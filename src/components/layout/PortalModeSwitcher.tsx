@@ -4,9 +4,11 @@ import { cn } from "@/lib/utils";
 import { Briefcase, UserCircle } from "lucide-react";
 
 export function PortalModeSwitcher() {
-  const { portalMode, setPortalMode, hasSalesAccess } = useAuth();
+  const { portalMode, setPortalMode, hasSalesAccess, isManagement, isAdmin } = useAuth();
 
-  if (!hasSalesAccess) {
+  // Hide for Admin/Management - they see all modules
+  // Only show for sales team users who need to switch
+  if (!hasSalesAccess || isManagement || isAdmin) {
     return null;
   }
 

@@ -150,19 +150,66 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     return item.requiredRoles.includes(role);
   };
 
-  // Build navigation based on portal mode
+  // Build navigation based on portal mode and access level
   const getNavItems = (): NavItem[] => {
     const items: NavItem[] = [];
+    const isFullAccess = role === "admin" || isManagement;
 
-    if (portalMode === "sales" && hasSalesAccess) {
-      items.push(...salesPortalItems);
-    } else {
-      items.push(...employeePortalItems);
-    }
+    // Admin/Management see ALL modules regardless of portal mode
+    if (isFullAccess) {
+      // Dashboard first
+      items.push({
+        id: "dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        color: "text-primary",
+      });
 
-    // Admin items are always shown for admins
-    if (role === "admin" || isManagement) {
+      // Sales modules
+      items.push({
+        id: "sales",
+        label: "Sales",
+        icon: TrendingUp,
+        color: "text-sales",
+        children: [
+          { id: "sales-funnel", label: "Funnel Management", icon: Target },
+          { id: "sales-quotations", label: "Quotations", icon: FileText },
+          { id: "sales-leads", label: "Lead Tracking", icon: Activity },
+        ],
+      });
+
+      items.push({
+        id: "contacts",
+        label: "Contacts",
+        icon: Phone,
+        color: "text-primary",
+      });
+
+      // Employee Portal
+      items.push({
+        id: "employee",
+        label: "Employee Portal",
+        icon: UserCircle,
+        color: "text-employee",
+        children: [
+          { id: "employee-training", label: "Trainings", icon: GraduationCap },
+          { id: "employee-salary", label: "Salary Slips", icon: FileText },
+          { id: "employee-leave", label: "Leave Management", icon: Calendar },
+          { id: "employee-travel", label: "Travel Management", icon: Plane },
+          { id: "employee-appreciation", label: "Peer Appreciation", icon: Award },
+          { id: "employee-profile", label: "CV & Certifications", icon: FileUser },
+        ],
+      });
+
+      // Admin items
       items.push(...adminItems.filter(hasAccess));
+    } else {
+      // Regular users: show based on portal mode
+      if (portalMode === "sales" && hasSalesAccess) {
+        items.push(...salesPortalItems);
+      } else {
+        items.push(...employeePortalItems);
+      }
     }
 
     return items;
