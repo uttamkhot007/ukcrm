@@ -38,9 +38,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2, User } from "lucide-react";
+import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2, User, Download } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { exportToCSV } from "@/lib/csv-export";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -203,6 +204,19 @@ export function LeadsView() {
     lead.contacts?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleExport = () => {
+    if (!filteredLeads?.length) return;
+    exportToCSV(filteredLeads, "leads", [
+      { key: "title", label: "Title" },
+      { key: "contacts", label: "Contact", transform: (v) => (v as any)?.name || "" },
+      { key: "status", label: "Status", transform: (v) => statusLabels[v as LeadStatus] || String(v) },
+      { key: "source", label: "Source", transform: (v) => String(v || "") },
+      { key: "estimated_value", label: "Estimated Value", transform: (v) => String(v || "") },
+      { key: "notes", label: "Notes", transform: (v) => String(v || "") },
+      { key: "created_at", label: "Created", transform: (v) => format(new Date(v as string), "yyyy-MM-dd") },
+    ]);
+  };
+
   const newLeads = leads?.filter((l) => l.status === "new").length || 0;
   const convertedLeads = leads?.filter((l) => l.status === "converted").length || 0;
   const isPending = createLead.isPending || updateLead.isPending;
@@ -255,13 +269,18 @@ export function LeadsView() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Lead
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={!filteredLeads?.length}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Lead
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingLead ? "Edit Lead" : "Create New Lead"}</DialogTitle>
@@ -353,6 +372,7 @@ export function LeadsView() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card className="glass border-border">
