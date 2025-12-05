@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Table,
   TableBody,
@@ -38,7 +39,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { DealsKanban } from "./DealsKanban";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -74,6 +76,7 @@ const initialFormData = {
 
 export function DealsView() {
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Deal | null>(null);
@@ -232,14 +235,24 @@ export function DealsView() {
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search deals..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search deals..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as "list" | "kanban")}>
+            <ToggleGroupItem value="list" aria-label="List view" className="px-3">
+              <LayoutList className="w-4 h-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="kanban" aria-label="Kanban view" className="px-3">
+              <Kanban className="w-4 h-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogTrigger asChild>
@@ -335,12 +348,18 @@ export function DealsView() {
         </Dialog>
       </div>
 
-      <Card className="glass border-border">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
+      {isLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : viewMode === "kanban" ? (
+        <DealsKanban
+          deals={filteredDeals || []}
+          onEdit={openEditDialog}
+          onDelete={setDeleteTarget}
+        />
+      ) : (
+        <Card className="glass border-border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -404,8 +423,8 @@ export function DealsView() {
               )}
             </TableBody>
           </Table>
-        )}
-      </Card>
+        </Card>
+      )}
 
       <DeleteConfirmDialog
         open={!!deleteTarget}
