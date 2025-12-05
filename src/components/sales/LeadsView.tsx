@@ -38,12 +38,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
+type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 type LeadStatus = Database["public"]["Enums"]["lead_status"];
+
+type LeadWithContact = Lead & { contacts: Pick<Contact, "id" | "name" | "company"> | null };
 
 const statusColors: Record<LeadStatus, string> = {
   new: "bg-blue-500/20 text-blue-400",
@@ -67,13 +70,14 @@ const initialFormData = {
   source: "",
   estimated_value: "",
   notes: "",
+  contact_id: "",
 };
 
 export function LeadsView() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [editingLead, setEditingLead] = useState<LeadWithContact | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<LeadWithContact | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -84,10 +88,22 @@ export function LeadsView() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("*")
+        .select("*, contacts:contact_id(id, name, company)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Lead[];
+      return data as LeadWithContact[];
+    },
+  });
+
+  const { data: contacts } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, name, company")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -99,6 +115,7 @@ export function LeadsView() {
         source: data.source.trim() || null,
         estimated_value: data.estimated_value ? parseFloat(data.estimated_value) : null,
         notes: data.notes.trim() || null,
+        contact_id: data.contact_id || null,
         user_id: user!.id,
       });
       if (error) throw error;
@@ -123,6 +140,7 @@ export function LeadsView() {
           source: data.source.trim() || null,
           estimated_value: data.estimated_value ? parseFloat(data.estimated_value) : null,
           notes: data.notes.trim() || null,
+          contact_id: data.contact_id || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -158,7 +176,7 @@ export function LeadsView() {
     setFormData(initialFormData);
   };
 
-  const openEditDialog = (lead: Lead) => {
+  const openEditDialog = (lead: LeadWithContact) => {
     setEditingLead(lead);
     setFormData({
       title: lead.title,
@@ -166,6 +184,7 @@ export function LeadsView() {
       source: lead.source || "",
       estimated_value: lead.estimated_value ? String(lead.estimated_value) : "",
       notes: lead.notes || "",
+      contact_id: lead.contact_id || "",
     });
     setIsDialogOpen(true);
   };
@@ -180,7 +199,8 @@ export function LeadsView() {
   };
 
   const filteredLeads = leads?.filter((lead) =>
-    lead.title.toLowerCase().includes(search.toLowerCase())
+    lead.title.toLowerCase().includes(search.toLowerCase()) ||
+    lead.contacts?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const newLeads = leads?.filter((l) => l.status === "new").length || 0;
@@ -257,6 +277,25 @@ export function LeadsView() {
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact">Contact</Label>
+                <Select
+                  value={formData.contact_id}
+                  onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a contact (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No contact</SelectItem>
+                    {contacts?.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.name} {contact.company && `(${contact.company})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
@@ -326,6 +365,7 @@ export function LeadsView() {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Est. Value</TableHead>
@@ -336,7 +376,7 @@ export function LeadsView() {
             <TableBody>
               {filteredLeads?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No leads found. Create your first lead to get started.
                   </TableCell>
                 </TableRow>
@@ -344,6 +384,16 @@ export function LeadsView() {
                 filteredLeads?.map((lead) => (
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.title}</TableCell>
+                    <TableCell>
+                      {lead.contacts ? (
+                        <div className="flex items-center gap-2">
+                          <User className="w-3 h-3 text-muted-foreground" />
+                          <span>{lead.contacts.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge className={statusColors[lead.status]}>{statusLabels[lead.status]}</Badge>
                     </TableCell>

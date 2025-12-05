@@ -40,12 +40,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban } from "lucide-react";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
+type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 type DealStage = Database["public"]["Enums"]["deal_stage"];
+
+type DealWithContact = Deal & { contacts: Pick<Contact, "id" | "name" | "company"> | null };
 
 const stageColors: Record<DealStage, string> = {
   pipeline: "bg-muted text-muted-foreground",
@@ -72,14 +75,15 @@ const initialFormData = {
   description: "",
   expected_close_date: "",
   probability: "10",
+  contact_id: "",
 };
 
 export function DealsView() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Deal | null>(null);
+  const [editingDeal, setEditingDeal] = useState<DealWithContact | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DealWithContact | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -90,10 +94,22 @@ export function DealsView() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("deals")
-        .select("*")
+        .select("*, contacts:contact_id(id, name, company)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Deal[];
+      return data as DealWithContact[];
+    },
+  });
+
+  const { data: contacts } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, name, company")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -106,6 +122,7 @@ export function DealsView() {
         description: data.description.trim() || null,
         expected_close_date: data.expected_close_date || null,
         probability: parseInt(data.probability) || 10,
+        contact_id: data.contact_id || null,
         user_id: user!.id,
       });
       if (error) throw error;
@@ -131,6 +148,7 @@ export function DealsView() {
           description: data.description.trim() || null,
           expected_close_date: data.expected_close_date || null,
           probability: parseInt(data.probability) || 10,
+          contact_id: data.contact_id || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -166,7 +184,7 @@ export function DealsView() {
     setFormData(initialFormData);
   };
 
-  const openEditDialog = (deal: Deal) => {
+  const openEditDialog = (deal: DealWithContact) => {
     setEditingDeal(deal);
     setFormData({
       title: deal.title,
@@ -175,6 +193,7 @@ export function DealsView() {
       description: deal.description || "",
       expected_close_date: deal.expected_close_date || "",
       probability: String(deal.probability || 10),
+      contact_id: deal.contact_id || "",
     });
     setIsDialogOpen(true);
   };
@@ -189,7 +208,8 @@ export function DealsView() {
   };
 
   const filteredDeals = deals?.filter((deal) =>
-    deal.title.toLowerCase().includes(search.toLowerCase())
+    deal.title.toLowerCase().includes(search.toLowerCase()) ||
+    deal.contacts?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalValue = deals?.reduce((sum, deal) => sum + Number(deal.value), 0) || 0;
@@ -275,6 +295,25 @@ export function DealsView() {
                   maxLength={200}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact">Contact</Label>
+                <Select
+                  value={formData.contact_id}
+                  onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a contact (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No contact</SelectItem>
+                    {contacts?.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.name} {contact.company && `(${contact.company})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -364,11 +403,11 @@ export function DealsView() {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Value</TableHead>
                 <TableHead>Stage</TableHead>
                 <TableHead>Probability</TableHead>
                 <TableHead>Expected Close</TableHead>
-                <TableHead>Created</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
@@ -383,6 +422,16 @@ export function DealsView() {
                 filteredDeals?.map((deal) => (
                   <TableRow key={deal.id}>
                     <TableCell className="font-medium">{deal.title}</TableCell>
+                    <TableCell>
+                      {deal.contacts ? (
+                        <div className="flex items-center gap-2">
+                          <User className="w-3 h-3 text-muted-foreground" />
+                          <span>{deal.contacts.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>${Number(deal.value).toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge className={stageColors[deal.stage]}>{stageLabels[deal.stage]}</Badge>
@@ -392,9 +441,6 @@ export function DealsView() {
                       {deal.expected_close_date
                         ? format(new Date(deal.expected_close_date), "MMM d, yyyy")
                         : "-"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(deal.created_at), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
