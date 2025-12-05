@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -29,6 +28,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   FileText,
   Plus,
   Search,
@@ -41,81 +47,43 @@ import {
   Eye,
   Edit,
   Trash2,
+  Loader2,
+  Send,
 } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+type LegalDocumentType = "contract" | "nda" | "agreement" | "policy" | "compliance";
+type LegalDocumentStatus = "draft" | "pending_review" | "approved" | "rejected" | "revision_needed";
 
 interface LegalDocument {
   id: string;
   title: string;
-  type: "contract" | "nda" | "agreement" | "policy" | "compliance";
-  status: "draft" | "pending_review" | "approved" | "rejected" | "revision_needed";
-  createdBy: string;
-  createdAt: Date;
-  lastModified: Date;
-  assignedTo?: string;
-  comments: Comment[];
+  description: string | null;
+  type: LegalDocumentType;
+  status: LegalDocumentStatus;
+  file_url: string | null;
+  file_name: string | null;
+  created_by: string;
+  assigned_to: string | null;
+  created_at: string;
+  updated_at: string;
+  creator_name?: string;
 }
 
 interface Comment {
   id: string;
-  author: string;
-  text: string;
-  createdAt: Date;
-  type: "comment" | "suggestion" | "approval" | "rejection";
+  document_id: string;
+  user_id: string;
+  comment: string;
+  comment_type: string;
+  created_at: string;
+  user_name?: string;
 }
 
-// Mock data
-const mockDocuments: LegalDocument[] = [
-  {
-    id: "1",
-    title: "Vendor Service Agreement - TechCorp",
-    type: "contract",
-    status: "pending_review",
-    createdBy: "John Smith",
-    createdAt: new Date("2024-01-15"),
-    lastModified: new Date("2024-01-20"),
-    assignedTo: "Legal Team",
-    comments: [
-      { id: "c1", author: "Jane Doe", text: "Please review clause 4.2", createdAt: new Date("2024-01-18"), type: "suggestion" },
-    ],
-  },
-  {
-    id: "2",
-    title: "Employee NDA Template",
-    type: "nda",
-    status: "approved",
-    createdBy: "HR Team",
-    createdAt: new Date("2024-01-10"),
-    lastModified: new Date("2024-01-12"),
-    assignedTo: "Legal Head",
-    comments: [],
-  },
-  {
-    id: "3",
-    title: "Data Privacy Policy v2.0",
-    type: "policy",
-    status: "revision_needed",
-    createdBy: "Compliance Team",
-    createdAt: new Date("2024-01-05"),
-    lastModified: new Date("2024-01-19"),
-    assignedTo: "Legal Team",
-    comments: [
-      { id: "c2", author: "Legal Head", text: "Need to update GDPR section", createdAt: new Date("2024-01-19"), type: "suggestion" },
-    ],
-  },
-  {
-    id: "4",
-    title: "Partner Agreement - CloudSoft",
-    type: "agreement",
-    status: "draft",
-    createdBy: "Sales Team",
-    createdAt: new Date("2024-01-22"),
-    lastModified: new Date("2024-01-22"),
-    comments: [],
-  },
-];
-
-const getStatusBadge = (status: LegalDocument["status"]) => {
+const getStatusBadge = (status: LegalDocumentStatus) => {
   const config = {
     draft: { label: "Draft", variant: "secondary" as const, icon: FileText },
     pending_review: { label: "Pending Review", variant: "outline" as const, icon: Clock },
@@ -132,7 +100,7 @@ const getStatusBadge = (status: LegalDocument["status"]) => {
   );
 };
 
-const getTypeBadge = (type: LegalDocument["type"]) => {
+const getTypeBadge = (type: LegalDocumentType) => {
   const colors = {
     contract: "bg-blue-500/10 text-blue-500",
     nda: "bg-purple-500/10 text-purple-500",
@@ -148,12 +116,207 @@ const getTypeBadge = (type: LegalDocument["type"]) => {
 };
 
 export function LegalModule() {
-  const [documents, setDocuments] = useState<LegalDocument[]>(mockDocuments);
+  const { user, isAdmin, isManager } = useAuth();
+  const [documents, setDocuments] = useState<LegalDocument[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<LegalDocument | null>(null);
+  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state for new document
+  const [newDocTitle, setNewDocTitle] = useState("");
+  const [newDocType, setNewDocType] = useState<LegalDocumentType>("contract");
+  const [newDocDescription, setNewDocDescription] = useState("");
+
+  const canApprove = isAdmin || isManager;
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      setIsLoading(true);
+      const { data: docs, error } = await supabase
+        .from("legal_documents")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch creator names from profiles
+      const userIds = [...new Set(docs?.map(d => d.created_by) || [])];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name || p.email || "Unknown"]));
+
+      const documentsWithNames = docs?.map(doc => ({
+        ...doc,
+        creator_name: profileMap.get(doc.created_by) || "Unknown",
+      })) || [];
+
+      setDocuments(documentsWithNames);
+    } catch (error: any) {
+      console.error("Error fetching documents:", error);
+      toast.error("Failed to load documents");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchComments = async (documentId: string) => {
+    try {
+      const { data: commentsData, error } = await supabase
+        .from("legal_document_comments")
+        .select("*")
+        .eq("document_id", documentId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      // Fetch user names from profiles
+      const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name || p.email || "Unknown"]));
+
+      const commentsWithNames = commentsData?.map(comment => ({
+        ...comment,
+        user_name: profileMap.get(comment.user_id) || "Unknown",
+      })) || [];
+
+      setComments(commentsWithNames);
+    } catch (error: any) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
+  const handleCreateDocument = async () => {
+    if (!user || !newDocTitle.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+      const { error } = await supabase.from("legal_documents").insert({
+        title: newDocTitle,
+        type: newDocType,
+        description: newDocDescription || null,
+        created_by: user.id,
+        status: "draft",
+      });
+
+      if (error) throw error;
+
+      toast.success("Document created successfully");
+      setIsAddDialogOpen(false);
+      setNewDocTitle("");
+      setNewDocType("contract");
+      setNewDocDescription("");
+      fetchDocuments();
+    } catch (error: any) {
+      console.error("Error creating document:", error);
+      toast.error("Failed to create document");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!user || !selectedDocument || !newComment.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+      const { error } = await supabase.from("legal_document_comments").insert({
+        document_id: selectedDocument.id,
+        user_id: user.id,
+        comment: newComment,
+        comment_type: "comment",
+      });
+
+      if (error) throw error;
+
+      toast.success("Comment added");
+      setNewComment("");
+      fetchComments(selectedDocument.id);
+    } catch (error: any) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateStatus = async (documentId: string, newStatus: LegalDocumentStatus) => {
+    try {
+      const { error: updateError } = await supabase
+        .from("legal_documents")
+        .update({ status: newStatus })
+        .eq("id", documentId);
+
+      if (updateError) throw updateError;
+
+      // Log the approval action
+      if (canApprove && user) {
+        const action = newStatus === "approved" ? "approved" : 
+                       newStatus === "rejected" ? "rejected" : "revision_requested";
+        
+        await supabase.from("legal_document_approvals").insert({
+          document_id: documentId,
+          user_id: user.id,
+          action,
+        });
+      }
+
+      toast.success(`Document ${newStatus.replace("_", " ")}`);
+      fetchDocuments();
+      if (selectedDocument?.id === documentId) {
+        setSelectedDocument({ ...selectedDocument, status: newStatus });
+      }
+    } catch (error: any) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update document status");
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm("Are you sure you want to delete this document?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("legal_documents")
+        .delete()
+        .eq("id", documentId);
+
+      if (error) throw error;
+
+      toast.success("Document deleted");
+      fetchDocuments();
+      if (selectedDocument?.id === documentId) {
+        setIsDetailSheetOpen(false);
+        setSelectedDocument(null);
+      }
+    } catch (error: any) {
+      console.error("Error deleting document:", error);
+      toast.error("Failed to delete document");
+    }
+  };
+
+  const openDocumentDetails = async (doc: LegalDocument) => {
+    setSelectedDocument(doc);
+    setIsDetailSheetOpen(true);
+    await fetchComments(doc.id);
+  };
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -168,6 +331,14 @@ export function LegalModule() {
     approved: documents.filter((d) => d.status === "approved").length,
     needsRevision: documents.filter((d) => d.status === "revision_needed").length,
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -186,17 +357,21 @@ export function LegalModule() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Upload Legal Document</DialogTitle>
-              <DialogDescription>Upload a new document for review</DialogDescription>
+              <DialogTitle>Create Legal Document</DialogTitle>
+              <DialogDescription>Add a new document for review</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Document Title</label>
-                <Input placeholder="Enter document title" />
+                <label className="text-sm font-medium">Document Title *</label>
+                <Input 
+                  placeholder="Enter document title" 
+                  value={newDocTitle}
+                  onChange={(e) => setNewDocTitle(e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Document Type</label>
-                <Select>
+                <Select value={newDocType} onValueChange={(v) => setNewDocType(v as LegalDocumentType)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -211,16 +386,18 @@ export function LegalModule() {
               </div>
               <div>
                 <label className="text-sm font-medium">Description</label>
-                <Textarea placeholder="Brief description of the document" />
-              </div>
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                <Upload className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Drag and drop or click to upload</p>
-                <p className="text-xs text-muted-foreground mt-1">PDF, DOCX, or DOC up to 10MB</p>
+                <Textarea 
+                  placeholder="Brief description of the document" 
+                  value={newDocDescription}
+                  onChange={(e) => setNewDocDescription(e.target.value)}
+                />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsAddDialogOpen(false)}>Upload Document</Button>
+                <Button onClick={handleCreateDocument} disabled={isSubmitting || !newDocTitle.trim()}>
+                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Create Document
+                </Button>
               </div>
             </div>
           </DialogContent>
@@ -338,57 +515,197 @@ export function LegalModule() {
                 <TableHead>Status</TableHead>
                 <TableHead>Created By</TableHead>
                 <TableHead>Last Modified</TableHead>
-                <TableHead>Assigned To</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDocuments.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{doc.title}</p>
-                        {doc.comments.length > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            {doc.comments.length} comment{doc.comments.length > 1 ? "s" : ""}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getTypeBadge(doc.type)}</TableCell>
-                  <TableCell>{getStatusBadge(doc.status)}</TableCell>
-                  <TableCell>{doc.createdBy}</TableCell>
-                  <TableCell>{format(doc.lastModified, "MMM d, yyyy")}</TableCell>
-                  <TableCell>{doc.assignedTo || "-"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      {doc.status === "pending_review" && (
-                        <>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600">
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600">
-                            <XCircle className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+              {filteredDocuments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    No documents found
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredDocuments.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{doc.title}</p>
+                          {doc.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {doc.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getTypeBadge(doc.type)}</TableCell>
+                    <TableCell>{getStatusBadge(doc.status)}</TableCell>
+                    <TableCell>{doc.creator_name}</TableCell>
+                    <TableCell>{format(new Date(doc.updated_at), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => openDocumentDetails(doc)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        {canApprove && doc.status === "pending_review" && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-green-500 hover:text-green-600"
+                              onClick={() => handleUpdateStatus(doc.id, "approved")}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-orange-500 hover:text-orange-600"
+                              onClick={() => handleUpdateStatus(doc.id, "revision_needed")}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-500 hover:text-red-600"
+                              onClick={() => handleUpdateStatus(doc.id, "rejected")}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteDocument(doc.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* Document Detail Sheet */}
+      <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
+        <SheetContent className="sm:max-w-lg">
+          {selectedDocument && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{selectedDocument.title}</SheetTitle>
+                <SheetDescription>
+                  {getTypeBadge(selectedDocument.type)}
+                  <span className="ml-2">{getStatusBadge(selectedDocument.status)}</span>
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-6">
+                {selectedDocument.description && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">Description</h4>
+                    <p className="text-sm text-muted-foreground">{selectedDocument.description}</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Created by</span>
+                    <p className="font-medium">{selectedDocument.creator_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Created</span>
+                    <p className="font-medium">
+                      {format(new Date(selectedDocument.created_at), "MMM d, yyyy")}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status Actions */}
+                {selectedDocument.status === "draft" && selectedDocument.created_by === user?.id && (
+                  <Button 
+                    className="w-full"
+                    onClick={() => handleUpdateStatus(selectedDocument.id, "pending_review")}
+                  >
+                    Submit for Review
+                  </Button>
+                )}
+
+                {canApprove && selectedDocument.status === "pending_review" && (
+                  <div className="flex gap-2">
+                    <Button 
+                      className="flex-1"
+                      onClick={() => handleUpdateStatus(selectedDocument.id, "approved")}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleUpdateStatus(selectedDocument.id, "revision_needed")}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Request Changes
+                    </Button>
+                  </div>
+                )}
+
+                {/* Comments Section */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Comments & Suggestions</h4>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {comments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No comments yet</p>
+                    ) : (
+                      comments.map((comment) => (
+                        <div key={comment.id} className="bg-muted/50 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium">
+                              {comment.user_name || "Unknown"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(comment.created_at), "MMM d, h:mm a")}
+                            </span>
+                          </div>
+                          <p className="text-sm">{comment.comment}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Input
+                      placeholder="Add a comment or suggestion..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                    />
+                    <Button 
+                      size="icon" 
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || isSubmitting}
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
