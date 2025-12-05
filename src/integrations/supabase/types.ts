@@ -166,6 +166,90 @@ export type Database = {
           },
         ]
       }
+      inside_sales_prospects: {
+        Row: {
+          assigned_to: string | null
+          company_name: string | null
+          contact_email: string | null
+          contact_id: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string
+          deal_id: string | null
+          follow_up_date: string | null
+          id: string
+          last_contacted_at: string | null
+          loss_reason: string | null
+          notes: string | null
+          original_deal_title: string
+          original_deal_value: number | null
+          priority: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by: string
+          deal_id?: string | null
+          follow_up_date?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          loss_reason?: string | null
+          notes?: string | null
+          original_deal_title: string
+          original_deal_value?: number | null
+          priority?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          company_name?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string
+          deal_id?: string | null
+          follow_up_date?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          loss_reason?: string | null
+          notes?: string | null
+          original_deal_title?: string
+          original_deal_value?: number | null
+          priority?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inside_sales_prospects_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inside_sales_prospects_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
