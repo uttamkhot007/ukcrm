@@ -4,7 +4,9 @@ import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
 import { ContactsView } from "./ContactsView";
 import { QuotationsView } from "./QuotationsView";
-import { Handshake, Users, UserPlus, FileText } from "lucide-react";
+import { ActivityTimeline } from "./ActivityTimeline";
+import { SalesReports } from "./SalesReports";
+import { Handshake, Users, UserPlus, FileText, Clock, BarChart3 } from "lucide-react";
 
 export function SalesModule() {
   const [activeTab, setActiveTab] = useState("deals");
@@ -38,6 +40,14 @@ export function SalesModule() {
             <FileText className="w-4 h-4" />
             Quotations
           </TabsTrigger>
+          <TabsTrigger value="activity" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Activity
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Reports
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="deals" className="space-y-4">
@@ -54,6 +64,18 @@ export function SalesModule() {
 
         <TabsContent value="quotations" className="space-y-4">
           <QuotationsView />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Activity Timeline</h2>
+            <p className="text-muted-foreground mb-6">Track all interactions and changes for deals</p>
+            <ActivityTimeline limit={50} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-4">
+          <SalesReports />
         </TabsContent>
       </Tabs>
     </div>
