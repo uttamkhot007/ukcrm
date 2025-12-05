@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -35,6 +35,8 @@ import {
   Settings,
   LogOut,
   Shield,
+  Phone,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -49,22 +51,25 @@ interface NavItem {
   icon: React.ElementType;
   color: string;
   requiredRoles?: ("admin" | "manager" | "employee")[];
+  portalMode?: PortalMode;
   children?: { id: string; label: string; icon: React.ElementType }[];
 }
 
-const navItems: NavItem[] = [
+// Sales Portal Items
+const salesPortalItems: NavItem[] = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "Sales Dashboard",
     icon: LayoutDashboard,
     color: "text-primary",
+    portalMode: "sales",
   },
   {
     id: "sales",
     label: "Sales",
     icon: TrendingUp,
     color: "text-sales",
-    requiredRoles: ["admin", "manager"],
+    portalMode: "sales",
     children: [
       { id: "sales-funnel", label: "Funnel Management", icon: Target },
       { id: "sales-quotations", label: "Quotations", icon: FileText },
@@ -72,63 +77,42 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    id: "finance",
-    label: "Finance",
-    icon: DollarSign,
-    color: "text-finance",
-    requiredRoles: ["admin", "manager"],
-    children: [
-      { id: "finance-payments", label: "Payment Tracking", icon: CreditCard },
-      { id: "finance-dso", label: "DSO Trends", icon: PieChart },
-      { id: "finance-pnl", label: "Profit & Loss", icon: BarChart3 },
-      { id: "finance-tax", label: "GST Reports", icon: Receipt },
-    ],
+    id: "contacts",
+    label: "Contacts",
+    icon: Phone,
+    color: "text-primary",
+    portalMode: "sales",
+  },
+];
+
+// Employee Portal Items
+const employeePortalItems: NavItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    color: "text-primary",
+    portalMode: "employee",
   },
   {
-    id: "hr",
-    label: "Human Resources",
-    icon: Users,
-    color: "text-hr",
-    requiredRoles: ["admin", "manager"],
+    id: "employee",
+    label: "Employee Portal",
+    icon: UserCircle,
+    color: "text-employee",
+    portalMode: "employee",
     children: [
-      { id: "hr-people", label: "People Management", icon: UserPlus },
-      { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
-      { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
+      { id: "employee-training", label: "Trainings", icon: GraduationCap },
+      { id: "employee-salary", label: "Salary Slips", icon: FileText },
+      { id: "employee-leave", label: "Leave Management", icon: Calendar },
+      { id: "employee-travel", label: "Travel Management", icon: Plane },
+      { id: "employee-appreciation", label: "Peer Appreciation", icon: Award },
+      { id: "employee-profile", label: "CV & Certifications", icon: FileUser },
     ],
   },
-  {
-    id: "tech",
-    label: "Technical",
-    icon: Code,
-    color: "text-tech",
-    requiredRoles: ["admin", "manager"],
-    children: [
-      { id: "tech-projects", label: "Project Management", icon: FolderKanban },
-      { id: "tech-knowledge", label: "Knowledge Base", icon: BookOpen },
-      { id: "tech-updates", label: "Updates & Alerts", icon: Bell },
-    ],
-  },
-  {
-    id: "support",
-    label: "Customer Support",
-    icon: HeadphonesIcon,
-    color: "text-support",
-    requiredRoles: ["admin", "manager"],
-    children: [
-      { id: "support-tickets", label: "Ticketing", icon: Ticket },
-    ],
-  },
-  {
-    id: "marketing",
-    label: "Marketing",
-    icon: Megaphone,
-    color: "text-marketing",
-    requiredRoles: ["admin", "manager"],
-    children: [
-      { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
-      { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
-    ],
-  },
+];
+
+// Admin-only Items
+const adminItems: NavItem[] = [
   {
     id: "management",
     label: "Management",
@@ -147,26 +131,12 @@ const navItems: NavItem[] = [
     color: "text-destructive",
     requiredRoles: ["admin"],
   },
-  {
-    id: "employee",
-    label: "Employee Portal",
-    icon: UserCircle,
-    color: "text-employee",
-    children: [
-      { id: "employee-training", label: "Trainings", icon: GraduationCap },
-      { id: "employee-salary", label: "Salary Slips", icon: FileText },
-      { id: "employee-leave", label: "Leave Management", icon: Calendar },
-      { id: "employee-travel", label: "Travel Management", icon: Plane },
-      { id: "employee-appreciation", label: "Peer Appreciation", icon: Award },
-      { id: "employee-profile", label: "CV & Certifications", icon: FileUser },
-    ],
-  },
 ];
 
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const { role, signOut, profile } = useAuth();
+  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement } = useAuth();
 
   const toggleExpand = (id: string) => {
     setExpandedItems((prev) =>
@@ -180,7 +150,25 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     return item.requiredRoles.includes(role);
   };
 
-  const filteredNavItems = navItems.filter(hasAccess);
+  // Build navigation based on portal mode
+  const getNavItems = (): NavItem[] => {
+    const items: NavItem[] = [];
+
+    if (portalMode === "sales" && hasSalesAccess) {
+      items.push(...salesPortalItems);
+    } else {
+      items.push(...employeePortalItems);
+    }
+
+    // Admin items are always shown for admins
+    if (role === "admin" || isManagement) {
+      items.push(...adminItems.filter(hasAccess));
+    }
+
+    return items;
+  };
+
+  const filteredNavItems = getNavItems();
 
   const getRoleBadgeColor = () => {
     switch (role) {

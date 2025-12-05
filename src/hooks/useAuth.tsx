@@ -3,6 +3,8 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
+type TeamType = "sales" | "presales" | "technical" | "managed_services" | "management" | "hr" | "finance" | "inside_sales" | "marketing";
+type PortalMode = "employee" | "sales";
 
 interface Profile {
   id: string;
@@ -19,6 +21,11 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   role: AppRole | null;
+  teams: TeamType[];
+  portalMode: PortalMode;
+  setPortalMode: (mode: PortalMode) => void;
+  hasSalesAccess: boolean;
+  isManagement: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -26,15 +33,20 @@ interface AuthContextType {
   isAdmin: boolean;
   isManager: boolean;
   isEmployee: boolean;
+  refreshTeams: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const SALES_TEAMS: TeamType[] = ["sales", "presales", "inside_sales", "management"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [teams, setTeams] = useState<TeamType[]>([]);
+  const [portalMode, setPortalMode] = useState<PortalMode>("employee");
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -59,18 +71,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (roleData) {
       setRole(roleData.role as AppRole);
     } else {
-      setRole("employee"); // Default to employee
+      setRole("employee");
+    }
+
+    // Fetch teams
+    const { data: teamsData } = await supabase
+      .from("user_teams")
+      .select("team")
+      .eq("user_id", userId);
+
+    if (teamsData) {
+      setTeams(teamsData.map(t => t.team as TeamType));
+    }
+  };
+
+  const refreshTeams = async () => {
+    if (user) {
+      const { data: teamsData } = await supabase
+        .from("user_teams")
+        .select("team")
+        .eq("user_id", user.id);
+
+      if (teamsData) {
+        setTeams(teamsData.map(t => t.team as TeamType));
+      }
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer fetching user data with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
             fetchUserData(session.user.id);
@@ -78,12 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRole(null);
+          setTeams([]);
         }
         setIsLoading(false);
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -126,13 +159,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setTeams([]);
+    setPortalMode("employee");
   };
+
+  const hasSalesAccess = role === "admin" || teams.some(t => SALES_TEAMS.includes(t));
+  const isManagement = teams.includes("management") || role === "admin";
 
   const value: AuthContextType = {
     user,
     session,
     profile,
     role,
+    teams,
+    portalMode,
+    setPortalMode,
+    hasSalesAccess,
+    isManagement,
     isLoading,
     signIn,
     signUp,
@@ -140,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: role === "admin",
     isManager: role === "manager",
     isEmployee: role === "employee",
+    refreshTeams,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -152,3 +196,5 @@ export function useAuth() {
   }
   return context;
 }
+
+export type { TeamType, PortalMode, AppRole };
