@@ -483,6 +483,93 @@ export type Database = {
           },
         ]
       }
+      renewals: {
+        Row: {
+          assigned_to: string | null
+          auto_renew: boolean | null
+          contact_id: string | null
+          cost: number | null
+          created_at: string
+          created_by: string
+          deal_id: string | null
+          expiry_date: string
+          id: string
+          name: string
+          notes: string | null
+          notified_1_week: boolean | null
+          notified_2_weeks: boolean | null
+          notified_3_weeks: boolean | null
+          notified_4_weeks: boolean | null
+          reminder_days: number | null
+          start_date: string
+          status: Database["public"]["Enums"]["renewal_status"]
+          type: Database["public"]["Enums"]["renewal_type"]
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          auto_renew?: boolean | null
+          contact_id?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by: string
+          deal_id?: string | null
+          expiry_date: string
+          id?: string
+          name: string
+          notes?: string | null
+          notified_1_week?: boolean | null
+          notified_2_weeks?: boolean | null
+          notified_3_weeks?: boolean | null
+          notified_4_weeks?: boolean | null
+          reminder_days?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["renewal_status"]
+          type?: Database["public"]["Enums"]["renewal_type"]
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          auto_renew?: boolean | null
+          contact_id?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string
+          deal_id?: string | null
+          expiry_date?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          notified_1_week?: boolean | null
+          notified_2_weeks?: boolean | null
+          notified_3_weeks?: boolean | null
+          notified_4_weeks?: boolean | null
+          reminder_days?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["renewal_status"]
+          type?: Database["public"]["Enums"]["renewal_type"]
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renewals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewals_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -592,6 +679,19 @@ export type Database = {
         | "policy"
         | "compliance"
       quotation_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
+      renewal_status:
+        | "active"
+        | "expiring_soon"
+        | "expired"
+        | "renewed"
+        | "cancelled"
+      renewal_type:
+        | "contract"
+        | "license"
+        | "subscription"
+        | "certification"
+        | "insurance"
+        | "domain"
       team_type:
         | "sales"
         | "presales"
@@ -766,6 +866,21 @@ export const Constants = {
         "compliance",
       ],
       quotation_status: ["draft", "sent", "accepted", "rejected", "expired"],
+      renewal_status: [
+        "active",
+        "expiring_soon",
+        "expired",
+        "renewed",
+        "cancelled",
+      ],
+      renewal_type: [
+        "contract",
+        "license",
+        "subscription",
+        "certification",
+        "insurance",
+        "domain",
+      ],
       team_type: [
         "sales",
         "presales",
