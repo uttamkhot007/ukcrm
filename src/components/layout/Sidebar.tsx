@@ -185,6 +185,69 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-primary",
       });
 
+      // Finance
+      items.push({
+        id: "finance",
+        label: "Finance",
+        icon: DollarSign,
+        color: "text-finance",
+        children: [
+          { id: "finance-payments", label: "Payment Tracking", icon: CreditCard },
+          { id: "finance-dso", label: "DSO Trends", icon: PieChart },
+          { id: "finance-pnl", label: "Profit & Loss", icon: BarChart3 },
+          { id: "finance-tax", label: "GST Reports", icon: Receipt },
+        ],
+      });
+
+      // HR
+      items.push({
+        id: "hr",
+        label: "Human Resources",
+        icon: Users,
+        color: "text-hr",
+        children: [
+          { id: "hr-people", label: "People Management", icon: UserPlus },
+          { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
+          { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
+        ],
+      });
+
+      // Technical
+      items.push({
+        id: "tech",
+        label: "Technical",
+        icon: Code,
+        color: "text-tech",
+        children: [
+          { id: "tech-projects", label: "Project Management", icon: FolderKanban },
+          { id: "tech-knowledge", label: "Knowledge Base", icon: BookOpen },
+          { id: "tech-updates", label: "Updates & Alerts", icon: Bell },
+        ],
+      });
+
+      // Support
+      items.push({
+        id: "support",
+        label: "Customer Support",
+        icon: HeadphonesIcon,
+        color: "text-support",
+        children: [
+          { id: "support-tickets", label: "Ticketing", icon: Ticket },
+        ],
+      });
+
+      // Marketing
+      items.push({
+        id: "marketing",
+        label: "Marketing",
+        icon: Megaphone,
+        color: "text-marketing",
+        children: [
+          { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
+          { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
+        ],
+      });
+
       // Employee Portal
       items.push({
         id: "employee",
@@ -201,7 +264,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Admin items
+      // Admin items (Management & Admin Panel)
       items.push(...adminItems.filter(hasAccess));
     } else {
       // Regular users: show based on portal mode
