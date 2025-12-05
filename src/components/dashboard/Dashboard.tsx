@@ -8,10 +8,10 @@ import {
   BarChart3,
   UserCircle,
   Target,
-  FileText,
   Ticket,
   FolderKanban,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { MetricCard } from "./MetricCard";
 import { ModuleCard } from "./ModuleCard";
 import { ActivityFeed } from "./ActivityFeed";
@@ -25,7 +25,7 @@ interface DashboardProps {
   onModuleChange: (module: string) => void;
 }
 
-const metrics = [
+const allMetrics = [
   {
     title: "Total Revenue",
     value: "$2.4M",
@@ -33,6 +33,7 @@ const metrics = [
     changeLabel: "vs last month",
     icon: DollarSign,
     color: "finance" as const,
+    requiredRoles: ["admin", "manager"],
   },
   {
     title: "Active Deals",
@@ -41,6 +42,7 @@ const metrics = [
     changeLabel: "vs last month",
     icon: Target,
     color: "sales" as const,
+    requiredRoles: ["admin", "manager"],
   },
   {
     title: "Team Members",
@@ -49,6 +51,7 @@ const metrics = [
     changeLabel: "vs last month",
     icon: Users,
     color: "hr" as const,
+    requiredRoles: ["admin", "manager"],
   },
   {
     title: "Active Projects",
@@ -57,6 +60,7 @@ const metrics = [
     changeLabel: "vs last month",
     icon: FolderKanban,
     color: "tech" as const,
+    requiredRoles: ["admin", "manager"],
   },
   {
     title: "Open Tickets",
@@ -65,6 +69,7 @@ const metrics = [
     changeLabel: "vs last month",
     icon: Ticket,
     color: "support" as const,
+    requiredRoles: ["admin", "manager"],
   },
   {
     title: "MQL Generated",
@@ -73,10 +78,11 @@ const metrics = [
     changeLabel: "vs last month",
     icon: Megaphone,
     color: "marketing" as const,
+    requiredRoles: ["admin", "manager"],
   },
 ];
 
-const modules = [
+const allModules = [
   {
     id: "sales",
     title: "Sales",
@@ -87,6 +93,7 @@ const modules = [
       { label: "Pipeline", value: "$12.5M" },
       { label: "Win Rate", value: "32%" },
     ],
+    requiredRoles: ["admin", "manager"],
   },
   {
     id: "finance",
@@ -98,6 +105,7 @@ const modules = [
       { label: "Receivables", value: "$890K" },
       { label: "DSO", value: "45 days" },
     ],
+    requiredRoles: ["admin", "manager"],
   },
   {
     id: "hr",
@@ -109,6 +117,7 @@ const modules = [
       { label: "Employees", value: "156" },
       { label: "Open Positions", value: "12" },
     ],
+    requiredRoles: ["admin", "manager"],
   },
   {
     id: "tech",
@@ -120,6 +129,7 @@ const modules = [
       { label: "Projects", value: "32" },
       { label: "Sprints", value: "8" },
     ],
+    requiredRoles: ["admin", "manager"],
   },
   {
     id: "support",
@@ -131,6 +141,7 @@ const modules = [
       { label: "Open", value: "89" },
       { label: "Avg Response", value: "2.4h" },
     ],
+    requiredRoles: ["admin", "manager"],
   },
   {
     id: "marketing",
@@ -142,6 +153,7 @@ const modules = [
       { label: "Campaigns", value: "15" },
       { label: "Leads", value: "1,245" },
     ],
+    requiredRoles: ["admin", "manager"],
   },
   {
     id: "management",
@@ -153,6 +165,7 @@ const modules = [
       { label: "Net Profit", value: "$1.2M" },
       { label: "Growth", value: "+18%" },
     ],
+    requiredRoles: ["admin"],
   },
   {
     id: "employee",
@@ -168,16 +181,34 @@ const modules = [
 ];
 
 export function Dashboard({ onModuleChange }: DashboardProps) {
+  const { profile, role, isAdmin, isManager } = useAuth();
+
+  const hasAccess = (requiredRoles?: string[]) => {
+    if (!requiredRoles) return true;
+    if (!role) return false;
+    return requiredRoles.includes(role);
+  };
+
+  const metrics = allMetrics.filter((m) => hasAccess(m.requiredRoles));
+  const modules = allModules.filter((m) => hasAccess(m.requiredRoles));
+
   return (
     <div className="space-y-6 p-6">
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Welcome back, <span className="text-gradient">John</span>
+            Welcome back,{" "}
+            <span className="text-gradient">
+              {profile?.full_name?.split(" ")[0] || "User"}
+            </span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening with your business today
+            {isAdmin
+              ? "You have full administrative access"
+              : isManager
+              ? "Here's what's happening with your business today"
+              : "Access your personal dashboard and tools"}
           </p>
         </div>
         <div className="text-right">
@@ -192,31 +223,34 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
         </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {metrics.map((metric, index) => (
-          <MetricCard key={metric.title} {...metric} delay={index * 100} />
-        ))}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
-          <RevenueChart />
-          <SalesFunnel />
+      {/* Metrics Grid - Only for Admin/Manager */}
+      {metrics.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          {metrics.map((metric, index) => (
+            <MetricCard key={metric.title} {...metric} delay={index * 100} />
+          ))}
         </div>
+      )}
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          <QuickActions />
-          <UpcomingTasks />
+      {/* Main Content Grid - Only for Admin/Manager */}
+      {(isAdmin || isManager) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <RevenueChart />
+            <SalesFunnel />
+          </div>
+          <div className="space-y-6">
+            <QuickActions />
+            <UpcomingTasks />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modules Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Modules</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          {isAdmin || isManager ? "Modules" : "Your Tools"}
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {modules.map((module, index) => (
             <ModuleCard
@@ -229,11 +263,13 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ActivityFeed />
-        <TeamPerformance />
-      </div>
+      {/* Bottom Section - Only for Admin/Manager */}
+      {(isAdmin || isManager) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ActivityFeed />
+          <TeamPerformance />
+        </div>
+      )}
     </div>
   );
 }
