@@ -1,0 +1,61 @@
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DealsView } from "./DealsView";
+import { LeadsView } from "./LeadsView";
+import { ContactsView } from "./ContactsView";
+import { QuotationsView } from "./QuotationsView";
+import { Handshake, Users, UserPlus, FileText } from "lucide-react";
+
+export function SalesModule() {
+  const [activeTab, setActiveTab] = useState("deals");
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Sales</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your deals, leads, contacts, and quotations
+          </p>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="deals" className="flex items-center gap-2">
+            <Handshake className="w-4 h-4" />
+            Deals
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4" />
+            Leads
+          </TabsTrigger>
+          <TabsTrigger value="contacts" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Contacts
+          </TabsTrigger>
+          <TabsTrigger value="quotations" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Quotations
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="deals" className="space-y-4">
+          <DealsView />
+        </TabsContent>
+
+        <TabsContent value="leads" className="space-y-4">
+          <LeadsView />
+        </TabsContent>
+
+        <TabsContent value="contacts" className="space-y-4">
+          <ContactsView />
+        </TabsContent>
+
+        <TabsContent value="quotations" className="space-y-4">
+          <QuotationsView />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

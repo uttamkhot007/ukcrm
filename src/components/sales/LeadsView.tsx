@@ -1,0 +1,296 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { Plus, Search, Users, TrendingUp, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import type { Database } from "@/integrations/supabase/types";
+
+type Lead = Database["public"]["Tables"]["leads"]["Row"];
+type LeadStatus = Database["public"]["Enums"]["lead_status"];
+
+const statusColors: Record<LeadStatus, string> = {
+  new: "bg-blue-500/20 text-blue-400",
+  contacted: "bg-amber-500/20 text-amber-400",
+  qualified: "bg-purple-500/20 text-purple-400",
+  converted: "bg-emerald-500/20 text-emerald-400",
+  unqualified: "bg-red-500/20 text-red-400",
+};
+
+const statusLabels: Record<LeadStatus, string> = {
+  new: "New",
+  contacted: "Contacted",
+  qualified: "Qualified",
+  converted: "Converted",
+  unqualified: "Unqualified",
+};
+
+export function LeadsView() {
+  const [search, setSearch] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    status: "new" as LeadStatus,
+    source: "",
+    estimated_value: "",
+    notes: "",
+  });
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: leads, isLoading } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Lead[];
+    },
+  });
+
+  const createLead = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const { error } = await supabase.from("leads").insert({
+        title: data.title,
+        status: data.status,
+        source: data.source || null,
+        estimated_value: data.estimated_value ? parseFloat(data.estimated_value) : null,
+        notes: data.notes || null,
+        user_id: user!.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      setIsDialogOpen(false);
+      setFormData({
+        title: "",
+        status: "new",
+        source: "",
+        estimated_value: "",
+        notes: "",
+      });
+      toast({ title: "Lead created successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error creating lead", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const filteredLeads = leads?.filter((lead) =>
+    lead.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const newLeads = leads?.filter((l) => l.status === "new").length || 0;
+  const convertedLeads = leads?.filter((l) => l.status === "converted").length || 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4 glass border-border">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20">
+              <Users className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Leads</p>
+              <p className="text-2xl font-bold">{leads?.length || 0}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 glass border-border">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <TrendingUp className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">New Leads</p>
+              <p className="text-2xl font-bold">{newLeads}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 glass border-border">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20">
+              <TrendingUp className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Converted</p>
+              <p className="text-2xl font-bold">{convertedLeads}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search leads..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Lead
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Lead</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                createLead.mutate(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as LeadStatus })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="estimated_value">Estimated Value ($)</Label>
+                  <Input
+                    id="estimated_value"
+                    type="number"
+                    value={formData.estimated_value}
+                    onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="source">Source</Label>
+                <Input
+                  id="source"
+                  value={formData.source}
+                  onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                  placeholder="e.g., Website, Referral, LinkedIn"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={createLead.isPending}>
+                {createLead.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Create Lead
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card className="glass border-border">
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Est. Value</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLeads?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No leads found. Create your first lead to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredLeads?.map((lead) => (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium">{lead.title}</TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[lead.status]}>{statusLabels[lead.status]}</Badge>
+                    </TableCell>
+                    <TableCell>{lead.source || "-"}</TableCell>
+                    <TableCell>
+                      {lead.estimated_value ? `$${Number(lead.estimated_value).toLocaleString()}` : "-"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(lead.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+    </div>
+  );
+}

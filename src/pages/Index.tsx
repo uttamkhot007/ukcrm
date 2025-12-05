@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { AIAssistant } from "@/components/ai/AIAssistant";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { AdminPanel } from "@/components/admin/AdminPanel";
+import { SalesModule } from "@/components/sales/SalesModule";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -37,6 +38,8 @@ const Index = () => {
     switch (activeModule) {
       case "admin":
         return <AdminPanel />;
+      case "sales":
+        return <SalesModule />;
       default:
         return <Dashboard onModuleChange={setActiveModule} />;
     }
