@@ -37,6 +37,10 @@ import {
   Shield,
   Phone,
   Building2,
+  Scale,
+  RefreshCw,
+  Key,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -233,6 +237,31 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-support",
         children: [
           { id: "support-tickets", label: "Ticketing", icon: Ticket },
+        ],
+      });
+
+      // Legal
+      items.push({
+        id: "legal",
+        label: "Legal",
+        icon: Scale,
+        color: "text-legal",
+        children: [
+          { id: "legal-documents", label: "Documents", icon: FileText },
+          { id: "legal-approvals", label: "Approvals", icon: FileCheck },
+        ],
+      });
+
+      // Renewals
+      items.push({
+        id: "renewals",
+        label: "Renewals",
+        icon: RefreshCw,
+        color: "text-renewals",
+        children: [
+          { id: "renewals-contracts", label: "Contracts", icon: FileText },
+          { id: "renewals-licenses", label: "Licenses", icon: Key },
+          { id: "renewals-subscriptions", label: "Subscriptions", icon: RefreshCw },
         ],
       });
 
