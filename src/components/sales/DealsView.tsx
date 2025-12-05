@@ -32,6 +32,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
@@ -41,7 +42,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
 import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download } from "lucide-react";
+import { AddActivityDialog } from "./AddActivityDialog";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -500,6 +502,17 @@ export function DealsView() {
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
+                          <AddActivityDialog
+                            dealId={deal.id}
+                            dealTitle={deal.title}
+                            trigger={
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <MessageSquarePlus className="w-4 h-4 mr-2" />
+                                Log Activity
+                              </DropdownMenuItem>
+                            }
+                          />
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setDeleteTarget(deal)}
                             className="text-destructive focus:text-destructive"

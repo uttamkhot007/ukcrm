@@ -11,7 +11,9 @@ import {
   Mail, 
   Calendar,
   Clock,
-  Loader2
+  Loader2,
+  Video,
+  FileText
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -34,6 +36,8 @@ const activityIcons: Record<string, typeof ArrowRight> = {
   call: Phone,
   email: Mail,
   meeting: Calendar,
+  video_call: Video,
+  document: FileText,
 };
 
 const activityColors: Record<string, string> = {
@@ -43,6 +47,8 @@ const activityColors: Record<string, string> = {
   call: "bg-emerald-500/20 text-emerald-400",
   email: "bg-pink-500/20 text-pink-400",
   meeting: "bg-cyan-500/20 text-cyan-400",
+  video_call: "bg-indigo-500/20 text-indigo-400",
+  document: "bg-orange-500/20 text-orange-400",
 };
 
 interface ActivityTimelineProps {

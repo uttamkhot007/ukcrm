@@ -6,6 +6,7 @@ import { ContactsView } from "./ContactsView";
 import { QuotationsView } from "./QuotationsView";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { SalesReports } from "./SalesReports";
+import { LogActivitySection } from "./LogActivitySection";
 import { Handshake, Users, UserPlus, FileText, Clock, BarChart3 } from "lucide-react";
 
 export function SalesModule() {
@@ -70,7 +71,14 @@ export function SalesModule() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Activity Timeline</h2>
             <p className="text-muted-foreground mb-6">Track all interactions and changes for deals</p>
-            <ActivityTimeline limit={50} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <ActivityTimeline limit={50} />
+              </div>
+              <div>
+                <LogActivitySection />
+              </div>
+            </div>
           </div>
         </TabsContent>
 
