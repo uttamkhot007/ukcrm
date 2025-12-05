@@ -6,6 +6,8 @@ import { AIAssistant } from "@/components/ai/AIAssistant";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import { SalesModule } from "@/components/sales/SalesModule";
+import { LegalModule } from "@/components/legal/LegalModule";
+import { RenewalsModule } from "@/components/renewals/RenewalsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -39,7 +41,20 @@ const Index = () => {
       case "admin":
         return <AdminPanel />;
       case "sales":
+      case "sales-funnel":
+      case "sales-quotations":
+      case "sales-leads":
+      case "contacts":
         return <SalesModule />;
+      case "legal":
+      case "legal-documents":
+      case "legal-approvals":
+        return <LegalModule />;
+      case "renewals":
+      case "renewals-contracts":
+      case "renewals-licenses":
+      case "renewals-subscriptions":
+        return <RenewalsModule />;
       default:
         return <Dashboard onModuleChange={setActiveModule} />;
     }

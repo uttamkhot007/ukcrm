@@ -1,4 +1,15 @@
 @tailwind base;
+
+/* Add custom colors for new modules */
+:root {
+  --legal: 220 70% 50%;
+  --renewals: 280 70% 50%;
+}
+
+.dark {
+  --legal: 220 70% 60%;
+  --renewals: 280 70% 60%;
+}
 @tailwind components;
 @tailwind utilities;
 

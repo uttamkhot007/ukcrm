@@ -82,6 +82,12 @@ export default {
           DEFAULT: "hsl(var(--employee))",
           glow: "hsl(var(--employee-glow))",
         },
+        legal: {
+          DEFAULT: "hsl(var(--legal))",
+        },
+        renewals: {
+          DEFAULT: "hsl(var(--renewals))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
