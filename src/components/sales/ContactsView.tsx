@@ -19,27 +19,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, Users, Building, Mail, Loader2 } from "lucide-react";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 
+const initialFormData = {
+  name: "",
+  email: "",
+  phone: "",
+  company: "",
+  designation: "",
+  notes: "",
+};
+
 export function ContactsView() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    designation: "",
-    notes: "",
-  });
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
+  const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -59,33 +70,93 @@ export function ContactsView() {
   const createContact = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("contacts").insert({
-        name: data.name,
-        email: data.email || null,
-        phone: data.phone || null,
-        company: data.company || null,
-        designation: data.designation || null,
-        notes: data.notes || null,
+        name: data.name.trim(),
+        email: data.email.trim() || null,
+        phone: data.phone.trim() || null,
+        company: data.company.trim() || null,
+        designation: data.designation.trim() || null,
+        notes: data.notes.trim() || null,
         user_id: user!.id,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      setIsDialogOpen(false);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        designation: "",
-        notes: "",
-      });
+      closeDialog();
       toast({ title: "Contact created successfully" });
     },
     onError: (error) => {
       toast({ title: "Error creating contact", description: error.message, variant: "destructive" });
     },
   });
+
+  const updateContact = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from("contacts")
+        .update({
+          name: data.name.trim(),
+          email: data.email.trim() || null,
+          phone: data.phone.trim() || null,
+          company: data.company.trim() || null,
+          designation: data.designation.trim() || null,
+          notes: data.notes.trim() || null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      closeDialog();
+      toast({ title: "Contact updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating contact", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteContact = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("contacts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      setDeleteTarget(null);
+      toast({ title: "Contact deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting contact", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingContact(null);
+    setFormData(initialFormData);
+  };
+
+  const openEditDialog = (contact: Contact) => {
+    setEditingContact(contact);
+    setFormData({
+      name: contact.name,
+      email: contact.email || "",
+      phone: contact.phone || "",
+      company: contact.company || "",
+      designation: contact.designation || "",
+      notes: contact.notes || "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingContact) {
+      updateContact.mutate({ id: editingContact.id, data: formData });
+    } else {
+      createContact.mutate(formData);
+    }
+  };
 
   const filteredContacts = contacts?.filter(
     (contact) =>
@@ -95,6 +166,7 @@ export function ContactsView() {
   );
 
   const uniqueCompanies = new Set(contacts?.map((c) => c.company).filter(Boolean)).size;
+  const isPending = createContact.isPending || updateContact.isPending;
 
   return (
     <div className="space-y-6">
@@ -146,30 +218,25 @@ export function ContactsView() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Contact
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Contact</DialogTitle>
+              <DialogTitle>{editingContact ? "Edit Contact" : "Create New Contact"}</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                createContact.mutate(formData);
-              }}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  maxLength={100}
                   required
                 />
               </div>
@@ -181,6 +248,7 @@ export function ContactsView() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    maxLength={255}
                   />
                 </div>
                 <div className="space-y-2">
@@ -189,6 +257,7 @@ export function ContactsView() {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    maxLength={20}
                   />
                 </div>
               </div>
@@ -199,6 +268,7 @@ export function ContactsView() {
                     id="company"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    maxLength={100}
                   />
                 </div>
                 <div className="space-y-2">
@@ -207,6 +277,7 @@ export function ContactsView() {
                     id="designation"
                     value={formData.designation}
                     onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    maxLength={100}
                   />
                 </div>
               </div>
@@ -216,12 +287,13 @@ export function ContactsView() {
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  maxLength={1000}
                   rows={3}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={createContact.isPending}>
-                {createContact.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Create Contact
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {editingContact ? "Update Contact" : "Create Contact"}
               </Button>
             </form>
           </DialogContent>
@@ -243,12 +315,13 @@ export function ContactsView() {
                 <TableHead>Company</TableHead>
                 <TableHead>Designation</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredContacts?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No contacts found. Create your first contact to get started.
                   </TableCell>
                 </TableRow>
@@ -263,6 +336,28 @@ export function ContactsView() {
                     <TableCell className="text-muted-foreground">
                       {format(new Date(contact.created_at), "MMM d, yyyy")}
                     </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(contact)}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteTarget(contact)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -270,6 +365,15 @@ export function ContactsView() {
           </Table>
         )}
       </Card>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteContact.mutate(deleteTarget.id)}
+        title="Delete Contact"
+        description={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        isDeleting={deleteContact.isPending}
+      />
     </div>
   );
 }

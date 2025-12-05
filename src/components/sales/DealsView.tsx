@@ -27,11 +27,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2 } from "lucide-react";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -56,17 +63,21 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
+const initialFormData = {
+  title: "",
+  value: "",
+  stage: "pipeline" as DealStage,
+  description: "",
+  expected_close_date: "",
+  probability: "10",
+};
+
 export function DealsView() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    value: "",
-    stage: "pipeline" as DealStage,
-    description: "",
-    expected_close_date: "",
-    probability: "10",
-  });
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Deal | null>(null);
+  const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -86,10 +97,10 @@ export function DealsView() {
   const createDeal = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("deals").insert({
-        title: data.title,
+        title: data.title.trim(),
         value: parseFloat(data.value) || 0,
         stage: data.stage,
-        description: data.description || null,
+        description: data.description.trim() || null,
         expected_close_date: data.expected_close_date || null,
         probability: parseInt(data.probability) || 10,
         user_id: user!.id,
@@ -98,15 +109,7 @@ export function DealsView() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
-      setIsDialogOpen(false);
-      setFormData({
-        title: "",
-        value: "",
-        stage: "pipeline",
-        description: "",
-        expected_close_date: "",
-        probability: "10",
-      });
+      closeDialog();
       toast({ title: "Deal created successfully" });
     },
     onError: (error) => {
@@ -114,12 +117,81 @@ export function DealsView() {
     },
   });
 
+  const updateDeal = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from("deals")
+        .update({
+          title: data.title.trim(),
+          value: parseFloat(data.value) || 0,
+          stage: data.stage,
+          description: data.description.trim() || null,
+          expected_close_date: data.expected_close_date || null,
+          probability: parseInt(data.probability) || 10,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+      closeDialog();
+      toast({ title: "Deal updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating deal", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteDeal = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("deals").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+      setDeleteTarget(null);
+      toast({ title: "Deal deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting deal", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingDeal(null);
+    setFormData(initialFormData);
+  };
+
+  const openEditDialog = (deal: Deal) => {
+    setEditingDeal(deal);
+    setFormData({
+      title: deal.title,
+      value: String(deal.value),
+      stage: deal.stage,
+      description: deal.description || "",
+      expected_close_date: deal.expected_close_date || "",
+      probability: String(deal.probability || 10),
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingDeal) {
+      updateDeal.mutate({ id: editingDeal.id, data: formData });
+    } else {
+      createDeal.mutate(formData);
+    }
+  };
+
   const filteredDeals = deals?.filter((deal) =>
     deal.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalValue = deals?.reduce((sum, deal) => sum + Number(deal.value), 0) || 0;
   const wonValue = deals?.filter((d) => d.stage === "closed_won").reduce((sum, deal) => sum + Number(deal.value), 0) || 0;
+  const isPending = createDeal.isPending || updateDeal.isPending;
 
   return (
     <div className="space-y-6">
@@ -169,30 +241,25 @@ export function DealsView() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Deal
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Deal</DialogTitle>
+              <DialogTitle>{editingDeal ? "Edit Deal" : "Create New Deal"}</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                createDeal.mutate(formData);
-              }}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  maxLength={200}
                   required
                 />
               </div>
@@ -202,6 +269,7 @@ export function DealsView() {
                   <Input
                     id="value"
                     type="number"
+                    min="0"
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                     required
@@ -254,12 +322,13 @@ export function DealsView() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  maxLength={1000}
                   rows={3}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={createDeal.isPending}>
-                {createDeal.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Create Deal
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {editingDeal ? "Update Deal" : "Create Deal"}
               </Button>
             </form>
           </DialogContent>
@@ -281,12 +350,13 @@ export function DealsView() {
                 <TableHead>Probability</TableHead>
                 <TableHead>Expected Close</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredDeals?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No deals found. Create your first deal to get started.
                   </TableCell>
                 </TableRow>
@@ -307,6 +377,28 @@ export function DealsView() {
                     <TableCell className="text-muted-foreground">
                       {format(new Date(deal.created_at), "MMM d, yyyy")}
                     </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(deal)}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteTarget(deal)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -314,6 +406,15 @@ export function DealsView() {
           </Table>
         )}
       </Card>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteDeal.mutate(deleteTarget.id)}
+        title="Delete Deal"
+        description={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        isDeleting={deleteDeal.isPending}
+      />
     </div>
   );
 }
