@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCog, Check, Loader2 } from "lucide-react";
+import { Shield, UserCog, Check, Loader2, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamManagement } from "./TeamManagement";
 
 type AppRole = "admin" | "manager" | "employee";
 
@@ -114,20 +116,33 @@ export function AdminPanel() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground">Manage user roles and permissions</p>
+          <p className="text-muted-foreground">Manage user roles, teams, and permissions</p>
         </div>
       </div>
 
-      <div className="glass rounded-xl border border-border overflow-hidden">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold flex items-center gap-2">
-            <UserCog className="w-5 h-5" />
-            User Management
-          </h2>
-          <span className="text-sm text-muted-foreground">
-            {users.length} users
-          </span>
-        </div>
+      <Tabs defaultValue="roles" className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="roles" className="flex items-center gap-2">
+            <UserCog className="w-4 h-4" />
+            User Roles
+          </TabsTrigger>
+          <TabsTrigger value="teams" className="flex items-center gap-2">
+            <Users2 className="w-4 h-4" />
+            Team Assignment
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="roles" className="space-y-6">
+          <div className="glass rounded-xl border border-border overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold flex items-center gap-2">
+                <UserCog className="w-5 h-5" />
+                User Management
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                {users.length} users
+              </span>
+            </div>
 
         {isLoading ? (
           <div className="p-8 flex items-center justify-center">
@@ -179,35 +194,41 @@ export function AdminPanel() {
         )}
       </div>
 
-      <div className="glass rounded-xl border border-border p-4">
-        <h3 className="font-semibold mb-3">Role Permissions</h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex items-start gap-3">
-            <span className={cn("px-2 py-1 rounded-full border", getRoleColor("admin"))}>
-              Admin
-            </span>
-            <p className="text-muted-foreground">
-              Full access to all modules including Management, Admin Panel, and user role management.
-            </p>
+          <div className="glass rounded-xl border border-border p-4">
+            <h3 className="font-semibold mb-3">Role Permissions</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-3">
+                <span className={cn("px-2 py-1 rounded-full border", getRoleColor("admin"))}>
+                  Admin
+                </span>
+                <p className="text-muted-foreground">
+                  Full access to all modules including Management, Admin Panel, and user role management.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className={cn("px-2 py-1 rounded-full border", getRoleColor("manager"))}>
+                  Manager
+                </span>
+                <p className="text-muted-foreground">
+                  Access to Sales, Finance, HR, Technical, Support, Marketing modules. Cannot access Management or Admin.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className={cn("px-2 py-1 rounded-full border", getRoleColor("employee"))}>
+                  Employee
+                </span>
+                <p className="text-muted-foreground">
+                  Access to Dashboard and Employee Portal only. Basic user access.
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-start gap-3">
-            <span className={cn("px-2 py-1 rounded-full border", getRoleColor("manager"))}>
-              Manager
-            </span>
-            <p className="text-muted-foreground">
-              Access to Sales, Finance, HR, Technical, Support, Marketing modules. Cannot access Management or Admin.
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className={cn("px-2 py-1 rounded-full border", getRoleColor("employee"))}>
-              Employee
-            </span>
-            <p className="text-muted-foreground">
-              Access to Dashboard and Employee Portal only. Basic user access.
-            </p>
-          </div>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="teams">
+          <TeamManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

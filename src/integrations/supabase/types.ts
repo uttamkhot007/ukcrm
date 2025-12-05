@@ -392,6 +392,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_teams: {
+        Row: {
+          created_at: string
+          id: string
+          team: Database["public"]["Enums"]["team_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team: Database["public"]["Enums"]["team_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team?: Database["public"]["Enums"]["team_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -401,6 +422,13 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      has_any_team: {
+        Args: {
+          _teams: Database["public"]["Enums"]["team_type"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -408,6 +436,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_sales_access: { Args: { _user_id: string }; Returns: boolean }
+      has_team: {
+        Args: {
+          _team: Database["public"]["Enums"]["team_type"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_management: { Args: { _user_id: string }; Returns: boolean }
       promote_to_admin: { Args: { _user_email: string }; Returns: undefined }
     }
     Enums: {
@@ -431,6 +468,16 @@ export type Database = {
         | "unqualified"
         | "converted"
       quotation_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
+      team_type:
+        | "sales"
+        | "presales"
+        | "technical"
+        | "managed_services"
+        | "management"
+        | "hr"
+        | "finance"
+        | "inside_sales"
+        | "marketing"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -581,6 +628,17 @@ export const Constants = {
         "converted",
       ],
       quotation_status: ["draft", "sent", "accepted", "rejected", "expired"],
+      team_type: [
+        "sales",
+        "presales",
+        "technical",
+        "managed_services",
+        "management",
+        "hr",
+        "finance",
+        "inside_sales",
+        "marketing",
+      ],
     },
   },
 } as const
