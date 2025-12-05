@@ -40,9 +40,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User } from "lucide-react";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { exportToCSV } from "@/lib/csv-export";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -212,6 +213,20 @@ export function DealsView() {
     deal.contacts?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleExport = () => {
+    if (!filteredDeals?.length) return;
+    exportToCSV(filteredDeals, "deals", [
+      { key: "title", label: "Title" },
+      { key: "contacts", label: "Contact", transform: (v) => (v as any)?.name || "" },
+      { key: "value", label: "Value", transform: (v) => String(v) },
+      { key: "stage", label: "Stage", transform: (v) => stageLabels[v as DealStage] || String(v) },
+      { key: "probability", label: "Probability (%)", transform: (v) => String(v) },
+      { key: "expected_close_date", label: "Expected Close", transform: (v) => v ? format(new Date(v as string), "yyyy-MM-dd") : "" },
+      { key: "description", label: "Description", transform: (v) => String(v || "") },
+      { key: "created_at", label: "Created", transform: (v) => format(new Date(v as string), "yyyy-MM-dd") },
+    ]);
+  };
+
   const totalValue = deals?.reduce((sum, deal) => sum + Number(deal.value), 0) || 0;
   const wonValue = deals?.filter((d) => d.stage === "closed_won").reduce((sum, deal) => sum + Number(deal.value), 0) || 0;
   const isPending = createDeal.isPending || updateDeal.isPending;
@@ -274,13 +289,18 @@ export function DealsView() {
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Deal
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={!filteredDeals?.length}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Deal
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingDeal ? "Edit Deal" : "Create New Deal"}</DialogTitle>
@@ -385,6 +405,7 @@ export function DealsView() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {isLoading ? (

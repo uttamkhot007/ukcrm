@@ -38,9 +38,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { exportToCSV } from "@/lib/csv-export";
 
 type Quotation = Database["public"]["Tables"]["quotations"]["Row"];
 type QuotationStatus = Database["public"]["Enums"]["quotation_status"];
@@ -212,6 +213,22 @@ export function QuotationsView() {
       q.quotation_number.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleExport = () => {
+    if (!filteredQuotations?.length) return;
+    exportToCSV(filteredQuotations, "quotations", [
+      { key: "quotation_number", label: "Number" },
+      { key: "title", label: "Title" },
+      { key: "status", label: "Status", transform: (v) => statusLabels[v as QuotationStatus] || String(v) },
+      { key: "subtotal", label: "Subtotal", transform: (v) => String(v) },
+      { key: "tax_rate", label: "Tax Rate (%)", transform: (v) => String(v || "") },
+      { key: "tax_amount", label: "Tax Amount", transform: (v) => String(v) },
+      { key: "total", label: "Total", transform: (v) => String(v) },
+      { key: "valid_until", label: "Valid Until", transform: (v) => v ? format(new Date(v as string), "yyyy-MM-dd") : "" },
+      { key: "description", label: "Description", transform: (v) => String(v || "") },
+      { key: "created_at", label: "Created", transform: (v) => format(new Date(v as string), "yyyy-MM-dd") },
+    ]);
+  };
+
   const totalValue = quotations?.reduce((sum, q) => sum + Number(q.total), 0) || 0;
   const acceptedCount = quotations?.filter((q) => q.status === "accepted").length || 0;
   const isPending = createQuotation.isPending || updateQuotation.isPending;
@@ -264,13 +281,18 @@ export function QuotationsView() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Quotation
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={!filteredQuotations?.length}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Quotation
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingQuotation ? "Edit Quotation" : "Create New Quotation"}</DialogTitle>
@@ -364,6 +386,7 @@ export function QuotationsView() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card className="glass border-border">

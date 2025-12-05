@@ -31,9 +31,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus } from "lucide-react";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { exportToCSV } from "@/lib/csv-export";
 
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 
@@ -174,6 +175,21 @@ export function ContactsView() {
       contact.company?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleExport = () => {
+    if (!filteredContacts?.length) return;
+    exportToCSV(filteredContacts, "contacts", [
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email", transform: (v) => String(v || "") },
+      { key: "phone", label: "Phone", transform: (v) => String(v || "") },
+      { key: "company", label: "Company", transform: (v) => String(v || "") },
+      { key: "designation", label: "Designation", transform: (v) => String(v || "") },
+      { key: "deals", label: "Deals", transform: (v) => String((v as any[])?.length || 0) },
+      { key: "leads", label: "Leads", transform: (v) => String((v as any[])?.length || 0) },
+      { key: "notes", label: "Notes", transform: (v) => String(v || "") },
+      { key: "created_at", label: "Created", transform: (v) => format(new Date(v as string), "yyyy-MM-dd") },
+    ]);
+  };
+
   const uniqueCompanies = new Set(contacts?.map((c) => c.company).filter(Boolean)).size;
   const isPending = createContact.isPending || updateContact.isPending;
 
@@ -227,11 +243,16 @@ export function ContactsView() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Contact
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={!filteredContacts?.length}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Contact
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -307,6 +328,7 @@ export function ContactsView() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card className="glass border-border">
