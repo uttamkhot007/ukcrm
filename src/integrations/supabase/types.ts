@@ -216,6 +216,118 @@ export type Database = {
           },
         ]
       }
+      legal_document_approvals: {
+        Row: {
+          action: string
+          created_at: string
+          document_id: string
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          document_id: string
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_document_approvals_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_document_comments: {
+        Row: {
+          comment: string
+          comment_type: string
+          created_at: string
+          document_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          comment_type?: string
+          created_at?: string
+          document_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          comment_type?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_document_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_documents: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          status: Database["public"]["Enums"]["legal_document_status"]
+          title: string
+          type: Database["public"]["Enums"]["legal_document_type"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["legal_document_status"]
+          title: string
+          type?: Database["public"]["Enums"]["legal_document_type"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["legal_document_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["legal_document_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -467,6 +579,18 @@ export type Database = {
         | "qualified"
         | "unqualified"
         | "converted"
+      legal_document_status:
+        | "draft"
+        | "pending_review"
+        | "approved"
+        | "rejected"
+        | "revision_needed"
+      legal_document_type:
+        | "contract"
+        | "nda"
+        | "agreement"
+        | "policy"
+        | "compliance"
       quotation_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
       team_type:
         | "sales"
@@ -626,6 +750,20 @@ export const Constants = {
         "qualified",
         "unqualified",
         "converted",
+      ],
+      legal_document_status: [
+        "draft",
+        "pending_review",
+        "approved",
+        "rejected",
+        "revision_needed",
+      ],
+      legal_document_type: [
+        "contract",
+        "nda",
+        "agreement",
+        "policy",
+        "compliance",
       ],
       quotation_status: ["draft", "sent", "accepted", "rejected", "expired"],
       team_type: [
