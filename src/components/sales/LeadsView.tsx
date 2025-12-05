@@ -27,11 +27,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, Users, TrendingUp, Loader2 } from "lucide-react";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -54,16 +61,20 @@ const statusLabels: Record<LeadStatus, string> = {
   unqualified: "Unqualified",
 };
 
+const initialFormData = {
+  title: "",
+  status: "new" as LeadStatus,
+  source: "",
+  estimated_value: "",
+  notes: "",
+};
+
 export function LeadsView() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    status: "new" as LeadStatus,
-    source: "",
-    estimated_value: "",
-    notes: "",
-  });
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -83,25 +94,18 @@ export function LeadsView() {
   const createLead = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("leads").insert({
-        title: data.title,
+        title: data.title.trim(),
         status: data.status,
-        source: data.source || null,
+        source: data.source.trim() || null,
         estimated_value: data.estimated_value ? parseFloat(data.estimated_value) : null,
-        notes: data.notes || null,
+        notes: data.notes.trim() || null,
         user_id: user!.id,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      setIsDialogOpen(false);
-      setFormData({
-        title: "",
-        status: "new",
-        source: "",
-        estimated_value: "",
-        notes: "",
-      });
+      closeDialog();
       toast({ title: "Lead created successfully" });
     },
     onError: (error) => {
@@ -109,12 +113,79 @@ export function LeadsView() {
     },
   });
 
+  const updateLead = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          title: data.title.trim(),
+          status: data.status,
+          source: data.source.trim() || null,
+          estimated_value: data.estimated_value ? parseFloat(data.estimated_value) : null,
+          notes: data.notes.trim() || null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      closeDialog();
+      toast({ title: "Lead updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating lead", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteLead = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("leads").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      setDeleteTarget(null);
+      toast({ title: "Lead deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting lead", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingLead(null);
+    setFormData(initialFormData);
+  };
+
+  const openEditDialog = (lead: Lead) => {
+    setEditingLead(lead);
+    setFormData({
+      title: lead.title,
+      status: lead.status,
+      source: lead.source || "",
+      estimated_value: lead.estimated_value ? String(lead.estimated_value) : "",
+      notes: lead.notes || "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingLead) {
+      updateLead.mutate({ id: editingLead.id, data: formData });
+    } else {
+      createLead.mutate(formData);
+    }
+  };
+
   const filteredLeads = leads?.filter((lead) =>
     lead.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const newLeads = leads?.filter((l) => l.status === "new").length || 0;
   const convertedLeads = leads?.filter((l) => l.status === "converted").length || 0;
+  const isPending = createLead.isPending || updateLead.isPending;
 
   return (
     <div className="space-y-6">
@@ -164,30 +235,25 @@ export function LeadsView() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Lead
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Lead</DialogTitle>
+              <DialogTitle>{editingLead ? "Edit Lead" : "Create New Lead"}</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                createLead.mutate(formData);
-              }}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  maxLength={200}
                   required
                 />
               </div>
@@ -215,6 +281,7 @@ export function LeadsView() {
                   <Input
                     id="estimated_value"
                     type="number"
+                    min="0"
                     value={formData.estimated_value}
                     onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
                   />
@@ -227,6 +294,7 @@ export function LeadsView() {
                   value={formData.source}
                   onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                   placeholder="e.g., Website, Referral, LinkedIn"
+                  maxLength={100}
                 />
               </div>
               <div className="space-y-2">
@@ -235,12 +303,13 @@ export function LeadsView() {
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  maxLength={1000}
                   rows={3}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={createLead.isPending}>
-                {createLead.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Create Lead
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {editingLead ? "Update Lead" : "Create Lead"}
               </Button>
             </form>
           </DialogContent>
@@ -261,12 +330,13 @@ export function LeadsView() {
                 <TableHead>Source</TableHead>
                 <TableHead>Est. Value</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredLeads?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     No leads found. Create your first lead to get started.
                   </TableCell>
                 </TableRow>
@@ -284,6 +354,28 @@ export function LeadsView() {
                     <TableCell className="text-muted-foreground">
                       {format(new Date(lead.created_at), "MMM d, yyyy")}
                     </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(lead)}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteTarget(lead)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -291,6 +383,15 @@ export function LeadsView() {
           </Table>
         )}
       </Card>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteLead.mutate(deleteTarget.id)}
+        title="Delete Lead"
+        description={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        isDeleting={deleteLead.isPending}
+      />
     </div>
   );
 }
