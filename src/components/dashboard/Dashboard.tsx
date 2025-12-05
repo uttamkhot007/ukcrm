@@ -20,6 +20,7 @@ import { RevenueChart } from "./RevenueChart";
 import { TeamPerformance } from "./TeamPerformance";
 import { QuickActions } from "./QuickActions";
 import { UpcomingTasks } from "./UpcomingTasks";
+import { SalesWidgets } from "./SalesWidgets";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -243,6 +244,14 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
             <QuickActions />
             <UpcomingTasks />
           </div>
+        </div>
+      )}
+
+      {/* Sales Dashboard Widgets */}
+      {(isAdmin || isManager) && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Sales Overview</h2>
+          <SalesWidgets />
         </div>
       )}
 

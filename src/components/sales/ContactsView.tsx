@@ -31,7 +31,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download } from "lucide-react";
+import { ContactDetailsSheet } from "./ContactDetailsSheet";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -57,6 +58,7 @@ export function ContactsView() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ContactWithRelations | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContactWithRelations | null>(null);
+  const [selectedContact, setSelectedContact] = useState<ContactWithRelations | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -393,6 +395,10 @@ export function ContactsView() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedContact(contact)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => openEditDialog(contact)}>
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
@@ -422,6 +428,12 @@ export function ContactsView() {
         title="Delete Contact"
         description={`Are you sure you want to delete "${deleteTarget?.name}"? This will remove the contact but keep associated deals and leads.`}
         isDeleting={deleteContact.isPending}
+      />
+
+      <ContactDetailsSheet
+        contact={selectedContact}
+        open={!!selectedContact}
+        onOpenChange={(open) => !open && setSelectedContact(null)}
       />
     </div>
   );
