@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -30,11 +31,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+
+type ContactWithRelations = Contact & {
+  deals: { id: string }[];
+  leads: { id: string }[];
+};
 
 const initialFormData = {
   name: "",
@@ -48,22 +54,22 @@ const initialFormData = {
 export function ContactsView() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
+  const [editingContact, setEditingContact] = useState<ContactWithRelations | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ContactWithRelations | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: contacts, isLoading } = useQuery({
-    queryKey: ["contacts"],
+    queryKey: ["contacts-with-relations"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("*")
+        .select("*, deals:deals(id), leads:leads(id)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Contact[];
+      return data as ContactWithRelations[];
     },
   });
 
@@ -81,6 +87,7 @@ export function ContactsView() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       closeDialog();
       toast({ title: "Contact created successfully" });
@@ -106,6 +113,7 @@ export function ContactsView() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       closeDialog();
       toast({ title: "Contact updated successfully" });
@@ -121,6 +129,7 @@ export function ContactsView() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setDeleteTarget(null);
       toast({ title: "Contact deleted successfully" });
@@ -136,7 +145,7 @@ export function ContactsView() {
     setFormData(initialFormData);
   };
 
-  const openEditDialog = (contact: Contact) => {
+  const openEditDialog = (contact: ContactWithRelations) => {
     setEditingContact(contact);
     setFormData({
       name: contact.name,
@@ -311,9 +320,9 @@ export function ContactsView() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Designation</TableHead>
+                <TableHead>Related</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
@@ -330,9 +339,27 @@ export function ContactsView() {
                   <TableRow key={contact.id}>
                     <TableCell className="font-medium">{contact.name}</TableCell>
                     <TableCell>{contact.email || "-"}</TableCell>
-                    <TableCell>{contact.phone || "-"}</TableCell>
                     <TableCell>{contact.company || "-"}</TableCell>
                     <TableCell>{contact.designation || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {contact.deals.length > 0 && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Handshake className="w-3 h-3" />
+                            {contact.deals.length}
+                          </Badge>
+                        )}
+                        {contact.leads.length > 0 && (
+                          <Badge variant="secondary" className="gap-1">
+                            <UserPlus className="w-3 h-3" />
+                            {contact.leads.length}
+                          </Badge>
+                        )}
+                        {contact.deals.length === 0 && contact.leads.length === 0 && (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {format(new Date(contact.created_at), "MMM d, yyyy")}
                     </TableCell>
@@ -371,7 +398,7 @@ export function ContactsView() {
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         onConfirm={() => deleteTarget && deleteContact.mutate(deleteTarget.id)}
         title="Delete Contact"
-        description={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${deleteTarget?.name}"? This will remove the contact but keep associated deals and leads.`}
         isDeleting={deleteContact.isPending}
       />
     </div>

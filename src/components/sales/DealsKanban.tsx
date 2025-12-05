@@ -6,17 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { GripVertical, DollarSign, Calendar, Pencil, Trash2 } from "lucide-react";
+import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
+type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 type DealStage = Database["public"]["Enums"]["deal_stage"];
+type DealWithContact = Deal & { contacts: Pick<Contact, "id" | "name" | "company"> | null };
 
 interface DealsKanbanProps {
-  deals: Deal[];
-  onEdit: (deal: Deal) => void;
-  onDelete: (deal: Deal) => void;
+  deals: DealWithContact[];
+  onEdit: (deal: DealWithContact) => void;
+  onDelete: (deal: DealWithContact) => void;
 }
 
 const stages: { id: DealStage; label: string; color: string; bgColor: string }[] = [
@@ -137,6 +139,13 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
                     <GripVertical className="w-4 h-4 text-muted-foreground/50 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm truncate">{deal.title}</h4>
+                      
+                      {deal.contacts && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <User className="w-3 h-3" />
+                          <span className="truncate">{deal.contacts.name}</span>
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
