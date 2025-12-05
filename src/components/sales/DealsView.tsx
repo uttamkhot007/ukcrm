@@ -40,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
+import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
 import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
@@ -86,6 +87,7 @@ export function DealsView() {
   const [editingDeal, setEditingDeal] = useState<DealWithContact | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DealWithContact | null>(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [filters, setFilters] = useState<DealFilters>(initialDealFilters);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -208,10 +210,32 @@ export function DealsView() {
     }
   };
 
-  const filteredDeals = deals?.filter((deal) =>
-    deal.title.toLowerCase().includes(search.toLowerCase()) ||
-    deal.contacts?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredDeals = deals?.filter((deal) => {
+    // Search filter
+    const matchesSearch = deal.title.toLowerCase().includes(search.toLowerCase()) ||
+      deal.contacts?.name?.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+
+    // Stage filter
+    if (filters.stage !== "all" && deal.stage !== filters.stage) return false;
+
+    // Value range filter
+    const value = Number(deal.value);
+    if (filters.minValue && value < parseFloat(filters.minValue)) return false;
+    if (filters.maxValue && value > parseFloat(filters.maxValue)) return false;
+
+    // Date range filter
+    if (deal.expected_close_date) {
+      const closeDate = new Date(deal.expected_close_date);
+      if (filters.startDate && closeDate < new Date(filters.startDate)) return false;
+      if (filters.endDate && closeDate > new Date(filters.endDate)) return false;
+    } else {
+      // If no close date and date filter is set, exclude
+      if (filters.startDate || filters.endDate) return false;
+    }
+
+    return true;
+  });
 
   const handleExport = () => {
     if (!filteredDeals?.length) return;
@@ -290,6 +314,7 @@ export function DealsView() {
           </ToggleGroup>
         </div>
         <div className="flex items-center gap-2">
+          <DealFiltersComponent filters={filters} onFiltersChange={setFilters} />
           <Button variant="outline" onClick={handleExport} disabled={!filteredDeals?.length}>
             <Download className="w-4 h-4 mr-2" />
             Export
