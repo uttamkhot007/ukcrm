@@ -8,6 +8,7 @@ import { AdminPanel } from "@/components/admin/AdminPanel";
 import { SalesModule } from "@/components/sales/SalesModule";
 import { LegalModule } from "@/components/legal/LegalModule";
 import { RenewalsModule } from "@/components/renewals/RenewalsModule";
+import { InsideSalesModule } from "@/components/sales/InsideSalesModule";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -46,6 +47,8 @@ const Index = () => {
       case "sales-leads":
       case "contacts":
         return <SalesModule />;
+      case "inside-sales":
+        return <InsideSalesModule />;
       case "legal":
       case "legal-documents":
       case "legal-approvals":

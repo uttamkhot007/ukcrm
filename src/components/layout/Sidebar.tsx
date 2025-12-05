@@ -36,6 +36,7 @@ import {
   LogOut,
   Shield,
   Phone,
+  PhoneOutgoing,
   Building2,
   Scale,
   RefreshCw,
@@ -187,6 +188,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Contacts",
         icon: Phone,
         color: "text-primary",
+      });
+
+      // Inside Sales
+      items.push({
+        id: "inside-sales",
+        label: "Inside Sales",
+        icon: PhoneOutgoing,
+        color: "text-orange-500",
       });
 
       // Finance
