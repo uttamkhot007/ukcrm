@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -33,6 +34,7 @@ import {
   FileUser,
   Settings,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -46,6 +48,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   color: string;
+  requiredRoles?: ("admin" | "manager" | "employee")[];
   children?: { id: string; label: string; icon: React.ElementType }[];
 }
 
@@ -61,6 +64,7 @@ const navItems: NavItem[] = [
     label: "Sales",
     icon: TrendingUp,
     color: "text-sales",
+    requiredRoles: ["admin", "manager"],
     children: [
       { id: "sales-funnel", label: "Funnel Management", icon: Target },
       { id: "sales-quotations", label: "Quotations", icon: FileText },
@@ -72,6 +76,7 @@ const navItems: NavItem[] = [
     label: "Finance",
     icon: DollarSign,
     color: "text-finance",
+    requiredRoles: ["admin", "manager"],
     children: [
       { id: "finance-payments", label: "Payment Tracking", icon: CreditCard },
       { id: "finance-dso", label: "DSO Trends", icon: PieChart },
@@ -84,6 +89,7 @@ const navItems: NavItem[] = [
     label: "Human Resources",
     icon: Users,
     color: "text-hr",
+    requiredRoles: ["admin", "manager"],
     children: [
       { id: "hr-people", label: "People Management", icon: UserPlus },
       { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
@@ -95,6 +101,7 @@ const navItems: NavItem[] = [
     label: "Technical",
     icon: Code,
     color: "text-tech",
+    requiredRoles: ["admin", "manager"],
     children: [
       { id: "tech-projects", label: "Project Management", icon: FolderKanban },
       { id: "tech-knowledge", label: "Knowledge Base", icon: BookOpen },
@@ -106,6 +113,7 @@ const navItems: NavItem[] = [
     label: "Customer Support",
     icon: HeadphonesIcon,
     color: "text-support",
+    requiredRoles: ["admin", "manager"],
     children: [
       { id: "support-tickets", label: "Ticketing", icon: Ticket },
     ],
@@ -115,6 +123,7 @@ const navItems: NavItem[] = [
     label: "Marketing",
     icon: Megaphone,
     color: "text-marketing",
+    requiredRoles: ["admin", "manager"],
     children: [
       { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
       { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
@@ -125,10 +134,18 @@ const navItems: NavItem[] = [
     label: "Management",
     icon: BarChart3,
     color: "text-management",
+    requiredRoles: ["admin"],
     children: [
       { id: "management-performance", label: "People Performance", icon: Activity },
       { id: "management-cashflow", label: "Inflow vs Outflow", icon: DollarSign },
     ],
+  },
+  {
+    id: "admin",
+    label: "Admin Panel",
+    icon: Shield,
+    color: "text-destructive",
+    requiredRoles: ["admin"],
   },
   {
     id: "employee",
@@ -149,11 +166,31 @@ const navItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
+  const { role, signOut, profile } = useAuth();
 
   const toggleExpand = (id: string) => {
     setExpandedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  };
+
+  const hasAccess = (item: NavItem) => {
+    if (!item.requiredRoles) return true;
+    if (!role) return false;
+    return item.requiredRoles.includes(role);
+  };
+
+  const filteredNavItems = navItems.filter(hasAccess);
+
+  const getRoleBadgeColor = () => {
+    switch (role) {
+      case "admin":
+        return "bg-destructive/20 text-destructive";
+      case "manager":
+        return "bg-management/20 text-management";
+      default:
+        return "bg-employee/20 text-employee";
+    }
   };
 
   return (
@@ -187,9 +224,26 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         </Button>
       </div>
 
+      {/* User Info */}
+      {!collapsed && profile && (
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold text-sm">
+              {profile.full_name?.slice(0, 2).toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{profile.full_name || "User"}</p>
+              <span className={cn("text-xs px-2 py-0.5 rounded-full capitalize", getRoleBadgeColor())}>
+                {role || "employee"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
-        {navItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <div key={item.id} className="mb-1">
             <button
               onClick={() => {
@@ -259,6 +313,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           {!collapsed && <span className="text-sm">Settings</span>}
         </button>
         <button
+          onClick={signOut}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all",
             collapsed && "justify-center"

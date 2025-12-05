@@ -1,12 +1,27 @@
 import { Bell, Search, Sparkles, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onAIToggle: () => void;
 }
 
 export function Header({ onAIToggle }: HeaderProps) {
+  const { profile, role } = useAuth();
+
+  const getRoleBadgeColor = () => {
+    switch (role) {
+      case "admin":
+        return "bg-destructive/20 text-destructive border-destructive/30";
+      case "manager":
+        return "bg-management/20 text-management border-management/30";
+      default:
+        return "bg-employee/20 text-employee border-employee/30";
+    }
+  };
+
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-6">
       <div className="flex items-center gap-4 flex-1">
@@ -43,11 +58,13 @@ export function Header({ onAIToggle }: HeaderProps) {
 
         <div className="flex items-center gap-3 ml-3 pl-3 border-l border-border">
           <div className="text-right">
-            <p className="text-sm font-medium">John Doe</p>
-            <p className="text-xs text-muted-foreground">Admin</p>
+            <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
+            <span className={cn("text-xs px-2 py-0.5 rounded-full capitalize border", getRoleBadgeColor())}>
+              {role || "employee"}
+            </span>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
-            JD
+            {profile?.full_name?.slice(0, 2).toUpperCase() || "U"}
           </div>
         </div>
       </div>
