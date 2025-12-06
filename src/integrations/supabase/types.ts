@@ -166,6 +166,99 @@ export type Database = {
           },
         ]
       }
+      employee_requests: {
+        Row: {
+          advance_amount: number | null
+          advance_reason: string | null
+          assigned_team: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          escalated: boolean | null
+          escalation_level: number | null
+          hardware_description: string | null
+          hardware_type: string | null
+          id: string
+          leave_end_date: string | null
+          leave_start_date: string | null
+          leave_type: string | null
+          priority: Database["public"]["Enums"]["request_priority"]
+          request_number: string
+          resolved_at: string | null
+          reviewed_at: string | null
+          sla_deadline: string | null
+          sla_hours: number
+          status: Database["public"]["Enums"]["request_status"]
+          submitted_at: string
+          title: string
+          type: Database["public"]["Enums"]["request_type"]
+          updated_at: string
+          user_id: string
+          wfh_date: string | null
+          wfh_reason: string | null
+        }
+        Insert: {
+          advance_amount?: number | null
+          advance_reason?: string | null
+          assigned_team?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalated?: boolean | null
+          escalation_level?: number | null
+          hardware_description?: string | null
+          hardware_type?: string | null
+          id?: string
+          leave_end_date?: string | null
+          leave_start_date?: string | null
+          leave_type?: string | null
+          priority?: Database["public"]["Enums"]["request_priority"]
+          request_number: string
+          resolved_at?: string | null
+          reviewed_at?: string | null
+          sla_deadline?: string | null
+          sla_hours?: number
+          status?: Database["public"]["Enums"]["request_status"]
+          submitted_at?: string
+          title: string
+          type: Database["public"]["Enums"]["request_type"]
+          updated_at?: string
+          user_id: string
+          wfh_date?: string | null
+          wfh_reason?: string | null
+        }
+        Update: {
+          advance_amount?: number | null
+          advance_reason?: string | null
+          assigned_team?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalated?: boolean | null
+          escalation_level?: number | null
+          hardware_description?: string | null
+          hardware_type?: string | null
+          id?: string
+          leave_end_date?: string | null
+          leave_start_date?: string | null
+          leave_type?: string | null
+          priority?: Database["public"]["Enums"]["request_priority"]
+          request_number?: string
+          resolved_at?: string | null
+          reviewed_at?: string | null
+          sla_deadline?: string | null
+          sla_hours?: number
+          status?: Database["public"]["Enums"]["request_status"]
+          submitted_at?: string
+          title?: string
+          type?: Database["public"]["Enums"]["request_type"]
+          updated_at?: string
+          user_id?: string
+          wfh_date?: string | null
+          wfh_reason?: string | null
+        }
+        Relationships: []
+      }
       inside_sales_prospects: {
         Row: {
           assigned_to: string | null
@@ -654,6 +747,82 @@ export type Database = {
           },
         ]
       }
+      request_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_comments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "employee_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_status: Database["public"]["Enums"]["request_status"] | null
+          notes: string | null
+          old_status: Database["public"]["Enums"]["request_status"] | null
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["request_status"] | null
+          notes?: string | null
+          old_status?: Database["public"]["Enums"]["request_status"] | null
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["request_status"] | null
+          notes?: string | null
+          old_status?: Database["public"]["Enums"]["request_status"] | null
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_history_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "employee_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -776,6 +945,21 @@ export type Database = {
         | "certification"
         | "insurance"
         | "domain"
+      request_priority: "low" | "medium" | "high" | "urgent"
+      request_status:
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "cancelled"
+      request_type:
+        | "leave"
+        | "work_from_home"
+        | "advance_salary"
+        | "new_hardware"
+        | "hardware_problem"
+        | "other"
       team_type:
         | "sales"
         | "presales"
@@ -964,6 +1148,23 @@ export const Constants = {
         "certification",
         "insurance",
         "domain",
+      ],
+      request_priority: ["low", "medium", "high", "urgent"],
+      request_status: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
+      request_type: [
+        "leave",
+        "work_from_home",
+        "advance_salary",
+        "new_hardware",
+        "hardware_problem",
+        "other",
       ],
       team_type: [
         "sales",
