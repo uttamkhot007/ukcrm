@@ -1165,6 +1165,7 @@ export type Database = {
           address: string | null
           alert_managers_on_early_departure: boolean | null
           alert_managers_on_late: boolean | null
+          alternate_currency: string | null
           cities: string[] | null
           consecutive_late_threshold: number | null
           countries: string[] | null
@@ -1190,6 +1191,7 @@ export type Database = {
           address?: string | null
           alert_managers_on_early_departure?: boolean | null
           alert_managers_on_late?: boolean | null
+          alternate_currency?: string | null
           cities?: string[] | null
           consecutive_late_threshold?: number | null
           countries?: string[] | null
@@ -1215,6 +1217,7 @@ export type Database = {
           address?: string | null
           alert_managers_on_early_departure?: boolean | null
           alert_managers_on_late?: boolean | null
+          alternate_currency?: string | null
           cities?: string[] | null
           consecutive_late_threshold?: number | null
           countries?: string[] | null

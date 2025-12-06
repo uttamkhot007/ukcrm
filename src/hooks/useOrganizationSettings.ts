@@ -17,6 +17,7 @@ export function useOrganizationSettings() {
   });
 
   const currency = settings?.currency || "INR";
+  const alternateCurrency = (settings as any)?.alternate_currency || "USD";
   
   const formatCurrency = (value: number, overrideCurrency?: string) => {
     const currencyToUse = overrideCurrency || currency;
@@ -44,6 +45,7 @@ export function useOrganizationSettings() {
     settings,
     isLoading,
     currency,
+    alternateCurrency,
     formatCurrency,
     getCurrencySymbol,
   };

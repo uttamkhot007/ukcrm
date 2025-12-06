@@ -63,6 +63,7 @@ interface OrgSettings {
   countries: string[];
   cities: string[];
   currency: string;
+  alternate_currency: string;
   total_employees: number;
   senior_management: SeniorManager[];
 }
@@ -227,40 +228,64 @@ export function OrganizationSettings() {
                 disabled={!isAdmin}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <Select
-                  value={formData.currency || "USD"}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, currency: value }))}
-                  disabled={!isAdmin}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {CURRENCIES.map((currency) => (
-                      <SelectItem key={currency.code} value={currency.code}>
-                        <span className="flex items-center gap-2">
-                          <span className="font-mono">{currency.symbol}</span>
-                          <span>{currency.code}</span>
-                          <span className="text-muted-foreground">- {currency.name}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="employees">Total Employees</Label>
-                <Input
-                  id="employees"
-                  type="number"
-                  value={formData.total_employees || 0}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, total_employees: parseInt(e.target.value) || 0 }))}
-                  disabled={!isAdmin}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency">Primary Currency</Label>
+              <Select
+                value={formData.currency || "USD"}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, currency: value }))}
+                disabled={!isAdmin}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono">{currency.symbol}</span>
+                        <span>{currency.code}</span>
+                        <span className="text-muted-foreground">- {currency.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="alternate_currency">Alternate Currency (for conversions)</Label>
+              <Select
+                value={formData.alternate_currency || "USD"}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, alternate_currency: value }))}
+                disabled={!isAdmin}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select alternate currency" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {CURRENCIES.filter((c) => c.code !== formData.currency).map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono">{currency.symbol}</span>
+                        <span>{currency.code}</span>
+                        <span className="text-muted-foreground">- {currency.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Used for displaying converted amounts across the app
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="employees">Total Employees</Label>
+              <Input
+                id="employees"
+                type="number"
+                value={formData.total_employees || 0}
+                onChange={(e) => setFormData((prev) => ({ ...prev, total_employees: parseInt(e.target.value) || 0 }))}
+                disabled={!isAdmin}
+              />
             </div>
           </CardContent>
         </Card>
