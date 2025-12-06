@@ -308,6 +308,69 @@ export type Database = {
         }
         Relationships: []
       }
+      contractors: {
+        Row: {
+          company: string | null
+          contract_end_date: string | null
+          contract_start_date: string | null
+          created_at: string
+          created_by: string
+          department: string | null
+          designation: string | null
+          email: string | null
+          id: string
+          location: string | null
+          manager_id: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          rate: number | null
+          rate_type: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          created_by: string
+          department?: string | null
+          designation?: string | null
+          email?: string | null
+          id?: string
+          location?: string | null
+          manager_id?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          rate?: number | null
+          rate_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          created_by?: string
+          department?: string | null
+          designation?: string | null
+          email?: string | null
+          id?: string
+          location?: string | null
+          manager_id?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          rate?: number | null
+          rate_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deal_activities: {
         Row: {
           activity_type: string
@@ -420,6 +483,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      distributors: {
+        Row: {
+          address: string | null
+          bank_details: string | null
+          city: string | null
+          company_name: string
+          contact_name: string | null
+          country: string | null
+          created_at: string
+          created_by: string
+          credit_limit: number | null
+          discount_percentage: number | null
+          email: string | null
+          gst_number: string | null
+          id: string
+          notes: string | null
+          pan_number: string | null
+          payment_terms: string | null
+          phone: string | null
+          region: string | null
+          status: string | null
+          territory: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          bank_details?: string | null
+          city?: string | null
+          company_name: string
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by: string
+          credit_limit?: number | null
+          discount_percentage?: number | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          notes?: string | null
+          pan_number?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          region?: string | null
+          status?: string | null
+          territory?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          bank_details?: string | null
+          city?: string | null
+          company_name?: string
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          credit_limit?: number | null
+          discount_percentage?: number | null
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          notes?: string | null
+          pan_number?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          region?: string | null
+          status?: string | null
+          territory?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       employee_events: {
         Row: {
@@ -550,6 +685,27 @@ export type Database = {
           user_id?: string
           wfh_date?: string | null
           wfh_reason?: string | null
+        }
+        Relationships: []
+      }
+      employee_sales_teams: {
+        Row: {
+          created_at: string
+          id: string
+          sales_sub_team: Database["public"]["Enums"]["sales_sub_team"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sales_sub_team: Database["public"]["Enums"]["sales_sub_team"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -1287,42 +1443,69 @@ export type Database = {
       }
       profiles: {
         Row: {
+          anniversary_date: string | null
           avatar_url: string | null
           birth_date: string | null
           created_at: string
           department: string | null
           email: string | null
+          employee_code: string | null
+          employment_status:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
           full_name: string | null
           hire_date: string | null
           id: string
           job_title: string | null
+          location: string | null
+          manager_id: string | null
+          sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
           updated_at: string
+          user_category: Database["public"]["Enums"]["user_category"] | null
           user_id: string
         }
         Insert: {
+          anniversary_date?: string | null
           avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
+          employee_code?: string | null
+          employment_status?:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
           full_name?: string | null
           hire_date?: string | null
           id?: string
           job_title?: string | null
+          location?: string | null
+          manager_id?: string | null
+          sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
           updated_at?: string
+          user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id: string
         }
         Update: {
+          anniversary_date?: string | null
           avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
+          employee_code?: string | null
+          employment_status?:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
           full_name?: string | null
           hire_date?: string | null
           id?: string
           job_title?: string | null
+          location?: string | null
+          manager_id?: string | null
+          sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
           updated_at?: string
+          user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id?: string
         }
         Relationships: []
@@ -1943,6 +2126,69 @@ export type Database = {
         }
         Relationships: []
       }
+      vendors: {
+        Row: {
+          address: string | null
+          bank_details: string | null
+          category: string | null
+          city: string | null
+          company_name: string
+          contact_name: string | null
+          country: string | null
+          created_at: string
+          created_by: string
+          email: string | null
+          gst_number: string | null
+          id: string
+          notes: string | null
+          pan_number: string | null
+          payment_terms: string | null
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          bank_details?: string | null
+          category?: string | null
+          city?: string | null
+          company_name: string
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by: string
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          notes?: string | null
+          pan_number?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          bank_details?: string | null
+          category?: string | null
+          city?: string | null
+          company_name?: string
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          notes?: string | null
+          pan_number?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       workflow_logs: {
         Row: {
           action: string
@@ -2034,6 +2280,13 @@ export type Database = {
         | "commit"
         | "closed_won"
         | "closed_lost"
+      employment_status:
+        | "active"
+        | "probation"
+        | "pip"
+        | "notice_period"
+        | "inactive"
+        | "terminated"
       framework_type:
         | "soc2"
         | "iso27001"
@@ -2096,6 +2349,12 @@ export type Database = {
         | "new_hardware"
         | "hardware_problem"
         | "other"
+      sales_sub_team:
+        | "commercial"
+        | "enterprise_govt"
+        | "bfsi"
+        | "international"
+        | "alliance_india"
       team_type:
         | "sales"
         | "presales"
@@ -2121,6 +2380,7 @@ export type Database = {
         | "escalated"
         | "resolved"
         | "closed"
+      user_category: "employee" | "contractor" | "vendor" | "distributor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2271,6 +2531,14 @@ export const Constants = {
         "closed_won",
         "closed_lost",
       ],
+      employment_status: [
+        "active",
+        "probation",
+        "pip",
+        "notice_period",
+        "inactive",
+        "terminated",
+      ],
       framework_type: [
         "soc2",
         "iso27001",
@@ -2342,6 +2610,13 @@ export const Constants = {
         "hardware_problem",
         "other",
       ],
+      sales_sub_team: [
+        "commercial",
+        "enterprise_govt",
+        "bfsi",
+        "international",
+        "alliance_india",
+      ],
       team_type: [
         "sales",
         "presales",
@@ -2370,6 +2645,7 @@ export const Constants = {
         "resolved",
         "closed",
       ],
+      user_category: ["employee", "contractor", "vendor", "distributor"],
     },
   },
 } as const
