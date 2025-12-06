@@ -143,6 +143,12 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
     setPreviewData({ ...previewData, rows: updatedRows });
   };
 
+  const handleRowDelete = (rowIndex: number) => {
+    if (!previewData) return;
+    const updatedRows = previewData.rows.filter((_, idx) => idx !== rowIndex);
+    setPreviewData({ ...previewData, rows: updatedRows });
+  };
+
   const handleUpload = async () => {
     if (!dataType || !previewData || !user) return;
 
@@ -427,6 +433,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 columns={previewData.columns}
                 requiredColumns={previewData.requiredColumns}
                 onCellEdit={handleCellEdit}
+                onRowDelete={handleRowDelete}
               />
             )}
           </div>
