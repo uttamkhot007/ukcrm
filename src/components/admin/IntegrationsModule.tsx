@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { 
   Puzzle, 
   Mail, 
@@ -18,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { IntegrationConfigDialog } from "./IntegrationConfigDialog";
 import { ManualUploadDialog } from "./ManualUploadDialog";
+import { useOffice365Integration } from "@/hooks/useOffice365Integration";
 
 interface Integration {
   id: string;
@@ -25,7 +27,6 @@ interface Integration {
   description: string;
   icon: React.ReactNode;
   color: string;
-  status: "connected" | "disconnected" | "pending";
   category: "email" | "crm" | "manual";
 }
 
@@ -36,7 +37,6 @@ const integrations: Integration[] = [
     description: "Sync emails, contacts, and calendar from Microsoft Office 365",
     icon: <Mail className="w-6 h-6" />,
     color: "text-[hsl(217,91%,60%)]",
-    status: "disconnected",
     category: "email",
   },
   {
@@ -45,7 +45,6 @@ const integrations: Integration[] = [
     description: "Connect Zoho Mail for email synchronization and contact management",
     icon: <Mail className="w-6 h-6" />,
     color: "text-[hsl(25,95%,53%)]",
-    status: "disconnected",
     category: "email",
   },
   {
@@ -54,7 +53,6 @@ const integrations: Integration[] = [
     description: "Import contacts, deals, and activities from HubSpot CRM",
     icon: <Users className="w-6 h-6" />,
     color: "text-[hsl(16,100%,50%)]",
-    status: "disconnected",
     category: "crm",
   },
   {
@@ -63,14 +61,13 @@ const integrations: Integration[] = [
     description: "Upload data manually from CSV or Excel files exported from Office 365, Zoho, or HubSpot",
     icon: <Upload className="w-6 h-6" />,
     color: "text-primary",
-    status: "disconnected",
     category: "manual",
   },
 ];
 
 export function IntegrationsModule() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, "connected" | "disconnected" | "pending">>({
-    office365: "disconnected",
     zoho: "disconnected",
     hubspot: "disconnected",
     manual: "disconnected",
@@ -79,9 +76,33 @@ export function IntegrationsModule() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
 
+  const office365 = useOffice365Integration();
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code) {
+      office365.handleCallback(code).then(() => {
+        // Clear the code from URL
+        setSearchParams({});
+      });
+    }
+  }, [searchParams, setSearchParams, office365]);
+
+  const getOffice365Status = (): "connected" | "disconnected" | "pending" => {
+    if (office365.isLoading) return "pending";
+    if (office365.isConnected) return "connected";
+    return "disconnected";
+  };
+
   const handleConnect = (integration: Integration) => {
     if (integration.category === "manual") {
       setUploadDialogOpen(true);
+      return;
+    }
+    
+    if (integration.id === "office365") {
+      office365.connect();
       return;
     }
     
@@ -90,6 +111,11 @@ export function IntegrationsModule() {
   };
 
   const handleDisconnect = (integrationId: string) => {
+    if (integrationId === "office365") {
+      office365.disconnect();
+      return;
+    }
+
     setIntegrationStatuses(prev => ({
       ...prev,
       [integrationId]: "disconnected"
@@ -100,13 +126,18 @@ export function IntegrationsModule() {
     });
   };
 
+  const handleSync = (integrationId: string) => {
+    if (integrationId === "office365") {
+      office365.sync('all');
+    }
+  };
+
   const handleSaveConfig = (integrationId: string, config: Record<string, string>) => {
     setIntegrationStatuses(prev => ({
       ...prev,
       [integrationId]: "pending"
     }));
     
-    // Simulate connection attempt
     setTimeout(() => {
       setIntegrationStatuses(prev => ({
         ...prev,
@@ -127,6 +158,13 @@ export function IntegrationsModule() {
       manual: "connected"
     }));
     setUploadDialogOpen(false);
+  };
+
+  const getStatus = (integrationId: string): "connected" | "disconnected" | "pending" => {
+    if (integrationId === "office365") {
+      return getOffice365Status();
+    }
+    return integrationStatuses[integrationId] || "disconnected";
   };
 
   const getStatusBadge = (status: "connected" | "disconnected" | "pending") => {
@@ -182,9 +220,11 @@ export function IntegrationsModule() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              status={integrationStatuses[integration.id]}
+              status={getStatus(integration.id)}
+              isSyncing={integration.id === "office365" && office365.isSyncing}
               onConnect={() => handleConnect(integration)}
               onDisconnect={() => handleDisconnect(integration.id)}
+              onSync={() => handleSync(integration.id)}
               getStatusBadge={getStatusBadge}
             />
           ))}
@@ -202,9 +242,11 @@ export function IntegrationsModule() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              status={integrationStatuses[integration.id]}
+              status={getStatus(integration.id)}
+              isSyncing={false}
               onConnect={() => handleConnect(integration)}
               onDisconnect={() => handleDisconnect(integration.id)}
+              onSync={() => {}}
               getStatusBadge={getStatusBadge}
             />
           ))}
@@ -222,9 +264,11 @@ export function IntegrationsModule() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              status={integrationStatuses[integration.id]}
+              status={getStatus(integration.id)}
+              isSyncing={false}
               onConnect={() => handleConnect(integration)}
               onDisconnect={() => handleDisconnect(integration.id)}
+              onSync={() => {}}
               getStatusBadge={getStatusBadge}
             />
           ))}
@@ -252,12 +296,14 @@ export function IntegrationsModule() {
 interface IntegrationCardProps {
   integration: Integration;
   status: "connected" | "disconnected" | "pending";
+  isSyncing: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
+  onSync: () => void;
   getStatusBadge: (status: "connected" | "disconnected" | "pending") => React.ReactNode;
 }
 
-function IntegrationCard({ integration, status, onConnect, onDisconnect, getStatusBadge }: IntegrationCardProps) {
+function IntegrationCard({ integration, status, isSyncing, onConnect, onDisconnect, onSync, getStatusBadge }: IntegrationCardProps) {
   return (
     <Card className="glass border-border hover:border-primary/30 transition-all duration-300">
       <CardHeader className="pb-3">
@@ -278,9 +324,24 @@ function IntegrationCard({ integration, status, onConnect, onDisconnect, getStat
         <div className="flex gap-2">
           {status === "connected" ? (
             <>
-              <Button variant="outline" size="sm" className="flex-1">
-                <Settings2 className="w-4 h-4 mr-2" />
-                Configure
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={onSync}
+                disabled={isSyncing}
+              >
+                {isSyncing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Sync Now
+                  </>
+                )}
               </Button>
               <Button 
                 variant="outline" 
