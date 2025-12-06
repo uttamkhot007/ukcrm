@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.hubspot-sync]
 verify_jwt = true
+
+[functions.workflow-trigger]
+verify_jwt = false
+
+[functions.scheduled-checks]
+verify_jwt = false

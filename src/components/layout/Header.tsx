@@ -1,10 +1,11 @@
-import { Bell, Search, Sparkles, MessageSquare } from "lucide-react";
+import { Search, Sparkles, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { PortalModeSwitcher } from "./PortalModeSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { NotificationsPopover } from "./NotificationsPopover";
 
 interface HeaderProps {
   onAIToggle: () => void;
@@ -51,12 +52,7 @@ export function Header({ onAIToggle }: HeaderProps) {
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
         </Button>
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs flex items-center justify-center text-destructive-foreground">
-            5
-          </span>
-        </Button>
+        <NotificationsPopover />
 
         <Button variant="ghost" size="icon">
           <MessageSquare className="w-5 h-5" />
