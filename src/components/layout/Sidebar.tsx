@@ -327,6 +327,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-requests", label: "My Requests", icon: Ticket },
           { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
           { id: "employee-events", label: "Events & Celebrations", icon: PartyPopper },
+          { id: "employee-documentation", label: "Documentation", icon: BookOpen },
           { id: "employee-training", label: "Trainings", icon: GraduationCap },
           { id: "employee-salary", label: "Salary Slips", icon: FileText },
           { id: "employee-leave", label: "Leave Management", icon: Calendar },
