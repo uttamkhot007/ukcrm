@@ -47,6 +47,8 @@ import {
   PartyPopper,
   Cake,
   Clock,
+  Calculator,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -315,6 +317,34 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
           { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
+        ],
+      });
+
+      // Accounts Module
+      items.push({
+        id: "accounts",
+        label: "Accounts",
+        icon: Calculator,
+        color: "text-emerald-500",
+        children: [
+          { id: "accounts-receivable", label: "Accounts Receivable", icon: CreditCard },
+          { id: "accounts-payable", label: "Accounts Payable", icon: Receipt },
+          { id: "accounts-ledger", label: "General Ledger", icon: BookOpen },
+          { id: "accounts-reconciliation", label: "Bank Reconciliation", icon: FileCheck },
+        ],
+      });
+
+      // Admin Module
+      items.push({
+        id: "admin",
+        label: "Administration",
+        icon: ShieldCheck,
+        color: "text-slate-500",
+        children: [
+          { id: "admin-facilities", label: "Facilities", icon: Building2 },
+          { id: "admin-assets", label: "Asset Management", icon: Briefcase },
+          { id: "admin-vendors", label: "Vendor Management", icon: Users },
+          { id: "admin-procurement", label: "Procurement", icon: FileText },
         ],
       });
 
