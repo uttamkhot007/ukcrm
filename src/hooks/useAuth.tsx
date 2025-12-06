@@ -105,10 +105,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let initialSessionHandled = false;
 
+    // First, get the initial session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchUserData(session.user.id);
+        }
+        
+        initialSessionHandled = true;
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Then set up the listener for future auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
+        
+        // Skip if this is the initial session (already handled above)
+        if (!initialSessionHandled) return;
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -118,28 +149,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(async () => {
             if (isMounted) {
               await fetchUserData(session.user.id);
-              setIsLoading(false);
             }
           }, 0);
         } else {
           setProfile(null);
           setRole(null);
           setTeams([]);
-          setIsLoading(false);
         }
       }
     );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!isMounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserData(session.user.id);
-      }
-      setIsLoading(false);
-    });
 
     return () => {
       isMounted = false;
