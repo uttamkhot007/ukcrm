@@ -38,17 +38,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const TEAMS: { value: TeamType; label: string; color: string }[] = [
-  { value: "sales", label: "Sales", color: "bg-sales/20 text-sales border-sales/30" },
-  { value: "presales", label: "Pre-Sales", color: "bg-primary/20 text-primary border-primary/30" },
-  { value: "inside_sales", label: "Inside Sales", color: "bg-orange-500/20 text-orange-500 border-orange-500/30" },
-  { value: "technical", label: "Technical", color: "bg-tech/20 text-tech border-tech/30" },
-  { value: "managed_services", label: "Managed Services", color: "bg-support/20 text-support border-support/30" },
-  { value: "management", label: "Management", color: "bg-management/20 text-management border-management/30" },
-  { value: "hr", label: "HR", color: "bg-hr/20 text-hr border-hr/30" },
-  { value: "finance", label: "Finance", color: "bg-finance/20 text-finance border-finance/30" },
-  { value: "marketing", label: "Marketing", color: "bg-marketing/20 text-marketing border-marketing/30" },
+const TEAMS: { value: TeamType; label: string; color: string; departments?: string[] }[] = [
+  { value: "sales", label: "Sales", color: "bg-sales/20 text-sales border-sales/30", departments: ["Sales"] },
+  { value: "presales", label: "Pre-Sales", color: "bg-primary/20 text-primary border-primary/30", departments: ["Pre-Sales", "Sales"] },
+  { value: "inside_sales", label: "Inside Sales", color: "bg-orange-500/20 text-orange-500 border-orange-500/30", departments: ["Inside Sales", "Sales"] },
+  { value: "technical", label: "Technical", color: "bg-tech/20 text-tech border-tech/30", departments: ["Technical"] },
+  { value: "managed_services", label: "Managed Services", color: "bg-support/20 text-support border-support/30", departments: ["Managed Services", "Technical"] },
+  { value: "management", label: "Management", color: "bg-management/20 text-management border-management/30", departments: ["Management"] },
+  { value: "hr", label: "HR", color: "bg-hr/20 text-hr border-hr/30", departments: ["HR", "Admin"] },
+  { value: "finance", label: "Finance", color: "bg-finance/20 text-finance border-finance/30", departments: ["Finance"] },
+  { value: "marketing", label: "Marketing", color: "bg-marketing/20 text-marketing border-marketing/30", departments: ["Marketing"] },
+  { value: "renewals", label: "Renewals", color: "bg-amber-500/20 text-amber-600 border-amber-500/30" },
 ];
+
+// Get teams relevant to an employee's department
+const getRelevantTeams = (department: string | null) => {
+  if (!department) return TEAMS;
+  
+  // Always show the matching department team first, then renewals, then others
+  const matchingTeams = TEAMS.filter(
+    (team) => team.departments?.some((d) => d.toLowerCase() === department.toLowerCase())
+  );
+  const renewalsTeam = TEAMS.find((team) => team.value === "renewals");
+  const otherTeams = TEAMS.filter(
+    (team) => 
+      !team.departments?.some((d) => d.toLowerCase() === department.toLowerCase()) && 
+      team.value !== "renewals"
+  );
+  
+  return [...matchingTeams, ...(renewalsTeam ? [renewalsTeam] : []), ...otherTeams];
+};
 
 const SALES_SUB_TEAMS = [
   { value: "commercial", label: "Commercial" },
@@ -364,10 +383,13 @@ export function EmployeesManagement() {
                   </Button>
                 </div>
 
-                {/* Teams */}
+                {/* Teams - filtered by department */}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {TEAMS.map((team) => {
+                  {getRelevantTeams(employee.department).map((team) => {
                     const hasTeam = employee.teams.includes(team.value);
+                    const isRelevant = team.departments?.some(
+                      (d) => d.toLowerCase() === employee.department?.toLowerCase()
+                    ) || team.value === "renewals";
                     return (
                       <Button
                         key={team.value}
@@ -378,7 +400,8 @@ export function EmployeesManagement() {
                         className={cn(
                           "text-xs transition-all",
                           hasTeam && team.color,
-                          hasTeam && "border"
+                          hasTeam && "border",
+                          !hasTeam && !isRelevant && "opacity-50"
                         )}
                       >
                         {updatingUser === employee.user_id ? (

@@ -2365,6 +2365,7 @@ export type Database = {
         | "finance"
         | "inside_sales"
         | "marketing"
+        | "renewals"
       ticket_category:
         | "incident"
         | "service_request"
@@ -2627,6 +2628,7 @@ export const Constants = {
         "finance",
         "inside_sales",
         "marketing",
+        "renewals",
       ],
       ticket_category: [
         "incident",
