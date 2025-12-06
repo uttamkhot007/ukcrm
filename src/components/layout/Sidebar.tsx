@@ -336,13 +336,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: Calculator,
         color: "text-emerald-500",
         children: [
-          { id: "accounts-contracts", label: "Contract Workflow", icon: FileText },
-          { id: "accounts-odf-request", label: "Request ODF", icon: FileText },
-          { id: "accounts-odf-approved", label: "ODF Approved", icon: FileCheck },
-          { id: "accounts-process-order", label: "Process Order", icon: Package },
-          { id: "accounts-get-license", label: "Get License", icon: Key },
-          { id: "accounts-raise-invoice", label: "Raise Invoice", icon: Receipt },
-          { id: "accounts-collect-payment", label: "Collect Payment", icon: CreditCard },
+          { id: "accounts-contracts", label: "Contracts", icon: FileText },
+          { id: "accounts-workflows", label: "Workflows", icon: RefreshCw },
+          { id: "accounts-ar-aging", label: "AR Aging", icon: Clock },
+          { id: "accounts-sla-reminders", label: "SLA & Reminders", icon: Bell },
         ],
       });
 
