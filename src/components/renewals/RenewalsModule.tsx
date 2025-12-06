@@ -51,6 +51,8 @@ import {
 import { format, differenceInDays, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -141,6 +143,10 @@ const getNotificationStatus = (renewal: Renewal, daysUntilExpiry: number) => {
 
 export function RenewalsModule() {
   const { user } = useAuth();
+  const { formatCurrency, settings } = useOrganizationSettings();
+  const { convert, isLoading: isLoadingRates } = useExchangeRates();
+  const orgCurrency = settings?.currency || "INR";
+  const alternateCurrency = orgCurrency === "INR" ? "USD" : "INR";
   const [renewals, setRenewals] = useState<Renewal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -413,7 +419,7 @@ export function RenewalsModule() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Cost (₹)</label>
+                <label className="text-sm font-medium">Cost ({orgCurrency === "INR" ? "₹" : "$"})</label>
                 <Input 
                   type="number" 
                   placeholder="0" 
@@ -489,8 +495,14 @@ export function RenewalsModule() {
                 <Building2 className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">₹{(stats.totalCost / 100000).toFixed(1)}L</p>
+                <p className="text-2xl font-bold">{formatCurrency(stats.totalCost)}</p>
                 <p className="text-sm text-muted-foreground">Total Annual Cost</p>
+                {!isLoadingRates && convert(stats.totalCost, orgCurrency, alternateCurrency) !== null && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" />
+                    {formatCurrency(convert(stats.totalCost, orgCurrency, alternateCurrency)!, alternateCurrency)}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -702,7 +714,17 @@ export function RenewalsModule() {
                               </div>
                             </TableCell>
                             <TableCell>{getStatusBadge(renewal.status, daysUntilExpiry)}</TableCell>
-                            <TableCell>₹{(renewal.cost || 0).toLocaleString()}</TableCell>
+                            <TableCell>
+                              <div className="space-y-0.5">
+                                <div>{formatCurrency(renewal.cost || 0)}</div>
+                                {!isLoadingRates && renewal.cost > 0 && convert(renewal.cost, orgCurrency, alternateCurrency) !== null && (
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <RefreshCw className="w-3 h-3" />
+                                    {formatCurrency(convert(renewal.cost, orgCurrency, alternateCurrency)!, alternateCurrency)}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               {pendingNotifications.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
