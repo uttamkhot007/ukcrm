@@ -36,6 +36,7 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
     due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
     tax_rate: 18,
     notes: "",
+    currency: "INR",
   });
   const [lineItems, setLineItems] = useState<LineItem[]>([{ description: "", quantity: 1, unit_price: 0 }]);
 
@@ -79,6 +80,7 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
           total,
           notes: formData.notes,
           created_by: user.id,
+          currency: formData.currency,
         }])
         .select()
         .single();
@@ -106,7 +108,7 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
       onOpenChange(false);
-      setFormData({ contact_id: "", billing_frequency: "one_time", due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"), tax_rate: 18, notes: "" });
+      setFormData({ contact_id: "", billing_frequency: "one_time", due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"), tax_rate: 18, notes: "", currency: "INR" });
       setLineItems([{ description: "", quantity: 1, unit_price: 0 }]);
     } catch (error: any) {
       toast.error(error.message || "Failed to create invoice");
@@ -122,7 +124,7 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
           <DialogTitle>Create New Invoice</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Contact</Label>
               <Select value={formData.contact_id} onValueChange={(v) => setFormData({ ...formData, contact_id: v })}>
@@ -135,6 +137,18 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
                       {contact.name} {contact.company ? `(${contact.company})` : ""}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INR">INR (₹)</SelectItem>
+                  <SelectItem value="USD">USD ($)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,15 +234,15 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
           <div className="bg-muted p-4 rounded-lg space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>{formatCurrency(subtotal)}</span>
+              <span>{formatCurrency(subtotal, formData.currency)}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax ({formData.tax_rate}%)</span>
-              <span>{formatCurrency(taxAmount)}</span>
+              <span>{formatCurrency(taxAmount, formData.currency)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total</span>
-              <span>{formatCurrency(total)}</span>
+              <span>{formatCurrency(total, formData.currency)}</span>
             </div>
           </div>
 

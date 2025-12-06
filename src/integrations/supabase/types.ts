@@ -768,6 +768,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           created_by: string
+          currency: string | null
           deal_id: string | null
           discount_amount: number | null
           due_date: string
@@ -789,6 +790,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by: string
+          currency?: string | null
           deal_id?: string | null
           discount_amount?: number | null
           due_date: string
@@ -810,6 +812,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string
+          currency?: string | null
           deal_id?: string | null
           discount_amount?: number | null
           due_date?: string

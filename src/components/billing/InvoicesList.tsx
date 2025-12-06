@@ -82,9 +82,9 @@ export function InvoicesList({ statusFilter, onInvoiceSelect }: InvoicesListProp
               </TableCell>
               <TableCell>
                 <div>
-                  <p className="font-medium">{formatCurrency(invoice.total)}</p>
+                  <p className="font-medium">{formatCurrency(invoice.total, invoice.currency || "INR")}</p>
                   {invoice.amount_paid > 0 && invoice.amount_paid < invoice.total && (
-                    <p className="text-sm text-green-600">Paid: {formatCurrency(invoice.amount_paid)}</p>
+                    <p className="text-sm text-green-600">Paid: {formatCurrency(invoice.amount_paid, invoice.currency || "INR")}</p>
                   )}
                 </div>
               </TableCell>
