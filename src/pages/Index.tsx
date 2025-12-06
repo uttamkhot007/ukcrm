@@ -33,6 +33,13 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
+  // Handle navigation for HR directory
+  useEffect(() => {
+    if (activeModule === "hr-directory") {
+      navigate("/employee-directory");
+    }
+  }, [activeModule, navigate]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -89,8 +96,9 @@ const Index = () => {
       
       // HR modules
       case "hr":
+        return <PlaceholderModule title="Human Resources" section="hr" />;
       case "hr-directory":
-        navigate("/employee-directory");
+        // Navigation handled by useEffect
         return null;
       case "hr-people":
       case "hr-salary":
