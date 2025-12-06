@@ -113,6 +113,13 @@ const employeePortalItems: NavItem[] = [
     portalMode: "employee",
   },
   {
+    id: "employee-ai-assistant",
+    label: "My AI Assistant",
+    icon: Sparkles,
+    color: "text-primary",
+    portalMode: "employee",
+  },
+  {
     id: "employee",
     label: "Employee Portal",
     icon: UserCircle,
