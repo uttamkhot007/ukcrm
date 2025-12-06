@@ -42,6 +42,7 @@ import {
   RefreshCw,
   Key,
   FileCheck,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -243,15 +244,31 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Support
+      // Support / Help Desk
       items.push({
-        id: "support",
-        label: "Customer Support",
+        id: "helpdesk",
+        label: "Help Desk",
         icon: HeadphonesIcon,
         color: "text-support",
         children: [
-          { id: "support-tickets", label: "Ticketing", icon: Ticket },
+          { id: "helpdesk-tickets", label: "Tickets", icon: Ticket },
         ],
+      });
+
+      // Billing
+      items.push({
+        id: "billing",
+        label: "Billing",
+        icon: CreditCard,
+        color: "text-finance",
+      });
+
+      // Compliance
+      items.push({
+        id: "compliance",
+        label: "Compliance",
+        icon: ClipboardCheck,
+        color: "text-green-500",
       });
 
       // Legal
