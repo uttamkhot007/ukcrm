@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { User, Building, CreditCard, Calendar } from "lucide-react";
+import { User, Building, CreditCard, Calendar, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface InvoiceDetailsSheetProps {
@@ -34,6 +35,7 @@ const statusColors: Record<string, string> = {
 export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDetailsSheetProps) {
   const { user } = useAuth();
   const { formatCurrency } = useOrganizationSettings();
+  const { formatConvertedAmount, rateDate, isLoading: isLoadingRates } = useExchangeRates();
   const queryClient = useQueryClient();
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -163,6 +165,9 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
   const balance = invoice.total - (invoice.amount_paid || 0);
   const invoiceCurrency = invoice.currency || "INR";
   const canChangeCurrency = invoice.status !== "paid";
+  const alternateCurrency = invoiceCurrency === "INR" ? "USD" : "INR";
+  const convertedTotal = formatConvertedAmount(invoice.total, invoiceCurrency, alternateCurrency, formatCurrency);
+  const convertedBalance = formatConvertedAmount(balance, invoiceCurrency, alternateCurrency, formatCurrency);
 
   return (
     <>
@@ -264,7 +269,15 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>{formatCurrency(invoice.total, invoiceCurrency)}</span>
+                  <div className="text-right">
+                    <span>{formatCurrency(invoice.total, invoiceCurrency)}</span>
+                    {convertedTotal && (
+                      <p className="text-xs text-muted-foreground font-normal flex items-center gap-1 justify-end">
+                        <RefreshCw className="w-3 h-3" />
+                        ≈ {convertedTotal}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 {invoice.amount_paid > 0 && (
                   <>
@@ -274,9 +287,22 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>Balance</span>
-                      <span>{formatCurrency(balance, invoiceCurrency)}</span>
+                      <div className="text-right">
+                        <span>{formatCurrency(balance, invoiceCurrency)}</span>
+                        {convertedBalance && (
+                          <p className="text-xs text-muted-foreground font-normal flex items-center gap-1 justify-end">
+                            <RefreshCw className="w-3 h-3" />
+                            ≈ {convertedBalance}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </>
+                )}
+                {rateDate && !isLoadingRates && (
+                  <p className="text-xs text-muted-foreground text-center pt-2">
+                    Exchange rate as of {rateDate}
+                  </p>
                 )}
               </div>
 
