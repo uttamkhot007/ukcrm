@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Users2, Check, Loader2, Plus, X } from "lucide-react";
+import { Users2, Check, Loader2, Plus, X, Cake, CalendarHeart, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TeamType } from "@/hooks/useAuth";
+import { format, parseISO } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const TEAMS: { value: TeamType; label: string; color: string }[] = [
   { value: "sales", label: "Sales", color: "bg-sales/20 text-sales border-sales/30" },
@@ -23,6 +32,8 @@ interface UserWithTeams {
   user_id: string;
   email: string | null;
   full_name: string | null;
+  birth_date: string | null;
+  hire_date: string | null;
   teams: TeamType[];
 }
 
@@ -30,6 +41,9 @@ export function TeamManagement() {
   const [users, setUsers] = useState<UserWithTeams[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<UserWithTeams | null>(null);
+  const [editDates, setEditDates] = useState({ birth_date: "", hire_date: "" });
+  const [savingDates, setSavingDates] = useState(false);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -71,6 +85,8 @@ export function TeamManagement() {
         user_id: profile.user_id,
         email: profile.email,
         full_name: profile.full_name,
+        birth_date: profile.birth_date,
+        hire_date: profile.hire_date,
         teams,
       };
     });
@@ -134,6 +150,44 @@ export function TeamManagement() {
   const getTeamBadge = (team: TeamType) => {
     const teamConfig = TEAMS.find((t) => t.value === team);
     return teamConfig?.color || "bg-muted text-muted-foreground";
+  };
+
+  const openEditDates = (user: UserWithTeams) => {
+    setEditingUser(user);
+    setEditDates({
+      birth_date: user.birth_date || "",
+      hire_date: user.hire_date || "",
+    });
+  };
+
+  const saveDates = async () => {
+    if (!editingUser) return;
+    setSavingDates(true);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        birth_date: editDates.birth_date || null,
+        hire_date: editDates.hire_date || null,
+      })
+      .eq("user_id", editingUser.user_id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update dates",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Dates updated successfully. Birthday and anniversary events will be auto-created.",
+      });
+      fetchUsers();
+      setEditingUser(null);
+    }
+
+    setSavingDates(false);
   };
 
   return (
@@ -215,6 +269,26 @@ export function TeamManagement() {
                     );
                   })}
                 </div>
+
+                {/* Date Info Row */}
+                <div className="mt-3 flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Cake className="w-4 h-4 text-pink-500" />
+                    {user.birth_date ? format(parseISO(user.birth_date), "MMM d") : "No birthday set"}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CalendarHeart className="w-4 h-4 text-purple-500" />
+                    {user.hire_date ? format(parseISO(user.hire_date), "MMM d, yyyy") : "No hire date set"}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditDates(user)}
+                    className="text-xs"
+                  >
+                    Edit Dates
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -250,6 +324,53 @@ export function TeamManagement() {
           </div>
         </div>
       </div>
+
+      {/* Edit Dates Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Dates for {editingUser?.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Cake className="w-4 h-4 text-pink-500" />
+                Birth Date
+              </Label>
+              <Input
+                type="date"
+                value={editDates.birth_date}
+                onChange={(e) => setEditDates((prev) => ({ ...prev, birth_date: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                This will automatically create a recurring birthday event.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <CalendarHeart className="w-4 h-4 text-purple-500" />
+                Hire Date
+              </Label>
+              <Input
+                type="date"
+                value={editDates.hire_date}
+                onChange={(e) => setEditDates((prev) => ({ ...prev, hire_date: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                This will automatically create a recurring work anniversary event.
+              </p>
+            </div>
+            <Button onClick={saveDates} disabled={savingDates} className="w-full">
+              {savingDates ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Save Dates
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

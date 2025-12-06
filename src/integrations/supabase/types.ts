@@ -1195,10 +1195,12 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          birth_date: string | null
           created_at: string
           department: string | null
           email: string | null
           full_name: string | null
+          hire_date: string | null
           id: string
           job_title: string | null
           updated_at: string
@@ -1206,10 +1208,12 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
           full_name?: string | null
+          hire_date?: string | null
           id?: string
           job_title?: string | null
           updated_at?: string
@@ -1217,10 +1221,12 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
           full_name?: string | null
+          hire_date?: string | null
           id?: string
           job_title?: string | null
           updated_at?: string
