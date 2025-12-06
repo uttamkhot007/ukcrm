@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { PortalModeSwitcher } from "./PortalModeSwitcher";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 interface HeaderProps {
   onAIToggle: () => void;
@@ -36,6 +37,8 @@ export function Header({ onAIToggle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        <ThemeSwitcher />
+        
         <PortalModeSwitcher />
         
         <Button
