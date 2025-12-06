@@ -5,30 +5,49 @@ import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   FileText, 
   Clock, 
   CheckCircle, 
   XCircle, 
   AlertTriangle,
-  Users
+  Users,
+  Building2,
+  DollarSign,
+  Monitor,
+  Briefcase,
 } from "lucide-react";
 import { RequestApprovalList } from "./RequestApprovalList";
 import { RequestApprovalSheet } from "./RequestApprovalSheet";
+
+const TEAMS = [
+  { id: "all", label: "All Teams", icon: Users },
+  { id: "HR", label: "HR", icon: Briefcase },
+  { id: "Finance", label: "Finance", icon: DollarSign },
+  { id: "IT", label: "IT", icon: Monitor },
+  { id: "Admin", label: "Admin", icon: Building2 },
+];
 
 export function RequestApprovalModule() {
   const { isAdmin, isManager } = useAuth();
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("pending");
+  const [teamFilter, setTeamFilter] = useState("all");
 
-  // Fetch request stats
+  // Fetch request stats with team breakdown
   const { data: stats } = useQuery({
-    queryKey: ["request-approval-stats"],
+    queryKey: ["request-approval-stats", teamFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("employee_requests")
-        .select("status");
+        .select("status, assigned_team");
       
+      if (teamFilter !== "all") {
+        query = query.eq("assigned_team", teamFilter);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
       const counts = {
@@ -38,6 +57,29 @@ export function RequestApprovalModule() {
         approved: data.filter(r => r.status === "approved").length,
         rejected: data.filter(r => r.status === "rejected").length,
       };
+
+      return counts;
+    },
+    enabled: isAdmin || isManager,
+  });
+
+  // Fetch team counts for badges
+  const { data: teamCounts } = useQuery({
+    queryKey: ["request-team-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employee_requests")
+        .select("assigned_team, status")
+        .in("status", ["pending", "under_review"]);
+      
+      if (error) throw error;
+
+      const counts: Record<string, number> = { all: data.length };
+      data.forEach(r => {
+        if (r.assigned_team) {
+          counts[r.assigned_team] = (counts[r.assigned_team] || 0) + 1;
+        }
+      });
 
       return counts;
     },
@@ -56,14 +98,46 @@ export function RequestApprovalModule() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Users className="w-6 h-6" />
-          Request Approvals
-        </h1>
-        <p className="text-muted-foreground">
-          Review and process employee requests
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="w-6 h-6" />
+            Request Approvals
+          </h1>
+          <p className="text-muted-foreground">
+            Review and process employee requests
+          </p>
+        </div>
+      </div>
+
+      {/* Team Filter */}
+      <div className="flex flex-wrap gap-2">
+        {TEAMS.map((team) => {
+          const Icon = team.icon;
+          const count = teamCounts?.[team.id] || 0;
+          const isActive = teamFilter === team.id;
+          
+          return (
+            <Button
+              key={team.id}
+              variant={isActive ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTeamFilter(team.id)}
+              className="gap-2"
+            >
+              <Icon className="w-4 h-4" />
+              {team.label}
+              {count > 0 && (
+                <Badge 
+                  variant={isActive ? "secondary" : "outline"} 
+                  className="ml-1 text-xs px-1.5"
+                >
+                  {count}
+                </Badge>
+              )}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Stats Cards */}
@@ -129,7 +203,9 @@ export function RequestApprovalModule() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
-            <span>All Requests</span>
+            <span>
+              {teamFilter === "all" ? "All Requests" : `${teamFilter} Requests`}
+            </span>
             {stats?.pending ? (
               <Badge variant="destructive" className="animate-pulse">
                 {stats.pending} pending approval
@@ -156,30 +232,35 @@ export function RequestApprovalModule() {
             <TabsContent value="pending">
               <RequestApprovalList 
                 statusFilter="pending" 
+                teamFilter={teamFilter === "all" ? null : teamFilter}
                 onSelectRequest={setSelectedRequestId}
               />
             </TabsContent>
             <TabsContent value="under_review">
               <RequestApprovalList 
                 statusFilter="under_review" 
+                teamFilter={teamFilter === "all" ? null : teamFilter}
                 onSelectRequest={setSelectedRequestId}
               />
             </TabsContent>
             <TabsContent value="approved">
               <RequestApprovalList 
                 statusFilter="approved" 
+                teamFilter={teamFilter === "all" ? null : teamFilter}
                 onSelectRequest={setSelectedRequestId}
               />
             </TabsContent>
             <TabsContent value="rejected">
               <RequestApprovalList 
                 statusFilter="rejected" 
+                teamFilter={teamFilter === "all" ? null : teamFilter}
                 onSelectRequest={setSelectedRequestId}
               />
             </TabsContent>
             <TabsContent value="all">
               <RequestApprovalList 
                 statusFilter={null} 
+                teamFilter={teamFilter === "all" ? null : teamFilter}
                 onSelectRequest={setSelectedRequestId}
               />
             </TabsContent>
