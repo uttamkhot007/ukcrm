@@ -106,6 +106,7 @@ const employeePortalItems: NavItem[] = [
     color: "text-employee",
     portalMode: "employee",
     children: [
+      { id: "employee-requests", label: "My Requests", icon: Ticket },
       { id: "employee-training", label: "Trainings", icon: GraduationCap },
       { id: "employee-salary", label: "Salary Slips", icon: FileText },
       { id: "employee-leave", label: "Leave Management", icon: Calendar },
@@ -293,6 +294,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: UserCircle,
         color: "text-employee",
         children: [
+          { id: "employee-requests", label: "My Requests", icon: Ticket },
           { id: "employee-training", label: "Trainings", icon: GraduationCap },
           { id: "employee-salary", label: "Salary Slips", icon: FileText },
           { id: "employee-leave", label: "Leave Management", icon: Calendar },
