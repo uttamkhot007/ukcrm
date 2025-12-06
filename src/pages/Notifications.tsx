@@ -15,6 +15,8 @@ import {
   ArrowLeft,
   Loader2,
   Settings,
+  Trash2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,8 +30,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
+import { toast } from "sonner";
 
 const typeIcons: Record<string, typeof Info> = {
   info: Info,
@@ -49,12 +64,23 @@ type DateFilter = "all" | "today" | "yesterday" | "this_week" | "this_month";
 
 export default function NotificationsPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications();
+  const { 
+    notifications, 
+    unreadCount, 
+    isLoading, 
+    markAsRead, 
+    markAllAsRead,
+    deleteNotification,
+    deleteMultipleNotifications,
+    deleteAllNotifications,
+  } = useNotifications();
   
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
   const [activeView, setActiveView] = useState<"notifications" | "preferences">("notifications");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
@@ -105,6 +131,42 @@ export default function NotificationsPage() {
     return groups;
   }, [filteredNotifications]);
 
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(filteredNotifications.map(n => n.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  };
+
+  const handleDeleteSelected = async () => {
+    await deleteMultipleNotifications(Array.from(selectedIds));
+    toast.success(`Deleted ${selectedIds.size} notification${selectedIds.size > 1 ? 's' : ''}`);
+    clearSelection();
+  };
+
+  const handleDeleteSingle = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteNotification(id);
+    toast.success("Notification deleted");
+  };
+
+  const handleDeleteAll = async () => {
+    await deleteAllNotifications();
+    toast.success("All notifications deleted");
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -135,11 +197,57 @@ export default function NotificationsPage() {
               {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
             </p>
           </div>
-          {unreadCount > 0 && activeView === "notifications" && (
-            <Button variant="outline" size="sm" onClick={markAllAsRead}>
-              <CheckCheck className="w-4 h-4 mr-2" />
-              Mark all read
-            </Button>
+          {selectionMode ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedIds.size} selected
+              </span>
+              <Button variant="outline" size="sm" onClick={selectAll}>
+                Select all
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    disabled={selectedIds.size === 0}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete notifications?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {selectedIds.size} notification{selectedIds.size > 1 ? 's' : ''}. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSelected}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button variant="ghost" size="sm" onClick={clearSelection}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              {unreadCount > 0 && activeView === "notifications" && (
+                <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                  <CheckCheck className="w-4 h-4 mr-2" />
+                  Mark all read
+                </Button>
+              )}
+              {notifications.length > 0 && activeView === "notifications" && (
+                <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+            </>
           )}
           <Button
             variant={activeView === "preferences" ? "default" : "ghost"}
@@ -264,10 +372,27 @@ export default function NotificationsPage() {
                             key={notification.id}
                             className={cn(
                               "flex gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer",
-                              !notification.is_read && "bg-primary/5"
+                              !notification.is_read && "bg-primary/5",
+                              selectionMode && selectedIds.has(notification.id) && "bg-primary/10"
                             )}
-                            onClick={() => !notification.is_read && markAsRead(notification.id)}
+                            onClick={() => {
+                              if (selectionMode) {
+                                toggleSelection(notification.id);
+                              } else if (!notification.is_read) {
+                                markAsRead(notification.id);
+                              }
+                            }}
                           >
+                            {selectionMode && (
+                              <div className="flex items-center">
+                                <Checkbox
+                                  checked={selectedIds.has(notification.id)}
+                                  onCheckedChange={() => toggleSelection(notification.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            )}
+                            
                             <div className={cn("p-2 rounded-full h-fit", colorClass)}>
                               <Icon className="w-4 h-4" />
                             </div>
@@ -304,18 +429,30 @@ export default function NotificationsPage() {
                               )}
                             </div>
                             
-                            {!notification.is_read && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="flex-shrink-0 h-8 w-8"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
-                                }}
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
+                            {!selectionMode && (
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {!notification.is_read && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markAsRead(notification.id);
+                                    }}
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => handleDeleteSingle(notification.id, e)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             )}
                           </div>
                         );

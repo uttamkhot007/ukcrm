@@ -83,12 +83,41 @@ export function useNotifications() {
     queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
   };
 
+  const deleteNotification = async (notificationId: string) => {
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("id", notificationId);
+    queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+  };
+
+  const deleteMultipleNotifications = async (notificationIds: string[]) => {
+    if (!user || notificationIds.length === 0) return;
+    await supabase
+      .from("notifications")
+      .delete()
+      .in("id", notificationIds);
+    queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+  };
+
+  const deleteAllNotifications = async () => {
+    if (!user) return;
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("user_id", user.id);
+    queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+  };
+
   return {
     notifications,
     unreadCount,
     isLoading,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    deleteMultipleNotifications,
+    deleteAllNotifications,
     refetch,
   };
 }
