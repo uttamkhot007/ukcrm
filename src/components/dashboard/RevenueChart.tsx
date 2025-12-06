@@ -8,102 +8,133 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-
-const data = [
-  { month: "Jan", revenue: 4200, expenses: 2400 },
-  { month: "Feb", revenue: 3800, expenses: 2100 },
-  { month: "Mar", revenue: 5100, expenses: 2800 },
-  { month: "Apr", revenue: 4600, expenses: 2500 },
-  { month: "May", revenue: 5800, expenses: 3000 },
-  { month: "Jun", revenue: 6200, expenses: 3200 },
-  { month: "Jul", revenue: 5900, expenses: 3100 },
-  { month: "Aug", revenue: 6800, expenses: 3400 },
-  { month: "Sep", revenue: 7200, expenses: 3600 },
-  { month: "Oct", revenue: 6900, expenses: 3500 },
-  { month: "Nov", revenue: 7800, expenses: 3800 },
-  { month: "Dec", revenue: 8500, expenses: 4000 },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function RevenueChart() {
   const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
+
+  const { data: chartData, isLoading } = useQuery({
+    queryKey: ["revenue-chart-data"],
+    queryFn: async () => {
+      // Get invoices from last 12 months
+      const now = new Date();
+      const months = [];
+      
+      for (let i = 11; i >= 0; i--) {
+        const monthDate = subMonths(now, i);
+        const start = startOfMonth(monthDate);
+        const end = endOfMonth(monthDate);
+        
+        months.push({
+          month: format(monthDate, "MMM"),
+          start,
+          end,
+        });
+      }
+
+      const { data: invoices } = await supabase
+        .from("invoices")
+        .select("total, status, issue_date")
+        .gte("issue_date", format(months[0].start, "yyyy-MM-dd"))
+        .lte("issue_date", format(months[11].end, "yyyy-MM-dd"));
+
+      return months.map(({ month, start, end }) => {
+        const monthInvoices = invoices?.filter(inv => {
+          const invDate = new Date(inv.issue_date);
+          return invDate >= start && invDate <= end;
+        }) || [];
+
+        const revenue = monthInvoices
+          .filter(inv => inv.status === "paid")
+          .reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+
+        return {
+          month,
+          revenue: revenue / 1000, // Convert to K for display
+        };
+      });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="glass rounded-xl p-6 border border-border animate-fade-in">
+        <Skeleton className="h-6 w-48 mb-6" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  const hasData = chartData?.some(d => d.revenue > 0);
   
   return (
     <div className="glass rounded-xl p-6 border border-border animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold">Revenue vs Expenses</h3>
+          <h3 className="text-lg font-semibold">Revenue Trend</h3>
           <p className="text-sm text-muted-foreground">
-            Monthly financial overview
+            Monthly revenue from paid invoices
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-finance" />
-            <span className="text-sm text-muted-foreground">Revenue</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-destructive/50" />
-            <span className="text-sm text-muted-foreground">Expenses</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-finance" />
+          <span className="text-sm text-muted-foreground">Revenue</span>
         </div>
       </div>
 
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" />
-            <XAxis
-              dataKey="month"
-              stroke="hsl(215, 20%, 55%)"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke="hsl(215, 20%, 55%)"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => `${getCurrencySymbol()}${value / 1000}k`}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(222, 47%, 8%)",
-                border: "1px solid hsl(217, 33%, 17%)",
-                borderRadius: "8px",
-                color: "hsl(210, 40%, 98%)",
-              }}
-              formatter={(value: number) => [formatCurrency(value), ""]}
-            />
-            <Area
-              type="monotone"
-              dataKey="revenue"
-              stroke="hsl(217, 91%, 60%)"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorRevenue)"
-            />
-            <Area
-              type="monotone"
-              dataKey="expenses"
-              stroke="hsl(0, 84%, 60%)"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorExpenses)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {!hasData ? (
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          <p>No revenue data available yet</p>
+        </div>
+      ) : (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" />
+              <XAxis
+                dataKey="month"
+                stroke="hsl(215, 20%, 55%)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="hsl(215, 20%, 55%)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `${getCurrencySymbol()}${value}k`}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(222, 47%, 8%)",
+                  border: "1px solid hsl(217, 33%, 17%)",
+                  borderRadius: "8px",
+                  color: "hsl(210, 40%, 98%)",
+                }}
+                formatter={(value: number) => [formatCurrency(value * 1000), "Revenue"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="hsl(217, 91%, 60%)"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorRevenue)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
