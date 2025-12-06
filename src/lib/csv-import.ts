@@ -31,6 +31,8 @@ export interface ParsedPreviewRow {
   data: Record<string, string>;
   isValid: boolean;
   errors: string[];
+  isDuplicate?: boolean;
+  duplicateInfo?: string;
 }
 
 export interface ParsePreviewResult {
@@ -46,11 +48,35 @@ export async function parseContactsPreview(file: File): Promise<ParsePreviewResu
   const requiredColumns = ["name"];
   const columns = ["name", "email", "phone", "company", "designation", "notes"];
 
-  const rows: ParsedPreviewRow[] = rawRows.map((row, index) => {
+  // Fetch existing contacts for duplicate detection
+  const { data: existingContacts } = await supabase
+    .from("contacts")
+    .select("id, email, name, phone");
+
+  const existingEmailSet = new Set<string>();
+  const existingNameSet = new Set<string>();
+  
+  existingContacts?.forEach((contact) => {
+    if (contact.email) existingEmailSet.add(contact.email.toLowerCase());
+    if (contact.name) existingNameSet.add(contact.name.toLowerCase());
+  });
+
+  const rows: ParsedPreviewRow[] = rawRows.map((row) => {
     const errors: string[] = [];
+    let isDuplicate = false;
+    let duplicateInfo = "";
     
     if (!row.name || row.name.trim() === "") {
       errors.push("Missing required field 'name'");
+    }
+
+    // Check for duplicates
+    if (row.email && existingEmailSet.has(row.email.toLowerCase())) {
+      isDuplicate = true;
+      duplicateInfo = `Email "${row.email}" already exists`;
+    } else if (row.name && existingNameSet.has(row.name.toLowerCase())) {
+      isDuplicate = true;
+      duplicateInfo = `Contact "${row.name}" already exists`;
     }
 
     return {
@@ -64,6 +90,8 @@ export async function parseContactsPreview(file: File): Promise<ParsePreviewResu
       },
       isValid: errors.length === 0,
       errors,
+      isDuplicate,
+      duplicateInfo,
     };
   });
 
@@ -75,11 +103,29 @@ export async function parseDealsPreview(file: File): Promise<ParsePreviewResult>
   const requiredColumns = ["title"];
   const columns = ["title", "value", "stage", "probability", "expected_close_date", "description", "contact_name", "contact_email"];
 
-  const rows: ParsedPreviewRow[] = rawRows.map((row, index) => {
+  // Fetch existing deals for duplicate detection
+  const { data: existingDeals } = await supabase
+    .from("deals")
+    .select("id, title, value");
+
+  const existingDealTitles = new Set<string>();
+  existingDeals?.forEach((deal) => {
+    if (deal.title) existingDealTitles.add(deal.title.toLowerCase());
+  });
+
+  const rows: ParsedPreviewRow[] = rawRows.map((row) => {
     const errors: string[] = [];
+    let isDuplicate = false;
+    let duplicateInfo = "";
     
     if (!row.title || row.title.trim() === "") {
       errors.push("Missing required field 'title'");
+    }
+
+    // Check for duplicates
+    if (row.title && existingDealTitles.has(row.title.toLowerCase())) {
+      isDuplicate = true;
+      duplicateInfo = `Deal "${row.title}" already exists`;
     }
 
     // Validate stage if provided
@@ -111,6 +157,8 @@ export async function parseDealsPreview(file: File): Promise<ParsePreviewResult>
       },
       isValid: errors.length === 0,
       errors,
+      isDuplicate,
+      duplicateInfo,
     };
   });
 
