@@ -41,10 +41,13 @@ import {
   Loader2,
   DollarSign,
   MessageSquare,
+  RefreshCw,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { toast } from "sonner";
 
 interface Prospect {
@@ -100,6 +103,10 @@ const getPriorityBadge = (priority: string) => {
 
 export function InsideSalesModule() {
   const { user } = useAuth();
+  const { formatCurrency, settings } = useOrganizationSettings();
+  const { convert, isLoading: isLoadingRates } = useExchangeRates();
+  const orgCurrency = settings?.currency || "INR";
+  const alternateCurrency = orgCurrency === "INR" ? "USD" : "INR";
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -333,7 +340,13 @@ export function InsideSalesModule() {
                 <DollarSign className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">₹{(stats.totalValue / 100000).toFixed(1)}L</p>
+                <p className="text-2xl font-bold">{formatCurrency(stats.totalValue)}</p>
+                {!isLoadingRates && convert(stats.totalValue, orgCurrency, alternateCurrency) !== null && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" />
+                    {formatCurrency(convert(stats.totalValue, orgCurrency, alternateCurrency)!, alternateCurrency)}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">Lost Value</p>
               </div>
             </div>
@@ -428,7 +441,13 @@ export function InsideSalesModule() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{prospect.original_deal_title}</p>
-                          <p className="text-sm text-muted-foreground">₹{(prospect.original_deal_value || 0).toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground">{formatCurrency(prospect.original_deal_value || 0)}</p>
+                          {!isLoadingRates && prospect.original_deal_value > 0 && convert(prospect.original_deal_value, orgCurrency, alternateCurrency) !== null && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <RefreshCw className="w-3 h-3" />
+                              {formatCurrency(convert(prospect.original_deal_value, orgCurrency, alternateCurrency)!, alternateCurrency)}
+                            </p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
