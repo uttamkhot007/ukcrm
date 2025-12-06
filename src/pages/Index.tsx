@@ -17,6 +17,7 @@ import { DocumentationModule } from "@/components/employee/DocumentationModule";
 import { TicketingModule } from "@/components/ticketing/TicketingModule";
 import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
+import { HRModule } from "@/components/hr/HRModule";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -33,12 +34,6 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Handle navigation for HR directory
-  useEffect(() => {
-    if (activeModule === "hr-directory") {
-      navigate("/employee-directory");
-    }
-  }, [activeModule, navigate]);
 
   if (isLoading) {
     return (
@@ -96,14 +91,14 @@ const Index = () => {
       
       // HR modules
       case "hr":
-        return <PlaceholderModule title="Human Resources" section="hr" />;
       case "hr-directory":
-        // Navigation handled by useEffect
-        return null;
+        return <HRModule initialTab="directory" />;
       case "hr-people":
+        return <HRModule initialTab="people" />;
       case "hr-salary":
+        return <HRModule initialTab="salary" />;
       case "hr-onboarding":
-        return <PlaceholderModule title="Human Resources" section={activeModule} />;
+        return <HRModule initialTab="onboarding" />;
       
       // Finance modules
       case "finance":
