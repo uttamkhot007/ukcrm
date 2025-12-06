@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { Loader2, Settings, Building2, Users, Puzzle, BookOpen, Shield } from "lucide-react";
+import { Loader2, Settings, Building2, Users, Puzzle, BookOpen, Shield, Activity } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const adminTabs = [
@@ -13,6 +13,7 @@ const adminTabs = [
   { path: "/admin/integrations", label: "Integrations", icon: Puzzle },
   { path: "/admin/documentation", label: "Documentation", icon: BookOpen },
   { path: "/admin/portal", label: "Admin Portal", icon: Shield },
+  { path: "/admin/health", label: "Platform Health", icon: Activity },
 ];
 
 export default function AdminLayout() {

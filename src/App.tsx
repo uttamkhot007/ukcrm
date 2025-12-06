@@ -16,6 +16,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminIntegrations from "./pages/admin/AdminIntegrations";
 import AdminDocumentation from "./pages/admin/AdminDocumentation";
 import AdminPortal from "./pages/admin/AdminPortal";
+import AdminHealth from "./pages/admin/AdminHealth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="integrations" element={<AdminIntegrations />} />
                 <Route path="documentation" element={<AdminDocumentation />} />
                 <Route path="portal" element={<AdminPortal />} />
+                <Route path="health" element={<AdminHealth />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
