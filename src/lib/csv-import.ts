@@ -27,7 +27,95 @@ export interface ImportResult {
   errors: string[];
 }
 
+export interface ParsedPreviewRow {
+  data: Record<string, string>;
+  isValid: boolean;
+  errors: string[];
+}
+
+export interface ParsePreviewResult {
+  rows: ParsedPreviewRow[];
+  columns: string[];
+  requiredColumns: string[];
+}
+
 const VALID_DEAL_STAGES = ["pipeline", "upside", "strong_upside", "commit", "closed_won", "closed_lost"];
+
+export async function parseContactsPreview(file: File): Promise<ParsePreviewResult> {
+  const rawRows = await parseCSVFile<ContactCSVRow>(file);
+  const requiredColumns = ["name"];
+  const columns = ["name", "email", "phone", "company", "designation", "notes"];
+
+  const rows: ParsedPreviewRow[] = rawRows.map((row, index) => {
+    const errors: string[] = [];
+    
+    if (!row.name || row.name.trim() === "") {
+      errors.push("Missing required field 'name'");
+    }
+
+    return {
+      data: {
+        name: row.name || "",
+        email: row.email || "",
+        phone: row.phone || "",
+        company: row.company || "",
+        designation: row.designation || "",
+        notes: row.notes || "",
+      },
+      isValid: errors.length === 0,
+      errors,
+    };
+  });
+
+  return { rows, columns, requiredColumns };
+}
+
+export async function parseDealsPreview(file: File): Promise<ParsePreviewResult> {
+  const rawRows = await parseCSVFile<DealCSVRow>(file);
+  const requiredColumns = ["title"];
+  const columns = ["title", "value", "stage", "probability", "expected_close_date", "description", "contact_name", "contact_email"];
+
+  const rows: ParsedPreviewRow[] = rawRows.map((row, index) => {
+    const errors: string[] = [];
+    
+    if (!row.title || row.title.trim() === "") {
+      errors.push("Missing required field 'title'");
+    }
+
+    // Validate stage if provided
+    if (row.stage) {
+      const normalizedStage = row.stage.toLowerCase().replace(/\s+/g, "_");
+      if (!VALID_DEAL_STAGES.includes(normalizedStage)) {
+        errors.push(`Invalid stage '${row.stage}'. Valid: ${VALID_DEAL_STAGES.join(", ")}`);
+      }
+    }
+
+    // Validate date if provided
+    if (row.expected_close_date) {
+      const date = new Date(row.expected_close_date);
+      if (isNaN(date.getTime())) {
+        errors.push(`Invalid date format '${row.expected_close_date}'`);
+      }
+    }
+
+    return {
+      data: {
+        title: row.title || "",
+        value: row.value || "",
+        stage: row.stage || "",
+        probability: row.probability || "",
+        expected_close_date: row.expected_close_date || "",
+        description: row.description || "",
+        contact_name: row.contact_name || "",
+        contact_email: row.contact_email || "",
+      },
+      isValid: errors.length === 0,
+      errors,
+    };
+  });
+
+  return { rows, columns, requiredColumns };
+}
 
 export async function parseCSVFile<T>(file: File): Promise<T[]> {
   return new Promise((resolve, reject) => {

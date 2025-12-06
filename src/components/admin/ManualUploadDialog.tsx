@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download, ArrowLeft, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { importContacts, importDeals, ImportResult } from "@/lib/csv-import";
+import { importContacts, importDeals, ImportResult, parseContactsPreview, parseDealsPreview, ParsePreviewResult } from "@/lib/csv-import";
 import { useAuth } from "@/hooks/useAuth";
+import { CSVPreviewTable } from "./CSVPreviewTable";
 
 const TEMPLATE_URLS = {
   contacts: "/templates/hubspot-contacts-template.csv",
@@ -22,6 +23,7 @@ interface ManualUploadDialogProps {
 
 type UploadSource = "office365" | "zoho" | "hubspot" | "other";
 type DataType = "contacts" | "deals" | "emails" | "activities";
+type Step = "upload" | "preview";
 
 interface UploadedFile {
   file: File;
@@ -32,11 +34,14 @@ interface UploadedFile {
 
 export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUploadDialogProps) {
   const { user } = useAuth();
+  const [step, setStep] = useState<Step>("upload");
   const [source, setSource] = useState<UploadSource | "">("");
   const [dataType, setDataType] = useState<DataType | "">("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [previewData, setPreviewData] = useState<ParsePreviewResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +60,46 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePreview = async () => {
+    if (!dataType || uploadedFiles.length === 0) return;
+
+    setIsParsing(true);
+    try {
+      // Only preview the first file for now
+      const file = uploadedFiles[0].file;
+      let result: ParsePreviewResult;
+
+      if (dataType === "contacts") {
+        result = await parseContactsPreview(file);
+      } else if (dataType === "deals") {
+        result = await parseDealsPreview(file);
+      } else {
+        toast({
+          title: "Not Supported",
+          description: `Preview for ${dataType} is not yet supported.`,
+          variant: "destructive",
+        });
+        setIsParsing(false);
+        return;
+      }
+
+      setPreviewData(result);
+      setStep("preview");
+    } catch (error) {
+      toast({
+        title: "Parse Error",
+        description: error instanceof Error ? error.message : "Failed to parse CSV file",
+        variant: "destructive",
+      });
+    }
+    setIsParsing(false);
+  };
+
+  const handleBackToUpload = () => {
+    setStep("upload");
+    setPreviewData(null);
   };
 
   const handleUpload = async () => {
@@ -129,10 +174,12 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
   };
 
   const resetForm = () => {
+    setStep("upload");
     setSource("");
     setDataType("");
     setUploadedFiles([]);
     setImportErrors([]);
+    setPreviewData(null);
   };
 
   const getSourceIcon = (source: UploadSource) => {
@@ -153,220 +200,265 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
       if (!open) resetForm();
       onOpenChange(open);
     }}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn(
+        "max-h-[90vh] overflow-y-auto",
+        step === "preview" ? "sm:max-w-[900px]" : "sm:max-w-[600px]"
+      )}>
         <DialogHeader>
-          <DialogTitle>Manual Data Upload</DialogTitle>
+          <DialogTitle>
+            {step === "upload" ? "Manual Data Upload" : "Preview Import Data"}
+          </DialogTitle>
           <DialogDescription>
-            Upload CSV files exported from Office 365, Zoho Mail, HubSpot, or other sources.
+            {step === "upload" 
+              ? "Upload CSV files exported from Office 365, Zoho Mail, HubSpot, or other sources."
+              : `Review the ${previewData?.rows.length || 0} rows before importing to the database.`
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Template Downloads */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-            <Download className="w-5 h-5 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="text-sm font-medium">Download CSV Templates</p>
-              <p className="text-xs text-muted-foreground">Use these templates to format your data correctly</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
-                <a href={TEMPLATE_URLS.contacts} download="hubspot-contacts-template.csv">
-                  Contacts
-                </a>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
-                <a href={TEMPLATE_URLS.deals} download="hubspot-deals-template.csv">
-                  Deals
-                </a>
-              </Button>
-            </div>
-          </div>
-
-          {/* Source Selection */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Data Source</Label>
-              <Select value={source} onValueChange={(v) => setSource(v as UploadSource)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="office365">
-                    <span className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-[hsl(217,91%,60%)]" />
-                      Office 365
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="zoho">
-                    <span className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-[hsl(25,95%,53%)]" />
-                      Zoho Mail
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="hubspot">
-                    <span className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[hsl(16,100%,50%)]" />
-                      HubSpot
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="other">
-                    <span className="flex items-center gap-2">
-                      <FileSpreadsheet className="w-4 h-4" />
-                      Other
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Data Type</Label>
-              <Select value={dataType} onValueChange={(v) => setDataType(v as DataType)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="contacts">Contacts</SelectItem>
-                  <SelectItem value="deals">Deals / Opportunities</SelectItem>
-                  <SelectItem value="emails" disabled>Emails (coming soon)</SelectItem>
-                  <SelectItem value="activities" disabled>Activities (coming soon)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* File Upload Area */}
-          <div className="space-y-3">
-            <Label>Upload Files</Label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
-                "hover:border-primary/50 hover:bg-primary/5",
-                "border-border"
-              )}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm font-medium">Click to upload or drag and drop</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                CSV files only (max 10MB each)
-              </p>
-            </div>
-          </div>
-
-          {/* Uploaded Files List */}
-          {uploadedFiles.length > 0 && (
-            <div className="space-y-2">
-              <Label>Selected Files</Label>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {uploadedFiles.map((uploadedFile, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border",
-                      uploadedFile.status === "success" && "bg-primary/5 border-primary/30",
-                      uploadedFile.status === "error" && "bg-destructive/5 border-destructive/30",
-                      uploadedFile.status === "pending" && "border-border",
-                      uploadedFile.status === "processing" && "border-primary/30"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileSpreadsheet className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{uploadedFile.file.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(uploadedFile.file.size / 1024).toFixed(1)} KB
-                          {uploadedFile.recordCount !== undefined && ` • ${uploadedFile.recordCount} records imported`}
-                          {uploadedFile.error && <span className="text-destructive"> • {uploadedFile.error}</span>}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {uploadedFile.status === "processing" && (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      )}
-                      {uploadedFile.status === "success" && (
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                      )}
-                      {uploadedFile.status === "error" && (
-                        <AlertCircle className="w-4 h-4 text-destructive" />
-                      )}
-                      {uploadedFile.status === "pending" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFile(index);
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+        {step === "upload" ? (
+          <div className="space-y-6 py-4">
+            {/* Template Downloads */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <Download className="w-5 h-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Download CSV Templates</p>
+                <p className="text-xs text-muted-foreground">Use these templates to format your data correctly</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a href={TEMPLATE_URLS.contacts} download="hubspot-contacts-template.csv">
+                    Contacts
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a href={TEMPLATE_URLS.deals} download="hubspot-deals-template.csv">
+                    Deals
+                  </a>
+                </Button>
               </div>
             </div>
-          )}
 
-          {/* Import Errors */}
-          {importErrors.length > 0 && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-              <p className="text-sm font-medium text-destructive mb-2">Import Warnings</p>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                {importErrors.slice(0, 5).map((error, i) => (
-                  <li key={i}>• {error}</li>
-                ))}
-                {importErrors.length > 5 && (
-                  <li>• ... and {importErrors.length - 5} more</li>
-                )}
-              </ul>
+            {/* Source Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Data Source</Label>
+                <Select value={source} onValueChange={(v) => setSource(v as UploadSource)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="office365">
+                      <span className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-[hsl(217,91%,60%)]" />
+                        Office 365
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="zoho">
+                      <span className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-[hsl(25,95%,53%)]" />
+                        Zoho Mail
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="hubspot">
+                      <span className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[hsl(16,100%,50%)]" />
+                        HubSpot
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="other">
+                      <span className="flex items-center gap-2">
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Other
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Type</Label>
+                <Select value={dataType} onValueChange={(v) => setDataType(v as DataType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contacts">Contacts</SelectItem>
+                    <SelectItem value="deals">Deals / Opportunities</SelectItem>
+                    <SelectItem value="emails" disabled>Emails (coming soon)</SelectItem>
+                    <SelectItem value="activities" disabled>Activities (coming soon)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          )}
-        </div>
 
-        <DialogFooter>
+            {/* File Upload Area */}
+            <div className="space-y-3">
+              <Label>Upload Files</Label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
+                  "hover:border-primary/50 hover:bg-primary/5",
+                  "border-border"
+                )}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  CSV files only (max 10MB each)
+                </p>
+              </div>
+            </div>
+
+            {/* Uploaded Files List */}
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                <Label>Selected Files</Label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {uploadedFiles.map((uploadedFile, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-lg border",
+                        uploadedFile.status === "success" && "bg-primary/5 border-primary/30",
+                        uploadedFile.status === "error" && "bg-destructive/5 border-destructive/30",
+                        uploadedFile.status === "pending" && "border-border",
+                        uploadedFile.status === "processing" && "border-primary/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileSpreadsheet className="w-5 h-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{uploadedFile.file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(uploadedFile.file.size / 1024).toFixed(1)} KB
+                            {uploadedFile.recordCount !== undefined && ` • ${uploadedFile.recordCount} records imported`}
+                            {uploadedFile.error && <span className="text-destructive"> • {uploadedFile.error}</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {uploadedFile.status === "processing" && (
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        )}
+                        {uploadedFile.status === "success" && (
+                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                        )}
+                        {uploadedFile.status === "error" && (
+                          <AlertCircle className="w-4 h-4 text-destructive" />
+                        )}
+                        {uploadedFile.status === "pending" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFile(index);
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Import Errors */}
+            {importErrors.length > 0 && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                <p className="text-sm font-medium text-destructive mb-2">Import Warnings</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  {importErrors.slice(0, 5).map((error, i) => (
+                    <li key={i}>• {error}</li>
+                  ))}
+                  {importErrors.length > 5 && (
+                    <li>• ... and {importErrors.length - 5} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="py-4">
+            {previewData && (
+              <CSVPreviewTable
+                rows={previewData.rows}
+                columns={previewData.columns}
+                requiredColumns={previewData.requiredColumns}
+              />
+            )}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          {step === "preview" && (
+            <Button variant="outline" onClick={handleBackToUpload} className="mr-auto">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          )}
           <Button variant="outline" onClick={() => {
             resetForm();
             onOpenChange(false);
           }}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleUpload} 
-            disabled={!source || !dataType || uploadedFiles.length === 0 || isProcessing || !user}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Importing...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload & Import
-              </>
-            )}
-          </Button>
+          {step === "upload" ? (
+            <Button 
+              onClick={handlePreview} 
+              disabled={!source || !dataType || uploadedFiles.length === 0 || isParsing}
+            >
+              {isParsing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Parsing...
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview Data
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleUpload} 
+              disabled={!previewData || previewData.rows.filter(r => r.isValid).length === 0 || isProcessing || !user}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import {previewData?.rows.filter(r => r.isValid).length || 0} Rows
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
