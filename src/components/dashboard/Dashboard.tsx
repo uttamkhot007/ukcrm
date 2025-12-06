@@ -23,6 +23,8 @@ import { UpcomingTasks } from "./UpcomingTasks";
 import { SalesWidgets } from "./SalesWidgets";
 import { UpcomingFollowUps } from "./UpcomingFollowUps";
 import { PendingApprovalsWidget } from "./PendingApprovalsWidget";
+import { EmployeeWidgets } from "./EmployeeWidgets";
+import { TeamSpecificWidgets } from "./TeamSpecificWidgets";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -184,7 +186,7 @@ const allModules = [
 ];
 
 export function Dashboard({ onModuleChange }: DashboardProps) {
-  const { profile, role, isAdmin, isManager } = useAuth();
+  const { profile, role, isAdmin, isManager, teams } = useAuth();
 
   const hasAccess = (requiredRoles?: string[]) => {
     if (!requiredRoles) return true;
@@ -194,6 +196,9 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
 
   const metrics = allMetrics.filter((m) => hasAccess(m.requiredRoles));
   const modules = allModules.filter((m) => hasAccess(m.requiredRoles));
+
+  // Check if user has any team assignment for team-specific widgets
+  const hasTeamAssignment = teams.length > 0;
 
   return (
     <div className="space-y-6 p-6">
@@ -251,12 +256,22 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
         </div>
       )}
 
-      {/* Sales Dashboard Widgets */}
+      {/* Sales Dashboard Widgets - Only for Admin/Manager */}
       {(isAdmin || isManager) && (
         <div>
           <h2 className="text-xl font-semibold mb-4">Sales Overview</h2>
           <SalesWidgets />
         </div>
+      )}
+
+      {/* Employee-Specific Widgets - For non-admin/manager users */}
+      {!isAdmin && !isManager && (
+        <EmployeeWidgets onNavigate={onModuleChange} />
+      )}
+
+      {/* Team-Specific Widgets - For users with team assignments who aren't admin/manager */}
+      {!isAdmin && !isManager && hasTeamAssignment && (
+        <TeamSpecificWidgets onNavigate={onModuleChange} />
       )}
 
       {/* Modules Section */}
