@@ -68,6 +68,15 @@ serve(async (req) => {
       case "request_approved":
         result = await handleRequestApproved(supabase, resend, entity_id, data);
         break;
+      case "request_rejected":
+        result = await handleRequestRejected(supabase, resend, entity_id, data);
+        break;
+      case "request_escalated":
+        result = await handleRequestEscalated(supabase, resend, entity_id, data);
+        break;
+      case "request_under_review":
+        result = await handleRequestUnderReview(supabase, resend, entity_id, data);
+        break;
       default:
         console.log(`Unknown workflow type: ${type}`);
     }
@@ -562,4 +571,145 @@ async function handleRequestApproved(supabase: any, resend: any, requestId: stri
   }
 
   return { success: true, message: "Approval notification sent" };
+}
+
+async function handleRequestRejected(supabase: any, resend: any, requestId: string, data: any) {
+  const { data: request } = await supabase
+    .from("employee_requests")
+    .select("*")
+    .eq("id", requestId)
+    .single();
+
+  if (!request) return { success: false, error: "Request not found" };
+
+  // Notify the requester
+  await createNotification(
+    supabase,
+    request.user_id,
+    "❌ Request Rejected",
+    `Your request ${request.request_number} has been rejected${data?.reason ? `: ${data.reason}` : ""}`,
+    "error",
+    "request",
+    requestId,
+    "employee_requests"
+  );
+
+  // Get user email and send notification
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("user_id", request.user_id)
+    .single();
+
+  if (profile?.email) {
+    await sendEmail(
+      resend,
+      profile.email,
+      `Request Rejected: ${request.request_number}`,
+      `<h2>Request Rejected</h2>
+       <p>Dear ${profile.full_name},</p>
+       <p>Your request <strong>${request.request_number}</strong> has been rejected.</p>
+       <p><strong>Title:</strong> ${request.title}</p>
+       <p><strong>Type:</strong> ${request.type.replace("_", " ")}</p>
+       ${data?.reason ? `<p><strong>Reason:</strong> ${data.reason}</p>` : ""}`
+    );
+  }
+
+  return { success: true, message: "Rejection notification sent" };
+}
+
+async function handleRequestEscalated(supabase: any, resend: any, requestId: string, data: any) {
+  const { data: request } = await supabase
+    .from("employee_requests")
+    .select("*")
+    .eq("id", requestId)
+    .single();
+
+  if (!request) return { success: false, error: "Request not found" };
+
+  const newLevel = (request.escalation_level || 0) + 1;
+
+  // Update escalation status
+  await supabase
+    .from("employee_requests")
+    .update({ 
+      escalated: true, 
+      escalation_level: newLevel 
+    })
+    .eq("id", requestId);
+
+  // Notify all managers
+  const managers = await getManagers(supabase);
+  for (const managerId of managers) {
+    await createNotification(
+      supabase,
+      managerId,
+      "🚨 Request Escalated",
+      `Request ${request.request_number} has been escalated to level ${newLevel}`,
+      "error",
+      "request",
+      requestId,
+      "employee_requests"
+    );
+  }
+
+  // Get manager emails and send notifications
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("email")
+    .in("user_id", managers);
+
+  for (const profile of profiles || []) {
+    if (profile.email) {
+      await sendEmail(
+        resend,
+        profile.email,
+        `🚨 ESCALATION: Request ${request.request_number}`,
+        `<h2>Request Escalated</h2>
+         <p><strong>Request:</strong> ${request.request_number}</p>
+         <p><strong>Title:</strong> ${request.title}</p>
+         <p><strong>Escalation Level:</strong> ${newLevel}</p>
+         <p><strong>Priority:</strong> ${request.priority}</p>
+         <p>This request requires immediate attention.</p>`
+      );
+    }
+  }
+
+  // Notify the requester
+  await createNotification(
+    supabase,
+    request.user_id,
+    "⚠️ Request Escalated",
+    `Your request ${request.request_number} has been escalated for faster resolution`,
+    "warning",
+    "request",
+    requestId,
+    "employee_requests"
+  );
+
+  return { success: true, message: "Escalation notification sent" };
+}
+
+async function handleRequestUnderReview(supabase: any, resend: any, requestId: string, data: any) {
+  const { data: request } = await supabase
+    .from("employee_requests")
+    .select("*")
+    .eq("id", requestId)
+    .single();
+
+  if (!request) return { success: false, error: "Request not found" };
+
+  // Notify the requester
+  await createNotification(
+    supabase,
+    request.user_id,
+    "👀 Request Under Review",
+    `Your request ${request.request_number} is now being reviewed`,
+    "info",
+    "request",
+    requestId,
+    "employee_requests"
+  );
+
+  return { success: true, message: "Under review notification sent" };
 }
