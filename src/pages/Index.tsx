@@ -4,8 +4,6 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { AIAssistant } from "@/components/ai/AIAssistant";
 import { Dashboard } from "@/components/dashboard/Dashboard";
-import { AdminPanel } from "@/components/admin/AdminPanel";
-import { AdminCenter } from "@/components/admin/AdminCenter";
 import { SalesModule } from "@/components/sales/SalesModule";
 import { LegalModule } from "@/components/legal/LegalModule";
 import { RenewalsModule } from "@/components/renewals/RenewalsModule";
@@ -49,10 +47,6 @@ const Index = () => {
 
   const renderContent = () => {
     switch (activeModule) {
-      case "admin-center":
-      case "admin-integrations":
-      case "admin-panel":
-        return <AdminCenter />;
       case "sales":
       case "sales-funnel":
         return <SalesModule initialTab="deals" />;

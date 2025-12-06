@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
 import {
@@ -64,6 +65,8 @@ interface NavItem {
   requiredRoles?: ("admin" | "manager" | "employee")[];
   portalMode?: PortalMode;
   children?: { id: string; label: string; icon: React.ElementType }[];
+  isLink?: boolean;
+  linkPath?: string;
 }
 
 // Sales Portal Items
@@ -142,10 +145,8 @@ const adminItems: NavItem[] = [
     icon: Settings,
     color: "text-destructive",
     requiredRoles: ["admin"],
-    children: [
-      { id: "admin-integrations", label: "Integrations", icon: Building2 },
-      { id: "admin-panel", label: "Admin Panel", icon: Shield },
-    ],
+    isLink: true,
+    linkPath: "/admin",
   },
 ];
 
@@ -153,6 +154,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
   const { role, signOut, profile, portalMode, hasSalesAccess, isManagement } = useAuth();
+  const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
   const totalEventCount = eventCounts.birthdayCount + eventCounts.anniversaryCount + eventCounts.orgEventCount + eventCounts.achievementCount + eventCounts.performanceCount;
 
@@ -419,6 +421,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           <div key={item.id} className="mb-1">
             <button
               onClick={() => {
+                if (item.isLink && item.linkPath) {
+                  navigate(item.linkPath);
+                  return;
+                }
                 if (item.children) {
                   toggleExpand(item.id);
                 }
