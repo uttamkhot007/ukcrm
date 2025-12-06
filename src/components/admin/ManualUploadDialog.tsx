@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { importContacts, importDeals, ImportResult } from "@/lib/csv-import";
+import { useAuth } from "@/hooks/useAuth";
 
 const TEMPLATE_URLS = {
   contacts: "/templates/hubspot-contacts-template.csv",
@@ -29,10 +31,12 @@ interface UploadedFile {
 }
 
 export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUploadDialogProps) {
+  const { user } = useAuth();
   const [source, setSource] = useState<UploadSource | "">("");
   const [dataType, setDataType] = useState<DataType | "">("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,9 +58,12 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
   };
 
   const handleUpload = async () => {
-    if (!source || !dataType || uploadedFiles.length === 0) return;
+    if (!source || !dataType || uploadedFiles.length === 0 || !user) return;
 
     setIsProcessing(true);
+    setImportErrors([]);
+    let totalSuccessCount = 0;
+    const allErrors: string[] = [];
 
     // Process each file
     for (let i = 0; i < uploadedFiles.length; i++) {
@@ -64,32 +71,68 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
         idx === i ? { ...f, status: "processing" as const } : f
       ));
 
-      // Simulate processing
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      let result: ImportResult;
 
-      // Simulate success (in real app, this would parse the file)
-      const recordCount = Math.floor(Math.random() * 500) + 50;
-      setUploadedFiles(prev => prev.map((f, idx) => 
-        idx === i ? { ...f, status: "success" as const, recordCount } : f
-      ));
+      try {
+        if (dataType === "contacts") {
+          result = await importContacts(uploadedFiles[i].file, user.id);
+        } else if (dataType === "deals") {
+          result = await importDeals(uploadedFiles[i].file, user.id);
+        } else {
+          // For emails and activities, show not supported message
+          result = {
+            success: false,
+            recordCount: 0,
+            errors: [`Import for ${dataType} is not yet supported. Please use contacts or deals.`],
+          };
+        }
+
+        if (result.success) {
+          totalSuccessCount += result.recordCount;
+          setUploadedFiles(prev => prev.map((f, idx) => 
+            idx === i ? { ...f, status: "success" as const, recordCount: result.recordCount } : f
+          ));
+        } else {
+          setUploadedFiles(prev => prev.map((f, idx) => 
+            idx === i ? { ...f, status: "error" as const, error: result.errors[0] } : f
+          ));
+        }
+
+        if (result.errors.length > 0) {
+          allErrors.push(...result.errors.map(e => `${uploadedFiles[i].file.name}: ${e}`));
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        setUploadedFiles(prev => prev.map((f, idx) => 
+          idx === i ? { ...f, status: "error" as const, error: errorMessage } : f
+        ));
+        allErrors.push(`${uploadedFiles[i].file.name}: ${errorMessage}`);
+      }
     }
 
     setIsProcessing(false);
+    setImportErrors(allErrors);
 
-    const totalRecords = uploadedFiles.reduce((sum, f) => sum + (f.recordCount || 0), 0);
-    toast({
-      title: "Upload Complete",
-      description: `Successfully imported ${totalRecords} records from ${uploadedFiles.length} file(s).`,
-    });
-
-    onComplete();
-    resetForm();
+    if (totalSuccessCount > 0) {
+      toast({
+        title: "Import Complete",
+        description: `Successfully imported ${totalSuccessCount} ${dataType} from ${uploadedFiles.length} file(s).`,
+      });
+      onComplete();
+    } else if (allErrors.length > 0) {
+      toast({
+        title: "Import Failed",
+        description: allErrors[0],
+        variant: "destructive",
+      });
+    }
   };
 
   const resetForm = () => {
     setSource("");
     setDataType("");
     setUploadedFiles([]);
+    setImportErrors([]);
   };
 
   const getSourceIcon = (source: UploadSource) => {
@@ -110,11 +153,11 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
       if (!open) resetForm();
       onOpenChange(open);
     }}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Manual Data Upload</DialogTitle>
           <DialogDescription>
-            Upload CSV or Excel files exported from Office 365, Zoho Mail, HubSpot, or other sources.
+            Upload CSV files exported from Office 365, Zoho Mail, HubSpot, or other sources.
           </DialogDescription>
         </DialogHeader>
 
@@ -194,8 +237,8 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 <SelectContent>
                   <SelectItem value="contacts">Contacts</SelectItem>
                   <SelectItem value="deals">Deals / Opportunities</SelectItem>
-                  <SelectItem value="emails">Emails</SelectItem>
-                  <SelectItem value="activities">Activities</SelectItem>
+                  <SelectItem value="emails" disabled>Emails (coming soon)</SelectItem>
+                  <SelectItem value="activities" disabled>Activities (coming soon)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -215,7 +258,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,.xlsx,.xls"
+                accept=".csv"
                 multiple
                 onChange={handleFileSelect}
                 className="hidden"
@@ -223,7 +266,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
               <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm font-medium">Click to upload or drag and drop</p>
               <p className="text-xs text-muted-foreground mt-1">
-                CSV, XLSX, or XLS files (max 10MB each)
+                CSV files only (max 10MB each)
               </p>
             </div>
           </div>
@@ -241,7 +284,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                       uploadedFile.status === "success" && "bg-primary/5 border-primary/30",
                       uploadedFile.status === "error" && "bg-destructive/5 border-destructive/30",
                       uploadedFile.status === "pending" && "border-border",
-                      uploadedFile.status === "processing" && "border-support/30"
+                      uploadedFile.status === "processing" && "border-primary/30"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -250,13 +293,14 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                         <p className="text-sm font-medium">{uploadedFile.file.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {(uploadedFile.file.size / 1024).toFixed(1)} KB
-                          {uploadedFile.recordCount && ` • ${uploadedFile.recordCount} records`}
+                          {uploadedFile.recordCount !== undefined && ` • ${uploadedFile.recordCount} records imported`}
+                          {uploadedFile.error && <span className="text-destructive"> • {uploadedFile.error}</span>}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {uploadedFile.status === "processing" && (
-                        <Loader2 className="w-4 h-4 animate-spin text-support" />
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
                       )}
                       {uploadedFile.status === "success" && (
                         <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -269,7 +313,10 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => removeFile(index)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile(index);
+                          }}
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -278,6 +325,21 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Import Errors */}
+          {importErrors.length > 0 && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+              <p className="text-sm font-medium text-destructive mb-2">Import Warnings</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {importErrors.slice(0, 5).map((error, i) => (
+                  <li key={i}>• {error}</li>
+                ))}
+                {importErrors.length > 5 && (
+                  <li>• ... and {importErrors.length - 5} more</li>
+                )}
+              </ul>
             </div>
           )}
         </div>
@@ -291,12 +353,12 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
           </Button>
           <Button 
             onClick={handleUpload} 
-            disabled={!source || !dataType || uploadedFiles.length === 0 || isProcessing}
+            disabled={!source || !dataType || uploadedFiles.length === 0 || isProcessing || !user}
           >
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
+                Importing...
               </>
             ) : (
               <>
