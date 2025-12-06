@@ -14,6 +14,7 @@ import {
   Filter,
   ArrowLeft,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 
 const typeIcons: Record<string, typeof Info> = {
   info: Info,
@@ -52,6 +54,7 @@ export default function NotificationsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
+  const [activeView, setActiveView] = useState<"notifications" | "preferences">("notifications");
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
@@ -132,13 +135,25 @@ export default function NotificationsPage() {
               {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
             </p>
           </div>
-          {unreadCount > 0 && (
+          {unreadCount > 0 && activeView === "notifications" && (
             <Button variant="outline" size="sm" onClick={markAllAsRead}>
               <CheckCheck className="w-4 h-4 mr-2" />
               Mark all read
             </Button>
           )}
+          <Button
+            variant={activeView === "preferences" ? "default" : "ghost"}
+            size="icon"
+            onClick={() => setActiveView(activeView === "preferences" ? "notifications" : "preferences")}
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
         </div>
+
+        {activeView === "preferences" ? (
+          <NotificationPreferences />
+        ) : (
+          <>
 
         {/* Filters */}
         <Card className="mb-6">
@@ -311,6 +326,8 @@ export default function NotificationsPage() {
               </div>
             ))}
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

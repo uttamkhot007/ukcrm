@@ -894,6 +894,69 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_approvals: boolean
+          email_compliance: boolean
+          email_deals: boolean
+          email_enabled: boolean
+          email_renewals: boolean
+          email_requests: boolean
+          email_tickets: boolean
+          id: string
+          in_app_approvals: boolean
+          in_app_compliance: boolean
+          in_app_deals: boolean
+          in_app_enabled: boolean
+          in_app_renewals: boolean
+          in_app_requests: boolean
+          in_app_tickets: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_approvals?: boolean
+          email_compliance?: boolean
+          email_deals?: boolean
+          email_enabled?: boolean
+          email_renewals?: boolean
+          email_requests?: boolean
+          email_tickets?: boolean
+          id?: string
+          in_app_approvals?: boolean
+          in_app_compliance?: boolean
+          in_app_deals?: boolean
+          in_app_enabled?: boolean
+          in_app_renewals?: boolean
+          in_app_requests?: boolean
+          in_app_tickets?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_approvals?: boolean
+          email_compliance?: boolean
+          email_deals?: boolean
+          email_enabled?: boolean
+          email_renewals?: boolean
+          email_requests?: boolean
+          email_tickets?: boolean
+          id?: string
+          in_app_approvals?: boolean
+          in_app_compliance?: boolean
+          in_app_deals?: boolean
+          in_app_enabled?: boolean
+          in_app_renewals?: boolean
+          in_app_requests?: boolean
+          in_app_tickets?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
