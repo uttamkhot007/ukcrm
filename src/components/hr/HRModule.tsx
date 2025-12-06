@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +42,10 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Sync activeTab with initialTab when route changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["hr-employees"],
     queryFn: async () => {
