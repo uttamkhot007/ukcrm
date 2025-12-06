@@ -6,7 +6,6 @@ import {
   Upload, 
   CheckCircle2, 
   XCircle, 
-  Settings2, 
   RefreshCw,
   FileSpreadsheet,
   Users,
@@ -20,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { IntegrationConfigDialog } from "./IntegrationConfigDialog";
 import { ManualUploadDialog } from "./ManualUploadDialog";
 import { useOffice365Integration } from "@/hooks/useOffice365Integration";
+import { useHubSpotIntegration } from "@/hooks/useHubSpotIntegration";
 
 interface Integration {
   id: string;
@@ -69,7 +69,6 @@ export function IntegrationsModule() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, "connected" | "disconnected" | "pending">>({
     zoho: "disconnected",
-    hubspot: "disconnected",
     manual: "disconnected",
   });
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -77,22 +76,47 @@ export function IntegrationsModule() {
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
 
   const office365 = useOffice365Integration();
+  const hubspot = useHubSpotIntegration();
 
-  // Handle OAuth callback
+  // Handle OAuth callback for both Office 365 and HubSpot
   useEffect(() => {
     const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    
     if (code) {
-      office365.handleCallback(code).then(() => {
-        // Clear the code from URL
-        setSearchParams({});
-      });
-    }
-  }, [searchParams, setSearchParams, office365]);
+      // Determine which integration the callback is for
+      const hubspotRedirect = localStorage.getItem('hubspot_redirect');
+      const office365Redirect = localStorage.getItem('office365_redirect');
 
-  const getOffice365Status = (): "connected" | "disconnected" | "pending" => {
-    if (office365.isLoading) return "pending";
-    if (office365.isConnected) return "connected";
-    return "disconnected";
+      if (hubspotRedirect) {
+        hubspot.handleCallback(code).then(() => {
+          setSearchParams({});
+        });
+      } else if (office365Redirect) {
+        office365.handleCallback(code).then(() => {
+          setSearchParams({});
+        });
+      } else {
+        // Default to Office 365 if no redirect stored (backward compatibility)
+        office365.handleCallback(code).then(() => {
+          setSearchParams({});
+        });
+      }
+    }
+  }, [searchParams, setSearchParams, office365, hubspot]);
+
+  const getIntegrationStatus = (integrationId: string): "connected" | "disconnected" | "pending" => {
+    if (integrationId === "office365") {
+      if (office365.isLoading) return "pending";
+      if (office365.isConnected) return "connected";
+      return "disconnected";
+    }
+    if (integrationId === "hubspot") {
+      if (hubspot.isLoading) return "pending";
+      if (hubspot.isConnected) return "connected";
+      return "disconnected";
+    }
+    return integrationStatuses[integrationId] || "disconnected";
   };
 
   const handleConnect = (integration: Integration) => {
@@ -105,6 +129,11 @@ export function IntegrationsModule() {
       office365.connect();
       return;
     }
+
+    if (integration.id === "hubspot") {
+      hubspot.connect();
+      return;
+    }
     
     setSelectedIntegration(integration);
     setConfigDialogOpen(true);
@@ -113,6 +142,11 @@ export function IntegrationsModule() {
   const handleDisconnect = (integrationId: string) => {
     if (integrationId === "office365") {
       office365.disconnect();
+      return;
+    }
+
+    if (integrationId === "hubspot") {
+      hubspot.disconnect();
       return;
     }
 
@@ -130,6 +164,15 @@ export function IntegrationsModule() {
     if (integrationId === "office365") {
       office365.sync('all');
     }
+    if (integrationId === "hubspot") {
+      hubspot.sync('all');
+    }
+  };
+
+  const isSyncing = (integrationId: string): boolean => {
+    if (integrationId === "office365") return office365.isSyncing;
+    if (integrationId === "hubspot") return hubspot.isSyncing;
+    return false;
   };
 
   const handleSaveConfig = (integrationId: string, config: Record<string, string>) => {
@@ -158,13 +201,6 @@ export function IntegrationsModule() {
       manual: "connected"
     }));
     setUploadDialogOpen(false);
-  };
-
-  const getStatus = (integrationId: string): "connected" | "disconnected" | "pending" => {
-    if (integrationId === "office365") {
-      return getOffice365Status();
-    }
-    return integrationStatuses[integrationId] || "disconnected";
   };
 
   const getStatusBadge = (status: "connected" | "disconnected" | "pending") => {
@@ -220,8 +256,8 @@ export function IntegrationsModule() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              status={getStatus(integration.id)}
-              isSyncing={integration.id === "office365" && office365.isSyncing}
+              status={getIntegrationStatus(integration.id)}
+              isSyncing={isSyncing(integration.id)}
               onConnect={() => handleConnect(integration)}
               onDisconnect={() => handleDisconnect(integration.id)}
               onSync={() => handleSync(integration.id)}
@@ -242,11 +278,11 @@ export function IntegrationsModule() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              status={getStatus(integration.id)}
-              isSyncing={false}
+              status={getIntegrationStatus(integration.id)}
+              isSyncing={isSyncing(integration.id)}
               onConnect={() => handleConnect(integration)}
               onDisconnect={() => handleDisconnect(integration.id)}
-              onSync={() => {}}
+              onSync={() => handleSync(integration.id)}
               getStatusBadge={getStatusBadge}
             />
           ))}
@@ -264,7 +300,7 @@ export function IntegrationsModule() {
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              status={getStatus(integration.id)}
+              status={getIntegrationStatus(integration.id)}
               isSyncing={false}
               onConnect={() => handleConnect(integration)}
               onDisconnect={() => handleDisconnect(integration.id)}

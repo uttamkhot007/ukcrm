@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.office365-sync]
 verify_jwt = true
+
+[functions.hubspot-auth]
+verify_jwt = true
+
+[functions.hubspot-sync]
+verify_jwt = true
