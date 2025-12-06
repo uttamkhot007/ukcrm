@@ -47,6 +47,7 @@ const Index = () => {
 
   const renderContent = () => {
     switch (activeModule) {
+      // Sales modules
       case "sales":
       case "sales-funnel":
         return <SalesModule initialTab="deals" />;
@@ -58,15 +59,21 @@ const Index = () => {
         return <SalesModule initialTab="contacts" />;
       case "inside-sales":
         return <InsideSalesModule />;
+      
+      // Legal module
       case "legal":
       case "legal-documents":
       case "legal-approvals":
         return <LegalModule />;
+      
+      // Renewals module
       case "renewals":
       case "renewals-contracts":
       case "renewals-licenses":
       case "renewals-subscriptions":
         return <RenewalsModule />;
+      
+      // Employee Portal modules
       case "employee-attendance":
         return <AttendanceModule />;
       case "employee-attendance-reports":
@@ -79,16 +86,118 @@ const Index = () => {
         return <EmployeeEventsModule />;
       case "employee-documentation":
         return <DocumentationModule />;
+      
+      // HR modules
+      case "hr":
+      case "hr-directory":
+        navigate("/employee-directory");
+        return null;
+      case "hr-people":
+      case "hr-salary":
+      case "hr-onboarding":
+        return <PlaceholderModule title="Human Resources" section={activeModule} />;
+      
+      // Finance modules
+      case "finance":
+      case "finance-payments":
+      case "finance-dso":
+      case "finance-pnl":
+      case "finance-tax":
+        return <PlaceholderModule title="Finance" section={activeModule} />;
+      
+      // Technical modules
+      case "tech":
+      case "tech-projects":
+      case "tech-knowledge":
+      case "tech-updates":
+        return <PlaceholderModule title="Technical" section={activeModule} />;
+      
+      // Marketing modules
+      case "marketing":
+      case "marketing-campaigns":
+      case "marketing-leads":
+        return <PlaceholderModule title="Marketing" section={activeModule} />;
+      
+      // Accounts modules
+      case "accounts":
+      case "accounts-receivable":
+      case "accounts-payable":
+      case "accounts-ledger":
+      case "accounts-reconciliation":
+        return <PlaceholderModule title="Accounts" section={activeModule} />;
+      
+      // Admin modules
+      case "admin":
+      case "admin-facilities":
+      case "admin-assets":
+      case "admin-vendors":
+      case "admin-procurement":
+        return <PlaceholderModule title="Administration" section={activeModule} />;
+      
+      // Help Desk
       case "helpdesk":
       case "helpdesk-tickets":
         return <TicketingModule />;
+      
+      // Billing
       case "billing":
         return <BillingModule />;
+      
+      // Compliance
       case "compliance":
         return <ComplianceModule />;
+      
+      // Management modules
+      case "management":
+      case "management-performance":
+      case "management-cashflow":
+        return <PlaceholderModule title="Management" section={activeModule} />;
+      
       default:
         return <Dashboard onModuleChange={setActiveModule} />;
     }
+  };
+
+  // Placeholder component for modules not yet implemented
+  const PlaceholderModule = ({ title, section }: { title: string; section: string }) => {
+    const sectionLabels: Record<string, string> = {
+      "hr-people": "People Management",
+      "hr-salary": "Salary & Benefits",
+      "hr-onboarding": "Onboarding",
+      "finance-payments": "Payment Tracking",
+      "finance-dso": "DSO Trends",
+      "finance-pnl": "Profit & Loss",
+      "finance-tax": "GST Reports",
+      "tech-projects": "Project Management",
+      "tech-knowledge": "Knowledge Base",
+      "tech-updates": "Updates & Alerts",
+      "marketing-campaigns": "Campaigns",
+      "marketing-leads": "SQL/MQL Tracking",
+      "accounts-receivable": "Accounts Receivable",
+      "accounts-payable": "Accounts Payable",
+      "accounts-ledger": "General Ledger",
+      "accounts-reconciliation": "Bank Reconciliation",
+      "admin-facilities": "Facilities",
+      "admin-assets": "Asset Management",
+      "admin-vendors": "Vendor Management",
+      "admin-procurement": "Procurement",
+      "management-performance": "People Performance",
+      "management-cashflow": "Inflow vs Outflow",
+    };
+
+    return (
+      <div className="p-6">
+        <div className="glass rounded-xl border border-border p-8 text-center">
+          <h2 className="text-2xl font-bold mb-2">{title}</h2>
+          <p className="text-lg text-muted-foreground mb-4">
+            {sectionLabels[section] || section.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            This module is coming soon. Configure workflows and customize as needed.
+          </p>
+        </div>
+      </div>
+    );
   };
 
   return (
