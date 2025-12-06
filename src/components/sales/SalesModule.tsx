@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
@@ -9,8 +9,18 @@ import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { Handshake, Users, UserPlus, FileText, Clock, BarChart3 } from "lucide-react";
 
-export function SalesModule() {
-  const [activeTab, setActiveTab] = useState("deals");
+interface SalesModuleProps {
+  initialTab?: string;
+}
+
+export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   return (
     <div className="p-6 space-y-6">
