@@ -45,6 +45,7 @@ import {
   ClipboardCheck,
   PartyPopper,
   Cake,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -321,6 +322,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: UserCircle,
         color: "text-employee",
         children: [
+          { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-requests", label: "My Requests", icon: Ticket },
           { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
           { id: "employee-events", label: "Events & Celebrations", icon: PartyPopper },
