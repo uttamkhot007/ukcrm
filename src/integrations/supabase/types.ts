@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance: {
+        Row: {
+          check_in: string
+          check_out: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          user_id: string
+          work_hours: number | null
+        }
+        Insert: {
+          check_in?: string
+          check_out?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          user_id: string
+          work_hours?: number | null
+        }
+        Update: {
+          check_in?: string
+          check_out?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          user_id?: string
+          work_hours?: number | null
+        }
+        Relationships: []
+      }
       compliance_assessments: {
         Row: {
           assessment_date: string

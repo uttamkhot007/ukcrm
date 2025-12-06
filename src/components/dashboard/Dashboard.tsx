@@ -26,6 +26,7 @@ import { PendingApprovalsWidget } from "./PendingApprovalsWidget";
 import { EmployeeWidgets } from "./EmployeeWidgets";
 import { TeamSpecificWidgets } from "./TeamSpecificWidgets";
 import { NotificationCenterWidget } from "./NotificationCenterWidget";
+import { UpcomingEventsWidget } from "./UpcomingEventsWidget";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -250,10 +251,23 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
           </div>
           <div className="space-y-6">
             <NotificationCenterWidget />
+            <UpcomingEventsWidget />
             <QuickActions />
             <PendingApprovalsWidget onNavigate={onModuleChange} />
             <UpcomingFollowUps onNavigate={onModuleChange} />
             <UpcomingTasks />
+          </div>
+        </div>
+      )}
+
+      {/* Employee-Specific Widgets - For non-admin/manager users */}
+      {!isAdmin && !isManager && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <EmployeeWidgets onNavigate={onModuleChange} />
+          </div>
+          <div>
+            <UpcomingEventsWidget />
           </div>
         </div>
       )}
@@ -264,11 +278,6 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
           <h2 className="text-xl font-semibold mb-4">Sales Overview</h2>
           <SalesWidgets />
         </div>
-      )}
-
-      {/* Employee-Specific Widgets - For non-admin/manager users */}
-      {!isAdmin && !isManager && (
-        <EmployeeWidgets onNavigate={onModuleChange} />
       )}
 
       {/* Team-Specific Widgets - For users with team assignments who aren't admin/manager */}
