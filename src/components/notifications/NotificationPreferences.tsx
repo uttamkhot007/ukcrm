@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useNotificationSound, SoundType } from "@/hooks/useNotificationSound";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -32,6 +33,7 @@ import {
   VolumeX,
   Moon,
   Play,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -58,6 +60,14 @@ type CategoryKey = typeof categories[number]["key"];
 export function NotificationPreferences() {
   const { preferences, isLoading, updatePreferences, isUpdating } = useNotificationPreferences();
   const { isSupported, permission, requestPermission, isEnabled } = useBrowserNotifications();
+  const { 
+    isSupported: isPushSupported, 
+    isSubscribed: isPushSubscribed, 
+    isLoading: isPushLoading,
+    permission: pushPermission,
+    subscribe: subscribePush,
+    unsubscribe: unsubscribePush,
+  } = usePushNotifications();
   const { testSound } = useNotificationSound();
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, boolean>>({});
   const [requestingPermission, setRequestingPermission] = useState(false);
@@ -116,7 +126,7 @@ export function NotificationPreferences() {
 
   return (
     <div className="space-y-6">
-      {/* Browser Push Notifications */}
+      {/* Browser Notifications */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -175,6 +185,95 @@ export function NotificationPreferences() {
               </p>
               <Button onClick={handleRequestPermission} disabled={requestingPermission} size="sm">
                 {requestingPermission ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Bell className="w-4 h-4 mr-2" />
+                )}
+                Enable
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Push Notifications */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Smartphone className="w-5 h-5 text-orange-500" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Push Notifications</CardTitle>
+                <CardDescription>Receive alerts even when the app is closed</CardDescription>
+              </div>
+            </div>
+            {isPushSubscribed ? (
+              <Badge variant="secondary" className="bg-orange-500/10 text-orange-600">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Active
+              </Badge>
+            ) : pushPermission === "denied" ? (
+              <Badge variant="secondary" className="bg-red-500/10 text-red-600">
+                Blocked
+              </Badge>
+            ) : null}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!isPushSupported ? (
+            <p className="text-sm text-muted-foreground">
+              Push notifications are not supported in your browser.
+            </p>
+          ) : isPushSubscribed ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20 flex-1 mr-4">
+                <BellRing className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Push notifications active</p>
+                  <p className="text-xs text-muted-foreground">
+                    You'll receive push alerts even when the app is closed.
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={unsubscribePush}
+                disabled={isPushLoading}
+              >
+                {isPushLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Disable"
+                )}
+              </Button>
+            </div>
+          ) : pushPermission === "denied" ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Push notifications are blocked. To enable them, allow notifications in your browser settings.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Enable push notifications to receive alerts even when the app is closed.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Note: Server configuration required for full functionality.
+                </p>
+              </div>
+              <Button 
+                size="sm" 
+                disabled={isPushLoading}
+                onClick={() => {
+                  toast.info("Push notifications require VAPID keys to be configured.");
+                }}
+              >
+                {isPushLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
                   <Bell className="w-4 h-4 mr-2" />
