@@ -131,11 +131,15 @@ const adminItems: NavItem[] = [
     ],
   },
   {
-    id: "admin",
-    label: "Admin Panel",
-    icon: Shield,
+    id: "admin-center",
+    label: "Admin Center",
+    icon: Settings,
     color: "text-destructive",
     requiredRoles: ["admin"],
+    children: [
+      { id: "admin-integrations", label: "Integrations", icon: Building2 },
+      { id: "admin-panel", label: "Admin Panel", icon: Shield },
+    ],
   },
 ];
 
