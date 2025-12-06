@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, Copy } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export interface PreviewRow {
   data: Record<string, string>;
@@ -16,30 +19,65 @@ interface CSVPreviewTableProps {
   rows: PreviewRow[];
   columns: string[];
   requiredColumns: string[];
+  onCellEdit?: (rowIndex: number, column: string, value: string) => void;
 }
 
-export function CSVPreviewTable({ rows, columns, requiredColumns }: CSVPreviewTableProps) {
+export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit }: CSVPreviewTableProps) {
+  const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
+  const [editValue, setEditValue] = useState("");
+
   const validCount = rows.filter(r => r.isValid && !r.isDuplicate).length;
   const invalidCount = rows.filter(r => !r.isValid).length;
   const duplicateCount = rows.filter(r => r.isDuplicate).length;
 
+  const handleStartEdit = (rowIndex: number, column: string, currentValue: string) => {
+    if (!onCellEdit) return;
+    setEditingCell({ row: rowIndex, col: column });
+    setEditValue(currentValue);
+  };
+
+  const handleFinishEdit = () => {
+    if (editingCell && onCellEdit) {
+      onCellEdit(editingCell.row, editingCell.col, editValue);
+    }
+    setEditingCell(null);
+    setEditValue("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleFinishEdit();
+    } else if (e.key === "Escape") {
+      setEditingCell(null);
+      setEditValue("");
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-4 text-sm flex-wrap">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-primary" />
-          <span className="text-muted-foreground">{validCount} new rows</span>
-        </div>
-        {duplicateCount > 0 && (
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-4 text-sm flex-wrap">
           <div className="flex items-center gap-2">
-            <Copy className="w-4 h-4 text-amber-500" />
-            <span className="text-amber-600">{duplicateCount} duplicates</span>
+            <CheckCircle2 className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground">{validCount} new rows</span>
           </div>
-        )}
-        {invalidCount > 0 && (
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-destructive" />
-            <span className="text-destructive">{invalidCount} invalid rows</span>
+          {duplicateCount > 0 && (
+            <div className="flex items-center gap-2">
+              <Copy className="w-4 h-4 text-amber-500" />
+              <span className="text-amber-600">{duplicateCount} duplicates</span>
+            </div>
+          )}
+          {invalidCount > 0 && (
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-destructive" />
+              <span className="text-destructive">{invalidCount} invalid rows</span>
+            </div>
+          )}
+        </div>
+        {onCellEdit && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Pencil className="w-3 h-3" />
+            <span>Click any cell to edit</span>
           </div>
         )}
       </div>
@@ -97,24 +135,48 @@ export function CSVPreviewTable({ rows, columns, requiredColumns }: CSVPreviewTa
                     </Badge>
                   )}
                 </TableCell>
-                {columns.map((col) => (
-                  <TableCell 
-                    key={col} 
-                    className={
-                      requiredColumns.includes(col) && !row.data[col]
-                        ? "text-destructive"
-                        : "text-muted-foreground"
-                    }
-                  >
-                    {row.data[col] || (
-                      requiredColumns.includes(col) ? (
-                        <span className="text-destructive italic">Missing</span>
+                {columns.map((col) => {
+                  const isEditing = editingCell?.row === index && editingCell?.col === col;
+                  const cellValue = row.data[col] || "";
+                  const isMissing = requiredColumns.includes(col) && !cellValue;
+
+                  return (
+                    <TableCell 
+                      key={col} 
+                      className={cn(
+                        "p-0",
+                        isMissing ? "text-destructive" : "text-muted-foreground"
+                      )}
+                    >
+                      {isEditing ? (
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={handleFinishEdit}
+                          onKeyDown={handleKeyDown}
+                          autoFocus
+                          className="h-8 text-sm border-primary focus-visible:ring-1"
+                        />
                       ) : (
-                        <span className="text-muted-foreground/50">—</span>
-                      )
-                    )}
-                  </TableCell>
-                ))}
+                        <div
+                          onClick={() => handleStartEdit(index, col, cellValue)}
+                          className={cn(
+                            "px-4 py-2 min-h-[40px] flex items-center",
+                            onCellEdit && "cursor-pointer hover:bg-muted/50 transition-colors"
+                          )}
+                        >
+                          {cellValue || (
+                            isMissing ? (
+                              <span className="text-destructive italic">Missing</span>
+                            ) : (
+                              <span className="text-muted-foreground/50">—</span>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>
