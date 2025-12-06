@@ -1,1 +1,7 @@
 project_id = "pnaiiwgjakqtwylmozvi"
+
+[functions.office365-auth]
+verify_jwt = true
+
+[functions.office365-sync]
+verify_jwt = true
