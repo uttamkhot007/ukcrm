@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Check, CheckCheck, Info, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
+import { Bell, Check, CheckCheck, Info, AlertTriangle, XCircle, CheckCircle, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +95,14 @@ export function NotificationsPopover() {
             </div>
           )}
         </ScrollArea>
+        <div className="p-2 border-t">
+          <Link to="/notifications" onClick={() => setOpen(false)}>
+            <Button variant="ghost" size="sm" className="w-full justify-center">
+              View all notifications
+              <ExternalLink className="w-3 h-3 ml-2" />
+            </Button>
+          </Link>
+        </div>
       </PopoverContent>
     </Popover>
   );
