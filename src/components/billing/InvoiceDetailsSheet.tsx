@@ -38,6 +38,7 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [isUpdatingCurrency, setIsUpdatingCurrency] = useState(false);
 
   const { data: invoice } = useQuery({
     queryKey: ["invoice", invoiceId],
@@ -101,6 +102,28 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
     }
   };
 
+  const handleCurrencyChange = async (newCurrency: string) => {
+    if (!invoice) return;
+    // Only allow currency change if not fully paid
+    if (invoice.status === "paid") {
+      toast.error("Cannot change currency for paid invoices");
+      return;
+    }
+    setIsUpdatingCurrency(true);
+    try {
+      const { error } = await supabase.from("invoices").update({ currency: newCurrency }).eq("id", invoice.id);
+      if (error) throw error;
+      toast.success("Currency updated");
+      queryClient.invalidateQueries({ queryKey: ["invoice", invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsUpdatingCurrency(false);
+    }
+  };
+
   const handleRecordPayment = async () => {
     if (!invoice || !user || !paymentAmount) return;
     try {
@@ -138,6 +161,8 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
   if (!invoice) return null;
 
   const balance = invoice.total - (invoice.amount_paid || 0);
+  const invoiceCurrency = invoice.currency || "INR";
+  const canChangeCurrency = invoice.status !== "paid";
 
   return (
     <>
@@ -184,6 +209,28 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                   </Select>
                 </div>
                 <div>
+                  <p className="text-sm text-muted-foreground">Currency</p>
+                  <Select 
+                    value={invoiceCurrency} 
+                    onValueChange={handleCurrencyChange}
+                    disabled={!canChangeCurrency || isUpdatingCurrency}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!canChangeCurrency && (
+                    <p className="text-xs text-muted-foreground mt-1">Currency locked after payment</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <p className="text-sm text-muted-foreground">Due Date</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Calendar className="w-4 h-4" />
@@ -200,7 +247,7 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                   {items?.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm p-2 bg-muted/50 rounded">
                       <span>{item.description}</span>
-                      <span>{item.quantity} × {formatCurrency(item.unit_price)} = {formatCurrency(item.total)}</span>
+                      <span>{item.quantity} × {formatCurrency(item.unit_price, invoiceCurrency)} = {formatCurrency(item.total, invoiceCurrency)}</span>
                     </div>
                   ))}
                 </div>
@@ -209,25 +256,25 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
               <div className="bg-muted p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>{formatCurrency(invoice.subtotal)}</span>
+                  <span>{formatCurrency(invoice.subtotal, invoiceCurrency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax ({invoice.tax_rate}%)</span>
-                  <span>{formatCurrency(invoice.tax_amount)}</span>
+                  <span>{formatCurrency(invoice.tax_amount, invoiceCurrency)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>{formatCurrency(invoice.total)}</span>
+                  <span>{formatCurrency(invoice.total, invoiceCurrency)}</span>
                 </div>
                 {invoice.amount_paid > 0 && (
                   <>
                     <div className="flex justify-between text-green-600">
                       <span>Paid</span>
-                      <span>-{formatCurrency(invoice.amount_paid)}</span>
+                      <span>-{formatCurrency(invoice.amount_paid, invoiceCurrency)}</span>
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>Balance</span>
-                      <span>{formatCurrency(balance)}</span>
+                      <span>{formatCurrency(balance, invoiceCurrency)}</span>
                     </div>
                   </>
                 )}
@@ -252,7 +299,7 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                             <p className="text-xs text-muted-foreground">{payment.payment_method}</p>
                           )}
                         </div>
-                        <span className="font-medium text-green-600">{formatCurrency(payment.amount)}</span>
+                        <span className="font-medium text-green-600">{formatCurrency(payment.amount, invoiceCurrency)}</span>
                       </div>
                     ))}
                   </div>
@@ -270,12 +317,12 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Amount</Label>
+              <Label>Amount ({invoiceCurrency})</Label>
               <Input
                 type="number"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                placeholder={`Balance: ${formatCurrency(balance)}`}
+                placeholder={`Balance: ${formatCurrency(balance, invoiceCurrency)}`}
               />
             </div>
             <div className="space-y-2">
