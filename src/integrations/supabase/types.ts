@@ -912,6 +912,7 @@ export type Database = {
           in_app_renewals: boolean
           in_app_requests: boolean
           in_app_tickets: boolean
+          push_enabled: boolean
           quiet_hours_enabled: boolean
           quiet_hours_end: string
           quiet_hours_start: string
@@ -937,6 +938,7 @@ export type Database = {
           in_app_renewals?: boolean
           in_app_requests?: boolean
           in_app_tickets?: boolean
+          push_enabled?: boolean
           quiet_hours_enabled?: boolean
           quiet_hours_end?: string
           quiet_hours_start?: string
@@ -962,6 +964,7 @@ export type Database = {
           in_app_renewals?: boolean
           in_app_requests?: boolean
           in_app_tickets?: boolean
+          push_enabled?: boolean
           quiet_hours_enabled?: boolean
           quiet_hours_end?: string
           quiet_hours_start?: string
@@ -1089,6 +1092,36 @@ export type Database = {
           full_name?: string | null
           id?: string
           job_title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
           updated_at?: string
           user_id?: string
         }
