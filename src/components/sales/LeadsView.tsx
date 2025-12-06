@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2, User, Download } from "lucide-react";
 import { format } from "date-fns";
@@ -82,6 +83,7 @@ export function LeadsView() {
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
   const queryClient = useQueryClient();
 
   const { data: leads, isLoading } = useQuery({
@@ -335,7 +337,7 @@ export function LeadsView() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="estimated_value">Estimated Value ($)</Label>
+                  <Label htmlFor="estimated_value">Estimated Value ({getCurrencySymbol()})</Label>
                   <Input
                     id="estimated_value"
                     type="number"
@@ -419,7 +421,7 @@ export function LeadsView() {
                     </TableCell>
                     <TableCell>{lead.source || "-"}</TableCell>
                     <TableCell>
-                      {lead.estimated_value ? `$${Number(lead.estimated_value).toLocaleString()}` : "-"}
+                      {lead.estimated_value ? formatCurrency(Number(lead.estimated_value)) : "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {format(new Date(lead.created_at), "MMM d, yyyy")}

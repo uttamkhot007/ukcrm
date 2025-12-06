@@ -1366,6 +1366,7 @@ export type Database = {
         Row: {
           contact_id: string | null
           created_at: string
+          currency: string | null
           deal_id: string | null
           description: string | null
           discount_amount: number | null
@@ -1386,6 +1387,7 @@ export type Database = {
         Insert: {
           contact_id?: string | null
           created_at?: string
+          currency?: string | null
           deal_id?: string | null
           description?: string | null
           discount_amount?: number | null
@@ -1406,6 +1408,7 @@ export type Database = {
         Update: {
           contact_id?: string | null
           created_at?: string
+          currency?: string | null
           deal_id?: string | null
           description?: string | null
           discount_amount?: number | null

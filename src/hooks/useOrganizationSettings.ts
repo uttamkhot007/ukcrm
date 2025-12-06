@@ -16,17 +16,20 @@ export function useOrganizationSettings() {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  const currency = settings?.currency || "USD";
+  const currency = settings?.currency || "INR";
   
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-IN', {
+  const formatCurrency = (value: number, overrideCurrency?: string) => {
+    const currencyToUse = overrideCurrency || currency;
+    const locale = currencyToUse === "INR" ? "en-IN" : "en-US";
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: currency,
+      currency: currencyToUse,
       maximumFractionDigits: 0,
     }).format(value);
   };
 
-  const getCurrencySymbol = () => {
+  const getCurrencySymbol = (overrideCurrency?: string) => {
+    const currencyToUse = overrideCurrency || currency;
     const symbols: Record<string, string> = {
       USD: "$",
       INR: "₹",
@@ -34,7 +37,7 @@ export function useOrganizationSettings() {
       GBP: "£",
       JPY: "¥",
     };
-    return symbols[currency] || currency;
+    return symbols[currencyToUse] || currencyToUse;
   };
 
   return {

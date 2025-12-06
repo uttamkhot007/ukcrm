@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { cn } from "@/lib/utils";
 import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
@@ -34,6 +35,7 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null);
   const { toast } = useToast();
+  const { formatCurrency } = useOrganizationSettings();
   const queryClient = useQueryClient();
 
   const updateDealStage = useMutation({
@@ -119,7 +121,7 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                ${stageTotal.toLocaleString()}
+                {formatCurrency(stageTotal)}
               </p>
             </div>
 
@@ -151,7 +153,7 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
                         <div className="flex items-center gap-1">
                           <DollarSign className="w-3 h-3" />
                           <span className="font-medium text-foreground">
-                            ${Number(deal.value).toLocaleString()}
+                            {formatCurrency(Number(deal.value))}
                           </span>
                         </div>
                         <span>•</span>

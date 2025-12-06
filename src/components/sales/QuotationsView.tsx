@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
 import { format } from "date-fns";
@@ -71,6 +72,7 @@ const initialFormData = {
   valid_until: "",
   terms: "",
   notes: "",
+  currency: "INR",
 };
 
 export function QuotationsView() {
@@ -81,6 +83,7 @@ export function QuotationsView() {
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { formatCurrency, currency: orgCurrency } = useOrganizationSettings();
   const queryClient = useQueryClient();
 
   const { data: quotations, isLoading } = useQuery({
@@ -115,7 +118,8 @@ export function QuotationsView() {
         terms: data.terms.trim() || null,
         notes: data.notes.trim() || null,
         user_id: user!.id,
-      });
+        currency: data.currency,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -148,7 +152,8 @@ export function QuotationsView() {
           valid_until: data.valid_until || null,
           terms: data.terms.trim() || null,
           notes: data.notes.trim() || null,
-        })
+          currency: data.currency,
+        } as any)
         .eq("id", id);
       if (error) throw error;
     },
@@ -194,6 +199,7 @@ export function QuotationsView() {
       valid_until: quotation.valid_until || "",
       terms: quotation.terms || "",
       notes: quotation.notes || "",
+      currency: (quotation as any).currency || orgCurrency,
     });
     setIsDialogOpen(true);
   };
@@ -254,7 +260,7 @@ export function QuotationsView() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Value</p>
-              <p className="text-2xl font-bold">${totalValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
             </div>
           </div>
         </Card>
@@ -318,9 +324,44 @@ export function QuotationsView() {
                   rows={2}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INR">INR (₹)</SelectItem>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as QuotationStatus })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="subtotal">Subtotal ($)</Label>
+                  <Label htmlFor="subtotal">Subtotal ({formData.currency === "INR" ? "₹" : "$"})</Label>
                   <Input
                     id="subtotal"
                     type="number"
@@ -342,32 +383,14 @@ export function QuotationsView() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value as QuotationStatus })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(statusLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="valid_until">Valid Until</Label>
+                  <Input
+                    id="valid_until"
+                    type="date"
+                    value={formData.valid_until}
+                    onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+                  />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="valid_until">Valid Until</Label>
-                <Input
-                  id="valid_until"
-                  type="date"
-                  value={formData.valid_until}
-                  onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="terms">Terms & Conditions</Label>
@@ -425,9 +448,9 @@ export function QuotationsView() {
                         {statusLabels[quotation.status]}
                       </Badge>
                     </TableCell>
-                    <TableCell>${Number(quotation.subtotal).toLocaleString()}</TableCell>
+                    <TableCell>{formatCurrency(Number(quotation.subtotal), (quotation as any).currency || orgCurrency)}</TableCell>
                     <TableCell className="font-semibold">
-                      ${Number(quotation.total).toLocaleString()}
+                      {formatCurrency(Number(quotation.total), (quotation as any).currency || orgCurrency)}
                     </TableCell>
                     <TableCell>
                       {quotation.valid_until

@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
 import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
@@ -92,6 +93,7 @@ export function DealsView() {
   const [filters, setFilters] = useState<DealFilters>(initialDealFilters);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
   const queryClient = useQueryClient();
 
   const { data: deals, isLoading } = useQuery({
@@ -267,7 +269,7 @@ export function DealsView() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Pipeline</p>
-              <p className="text-2xl font-bold">${totalValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
             </div>
           </div>
         </Card>
@@ -278,7 +280,7 @@ export function DealsView() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Won This Quarter</p>
-              <p className="text-2xl font-bold">${wonValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatCurrency(wonValue)}</p>
             </div>
           </div>
         </Card>
@@ -364,7 +366,7 @@ export function DealsView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="value">Value ($)</Label>
+                  <Label htmlFor="value">Value ({getCurrencySymbol()})</Label>
                   <Input
                     id="value"
                     type="number"
@@ -480,7 +482,7 @@ export function DealsView() {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell>${Number(deal.value).toLocaleString()}</TableCell>
+                    <TableCell>{formatCurrency(Number(deal.value))}</TableCell>
                     <TableCell>
                       <Badge className={stageColors[deal.stage]}>{stageLabels[deal.stage]}</Badge>
                     </TableCell>
