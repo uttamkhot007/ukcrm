@@ -149,6 +149,12 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
     setPreviewData({ ...previewData, rows: updatedRows });
   };
 
+  const handleRemoveAllDuplicates = () => {
+    if (!previewData) return;
+    const updatedRows = previewData.rows.filter(row => !row.isDuplicate);
+    setPreviewData({ ...previewData, rows: updatedRows });
+  };
+
   const handleUpload = async () => {
     if (!dataType || !previewData || !user) return;
 
@@ -434,6 +440,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 requiredColumns={previewData.requiredColumns}
                 onCellEdit={handleCellEdit}
                 onRowDelete={handleRowDelete}
+                onRemoveAllDuplicates={handleRemoveAllDuplicates}
               />
             )}
           </div>

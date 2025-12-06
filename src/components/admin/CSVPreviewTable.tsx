@@ -22,9 +22,10 @@ interface CSVPreviewTableProps {
   requiredColumns: string[];
   onCellEdit?: (rowIndex: number, column: string, value: string) => void;
   onRowDelete?: (rowIndex: number) => void;
+  onRemoveAllDuplicates?: () => void;
 }
 
-export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit, onRowDelete }: CSVPreviewTableProps) {
+export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit, onRowDelete, onRemoveAllDuplicates }: CSVPreviewTableProps) {
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -67,6 +68,16 @@ export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit, on
             <div className="flex items-center gap-2">
               <Copy className="w-4 h-4 text-amber-500" />
               <span className="text-amber-600">{duplicateCount} duplicates</span>
+              {onRemoveAllDuplicates && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs ml-1 text-amber-600 border-amber-500/30 hover:bg-amber-500/10"
+                  onClick={onRemoveAllDuplicates}
+                >
+                  Remove all
+                </Button>
+              )}
             </div>
           )}
           {invalidCount > 0 && (
