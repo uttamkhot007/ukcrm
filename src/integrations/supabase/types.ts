@@ -1130,11 +1130,18 @@ export type Database = {
       organization_settings: {
         Row: {
           address: string | null
+          alert_managers_on_early_departure: boolean | null
+          alert_managers_on_late: boolean | null
           cities: string[] | null
+          consecutive_late_threshold: number | null
           countries: string[] | null
           created_at: string
           currency: string | null
+          early_departure_alert_enabled: boolean | null
+          early_departure_threshold_minutes: number | null
           id: string
+          late_arrival_alert_enabled: boolean | null
+          late_threshold_minutes: number | null
           linkedin_url: string | null
           logo_url: string | null
           name: string
@@ -1143,14 +1150,23 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           website_url: string | null
+          work_end_time: string | null
+          work_start_time: string | null
         }
         Insert: {
           address?: string | null
+          alert_managers_on_early_departure?: boolean | null
+          alert_managers_on_late?: boolean | null
           cities?: string[] | null
+          consecutive_late_threshold?: number | null
           countries?: string[] | null
           created_at?: string
           currency?: string | null
+          early_departure_alert_enabled?: boolean | null
+          early_departure_threshold_minutes?: number | null
           id?: string
+          late_arrival_alert_enabled?: boolean | null
+          late_threshold_minutes?: number | null
           linkedin_url?: string | null
           logo_url?: string | null
           name?: string
@@ -1159,14 +1175,23 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           website_url?: string | null
+          work_end_time?: string | null
+          work_start_time?: string | null
         }
         Update: {
           address?: string | null
+          alert_managers_on_early_departure?: boolean | null
+          alert_managers_on_late?: boolean | null
           cities?: string[] | null
+          consecutive_late_threshold?: number | null
           countries?: string[] | null
           created_at?: string
           currency?: string | null
+          early_departure_alert_enabled?: boolean | null
+          early_departure_threshold_minutes?: number | null
           id?: string
+          late_arrival_alert_enabled?: boolean | null
+          late_threshold_minutes?: number | null
           linkedin_url?: string | null
           logo_url?: string | null
           name?: string
@@ -1175,6 +1200,8 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           website_url?: string | null
+          work_end_time?: string | null
+          work_start_time?: string | null
         }
         Relationships: []
       }
