@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface RequestApprovalListProps {
   statusFilter: string | null;
+  teamFilter: string | null;
   onSelectRequest: (id: string) => void;
 }
 
@@ -65,9 +66,9 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 type RequestStatus = "pending" | "under_review" | "approved" | "rejected" | "completed" | "cancelled";
 
-export function RequestApprovalList({ statusFilter, onSelectRequest }: RequestApprovalListProps) {
+export function RequestApprovalList({ statusFilter, teamFilter, onSelectRequest }: RequestApprovalListProps) {
   const { data: requests, isLoading } = useQuery({
-    queryKey: ["all-employee-requests", statusFilter],
+    queryKey: ["all-employee-requests", statusFilter, teamFilter],
     queryFn: async () => {
       let query = supabase
         .from("employee_requests")
@@ -76,6 +77,10 @@ export function RequestApprovalList({ statusFilter, onSelectRequest }: RequestAp
 
       if (statusFilter) {
         query = query.eq("status", statusFilter as RequestStatus);
+      }
+
+      if (teamFilter) {
+        query = query.eq("assigned_team", teamFilter);
       }
 
       const { data, error } = await query;
