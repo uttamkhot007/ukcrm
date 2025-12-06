@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ interface LineItem {
 
 export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) {
   const { user } = useAuth();
+  const { formatCurrency } = useOrganizationSettings();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -111,10 +113,6 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
   };
 
   return (

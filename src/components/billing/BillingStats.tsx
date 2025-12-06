@@ -2,8 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 export function BillingStats() {
+  const { formatCurrency } = useOrganizationSettings();
+  
   const { data: stats } = useQuery({
     queryKey: ["billing-stats"],
     queryFn: async () => {
@@ -27,10 +30,6 @@ export function BillingStats() {
       return { total, totalRevenue, collected, outstanding, overdue, paid };
     },
   });
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
-  };
 
   const statCards = [
     { title: "Total Revenue", value: formatCurrency(stats?.totalRevenue || 0), icon: DollarSign, color: "text-blue-500" },

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 interface InvoicesListProps {
   statusFilter: string | null;
@@ -19,6 +20,8 @@ const statusColors: Record<string, string> = {
 };
 
 export function InvoicesList({ statusFilter, onInvoiceSelect }: InvoicesListProps) {
+  const { formatCurrency } = useOrganizationSettings();
+  
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["invoices", statusFilter],
     queryFn: async () => {
@@ -39,10 +42,6 @@ export function InvoicesList({ statusFilter, onInvoiceSelect }: InvoicesListProp
       return data;
     },
   });
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
-  };
 
   if (isLoading) {
     return <div className="py-8 text-center text-muted-foreground">Loading invoices...</div>;
