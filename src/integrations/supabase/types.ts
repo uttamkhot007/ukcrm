@@ -14,6 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
+      compliance_assessments: {
+        Row: {
+          assessment_date: string
+          assessor_id: string
+          compliant_count: number | null
+          created_at: string
+          findings: string | null
+          framework_id: string
+          id: string
+          in_progress_count: number | null
+          non_compliant_count: number | null
+          overall_status: Database["public"]["Enums"]["compliance_status"]
+          recommendations: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_date?: string
+          assessor_id: string
+          compliant_count?: number | null
+          created_at?: string
+          findings?: string | null
+          framework_id: string
+          id?: string
+          in_progress_count?: number | null
+          non_compliant_count?: number | null
+          overall_status?: Database["public"]["Enums"]["compliance_status"]
+          recommendations?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_date?: string
+          assessor_id?: string
+          compliant_count?: number | null
+          created_at?: string
+          findings?: string | null
+          framework_id?: string
+          id?: string
+          in_progress_count?: number | null
+          non_compliant_count?: number | null
+          overall_status?: Database["public"]["Enums"]["compliance_status"]
+          recommendations?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_assessments_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_frameworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_controls: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          control_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          framework_id: string
+          id: string
+          last_assessed_at: string | null
+          notes: string | null
+          status: Database["public"]["Enums"]["compliance_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          control_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          framework_id: string
+          id?: string
+          last_assessed_at?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["compliance_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          control_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          framework_id?: string
+          id?: string
+          last_assessed_at?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["compliance_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_controls_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_frameworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_evidence: {
+        Row: {
+          control_id: string
+          created_at: string
+          description: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          title: string
+          uploaded_by: string
+        }
+        Insert: {
+          control_id: string
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          title: string
+          uploaded_by: string
+        }
+        Update: {
+          control_id?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          title?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_evidence_control_id_fkey"
+            columns: ["control_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_controls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_frameworks: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["framework_type"]
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["framework_type"]
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["framework_type"]
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           company: string | null
@@ -385,6 +571,128 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          sort_order: number | null
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          sort_order?: number | null
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          sort_order?: number | null
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_paid: number | null
+          billing_frequency: Database["public"]["Enums"]["billing_frequency"]
+          contact_id: string | null
+          created_at: string
+          created_by: string
+          deal_id: string | null
+          discount_amount: number | null
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          notes: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number
+          tax_rate: number | null
+          terms: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          billing_frequency?: Database["public"]["Enums"]["billing_frequency"]
+          contact_id?: string | null
+          created_at?: string
+          created_by: string
+          deal_id?: string | null
+          discount_amount?: number | null
+          due_date: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number | null
+          terms?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number | null
+          billing_frequency?: Database["public"]["Enums"]["billing_frequency"]
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string
+          deal_id?: string | null
+          discount_amount?: number | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number | null
+          terms?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
@@ -546,6 +854,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_records: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          recorded_by: string
+          reference_number: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          recorded_by: string
+          reference_number?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          recorded_by?: string
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_records_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -865,6 +1217,153 @@ export type Database = {
           },
         ]
       }
+      ticket_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          assigned_to: string | null
+          category: Database["public"]["Enums"]["ticket_category"]
+          closed_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          escalated_to: string | null
+          escalation_level: number | null
+          first_response_at: string | null
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          sla_deadline: string | null
+          sla_hours: number
+          status: Database["public"]["Enums"]["ticket_status"]
+          ticket_number: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          closed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          escalated_to?: string | null
+          escalation_level?: number | null
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          sla_deadline?: string | null
+          sla_hours?: number
+          status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_number: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          closed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          escalated_to?: string | null
+          escalation_level?: number | null
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          sla_deadline?: string | null
+          sla_hours?: number
+          status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_number?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -943,11 +1442,18 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "employee"
+      billing_frequency: "one_time" | "monthly" | "quarterly" | "annually"
       closed_won_substage:
         | "odf_created"
         | "odf_approved"
         | "invoice_raised"
         | "payment_received"
+      compliance_status:
+        | "not_started"
+        | "in_progress"
+        | "compliant"
+        | "non_compliant"
+        | "needs_review"
       deal_stage:
         | "pipeline"
         | "upside"
@@ -955,6 +1461,21 @@ export type Database = {
         | "commit"
         | "closed_won"
         | "closed_lost"
+      framework_type:
+        | "soc2"
+        | "iso27001"
+        | "hipaa"
+        | "pci_dss"
+        | "gdpr"
+        | "nist"
+        | "other"
+      invoice_status:
+        | "draft"
+        | "sent"
+        | "paid"
+        | "overdue"
+        | "cancelled"
+        | "partially_paid"
       lead_status:
         | "new"
         | "contacted"
@@ -1012,6 +1533,21 @@ export type Database = {
         | "finance"
         | "inside_sales"
         | "marketing"
+      ticket_category:
+        | "incident"
+        | "service_request"
+        | "change_request"
+        | "problem"
+        | "security_alert"
+      ticket_priority: "low" | "medium" | "high" | "critical"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "pending_customer"
+        | "pending_vendor"
+        | "escalated"
+        | "resolved"
+        | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1140,11 +1676,19 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "employee"],
+      billing_frequency: ["one_time", "monthly", "quarterly", "annually"],
       closed_won_substage: [
         "odf_created",
         "odf_approved",
         "invoice_raised",
         "payment_received",
+      ],
+      compliance_status: [
+        "not_started",
+        "in_progress",
+        "compliant",
+        "non_compliant",
+        "needs_review",
       ],
       deal_stage: [
         "pipeline",
@@ -1153,6 +1697,23 @@ export const Constants = {
         "commit",
         "closed_won",
         "closed_lost",
+      ],
+      framework_type: [
+        "soc2",
+        "iso27001",
+        "hipaa",
+        "pci_dss",
+        "gdpr",
+        "nist",
+        "other",
+      ],
+      invoice_status: [
+        "draft",
+        "sent",
+        "paid",
+        "overdue",
+        "cancelled",
+        "partially_paid",
       ],
       lead_status: [
         "new",
@@ -1218,6 +1779,23 @@ export const Constants = {
         "finance",
         "inside_sales",
         "marketing",
+      ],
+      ticket_category: [
+        "incident",
+        "service_request",
+        "change_request",
+        "problem",
+        "security_alert",
+      ],
+      ticket_priority: ["low", "medium", "high", "critical"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "pending_customer",
+        "pending_vendor",
+        "escalated",
+        "resolved",
+        "closed",
       ],
     },
   },
