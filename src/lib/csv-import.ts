@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
+import { parseFile } from "./file-parser";
 
 export interface ContactCSVRow {
   name: string;
@@ -55,7 +56,7 @@ export interface ParsePreviewResult {
 const VALID_DEAL_STAGES = ["pipeline", "upside", "strong_upside", "commit", "closed_won", "closed_lost"];
 
 export async function parseContactsPreview(file: File): Promise<ParsePreviewResult> {
-  const rawRows = await parseCSVFile<ContactCSVRow>(file);
+  const rawRows = await parseFile<ContactCSVRow>(file);
   const requiredColumns = ["name"];
   const columns = ["name", "email", "phone", "company", "designation", "notes"];
 
@@ -110,7 +111,7 @@ export async function parseContactsPreview(file: File): Promise<ParsePreviewResu
 }
 
 export async function parseDealsPreview(file: File): Promise<ParsePreviewResult> {
-  const rawRows = await parseCSVFile<DealCSVRow>(file);
+  const rawRows = await parseFile<DealCSVRow>(file);
   const requiredColumns = ["title"];
   const columns = ["title", "value", "stage", "probability", "expected_close_date", "description", "contact_name", "contact_email"];
 
@@ -177,7 +178,7 @@ export async function parseDealsPreview(file: File): Promise<ParsePreviewResult>
 }
 
 export async function parseEmployeesPreview(file: File): Promise<ParsePreviewResult> {
-  const rawRows = await parseCSVFile<EmployeeCSVRow>(file);
+  const rawRows = await parseFile<EmployeeCSVRow>(file);
   const requiredColumns = ["full_name", "email"];
   const columns = ["full_name", "email", "employee_code", "department", "job_title", "location", "birth_date", "hire_date"];
 
