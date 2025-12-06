@@ -7,8 +7,43 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Building2, Globe, Linkedin, Twitter, MapPin, Users, DollarSign, Plus, X, Save, UserCircle } from "lucide-react";
+
+const CURRENCIES = [
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
+  { code: "INR", name: "Indian Rupee", symbol: "₹" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
+  { code: "CHF", name: "Swiss Franc", symbol: "CHF" },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "HK$" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$" },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr" },
+  { code: "KRW", name: "South Korean Won", symbol: "₩" },
+  { code: "MXN", name: "Mexican Peso", symbol: "$" },
+  { code: "BRL", name: "Brazilian Real", symbol: "R$" },
+  { code: "RUB", name: "Russian Ruble", symbol: "₽" },
+  { code: "ZAR", name: "South African Rand", symbol: "R" },
+  { code: "AED", name: "UAE Dirham", symbol: "د.إ" },
+  { code: "SAR", name: "Saudi Riyal", symbol: "﷼" },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "NZ$" },
+  { code: "THB", name: "Thai Baht", symbol: "฿" },
+  { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM" },
+  { code: "PHP", name: "Philippine Peso", symbol: "₱" },
+  { code: "PLN", name: "Polish Zloty", symbol: "zł" },
+  { code: "TRY", name: "Turkish Lira", symbol: "₺" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr" },
+  { code: "DKK", name: "Danish Krone", symbol: "kr" },
+  { code: "COP", name: "Colombian Peso", symbol: "$" },
+  { code: "ARS", name: "Argentine Peso", symbol: "$" },
+];
+
 import { useAuth } from "@/hooks/useAuth";
 
 interface SeniorManager {
@@ -195,12 +230,26 @@ export function OrganizationSettings() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Input
-                  id="currency"
-                  value={formData.currency || ""}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, currency: e.target.value }))}
+                <Select
+                  value={formData.currency || "USD"}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, currency: value }))}
                   disabled={!isAdmin}
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {CURRENCIES.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        <span className="flex items-center gap-2">
+                          <span className="font-mono">{currency.symbol}</span>
+                          <span>{currency.code}</span>
+                          <span className="text-muted-foreground">- {currency.name}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="employees">Total Employees</Label>

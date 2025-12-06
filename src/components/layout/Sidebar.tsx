@@ -323,6 +323,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-employee",
         children: [
           { id: "employee-attendance", label: "Attendance", icon: Clock },
+          { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-requests", label: "My Requests", icon: Ticket },
           { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
           { id: "employee-events", label: "Events & Celebrations", icon: PartyPopper },
