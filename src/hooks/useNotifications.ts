@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
 
 interface Notification {
   id: string;
@@ -20,6 +21,7 @@ interface Notification {
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { showNotification, isEnabled: browserNotificationsEnabled } = useBrowserNotifications();
 
   const { data: notifications = [], isLoading, refetch } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -56,6 +58,15 @@ export function useNotifications() {
         (payload) => {
           console.log("New notification:", payload);
           queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+          
+          // Show browser notification if enabled
+          if (browserNotificationsEnabled && payload.new) {
+            const newNotification = payload.new as Notification;
+            showNotification(newNotification.title, {
+              body: newNotification.message,
+              tag: newNotification.id,
+            });
+          }
         }
       )
       .subscribe();
@@ -63,7 +74,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [user, queryClient, browserNotificationsEnabled, showNotification]);
 
   const markAsRead = async (notificationId: string) => {
     await supabase
