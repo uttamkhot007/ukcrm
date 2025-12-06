@@ -3,9 +3,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+const TEMPLATE_URLS = {
+  contacts: "/templates/hubspot-contacts-template.csv",
+  deals: "/templates/hubspot-deals-template.csv",
+};
 
 interface ManualUploadDialogProps {
   open: boolean;
@@ -114,6 +119,35 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Template Downloads */}
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+            <Download className="w-5 h-5 text-muted-foreground" />
+            <div className="flex-1">
+              <p className="text-sm font-medium">Download CSV Templates</p>
+              <p className="text-xs text-muted-foreground">Use these templates to format your data correctly</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+              >
+                <a href={TEMPLATE_URLS.contacts} download="hubspot-contacts-template.csv">
+                  Contacts
+                </a>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+              >
+                <a href={TEMPLATE_URLS.deals} download="hubspot-deals-template.csv">
+                  Deals
+                </a>
+              </Button>
+            </div>
+          </div>
+
           {/* Source Selection */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
