@@ -50,38 +50,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
-    // Fetch profile
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (profileData) {
-      setProfile(profileData);
-    }
+      if (profileData) {
+        setProfile(profileData);
+      }
 
-    // Fetch role
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
+      // Fetch role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (roleData) {
-      setRole(roleData.role as AppRole);
-    } else {
+      if (roleData) {
+        setRole(roleData.role as AppRole);
+      } else {
+        setRole("employee");
+      }
+
+      // Fetch teams
+      const { data: teamsData } = await supabase
+        .from("user_teams")
+        .select("team")
+        .eq("user_id", userId);
+
+      if (teamsData) {
+        setTeams(teamsData.map(t => t.team as TeamType));
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
       setRole("employee");
-    }
-
-    // Fetch teams
-    const { data: teamsData } = await supabase
-      .from("user_teams")
-      .select("team")
-      .eq("user_id", userId);
-
-    if (teamsData) {
-      setTeams(teamsData.map(t => t.team as TeamType));
     }
   };
 
@@ -99,34 +104,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserData(session.user.id);
+          // Use setTimeout to avoid Supabase auth deadlock
+          setTimeout(async () => {
+            if (isMounted) {
+              await fetchUserData(session.user.id);
+              setIsLoading(false);
+            }
           }, 0);
         } else {
           setProfile(null);
           setRole(null);
           setTeams([]);
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        await fetchUserData(session.user.id);
       }
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
