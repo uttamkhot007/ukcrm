@@ -498,66 +498,75 @@ export async function importEmployeesFromPreview(
     return { success: false, recordCount: 0, errors: ["No valid rows to import"] };
   }
 
-  // For each employee, we need to:
-  // 1. Create an auth user (or skip if exists)
-  // 2. Update their profile with the additional data
+  // Prepare users data for the edge function
+  const usersToCreate = validRows.map((row) => {
+    const userData: Record<string, any> = {
+      email: row.data.email.trim().toLowerCase(),
+      full_name: row.data.full_name.trim(),
+    };
 
-  for (const row of validRows) {
-    try {
-      // Check if user already exists in profiles by email
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id, user_id")
-        .eq("email", row.data.email.toLowerCase())
-        .maybeSingle();
-
-      if (existingProfile) {
-        // Update existing profile
-        const updateData: Record<string, any> = {
-          full_name: row.data.full_name.trim(),
-          department: row.data.department?.trim() || null,
-          job_title: row.data.job_title?.trim() || null,
-        };
-
-        if (row.data.birth_date) {
-          const date = new Date(row.data.birth_date);
-          if (!isNaN(date.getTime())) {
-            updateData.birth_date = date.toISOString().split("T")[0];
-          }
-        }
-
-        if (row.data.hire_date) {
-          const date = new Date(row.data.hire_date);
-          if (!isNaN(date.getTime())) {
-            updateData.hire_date = date.toISOString().split("T")[0];
-          }
-        }
-
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update(updateData)
-          .eq("id", existingProfile.id);
-
-        if (updateError) {
-          errors.push(`Failed to update ${row.data.email}: ${updateError.message}`);
-        } else {
-          successCount++;
-        }
-      } else {
-        // Profile doesn't exist - user needs to be created through auth signup first
-        // We can only update existing profiles, not create new auth users from here
-        errors.push(`No user account exists for ${row.data.email}. User must sign up first.`);
-      }
-    } catch (error) {
-      errors.push(`Error processing ${row.data.email}: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (row.data.employee_code?.trim()) {
+      userData.employee_code = row.data.employee_code.trim();
     }
-  }
+    if (row.data.department?.trim()) {
+      userData.department = row.data.department.trim();
+    }
+    if (row.data.job_title?.trim()) {
+      userData.job_title = row.data.job_title.trim();
+    }
+    if (row.data.location?.trim()) {
+      userData.location = row.data.location.trim();
+    }
+    if (row.data.birth_date) {
+      const date = new Date(row.data.birth_date);
+      if (!isNaN(date.getTime())) {
+        userData.birth_date = date.toISOString().split("T")[0];
+      }
+    }
+    if (row.data.hire_date) {
+      const date = new Date(row.data.hire_date);
+      if (!isNaN(date.getTime())) {
+        userData.hire_date = date.toISOString().split("T")[0];
+      }
+    }
 
-  return {
-    success: successCount > 0,
-    recordCount: successCount,
-    errors,
-  };
+    return userData;
+  });
+
+  try {
+    // Call the edge function to create users
+    const { data, error } = await supabase.functions.invoke("create-users", {
+      body: { users: usersToCreate },
+    });
+
+    if (error) {
+      return {
+        success: false,
+        recordCount: 0,
+        errors: [error.message || "Failed to create users"],
+      };
+    }
+
+    if (data) {
+      return {
+        success: data.success,
+        recordCount: data.recordCount || 0,
+        errors: data.errors || [],
+      };
+    }
+
+    return {
+      success: false,
+      recordCount: 0,
+      errors: ["No response from server"],
+    };
+  } catch (error) {
+    return {
+      success: false,
+      recordCount: 0,
+      errors: [error instanceof Error ? error.message : "Failed to import employees"],
+    };
+  }
 }
 
 export async function importDealsFromPreview(
