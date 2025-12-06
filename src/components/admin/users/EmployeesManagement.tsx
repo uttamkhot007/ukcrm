@@ -559,14 +559,14 @@ export function EmployeesManagement() {
             <div className="space-y-2">
               <Label>Manager</Label>
               <Select
-                value={editForm.manager_id || ""}
-                onValueChange={(value) => setEditForm((prev) => ({ ...prev, manager_id: value }))}
+                value={editForm.manager_id || "none"}
+                onValueChange={(value) => setEditForm((prev) => ({ ...prev, manager_id: value === "none" ? "" : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Manager</SelectItem>
+                  <SelectItem value="none">No Manager</SelectItem>
                   {managers.map((manager) => (
                     <SelectItem key={manager.user_id} value={manager.user_id}>
                       {manager.full_name}
