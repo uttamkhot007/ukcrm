@@ -25,6 +25,7 @@ import { UpcomingFollowUps } from "./UpcomingFollowUps";
 import { PendingApprovalsWidget } from "./PendingApprovalsWidget";
 import { EmployeeWidgets } from "./EmployeeWidgets";
 import { TeamSpecificWidgets } from "./TeamSpecificWidgets";
+import { NotificationCenterWidget } from "./NotificationCenterWidget";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -248,6 +249,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
             <SalesFunnel />
           </div>
           <div className="space-y-6">
+            <NotificationCenterWidget />
             <QuickActions />
             <PendingApprovalsWidget onNavigate={onModuleChange} />
             <UpcomingFollowUps onNavigate={onModuleChange} />
