@@ -17,6 +17,15 @@ import {
   Settings,
   Trash2,
   X,
+  Briefcase,
+  Ticket,
+  ClipboardCheck,
+  FileText,
+  RefreshCw,
+  Shield,
+  ChevronDown,
+  LayoutList,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +51,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 import { toast } from "sonner";
@@ -60,7 +74,145 @@ const typeColors: Record<string, string> = {
   error: "text-red-500 bg-red-500/10",
 };
 
+const categoryConfig: Record<string, { icon: typeof Info; label: string; color: string; bgColor: string }> = {
+  deals: { icon: Briefcase, label: "Deals", color: "text-blue-600", bgColor: "bg-blue-500/10" },
+  tickets: { icon: Ticket, label: "Tickets", color: "text-amber-600", bgColor: "bg-amber-500/10" },
+  approvals: { icon: ClipboardCheck, label: "Approvals", color: "text-green-600", bgColor: "bg-green-500/10" },
+  requests: { icon: FileText, label: "Requests", color: "text-purple-600", bgColor: "bg-purple-500/10" },
+  renewals: { icon: RefreshCw, label: "Renewals", color: "text-orange-600", bgColor: "bg-orange-500/10" },
+  compliance: { icon: Shield, label: "Compliance", color: "text-red-600", bgColor: "bg-red-500/10" },
+};
+
 type DateFilter = "all" | "today" | "yesterday" | "this_week" | "this_month";
+type GroupMode = "date" | "category";
+
+interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  category: string | null;
+  reference_id: string | null;
+  reference_type: string | null;
+  is_read: boolean;
+  action_url: string | null;
+  created_at: string;
+}
+
+interface NotificationItemProps {
+  notification: Notification;
+  selectionMode: boolean;
+  selectedIds: Set<string>;
+  toggleSelection: (id: string) => void;
+  markAsRead: (id: string) => void;
+  handleDeleteSingle: (id: string, e: React.MouseEvent) => void;
+  showCategory?: boolean;
+}
+
+function NotificationItem({
+  notification,
+  selectionMode,
+  selectedIds,
+  toggleSelection,
+  markAsRead,
+  handleDeleteSingle,
+  showCategory = true,
+}: NotificationItemProps) {
+  const Icon = typeIcons[notification.type] || Info;
+  const colorClass = typeColors[notification.type] || typeColors.info;
+
+  return (
+    <div
+      className={cn(
+        "flex gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer",
+        !notification.is_read && "bg-primary/5",
+        selectionMode && selectedIds.has(notification.id) && "bg-primary/10"
+      )}
+      onClick={() => {
+        if (selectionMode) {
+          toggleSelection(notification.id);
+        } else if (!notification.is_read) {
+          markAsRead(notification.id);
+        }
+      }}
+    >
+      {selectionMode && (
+        <div className="flex items-center">
+          <Checkbox
+            checked={selectedIds.has(notification.id)}
+            onCheckedChange={() => toggleSelection(notification.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      <div className={cn("p-2 rounded-full h-fit", colorClass)}>
+        <Icon className="w-4 h-4" />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className={cn(
+              "font-medium text-sm",
+              !notification.is_read && "text-foreground",
+              notification.is_read && "text-muted-foreground"
+            )}
+          >
+            {notification.title}
+          </p>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {!notification.is_read && (
+              <Badge variant="secondary" className="text-xs">
+                New
+              </Badge>
+            )}
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {format(parseISO(notification.created_at), "MMM d, h:mm a")}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+          {notification.message}
+        </p>
+
+        {showCategory && notification.category && (
+          <Badge variant="outline" className="mt-2 text-xs capitalize">
+            {notification.category.replace(/_/g, " ")}
+          </Badge>
+        )}
+      </div>
+
+      {!selectionMode && (
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {!notification.is_read && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                markAsRead(notification.id);
+              }}
+            >
+              <Check className="w-4 h-4" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={(e) => handleDeleteSingle(notification.id, e)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function NotificationsPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -82,6 +234,8 @@ export default function NotificationsPage() {
   const [activeView, setActiveView] = useState<"notifications" | "preferences">("notifications");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [groupMode, setGroupMode] = useState<GroupMode>("date");
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(Object.keys(categoryConfig)));
 
   // Get unique categories from notifications
   const uniqueCategories = useMemo(() => {
@@ -145,6 +299,51 @@ export default function NotificationsPage() {
     
     return groups;
   }, [filteredNotifications]);
+
+  // Group notifications by category
+  const groupedByCategory = useMemo(() => {
+    const groups: Record<string, typeof filteredNotifications> = {};
+    
+    filteredNotifications.forEach((n) => {
+      const key = n.category || "uncategorized";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(n);
+    });
+    
+    // Sort categories by config order, then uncategorized last
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === "uncategorized") return 1;
+      if (b === "uncategorized") return -1;
+      const aIndex = Object.keys(categoryConfig).indexOf(a);
+      const bIndex = Object.keys(categoryConfig).indexOf(b);
+      return aIndex - bIndex;
+    });
+    
+    const sortedGroups: Record<string, typeof filteredNotifications> = {};
+    sortedKeys.forEach(key => {
+      sortedGroups[key] = groups[key];
+    });
+    
+    return sortedGroups;
+  }, [filteredNotifications]);
+
+  const toggleCategoryExpand = (category: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(category)) {
+      newExpanded.delete(category);
+    } else {
+      newExpanded.add(category);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const expandAllCategories = () => {
+    setExpandedCategories(new Set([...Object.keys(categoryConfig), "uncategorized"]));
+  };
+
+  const collapseAllCategories = () => {
+    setExpandedCategories(new Set());
+  };
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedIds);
@@ -358,20 +557,55 @@ export default function NotificationsPage() {
           </CardContent>
         </Card>
 
-        {/* Tabs for quick filtering */}
-        <Tabs defaultValue="all" className="mb-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all" onClick={() => setReadFilter("all")}>
-              All ({notifications.length})
-            </TabsTrigger>
-            <TabsTrigger value="unread" onClick={() => setReadFilter("unread")}>
-              Unread ({unreadCount})
-            </TabsTrigger>
-            <TabsTrigger value="read" onClick={() => setReadFilter("read")}>
-              Read ({notifications.length - unreadCount})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Tabs and Group Mode Toggle */}
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <Tabs defaultValue="all" className="flex-1">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all" onClick={() => setReadFilter("all")}>
+                All ({notifications.length})
+              </TabsTrigger>
+              <TabsTrigger value="unread" onClick={() => setReadFilter("unread")}>
+                Unread ({unreadCount})
+              </TabsTrigger>
+              <TabsTrigger value="read" onClick={() => setReadFilter("read")}>
+                Read ({notifications.length - unreadCount})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant={groupMode === "date" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setGroupMode("date")}
+              className="gap-1.5"
+            >
+              <LayoutList className="w-4 h-4" />
+              By Date
+            </Button>
+            <Button
+              variant={groupMode === "category" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setGroupMode("category")}
+              className="gap-1.5"
+            >
+              <Layers className="w-4 h-4" />
+              By Category
+            </Button>
+          </div>
+        </div>
+
+        {/* Category expand/collapse controls */}
+        {groupMode === "category" && Object.keys(groupedByCategory).length > 0 && (
+          <div className="flex items-center justify-end gap-2 mb-4">
+            <Button variant="ghost" size="sm" onClick={expandAllCategories}>
+              Expand All
+            </Button>
+            <Button variant="ghost" size="sm" onClick={collapseAllCategories}>
+              Collapse All
+            </Button>
+          </div>
+        )}
 
         {/* Notifications List */}
         {isLoading ? (
@@ -388,7 +622,8 @@ export default function NotificationsPage() {
               </p>
             </CardContent>
           </Card>
-        ) : (
+        ) : groupMode === "date" ? (
+          // Date-grouped view
           <div className="space-y-6">
             {Object.entries(groupedNotifications).map(([date, items]) => (
               <div key={date}>
@@ -398,105 +633,99 @@ export default function NotificationsPage() {
                 <Card>
                   <ScrollArea className="max-h-[600px]">
                     <div className="divide-y divide-border">
-                      {items.map((notification) => {
-                        const Icon = typeIcons[notification.type] || Info;
-                        const colorClass = typeColors[notification.type] || typeColors.info;
-                        
-                        return (
-                          <div
-                            key={notification.id}
-                            className={cn(
-                              "flex gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer",
-                              !notification.is_read && "bg-primary/5",
-                              selectionMode && selectedIds.has(notification.id) && "bg-primary/10"
-                            )}
-                            onClick={() => {
-                              if (selectionMode) {
-                                toggleSelection(notification.id);
-                              } else if (!notification.is_read) {
-                                markAsRead(notification.id);
-                              }
-                            }}
-                          >
-                            {selectionMode && (
-                              <div className="flex items-center">
-                                <Checkbox
-                                  checked={selectedIds.has(notification.id)}
-                                  onCheckedChange={() => toggleSelection(notification.id)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              </div>
-                            )}
-                            
-                            <div className={cn("p-2 rounded-full h-fit", colorClass)}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <p className={cn(
-                                  "font-medium text-sm",
-                                  !notification.is_read && "text-foreground",
-                                  notification.is_read && "text-muted-foreground"
-                                )}>
-                                  {notification.title}
-                                </p>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  {!notification.is_read && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      New
-                                    </Badge>
-                                  )}
-                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {format(parseISO(notification.created_at), "h:mm a")}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {notification.message}
-                              </p>
-                              
-                              {notification.category && (
-                                <Badge variant="outline" className="mt-2 text-xs">
-                                  {notification.category}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {!selectionMode && (
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                {!notification.is_read && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      markAsRead(notification.id);
-                                    }}
-                                  >
-                                    <Check className="w-4 h-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                  onClick={(e) => handleDeleteSingle(notification.id, e)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {items.map((notification) => (
+                        <NotificationItem
+                          key={notification.id}
+                          notification={notification}
+                          selectionMode={selectionMode}
+                          selectedIds={selectedIds}
+                          toggleSelection={toggleSelection}
+                          markAsRead={markAsRead}
+                          handleDeleteSingle={handleDeleteSingle}
+                        />
+                      ))}
                     </div>
                   </ScrollArea>
                 </Card>
               </div>
             ))}
+          </div>
+        ) : (
+          // Category-grouped view with collapsible sections
+          <div className="space-y-4">
+            {Object.entries(groupedByCategory).map(([category, items]) => {
+              const config = categoryConfig[category];
+              const CategoryIcon = config?.icon || Bell;
+              const unreadInCategory = items.filter(n => !n.is_read).length;
+              const isExpanded = expandedCategories.has(category);
+              
+              return (
+                <Collapsible
+                  key={category}
+                  open={isExpanded}
+                  onOpenChange={() => toggleCategoryExpand(category)}
+                >
+                  <Card>
+                    <CollapsibleTrigger asChild>
+                      <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "p-2 rounded-lg",
+                              config?.bgColor || "bg-muted"
+                            )}>
+                              <CategoryIcon className={cn("w-5 h-5", config?.color || "text-muted-foreground")} />
+                            </div>
+                            <div>
+                              <CardTitle className="text-base capitalize">
+                                {config?.label || category.replace(/_/g, " ")}
+                              </CardTitle>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {items.length} notification{items.length !== 1 ? "s" : ""}
+                                {unreadInCategory > 0 && (
+                                  <span className="ml-2 text-primary font-medium">
+                                    ({unreadInCategory} unread)
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {unreadInCategory > 0 && (
+                              <Badge variant="secondary" className="h-6">
+                                {unreadInCategory}
+                              </Badge>
+                            )}
+                            <ChevronDown className={cn(
+                              "w-5 h-5 text-muted-foreground transition-transform",
+                              isExpanded && "rotate-180"
+                            )} />
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <ScrollArea className="max-h-[400px]">
+                        <div className="divide-y divide-border">
+                          {items.map((notification) => (
+                            <NotificationItem
+                              key={notification.id}
+                              notification={notification}
+                              selectionMode={selectionMode}
+                              selectedIds={selectedIds}
+                              toggleSelection={toggleSelection}
+                              markAsRead={markAsRead}
+                              handleDeleteSingle={handleDeleteSingle}
+                              showCategory={false}
+                            />
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              );
+            })}
           </div>
         )}
         </>
