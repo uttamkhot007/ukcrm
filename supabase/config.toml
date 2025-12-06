@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.scheduled-checks]
 verify_jwt = false
+
+[functions.exchange-rates]
+verify_jwt = false
