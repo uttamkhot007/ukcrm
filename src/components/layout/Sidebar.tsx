@@ -49,6 +49,7 @@ import {
   Clock,
   Calculator,
   ShieldCheck,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -327,10 +328,13 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: Calculator,
         color: "text-emerald-500",
         children: [
-          { id: "accounts-receivable", label: "Accounts Receivable", icon: CreditCard },
-          { id: "accounts-payable", label: "Accounts Payable", icon: Receipt },
-          { id: "accounts-ledger", label: "General Ledger", icon: BookOpen },
-          { id: "accounts-reconciliation", label: "Bank Reconciliation", icon: FileCheck },
+          { id: "accounts-contracts", label: "Contract Workflow", icon: FileText },
+          { id: "accounts-odf-request", label: "Request ODF", icon: FileText },
+          { id: "accounts-odf-approved", label: "ODF Approved", icon: FileCheck },
+          { id: "accounts-process-order", label: "Process Order", icon: Package },
+          { id: "accounts-get-license", label: "Get License", icon: Key },
+          { id: "accounts-raise-invoice", label: "Raise Invoice", icon: Receipt },
+          { id: "accounts-collect-payment", label: "Collect Payment", icon: CreditCard },
         ],
       });
 

@@ -2267,6 +2267,11 @@ export type Database = {
         | "odf_approved"
         | "invoice_raised"
         | "payment_received"
+        | "request_odf"
+        | "process_order"
+        | "get_license"
+        | "raise_invoice"
+        | "collect_payment"
       compliance_status:
         | "not_started"
         | "in_progress"
@@ -2518,6 +2523,11 @@ export const Constants = {
         "odf_approved",
         "invoice_raised",
         "payment_received",
+        "request_odf",
+        "process_order",
+        "get_license",
+        "raise_invoice",
+        "collect_payment",
       ],
       compliance_status: [
         "not_started",
