@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
+import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -16,8 +17,11 @@ import {
   Calendar,
   Shield,
   Loader2,
+  Monitor,
+  BellRing,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const categories = [
   { key: "requests", label: "Employee Requests", icon: FileText, description: "Leave, WFH, hardware requests" },
@@ -32,7 +36,9 @@ type CategoryKey = typeof categories[number]["key"];
 
 export function NotificationPreferences() {
   const { preferences, isLoading, updatePreferences, isUpdating } = useNotificationPreferences();
+  const { isSupported, permission, requestPermission, isEnabled } = useBrowserNotifications();
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, boolean>>({});
+  const [requestingPermission, setRequestingPermission] = useState(false);
 
   const handleToggle = (key: string, value: boolean) => {
     setPendingUpdates(prev => ({ ...prev, [key]: true }));
@@ -43,6 +49,18 @@ export function NotificationPreferences() {
         return rest;
       });
     }, 500);
+  };
+
+  const handleRequestPermission = async () => {
+    setRequestingPermission(true);
+    const result = await requestPermission();
+    setRequestingPermission(false);
+    
+    if (result === "granted") {
+      toast.success("Browser notifications enabled!");
+    } else if (result === "denied") {
+      toast.error("Notification permission denied. You can enable it in browser settings.");
+    }
   };
 
   if (isLoading) {
@@ -56,6 +74,75 @@ export function NotificationPreferences() {
 
   return (
     <div className="space-y-6">
+      {/* Browser Push Notifications */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <Monitor className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Browser Notifications</CardTitle>
+                <CardDescription>Get notified even when the app is in the background</CardDescription>
+              </div>
+            </div>
+            {isEnabled ? (
+              <Badge variant="secondary" className="bg-green-500/10 text-green-600">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Enabled
+              </Badge>
+            ) : permission === "denied" ? (
+              <Badge variant="secondary" className="bg-red-500/10 text-red-600">
+                Blocked
+              </Badge>
+            ) : null}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!isSupported ? (
+            <p className="text-sm text-muted-foreground">
+              Browser notifications are not supported in your browser.
+            </p>
+          ) : isEnabled ? (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+              <BellRing className="w-5 h-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-foreground">You're all set!</p>
+                <p className="text-xs text-muted-foreground">
+                  You'll receive notifications when new alerts arrive while the app is in the background.
+                </p>
+              </div>
+            </div>
+          ) : permission === "denied" ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Browser notifications are blocked. To enable them:
+              </p>
+              <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
+                <li>Click the lock/info icon in your browser's address bar</li>
+                <li>Find "Notifications" in the permissions</li>
+                <li>Change it from "Block" to "Allow"</li>
+                <li>Refresh the page</li>
+              </ol>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Enable browser notifications to get alerts even when the app is in the background.
+              </p>
+              <Button onClick={handleRequestPermission} disabled={requestingPermission} size="sm">
+                {requestingPermission ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Bell className="w-4 h-4 mr-2" />
+                )}
+                Enable
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       {/* In-App Notifications */}
       <Card>
         <CardHeader className="pb-4">
