@@ -1,0 +1,60 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { DollarSign, FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+
+export function BillingStats() {
+  const { data: stats } = useQuery({
+    queryKey: ["billing-stats"],
+    queryFn: async () => {
+      const { data: invoices, error } = await supabase
+        .from("invoices")
+        .select("status, total, amount_paid, due_date");
+
+      if (error) throw error;
+
+      const now = new Date();
+      const total = invoices?.length || 0;
+      const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      const collected = invoices?.reduce((sum, inv) => sum + Number(inv.amount_paid || 0), 0) || 0;
+      const outstanding = totalRevenue - collected;
+      const overdue = invoices?.filter(inv => 
+        inv.status !== "paid" && inv.status !== "cancelled" && 
+        inv.due_date && new Date(inv.due_date) < now
+      ).length || 0;
+      const paid = invoices?.filter(inv => inv.status === "paid").length || 0;
+
+      return { total, totalRevenue, collected, outstanding, overdue, paid };
+    },
+  });
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
+  };
+
+  const statCards = [
+    { title: "Total Revenue", value: formatCurrency(stats?.totalRevenue || 0), icon: DollarSign, color: "text-blue-500" },
+    { title: "Collected", value: formatCurrency(stats?.collected || 0), icon: CheckCircle, color: "text-green-500" },
+    { title: "Outstanding", value: formatCurrency(stats?.outstanding || 0), icon: Clock, color: "text-amber-500" },
+    { title: "Overdue", value: stats?.overdue || 0, icon: AlertTriangle, color: "text-red-500" },
+    { title: "Total Invoices", value: stats?.total || 0, icon: FileText, color: "text-primary" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {statCards.map((stat) => (
+        <Card key={stat.title}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <stat.icon className={`w-8 h-8 ${stat.color}`} />
+              <div>
+                <p className="text-xl font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.title}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
