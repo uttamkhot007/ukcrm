@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, Copy, Pencil } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Pencil, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export interface PreviewRow {
@@ -20,9 +21,10 @@ interface CSVPreviewTableProps {
   columns: string[];
   requiredColumns: string[];
   onCellEdit?: (rowIndex: number, column: string, value: string) => void;
+  onRowDelete?: (rowIndex: number) => void;
 }
 
-export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit }: CSVPreviewTableProps) {
+export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit, onRowDelete }: CSVPreviewTableProps) {
   const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -74,12 +76,20 @@ export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit }: 
             </div>
           )}
         </div>
-        {onCellEdit && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Pencil className="w-3 h-3" />
-            <span>Click any cell to edit</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {onCellEdit && (
+            <div className="flex items-center gap-1">
+              <Pencil className="w-3 h-3" />
+              <span>Click to edit</span>
+            </div>
+          )}
+          {onRowDelete && (
+            <div className="flex items-center gap-1">
+              <Trash2 className="w-3 h-3" />
+              <span>Delete rows</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="h-[300px] border rounded-lg">
@@ -96,6 +106,7 @@ export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit }: 
                   )}
                 </TableHead>
               ))}
+              {onRowDelete && <TableHead className="w-12"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -177,6 +188,27 @@ export function CSVPreviewTable({ rows, columns, requiredColumns, onCellEdit }: 
                     </TableCell>
                   );
                 })}
+                {onRowDelete && (
+                  <TableCell className="p-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onRowDelete(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remove row</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
