@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
+// Package icon imported below for accounts module
 import {
   LayoutDashboard,
   TrendingUp,
