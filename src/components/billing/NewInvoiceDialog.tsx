@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { addDays, format } from "date-fns";
+import { workflows } from "@/lib/workflows";
 
 interface NewInvoiceDialogProps {
   open: boolean;
@@ -95,6 +96,9 @@ export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) 
         const { error: itemsError } = await supabase.from("invoice_items").insert(itemsToInsert);
         if (itemsError) throw itemsError;
       }
+
+      // Trigger workflow for invoice creation
+      workflows.invoiceCreated(invoice.id);
 
       toast.success("Invoice created successfully");
       queryClient.invalidateQueries({ queryKey: ["invoices"] });

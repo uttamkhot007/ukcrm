@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_workflows: {
+        Row: {
+          approval_level: number
+          approved_at: string | null
+          approver_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          notes: string | null
+          required_role: string
+          status: string
+        }
+        Insert: {
+          approval_level?: number
+          approved_at?: string | null
+          approver_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          notes?: string | null
+          required_role?: string
+          status?: string
+        }
+        Update: {
+          approval_level?: number
+          approved_at?: string | null
+          approver_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          notes?: string | null
+          required_role?: string
+          status?: string
+        }
+        Relationships: []
+      }
       compliance_assessments: {
         Row: {
           assessment_date: string
@@ -855,6 +894,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_records: {
         Row: {
           amount: number
@@ -1403,6 +1484,42 @@ export type Database = {
           id?: string
           team?: Database["public"]["Enums"]["team_type"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      workflow_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          id: string
+          status: string
+          workflow_type: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          workflow_type: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          workflow_type?: string
         }
         Relationships: []
       }
