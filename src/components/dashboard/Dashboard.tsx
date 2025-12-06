@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "./MetricCard";
 import { ModuleCard } from "./ModuleCard";
 import { ActivityFeed } from "./ActivityFeed";
@@ -34,164 +36,42 @@ interface DashboardProps {
   onModuleChange: (module: string) => void;
 }
 
-const getMetrics = (formatCurrency: (value: number) => string) => [
-  {
-    title: "Total Revenue",
-    value: formatCurrency(2400000),
-    change: 12.5,
-    changeLabel: "vs last month",
-    icon: DollarSign,
-    color: "finance" as const,
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    title: "Active Deals",
-    value: "847",
-    change: 8.2,
-    changeLabel: "vs last month",
-    icon: Target,
-    color: "sales" as const,
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    title: "Team Members",
-    value: "156",
-    change: 4.1,
-    changeLabel: "vs last month",
-    icon: Users,
-    color: "hr" as const,
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    title: "Active Projects",
-    value: "32",
-    change: -2.3,
-    changeLabel: "vs last month",
-    icon: FolderKanban,
-    color: "tech" as const,
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    title: "Open Tickets",
-    value: "89",
-    change: -15.4,
-    changeLabel: "vs last month",
-    icon: Ticket,
-    color: "support" as const,
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    title: "MQL Generated",
-    value: "1,245",
-    change: 23.8,
-    changeLabel: "vs last month",
-    icon: Megaphone,
-    color: "marketing" as const,
-    requiredRoles: ["admin", "manager"],
-  },
-];
-
-const getModules = (formatCurrency: (value: number) => string) => [
-  {
-    id: "sales",
-    title: "Sales",
-    description: "Funnel management, quotations & lead tracking",
-    icon: TrendingUp,
-    color: "sales" as const,
-    stats: [
-      { label: "Pipeline", value: formatCurrency(12500000) },
-      { label: "Win Rate", value: "32%" },
-    ],
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    id: "finance",
-    title: "Finance",
-    description: "Payments, DSO, P&L and GST reports",
-    icon: DollarSign,
-    color: "finance" as const,
-    stats: [
-      { label: "Receivables", value: formatCurrency(890000) },
-      { label: "DSO", value: "45 days" },
-    ],
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    id: "hr",
-    title: "Human Resources",
-    description: "People management & onboarding",
-    icon: Users,
-    color: "hr" as const,
-    stats: [
-      { label: "Employees", value: "156" },
-      { label: "Open Positions", value: "12" },
-    ],
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    id: "tech",
-    title: "Technical",
-    description: "Projects, knowledge base & updates",
-    icon: Code,
-    color: "tech" as const,
-    stats: [
-      { label: "Projects", value: "32" },
-      { label: "Sprints", value: "8" },
-    ],
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    id: "support",
-    title: "Customer Support",
-    description: "Ticketing and customer service",
-    icon: HeadphonesIcon,
-    color: "support" as const,
-    stats: [
-      { label: "Open", value: "89" },
-      { label: "Avg Response", value: "2.4h" },
-    ],
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    id: "marketing",
-    title: "Marketing",
-    description: "Campaigns, SQL & MQL tracking",
-    icon: Megaphone,
-    color: "marketing" as const,
-    stats: [
-      { label: "Campaigns", value: "15" },
-      { label: "Leads", value: "1,245" },
-    ],
-    requiredRoles: ["admin", "manager"],
-  },
-  {
-    id: "management",
-    title: "Management",
-    description: "Performance & financial overview",
-    icon: BarChart3,
-    color: "management" as const,
-    stats: [
-      { label: "Net Profit", value: "dynamicNetProfit" },
-      { label: "Growth", value: "+18%" },
-    ],
-    requiredRoles: ["admin"],
-  },
-  {
-    id: "employee",
-    title: "Employee Portal",
-    description: "Training, leaves & personal info",
-    icon: UserCircle,
-    color: "employee" as const,
-    stats: [
-      { label: "Trainings", value: "24" },
-      { label: "Pending", value: "3" },
-    ],
-  },
-];
-
 export function Dashboard({ onModuleChange }: DashboardProps) {
   const { profile, role, isAdmin, isManager, teams } = useAuth();
-  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
+  const { formatCurrency } = useOrganizationSettings();
+
+  // Fetch real metrics from database
+  const { data: realMetrics } = useQuery({
+    queryKey: ["dashboard-metrics"],
+    queryFn: async () => {
+      const [dealsRes, employeesRes, ticketsRes, invoicesRes] = await Promise.all([
+        supabase.from("deals").select("id, value, stage"),
+        supabase.from("profiles").select("id"),
+        supabase.from("tickets").select("id, status"),
+        supabase.from("invoices").select("id, total, status"),
+      ]);
+
+      const deals = dealsRes.data || [];
+      const employees = employeesRes.data || [];
+      const tickets = ticketsRes.data || [];
+      const invoices = invoicesRes.data || [];
+
+      // Calculate totals
+      const activeDeals = deals.filter(d => !["closed_won", "closed_lost"].includes(d.stage));
+      const totalDealValue = activeDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+      const openTickets = tickets.filter(t => !["resolved", "closed"].includes(t.status));
+      const paidInvoices = invoices.filter(i => i.status === "paid");
+      const totalRevenue = paidInvoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+
+      return {
+        totalRevenue,
+        activeDeals: activeDeals.length,
+        totalDealValue,
+        teamMembers: employees.length,
+        openTickets: openTickets.length,
+      };
+    },
+  });
 
   const hasAccess = (requiredRoles?: string[]) => {
     if (!requiredRoles) return true;
@@ -199,21 +79,102 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     return requiredRoles.includes(role);
   };
 
-  const allMetrics = getMetrics(formatCurrency);
-  const allModules = getModules(formatCurrency).map(m => {
-    if (m.id === "management") {
-      return {
-        ...m,
-        stats: m.stats.map(s => 
-          s.value === "dynamicNetProfit" ? { ...s, value: formatCurrency(1200000) } : s
-        ),
-      };
-    }
-    return m;
-  });
+  // Build metrics from real data
+  const metrics = [
+    {
+      title: "Total Revenue",
+      value: formatCurrency(realMetrics?.totalRevenue || 0),
+      change: 0,
+      changeLabel: "from paid invoices",
+      icon: DollarSign,
+      color: "finance" as const,
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      title: "Active Deals",
+      value: String(realMetrics?.activeDeals || 0),
+      change: 0,
+      changeLabel: formatCurrency(realMetrics?.totalDealValue || 0) + " pipeline",
+      icon: Target,
+      color: "sales" as const,
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      title: "Team Members",
+      value: String(realMetrics?.teamMembers || 0),
+      change: 0,
+      changeLabel: "registered employees",
+      icon: Users,
+      color: "hr" as const,
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      title: "Open Tickets",
+      value: String(realMetrics?.openTickets || 0),
+      change: 0,
+      changeLabel: "pending resolution",
+      icon: Ticket,
+      color: "support" as const,
+      requiredRoles: ["admin", "manager"],
+    },
+  ].filter((m) => hasAccess(m.requiredRoles));
 
-  const metrics = allMetrics.filter((m) => hasAccess(m.requiredRoles));
-  const modules = allModules.filter((m) => hasAccess(m.requiredRoles));
+  // Build modules from real data
+  const modules = [
+    {
+      id: "sales",
+      title: "Sales",
+      description: "Funnel management, quotations & lead tracking",
+      icon: TrendingUp,
+      color: "sales" as const,
+      stats: [
+        { label: "Pipeline", value: formatCurrency(realMetrics?.totalDealValue || 0) },
+        { label: "Active", value: String(realMetrics?.activeDeals || 0) },
+      ],
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      id: "finance",
+      title: "Finance",
+      description: "Payments, DSO, P&L and GST reports",
+      icon: DollarSign,
+      color: "finance" as const,
+      stats: [
+        { label: "Revenue", value: formatCurrency(realMetrics?.totalRevenue || 0) },
+      ],
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      id: "hr",
+      title: "Human Resources",
+      description: "People management & onboarding",
+      icon: Users,
+      color: "hr" as const,
+      stats: [
+        { label: "Employees", value: String(realMetrics?.teamMembers || 0) },
+      ],
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      id: "support",
+      title: "Customer Support",
+      description: "Ticketing and customer service",
+      icon: HeadphonesIcon,
+      color: "support" as const,
+      stats: [
+        { label: "Open", value: String(realMetrics?.openTickets || 0) },
+      ],
+      requiredRoles: ["admin", "manager"],
+    },
+    {
+      id: "employee",
+      title: "Employee Portal",
+      description: "Attendance, requests & documentation",
+      icon: UserCircle,
+      color: "employee" as const,
+      stats: [],
+    },
+  ].filter((m) => hasAccess(m.requiredRoles));
 
   // Check if user has any team assignment for team-specific widgets
   const hasTeamAssignment = teams.length > 0;
@@ -251,7 +212,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
 
       {/* Metrics Grid - Only for Admin/Manager */}
       {metrics.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {metrics.map((metric, index) => (
             <MetricCard key={metric.title} {...metric} delay={index * 100} />
           ))}
