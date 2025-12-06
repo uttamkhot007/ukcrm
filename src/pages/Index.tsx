@@ -55,10 +55,13 @@ const Index = () => {
         return <AdminCenter />;
       case "sales":
       case "sales-funnel":
+        return <SalesModule initialTab="deals" />;
       case "sales-quotations":
+        return <SalesModule initialTab="quotations" />;
       case "sales-leads":
+        return <SalesModule initialTab="leads" />;
       case "contacts":
-        return <SalesModule />;
+        return <SalesModule initialTab="contacts" />;
       case "inside-sales":
         return <InsideSalesModule />;
       case "legal":
