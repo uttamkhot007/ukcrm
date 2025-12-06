@@ -3,12 +3,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download, ArrowLeft, Eye, UserPlus } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download, ArrowLeft, Eye, UserPlus, FileText, File } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { importContactsFromPreview, importDealsFromPreview, importEmployeesFromPreview, ImportResult, parseContactsPreview, parseDealsPreview, parseEmployeesPreview, ParsePreviewResult, ParsedPreviewRow } from "@/lib/csv-import";
 import { useAuth } from "@/hooks/useAuth";
 import { CSVPreviewTable } from "./CSVPreviewTable";
+import { getFileType, getSupportedFileExtensions, getFileTypeLabel, SupportedFileType } from "@/lib/file-parser";
 
 const VALID_DEAL_STAGES = ["pipeline", "upside", "strong_upside", "commit", "closed_won", "closed_lost"];
 
@@ -50,11 +51,27 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newFiles: UploadedFile[] = Array.from(files).map(file => ({
-        file,
-        status: "pending" as const,
-      }));
-      setUploadedFiles(prev => [...prev, ...newFiles]);
+      const newFiles: UploadedFile[] = [];
+      
+      Array.from(files).forEach(file => {
+        const fileType = getFileType(file);
+        if (fileType) {
+          newFiles.push({
+            file,
+            status: "pending" as const,
+          });
+        } else {
+          toast({
+            title: "Unsupported File",
+            description: `${file.name} is not a supported file type. Please use CSV, Excel, Word, or PDF.`,
+            variant: "destructive",
+          });
+        }
+      });
+      
+      if (newFiles.length > 0) {
+        setUploadedFiles(prev => [...prev, ...newFiles]);
+      }
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -95,7 +112,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
     } catch (error) {
       toast({
         title: "Parse Error",
-        description: error instanceof Error ? error.message : "Failed to parse CSV file",
+        description: error instanceof Error ? error.message : "Failed to parse file",
         variant: "destructive",
       });
     }
@@ -256,6 +273,23 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
     }
   };
 
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'xlsx':
+      case 'xls':
+        return <FileSpreadsheet className="w-5 h-5 text-green-600" />;
+      case 'docx':
+      case 'doc':
+        return <FileText className="w-5 h-5 text-blue-600" />;
+      case 'pdf':
+        return <File className="w-5 h-5 text-red-600" />;
+      case 'csv':
+      default:
+        return <FileSpreadsheet className="w-5 h-5 text-muted-foreground" />;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(open) => {
       if (!open) resetForm();
@@ -271,7 +305,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
           </DialogTitle>
           <DialogDescription>
             {step === "upload" 
-              ? "Upload CSV files exported from Office 365, Zoho Mail, HubSpot, or other sources."
+              ? "Upload CSV, Excel, Word, or PDF files exported from Office 365, Zoho Mail, HubSpot, or other sources."
               : `Review the ${previewData?.rows.length || 0} rows before importing to the database.`
             }
           </DialogDescription>
@@ -385,7 +419,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv"
+                  accept={getSupportedFileExtensions()}
                   multiple
                   onChange={handleFileSelect}
                   className="hidden"
@@ -393,7 +427,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-sm font-medium">Click to upload or drag and drop</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  CSV files only (max 10MB each)
+                  CSV, Excel (.xlsx, .xls), Word (.docx), or PDF files (max 10MB each)
                 </p>
               </div>
             </div>
@@ -415,7 +449,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <FileSpreadsheet className="w-5 h-5 text-muted-foreground" />
+                        {getFileIcon(uploadedFile.file.name)}
                         <div>
                           <p className="text-sm font-medium">{uploadedFile.file.name}</p>
                           <p className="text-xs text-muted-foreground">
