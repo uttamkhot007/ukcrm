@@ -76,16 +76,31 @@ export default function NotificationsPage() {
   } = useNotifications();
   
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
   const [activeView, setActiveView] = useState<"notifications" | "preferences">("notifications");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Get unique categories from notifications
+  const uniqueCategories = useMemo(() => {
+    const categories = notifications
+      .map((n) => n.category)
+      .filter((c): c is string => c !== null);
+    return [...new Set(categories)];
+  }, [notifications]);
+
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
       // Type filter
       if (typeFilter !== "all" && n.type !== typeFilter) return false;
+      
+      // Category filter
+      if (categoryFilter !== "all") {
+        if (categoryFilter === "uncategorized" && n.category !== null) return false;
+        if (categoryFilter !== "uncategorized" && n.category !== categoryFilter) return false;
+      }
       
       // Read status filter
       if (readFilter === "unread" && n.is_read) return false;
@@ -102,7 +117,7 @@ export default function NotificationsPage() {
       
       return true;
     });
-  }, [notifications, typeFilter, dateFilter, readFilter]);
+  }, [notifications, typeFilter, categoryFilter, dateFilter, readFilter]);
 
   // Group notifications by date
   const groupedNotifications = useMemo(() => {
@@ -286,6 +301,26 @@ export default function NotificationsPage() {
                         {type}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex-1 min-w-[150px]">
+                <label className="text-xs text-muted-foreground mb-1.5 block">Category</label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category} className="capitalize">
+                        {category.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                    {notifications.some(n => n.category === null) && (
+                      <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
