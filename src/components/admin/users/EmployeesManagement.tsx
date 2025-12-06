@@ -45,9 +45,11 @@ const TEAMS: { value: TeamType; label: string; color: string; departments?: stri
   { value: "technical", label: "Technical", color: "bg-tech/20 text-tech border-tech/30", departments: ["Technical"] },
   { value: "managed_services", label: "Managed Services", color: "bg-support/20 text-support border-support/30", departments: ["Managed Services", "Technical"] },
   { value: "management", label: "Management", color: "bg-management/20 text-management border-management/30", departments: ["Management"] },
-  { value: "hr", label: "HR", color: "bg-hr/20 text-hr border-hr/30", departments: ["HR", "Admin"] },
+  { value: "hr", label: "HR", color: "bg-hr/20 text-hr border-hr/30", departments: ["HR"] },
   { value: "finance", label: "Finance", color: "bg-finance/20 text-finance border-finance/30", departments: ["Finance"] },
   { value: "marketing", label: "Marketing", color: "bg-marketing/20 text-marketing border-marketing/30", departments: ["Marketing"] },
+  { value: "accounts", label: "Accounts", color: "bg-emerald-500/20 text-emerald-600 border-emerald-500/30", departments: ["Accounts", "Finance"] },
+  { value: "admin", label: "Admin", color: "bg-slate-500/20 text-slate-600 border-slate-500/30", departments: ["Admin", "HR"] },
   { value: "renewals", label: "Renewals", color: "bg-amber-500/20 text-amber-600 border-amber-500/30" },
 ];
 
