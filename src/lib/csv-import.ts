@@ -21,6 +21,17 @@ export interface DealCSVRow {
   contact_email?: string;
 }
 
+export interface EmployeeCSVRow {
+  full_name: string;
+  email: string;
+  employee_code?: string;
+  department?: string;
+  job_title?: string;
+  location?: string;
+  birth_date?: string;
+  hire_date?: string;
+}
+
 export interface ImportResult {
   success: boolean;
   recordCount: number;
@@ -154,6 +165,82 @@ export async function parseDealsPreview(file: File): Promise<ParsePreviewResult>
         description: row.description || "",
         contact_name: row.contact_name || "",
         contact_email: row.contact_email || "",
+      },
+      isValid: errors.length === 0,
+      errors,
+      isDuplicate,
+      duplicateInfo,
+    };
+  });
+
+  return { rows, columns, requiredColumns };
+}
+
+export async function parseEmployeesPreview(file: File): Promise<ParsePreviewResult> {
+  const rawRows = await parseCSVFile<EmployeeCSVRow>(file);
+  const requiredColumns = ["full_name", "email"];
+  const columns = ["full_name", "email", "employee_code", "department", "job_title", "location", "birth_date", "hire_date"];
+
+  // Fetch existing profiles for duplicate detection
+  const { data: existingProfiles } = await supabase
+    .from("profiles")
+    .select("id, email, full_name");
+
+  const existingEmailSet = new Set<string>();
+  existingProfiles?.forEach((profile) => {
+    if (profile.email) existingEmailSet.add(profile.email.toLowerCase());
+  });
+
+  const rows: ParsedPreviewRow[] = rawRows.map((row) => {
+    const errors: string[] = [];
+    let isDuplicate = false;
+    let duplicateInfo = "";
+
+    if (!row.full_name || row.full_name.trim() === "") {
+      errors.push("Missing required field 'full_name'");
+    }
+
+    if (!row.email || row.email.trim() === "") {
+      errors.push("Missing required field 'email'");
+    } else {
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(row.email.trim())) {
+        errors.push("Invalid email format");
+      }
+    }
+
+    // Check for duplicates
+    if (row.email && existingEmailSet.has(row.email.toLowerCase())) {
+      isDuplicate = true;
+      duplicateInfo = `Employee with email "${row.email}" already exists`;
+    }
+
+    // Validate date formats
+    if (row.birth_date) {
+      const date = new Date(row.birth_date);
+      if (isNaN(date.getTime())) {
+        errors.push(`Invalid birth date format '${row.birth_date}'`);
+      }
+    }
+
+    if (row.hire_date) {
+      const date = new Date(row.hire_date);
+      if (isNaN(date.getTime())) {
+        errors.push(`Invalid hire date format '${row.hire_date}'`);
+      }
+    }
+
+    return {
+      data: {
+        full_name: row.full_name || "",
+        email: row.email || "",
+        employee_code: row.employee_code || "",
+        department: row.department || "",
+        job_title: row.job_title || "",
+        location: row.location || "",
+        birth_date: row.birth_date || "",
+        hire_date: row.hire_date || "",
       },
       isValid: errors.length === 0,
       errors,
@@ -388,6 +475,80 @@ export async function importContactsFromPreview(
       errors.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
     } else {
       successCount += batch.length;
+    }
+  }
+
+  return {
+    success: successCount > 0,
+    recordCount: successCount,
+    errors,
+  };
+}
+
+export async function importEmployeesFromPreview(
+  rows: ParsedPreviewRow[]
+): Promise<ImportResult> {
+  const errors: string[] = [];
+  let successCount = 0;
+
+  const validRows = rows.filter(r => r.isValid && !r.isDuplicate);
+
+  if (validRows.length === 0) {
+    return { success: false, recordCount: 0, errors: ["No valid rows to import"] };
+  }
+
+  // For each employee, we need to:
+  // 1. Create an auth user (or skip if exists)
+  // 2. Update their profile with the additional data
+
+  for (const row of validRows) {
+    try {
+      // Check if user already exists in profiles by email
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id, user_id")
+        .eq("email", row.data.email.toLowerCase())
+        .maybeSingle();
+
+      if (existingProfile) {
+        // Update existing profile
+        const updateData: Record<string, any> = {
+          full_name: row.data.full_name.trim(),
+          department: row.data.department?.trim() || null,
+          job_title: row.data.job_title?.trim() || null,
+        };
+
+        if (row.data.birth_date) {
+          const date = new Date(row.data.birth_date);
+          if (!isNaN(date.getTime())) {
+            updateData.birth_date = date.toISOString().split("T")[0];
+          }
+        }
+
+        if (row.data.hire_date) {
+          const date = new Date(row.data.hire_date);
+          if (!isNaN(date.getTime())) {
+            updateData.hire_date = date.toISOString().split("T")[0];
+          }
+        }
+
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update(updateData)
+          .eq("id", existingProfile.id);
+
+        if (updateError) {
+          errors.push(`Failed to update ${row.data.email}: ${updateError.message}`);
+        } else {
+          successCount++;
+        }
+      } else {
+        // Profile doesn't exist - user needs to be created through auth signup first
+        // We can only update existing profiles, not create new auth users from here
+        errors.push(`No user account exists for ${row.data.email}. User must sign up first.`);
+      }
+    } catch (error) {
+      errors.push(`Error processing ${row.data.email}: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 

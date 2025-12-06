@@ -1,0 +1,4 @@
+full_name,email,employee_code,department,job_title,location,birth_date,hire_date
+John Doe,john.doe@company.com,EMP001,Engineering,Software Engineer,New York,1990-05-15,2022-01-10
+Jane Smith,jane.smith@company.com,EMP002,Marketing,Marketing Manager,Los Angeles,1988-08-22,2021-06-15
+Bob Johnson,bob.johnson@company.com,EMP003,Sales,Sales Representative,Chicago,1992-12-03,2023-03-01

@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download, ArrowLeft, Eye } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download, ArrowLeft, Eye, UserPlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { importContactsFromPreview, importDealsFromPreview, ImportResult, parseContactsPreview, parseDealsPreview, ParsePreviewResult, ParsedPreviewRow } from "@/lib/csv-import";
+import { importContactsFromPreview, importDealsFromPreview, importEmployeesFromPreview, ImportResult, parseContactsPreview, parseDealsPreview, parseEmployeesPreview, ParsePreviewResult, ParsedPreviewRow } from "@/lib/csv-import";
 import { useAuth } from "@/hooks/useAuth";
 import { CSVPreviewTable } from "./CSVPreviewTable";
 
@@ -15,6 +15,7 @@ const VALID_DEAL_STAGES = ["pipeline", "upside", "strong_upside", "commit", "clo
 const TEMPLATE_URLS = {
   contacts: "/templates/hubspot-contacts-template.csv",
   deals: "/templates/hubspot-deals-template.csv",
+  employees: "/templates/employees-template.csv",
 };
 
 interface ManualUploadDialogProps {
@@ -24,7 +25,7 @@ interface ManualUploadDialogProps {
 }
 
 type UploadSource = "office365" | "zoho" | "hubspot" | "other";
-type DataType = "contacts" | "deals" | "emails" | "activities";
+type DataType = "contacts" | "deals" | "employees" | "emails" | "activities";
 type Step = "upload" | "preview";
 
 interface UploadedFile {
@@ -77,6 +78,8 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
         result = await parseContactsPreview(file);
       } else if (dataType === "deals") {
         result = await parseDealsPreview(file);
+      } else if (dataType === "employees") {
+        result = await parseEmployeesPreview(file);
       } else {
         toast({
           title: "Not Supported",
@@ -134,6 +137,30 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
           errors.push(`Invalid date format`);
         }
       }
+    } else if (dataType === "employees") {
+      if (!row.data.full_name || row.data.full_name.trim() === "") {
+        errors.push("Missing required field 'full_name'");
+      }
+      if (!row.data.email || row.data.email.trim() === "") {
+        errors.push("Missing required field 'email'");
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(row.data.email.trim())) {
+          errors.push("Invalid email format");
+        }
+      }
+      if (row.data.birth_date) {
+        const date = new Date(row.data.birth_date);
+        if (isNaN(date.getTime())) {
+          errors.push(`Invalid birth date format`);
+        }
+      }
+      if (row.data.hire_date) {
+        const date = new Date(row.data.hire_date);
+        if (isNaN(date.getTime())) {
+          errors.push(`Invalid hire date format`);
+        }
+      }
     }
 
     row.errors = errors;
@@ -168,6 +195,8 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
         result = await importContactsFromPreview(previewData.rows, user.id);
       } else if (dataType === "deals") {
         result = await importDealsFromPreview(previewData.rows, user.id);
+      } else if (dataType === "employees") {
+        result = await importEmployeesFromPreview(previewData.rows);
       } else {
         result = {
           success: false,
@@ -257,7 +286,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 <p className="text-sm font-medium">Download CSV Templates</p>
                 <p className="text-xs text-muted-foreground">Use these templates to format your data correctly</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
@@ -274,6 +303,15 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 >
                   <a href={TEMPLATE_URLS.deals} download="hubspot-deals-template.csv">
                     Deals
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a href={TEMPLATE_URLS.employees} download="employees-template.csv">
+                    Employees
                   </a>
                 </Button>
               </div>
@@ -325,6 +363,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                   <SelectContent>
                     <SelectItem value="contacts">Contacts</SelectItem>
                     <SelectItem value="deals">Deals / Opportunities</SelectItem>
+                    <SelectItem value="employees">Employees</SelectItem>
                     <SelectItem value="emails" disabled>Emails (coming soon)</SelectItem>
                     <SelectItem value="activities" disabled>Activities (coming soon)</SelectItem>
                   </SelectContent>
