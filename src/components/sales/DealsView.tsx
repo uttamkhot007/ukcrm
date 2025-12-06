@@ -346,14 +346,14 @@ export function DealsView() {
               <div className="space-y-2">
                 <Label htmlFor="contact">Contact</Label>
                 <Select
-                  value={formData.contact_id}
-                  onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
+                  value={formData.contact_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, contact_id: value === "none" ? "" : value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a contact (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No contact</SelectItem>
+                    <SelectItem value="none">No contact</SelectItem>
                     {contacts?.map((contact) => (
                       <SelectItem key={contact.id} value={contact.id}>
                         {contact.name} {contact.company && `(${contact.company})`}
