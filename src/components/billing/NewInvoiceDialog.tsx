@@ -1,0 +1,251 @@
+import { useState } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { addDays, format } from "date-fns";
+
+interface NewInvoiceDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+interface LineItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    contact_id: "",
+    billing_frequency: "one_time",
+    due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
+    tax_rate: 18,
+    notes: "",
+  });
+  const [lineItems, setLineItems] = useState<LineItem[]>([{ description: "", quantity: 1, unit_price: 0 }]);
+
+  const { data: contacts } = useQuery({
+    queryKey: ["contacts-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contacts").select("id, name, company").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const subtotal = lineItems.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+  const taxAmount = (subtotal * formData.tax_rate) / 100;
+  const total = subtotal + taxAmount;
+
+  const addLineItem = () => setLineItems([...lineItems, { description: "", quantity: 1, unit_price: 0 }]);
+  const removeLineItem = (index: number) => setLineItems(lineItems.filter((_, i) => i !== index));
+  const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
+    const updated = [...lineItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setLineItems(updated);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsSubmitting(true);
+    try {
+      const { data: invoice, error: invoiceError } = await supabase
+        .from("invoices")
+        .insert([{
+          contact_id: formData.contact_id || null,
+          billing_frequency: formData.billing_frequency as "one_time" | "monthly" | "quarterly" | "annually",
+          due_date: formData.due_date,
+          tax_rate: formData.tax_rate,
+          subtotal,
+          tax_amount: taxAmount,
+          total,
+          notes: formData.notes,
+          created_by: user.id,
+        }])
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+
+      const itemsToInsert = lineItems.filter(item => item.description).map((item, index) => ({
+        invoice_id: invoice.id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total: item.quantity * item.unit_price,
+        sort_order: index,
+      }));
+
+      if (itemsToInsert.length > 0) {
+        const { error: itemsError } = await supabase.from("invoice_items").insert(itemsToInsert);
+        if (itemsError) throw itemsError;
+      }
+
+      toast.success("Invoice created successfully");
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
+      onOpenChange(false);
+      setFormData({ contact_id: "", billing_frequency: "one_time", due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"), tax_rate: 18, notes: "" });
+      setLineItems([{ description: "", quantity: 1, unit_price: 0 }]);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create invoice");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Invoice</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Contact</Label>
+              <Select value={formData.contact_id} onValueChange={(v) => setFormData({ ...formData, contact_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select contact" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contacts?.map((contact) => (
+                    <SelectItem key={contact.id} value={contact.id}>
+                      {contact.name} {contact.company ? `(${contact.company})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Line Items</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
+                <Plus className="w-4 h-4 mr-1" /> Add Item
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {lineItems.map((item, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Description"
+                    value={item.description}
+                    onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Qty"
+                    value={item.quantity}
+                    onChange={(e) => updateLineItem(index, "quantity", parseInt(e.target.value) || 0)}
+                    className="w-20"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Price"
+                    value={item.unit_price}
+                    onChange={(e) => updateLineItem(index, "unit_price", parseFloat(e.target.value) || 0)}
+                    className="w-28"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeLineItem(index)}
+                    disabled={lineItems.length === 1}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tax Rate (%)</Label>
+              <Input
+                type="number"
+                value={formData.tax_rate}
+                onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Billing Frequency</Label>
+              <Select value={formData.billing_frequency} onValueChange={(v) => setFormData({ ...formData, billing_frequency: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="one_time">One Time</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="annually">Annually</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="bg-muted p-4 rounded-lg space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Tax ({formData.tax_rate}%)</span>
+              <span>{formatCurrency(taxAmount)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-lg border-t pt-2">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              rows={2}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Invoice"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
