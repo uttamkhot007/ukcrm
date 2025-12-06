@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Settings, Puzzle } from "lucide-react";
+import { Settings, Puzzle, Building2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPanel } from "./AdminPanel";
 import { IntegrationsModule } from "./IntegrationsModule";
+import { OrganizationSettings } from "./OrganizationSettings";
 
 export function AdminCenter() {
   return (
@@ -17,8 +18,12 @@ export function AdminCenter() {
         </div>
       </div>
 
-      <Tabs defaultValue="integrations" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      <Tabs defaultValue="organization" className="space-y-6">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsTrigger value="organization" className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Organization
+          </TabsTrigger>
           <TabsTrigger value="integrations" className="flex items-center gap-2">
             <Puzzle className="w-4 h-4" />
             Integrations
@@ -28,6 +33,10 @@ export function AdminCenter() {
             Admin Panel
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="organization">
+          <OrganizationSettings />
+        </TabsContent>
 
         <TabsContent value="integrations">
           <IntegrationsModule />

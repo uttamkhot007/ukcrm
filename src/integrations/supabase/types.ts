@@ -391,6 +391,45 @@ export type Database = {
           },
         ]
       }
+      employee_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string
+          event_type: string
+          id: string
+          is_recurring: boolean | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date: string
+          event_type: string
+          id?: string
+          is_recurring?: boolean | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          is_recurring?: boolean | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       employee_requests: {
         Row: {
           advance_amount: number | null
@@ -483,6 +522,47 @@ export type Database = {
           wfh_reason?: string | null
         }
         Relationships: []
+      }
+      event_wishes: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          event_id: string
+          id: string
+          is_read: boolean | null
+          message: string | null
+          recipient_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          event_id: string
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          recipient_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          event_id?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          recipient_id?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_wishes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "employee_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inside_sales_prospects: {
         Row: {
@@ -1014,6 +1094,57 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      organization_settings: {
+        Row: {
+          address: string | null
+          cities: string[] | null
+          countries: string[] | null
+          created_at: string
+          currency: string | null
+          id: string
+          linkedin_url: string | null
+          logo_url: string | null
+          name: string
+          senior_management: Json | null
+          total_employees: number | null
+          twitter_url: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          cities?: string[] | null
+          countries?: string[] | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          linkedin_url?: string | null
+          logo_url?: string | null
+          name?: string
+          senior_management?: Json | null
+          total_employees?: number | null
+          twitter_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          cities?: string[] | null
+          countries?: string[] | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          linkedin_url?: string | null
+          logo_url?: string | null
+          name?: string
+          senior_management?: Json | null
+          total_employees?: number | null
+          twitter_url?: string | null
+          updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
