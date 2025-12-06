@@ -28,6 +28,7 @@ import { EmployeeWidgets } from "./EmployeeWidgets";
 import { TeamSpecificWidgets } from "./TeamSpecificWidgets";
 import { NotificationCenterWidget } from "./NotificationCenterWidget";
 import { UpcomingEventsWidget } from "./UpcomingEventsWidget";
+import { CurrencyConverterWidget } from "./CurrencyConverterWidget";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -266,6 +267,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
           </div>
           <div className="space-y-6">
             <NotificationCenterWidget />
+            <CurrencyConverterWidget />
             <UpcomingEventsWidget />
             <QuickActions />
             <PendingApprovalsWidget onNavigate={onModuleChange} />

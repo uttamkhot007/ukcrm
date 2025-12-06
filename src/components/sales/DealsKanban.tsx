@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { cn } from "@/lib/utils";
-import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User } from "lucide-react";
+import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -35,7 +36,8 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null);
   const { toast } = useToast();
-  const { formatCurrency } = useOrganizationSettings();
+  const { formatCurrency, currency: orgCurrency } = useOrganizationSettings();
+  const { formatConvertedAmount } = useExchangeRates();
   const queryClient = useQueryClient();
 
   const updateDealStage = useMutation({
@@ -122,6 +124,16 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
               </div>
               <p className="text-sm text-muted-foreground">
                 {formatCurrency(stageTotal)}
+                {(() => {
+                  const altCurrency = orgCurrency === "INR" ? "USD" : "INR";
+                  const converted = formatConvertedAmount(stageTotal, orgCurrency, altCurrency, formatCurrency);
+                  return converted ? (
+                    <span className="ml-1 text-xs flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3" />
+                      ≈ {converted}
+                    </span>
+                  ) : null;
+                })()}
               </p>
             </div>
 
