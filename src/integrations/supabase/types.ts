@@ -343,6 +343,48 @@ export type Database = {
           },
         ]
       }
+      integrations: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          provider: string
+          refresh_token: string | null
+          settings: Json | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          provider: string
+          refresh_token?: string | null
+          settings?: Json | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          settings?: Json | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           assigned_to: string | null
