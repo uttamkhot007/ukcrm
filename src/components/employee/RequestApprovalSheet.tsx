@@ -35,6 +35,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Eye,
+  ArrowUpCircle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -117,6 +118,7 @@ export function RequestApprovalSheet({ requestId, onClose }: RequestApprovalShee
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isMarkingReview, setIsMarkingReview] = useState(false);
+  const [isEscalating, setIsEscalating] = useState(false);
 
   const { data: request, isLoading } = useQuery<RequestWithRequester | null>({
     queryKey: ["employee-request-approval", requestId],
@@ -336,6 +338,45 @@ export function RequestApprovalSheet({ requestId, onClose }: RequestApprovalShee
       toast.error("Failed to reject request");
     } finally {
       setIsRejecting(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!requestId || !user?.id) return;
+
+    setIsEscalating(true);
+    try {
+      const newLevel = (request?.escalation_level || 0) + 1;
+
+      const { error } = await supabase
+        .from("employee_requests")
+        .update({ 
+          escalated: true,
+          escalation_level: newLevel
+        })
+        .eq("id", requestId);
+
+      if (error) throw error;
+
+      await supabase.from("request_history").insert([{
+        request_id: requestId,
+        user_id: user.id,
+        action: `escalated to level ${newLevel}`,
+        old_status: request?.status as "pending" | "under_review" | "approved" | "rejected" | "completed" | "cancelled" | undefined,
+        new_status: request?.status as "pending" | "under_review" | "approved" | "rejected" | "completed" | "cancelled" | undefined,
+        notes: `Request escalated for faster resolution`,
+      }]);
+
+      // Trigger workflow notification
+      workflows.requestEscalated(requestId);
+
+      invalidateQueries();
+      toast.success(`Request escalated to level ${newLevel}`);
+    } catch (error) {
+      console.error("Error escalating request:", error);
+      toast.error("Failed to escalate request");
+    } finally {
+      setIsEscalating(false);
     }
   };
 
@@ -599,6 +640,18 @@ export function RequestApprovalSheet({ requestId, onClose }: RequestApprovalShee
                       Reject
                     </Button>
                   </div>
+
+                  {/* Escalate Button */}
+                  <Button
+                    variant="outline"
+                    onClick={handleEscalate}
+                    disabled={isEscalating}
+                    className="w-full border-orange-500/50 text-orange-600 hover:bg-orange-500/10"
+                  >
+                    {isEscalating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    <ArrowUpCircle className="w-4 h-4 mr-2" />
+                    Escalate Request {request.escalation_level ? `(Level ${request.escalation_level})` : ""}
+                  </Button>
                 </div>
               )}
 
