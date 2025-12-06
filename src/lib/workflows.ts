@@ -48,4 +48,13 @@ export const workflows = {
     
   requestApproved: (requestId: string) =>
     triggerWorkflow({ type: "request_approved", entity_type: "employee_requests", entity_id: requestId }),
+    
+  requestRejected: (requestId: string, reason?: string) =>
+    triggerWorkflow({ type: "request_rejected", entity_type: "employee_requests", entity_id: requestId, data: { reason } }),
+    
+  requestEscalated: (requestId: string) =>
+    triggerWorkflow({ type: "request_escalated", entity_type: "employee_requests", entity_id: requestId }),
+    
+  requestUnderReview: (requestId: string) =>
+    triggerWorkflow({ type: "request_under_review", entity_type: "employee_requests", entity_id: requestId }),
 };

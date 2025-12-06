@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { workflows } from "@/lib/workflows";
 import {
   Sheet,
   SheetContent,
@@ -226,6 +227,9 @@ export function RequestApprovalSheet({ requestId, onClose }: RequestApprovalShee
         new_status: "under_review" as const,
       }]);
 
+      // Trigger workflow notification
+      workflows.requestUnderReview(requestId);
+
       invalidateQueries();
       toast.success("Request marked as under review");
     } catch (error) {
@@ -269,6 +273,9 @@ export function RequestApprovalSheet({ requestId, onClose }: RequestApprovalShee
           is_internal: false,
         }]);
       }
+
+      // Trigger workflow notification
+      workflows.requestApproved(requestId);
 
       invalidateQueries();
       setApprovalNotes("");
@@ -316,6 +323,9 @@ export function RequestApprovalSheet({ requestId, onClose }: RequestApprovalShee
         comment: `Rejection Reason: ${approvalNotes.trim()}`,
         is_internal: false,
       }]);
+
+      // Trigger workflow notification
+      workflows.requestRejected(requestId, approvalNotes.trim());
 
       invalidateQueries();
       setApprovalNotes("");
