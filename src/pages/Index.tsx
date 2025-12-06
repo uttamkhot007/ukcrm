@@ -10,6 +10,7 @@ import { LegalModule } from "@/components/legal/LegalModule";
 import { RenewalsModule } from "@/components/renewals/RenewalsModule";
 import { InsideSalesModule } from "@/components/sales/InsideSalesModule";
 import { RequestsModule } from "@/components/employee/RequestsModule";
+import { RequestApprovalModule } from "@/components/employee/RequestApprovalModule";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -61,6 +62,8 @@ const Index = () => {
         return <RenewalsModule />;
       case "employee-requests":
         return <RequestsModule />;
+      case "employee-approvals":
+        return <RequestApprovalModule />;
       default:
         return <Dashboard onModuleChange={setActiveModule} />;
     }
