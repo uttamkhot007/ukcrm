@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Settings, Puzzle, Building2, Clock } from "lucide-react";
+import { Settings, Puzzle, Building2, Clock, BookOpen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPanel } from "./AdminPanel";
 import { IntegrationsModule } from "./IntegrationsModule";
 import { OrganizationSettings } from "./OrganizationSettings";
 import { AttendanceSettings } from "./AttendanceSettings";
+import { AdminDocumentation } from "./AdminDocumentation";
 
 export function AdminCenter() {
   return (
@@ -20,7 +21,7 @@ export function AdminCenter() {
       </div>
 
       <Tabs defaultValue="organization" className="space-y-6">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="organization" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Organization
@@ -32,6 +33,10 @@ export function AdminCenter() {
           <TabsTrigger value="integrations" className="flex items-center gap-2">
             <Puzzle className="w-4 h-4" />
             Integrations
+          </TabsTrigger>
+          <TabsTrigger value="documentation" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Documentation
           </TabsTrigger>
           <TabsTrigger value="admin" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -49,6 +54,10 @@ export function AdminCenter() {
 
         <TabsContent value="integrations">
           <IntegrationsModule />
+        </TabsContent>
+
+        <TabsContent value="documentation">
+          <AdminDocumentation />
         </TabsContent>
 
         <TabsContent value="admin">

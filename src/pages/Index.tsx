@@ -15,6 +15,7 @@ import { RequestApprovalModule } from "@/components/employee/RequestApprovalModu
 import { EmployeeEventsModule } from "@/components/employee/EmployeeEventsModule";
 import { AttendanceModule } from "@/components/employee/AttendanceModule";
 import { AttendanceReports } from "@/components/employee/AttendanceReports";
+import { DocumentationModule } from "@/components/employee/DocumentationModule";
 import { TicketingModule } from "@/components/ticketing/TicketingModule";
 import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
@@ -79,6 +80,8 @@ const Index = () => {
         return <RequestApprovalModule />;
       case "employee-events":
         return <EmployeeEventsModule />;
+      case "employee-documentation":
+        return <DocumentationModule />;
       case "helpdesk":
       case "helpdesk-tickets":
         return <TicketingModule />;
