@@ -594,6 +594,36 @@ export type Database = {
           },
         ]
       }
+      exchange_rate_history: {
+        Row: {
+          created_at: string
+          fetched_at: string
+          from_currency: string
+          id: string
+          rate: number
+          rate_date: string
+          to_currency: string
+        }
+        Insert: {
+          created_at?: string
+          fetched_at?: string
+          from_currency: string
+          id?: string
+          rate: number
+          rate_date: string
+          to_currency: string
+        }
+        Update: {
+          created_at?: string
+          fetched_at?: string
+          from_currency?: string
+          id?: string
+          rate?: number
+          rate_date?: string
+          to_currency?: string
+        }
+        Relationships: []
+      }
       inside_sales_prospects: {
         Row: {
           assigned_to: string | null
