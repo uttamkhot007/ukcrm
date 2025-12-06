@@ -9,6 +9,7 @@ import { LegalModule } from "@/components/legal/LegalModule";
 import { RenewalsModule } from "@/components/renewals/RenewalsModule";
 import { InsideSalesModule } from "@/components/sales/InsideSalesModule";
 import { RequestsModule } from "@/components/employee/RequestsModule";
+import { EmployeeAIAssistant } from "@/components/employee/EmployeeAIAssistant";
 import { RequestApprovalModule } from "@/components/employee/RequestApprovalModule";
 import { EmployeeEventsModule } from "@/components/employee/EmployeeEventsModule";
 import { AttendanceModule } from "@/components/employee/AttendanceModule";
@@ -77,6 +78,8 @@ const Index = () => {
         return <RenewalsModule />;
       
       // Employee Portal modules
+      case "employee-ai-assistant":
+        return <EmployeeAIAssistant />;
       case "employee-attendance":
         return <AttendanceModule />;
       case "employee-attendance-reports":
