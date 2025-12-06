@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, subMonths, isWeekend, setHours, setMinutes } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { Clock, Users, TrendingUp, Calendar, Timer, BarChart3, Download, AlertTriangle, FileText, FileSpreadsheet } from "lucide-react";
+import { Clock, Users, TrendingUp, Calendar, Timer, BarChart3, Download, AlertTriangle, FileText, FileSpreadsheet, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -20,19 +20,48 @@ interface AttendanceRecord {
   work_hours: number | null;
 }
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+interface AttendanceConfig {
+  workStartHour: number;
+  workStartMinute: number;
+  lateThresholdMinutes: number;
+  workEndHour: number;
+  workEndMinute: number;
+  earlyDepartureThresholdMinutes: number;
+}
 
-// Default work start time (9:00 AM)
-const WORK_START_HOUR = 9;
-const WORK_START_MINUTE = 0;
-const LATE_THRESHOLD_MINUTES = 15; // Grace period
+const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export function AttendanceReports() {
   const { isManager, isAdmin } = useAuth();
-  const [viewMode, setViewMode] = useState<"daily" | "weekly" | "monthly" | "late">("weekly");
+  const [viewMode, setViewMode] = useState<"daily" | "weekly" | "monthly" | "late" | "early">("weekly");
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
 
   const canViewReports = isManager || isAdmin;
+
+  // Fetch organization attendance settings
+  const { data: orgSettings } = useQuery({
+    queryKey: ["org-attendance-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organization_settings")
+        .select("work_start_time, late_threshold_minutes, work_end_time, early_departure_threshold_minutes")
+        .limit(1)
+        .single();
+      
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    },
+  });
+
+  // Parse org settings into usable config
+  const attendanceConfig: AttendanceConfig = {
+    workStartHour: orgSettings?.work_start_time ? parseInt(orgSettings.work_start_time.split(":")[0]) : 9,
+    workStartMinute: orgSettings?.work_start_time ? parseInt(orgSettings.work_start_time.split(":")[1]) : 0,
+    lateThresholdMinutes: orgSettings?.late_threshold_minutes ?? 15,
+    workEndHour: orgSettings?.work_end_time ? parseInt(orgSettings.work_end_time.split(":")[0]) : 18,
+    workEndMinute: orgSettings?.work_end_time ? parseInt(orgSettings.work_end_time.split(":")[1]) : 0,
+    earlyDepartureThresholdMinutes: orgSettings?.early_departure_threshold_minutes ?? 15,
+  };
 
   // Get all attendance records for the selected period
   const { data: attendanceData = [], isLoading } = useQuery({
@@ -81,16 +110,77 @@ export function AttendanceReports() {
   // Check if a check-in is late
   const isLateArrival = (checkIn: string): boolean => {
     const checkInDate = parseISO(checkIn);
-    const workStart = setMinutes(setHours(checkInDate, WORK_START_HOUR), WORK_START_MINUTE + LATE_THRESHOLD_MINUTES);
+    const workStart = setMinutes(
+      setHours(checkInDate, attendanceConfig.workStartHour), 
+      attendanceConfig.workStartMinute + attendanceConfig.lateThresholdMinutes
+    );
     return checkInDate > workStart;
   };
 
   // Get late arrival minutes
   const getLateMinutes = (checkIn: string): number => {
     const checkInDate = parseISO(checkIn);
-    const workStart = setMinutes(setHours(checkInDate, WORK_START_HOUR), WORK_START_MINUTE);
+    const workStart = setMinutes(setHours(checkInDate, attendanceConfig.workStartHour), attendanceConfig.workStartMinute);
     const diff = (checkInDate.getTime() - workStart.getTime()) / (1000 * 60);
     return Math.max(0, Math.round(diff));
+  };
+
+  // Check if a check-out is early departure
+  const isEarlyDeparture = (checkOut: string | null): boolean => {
+    if (!checkOut) return false;
+    const checkOutDate = parseISO(checkOut);
+    const workEnd = setMinutes(
+      setHours(checkOutDate, attendanceConfig.workEndHour), 
+      attendanceConfig.workEndMinute - attendanceConfig.earlyDepartureThresholdMinutes
+    );
+    return checkOutDate < workEnd;
+  };
+
+  // Get early departure minutes
+  const getEarlyMinutes = (checkOut: string): number => {
+    const checkOutDate = parseISO(checkOut);
+    const workEnd = setMinutes(setHours(checkOutDate, attendanceConfig.workEndHour), attendanceConfig.workEndMinute);
+    const diff = (workEnd.getTime() - checkOutDate.getTime()) / (1000 * 60);
+    return Math.max(0, Math.round(diff));
+  };
+
+  // Get early departures data
+  const getEarlyDepartures = () => {
+    return attendanceData
+      .filter(r => r.check_out && isEarlyDeparture(r.check_out))
+      .map(r => ({
+        ...r,
+        name: getProfileName(r.user_id),
+        department: getProfileDepartment(r.user_id),
+        date: format(parseISO(r.check_in), "MMM d, yyyy"),
+        checkOutTime: format(parseISO(r.check_out!), "hh:mm a"),
+        earlyMinutes: getEarlyMinutes(r.check_out!),
+      }))
+      .sort((a, b) => b.earlyMinutes - a.earlyMinutes);
+  };
+
+  // Early departures by employee
+  const getEarlyDeparturesByEmployee = () => {
+    const earlyMap = new Map<string, { count: number; totalMinutes: number }>();
+    
+    attendanceData.forEach(record => {
+      if (record.check_out && isEarlyDeparture(record.check_out)) {
+        const current = earlyMap.get(record.user_id) || { count: 0, totalMinutes: 0 };
+        earlyMap.set(record.user_id, {
+          count: current.count + 1,
+          totalMinutes: current.totalMinutes + getEarlyMinutes(record.check_out),
+        });
+      }
+    });
+
+    return Array.from(earlyMap.entries())
+      .map(([userId, data]) => ({
+        name: getProfileName(userId),
+        userId,
+        earlyCount: data.count,
+        avgEarlyMinutes: Math.round(data.totalMinutes / data.count),
+      }))
+      .sort((a, b) => b.earlyCount - a.earlyCount);
   };
 
   // Get late arrivals data
@@ -134,6 +224,7 @@ export function AttendanceReports() {
 
   // Calculate stats
   const lateArrivals = attendanceData.filter(r => isLateArrival(r.check_in));
+  const earlyDepartures = attendanceData.filter(r => r.check_out && isEarlyDeparture(r.check_out));
   const stats = {
     totalRecords: attendanceData.length,
     uniqueEmployees: new Set(attendanceData.map(r => r.user_id)).size,
@@ -144,6 +235,10 @@ export function AttendanceReports() {
     lateArrivals: lateArrivals.length,
     latePercentage: attendanceData.length > 0 
       ? ((lateArrivals.length / attendanceData.length) * 100).toFixed(1)
+      : 0,
+    earlyDepartures: earlyDepartures.length,
+    earlyPercentage: attendanceData.length > 0 
+      ? ((earlyDepartures.length / attendanceData.length) * 100).toFixed(1)
       : 0,
   };
 
@@ -253,6 +348,7 @@ export function AttendanceReports() {
       const totalHours = dayRecords.reduce((sum, r) => sum + (r.work_hours || 0), 0);
       const employeeCount = new Set(dayRecords.map(r => r.user_id)).size;
       const lateCount = dayRecords.filter(r => isLateArrival(r.check_in)).length;
+      const earlyCount = dayRecords.filter(r => r.check_out && isEarlyDeparture(r.check_out)).length;
 
       return {
         date: format(day, "d"),
@@ -260,6 +356,7 @@ export function AttendanceReports() {
         hours: Math.round(totalHours * 10) / 10,
         employees: employeeCount,
         lateCount,
+        earlyCount,
         isWeekend: isWeekend(day),
       };
     });
@@ -390,13 +487,14 @@ export function AttendanceReports() {
               <SelectItem value="weekly">Weekly</SelectItem>
               <SelectItem value="monthly">By Employee</SelectItem>
               <SelectItem value="late">Late Arrivals</SelectItem>
+              <SelectItem value="early">Early Departures</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -458,7 +556,21 @@ export function AttendanceReports() {
               <div>
                 <p className="text-sm text-muted-foreground">Late Arrivals</p>
                 <p className="text-2xl font-bold">{stats.lateArrivals}</p>
-                <p className="text-xs text-muted-foreground">{stats.latePercentage}% of total</p>
+                <p className="text-xs text-muted-foreground">{stats.latePercentage}%</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <LogOut className="w-5 h-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Early Departures</p>
+                <p className="text-2xl font-bold">{stats.earlyDepartures}</p>
+                <p className="text-xs text-muted-foreground">{stats.earlyPercentage}%</p>
               </div>
             </div>
           </CardContent>
@@ -476,7 +588,7 @@ export function AttendanceReports() {
                 Late Arrivals This Month
               </CardTitle>
               <CardDescription>
-                Employees who checked in after {WORK_START_HOUR}:{WORK_START_MINUTE.toString().padStart(2, '0')} AM + {LATE_THRESHOLD_MINUTES}min grace period
+                Employees who checked in after {attendanceConfig.workStartHour}:{attendanceConfig.workStartMinute.toString().padStart(2, '0')} + {attendanceConfig.lateThresholdMinutes}min grace period
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -573,6 +685,120 @@ export function AttendanceReports() {
                   <Bar 
                     dataKey="lateCount" 
                     fill="hsl(var(--destructive))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      ) : viewMode === "early" ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Early Departures List */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LogOut className="w-5 h-5 text-orange-500" />
+                Early Departures This Month
+              </CardTitle>
+              <CardDescription>
+                Employees who checked out before {attendanceConfig.workEndHour}:{attendanceConfig.workEndMinute.toString().padStart(2, '0')} - {attendanceConfig.earlyDepartureThresholdMinutes}min threshold
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {getEarlyDepartures().length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No early departures this month
+                  </p>
+                ) : (
+                  getEarlyDepartures().map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-orange-500 border-orange-500">
+                          -{record.earlyMinutes}min
+                        </Badge>
+                        <div>
+                          <p className="font-medium">{record.name}</p>
+                          <p className="text-sm text-muted-foreground">{record.date}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{record.checkOutTime}</p>
+                        <p className="text-xs text-muted-foreground">{record.department}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Frequent Early Departures */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Frequent Early Departures</CardTitle>
+              <CardDescription>Employees with most early check-outs</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {getEarlyDeparturesByEmployee().slice(0, 5).map((emp, index) => (
+                  <div key={emp.userId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <Badge className="w-6 h-6 rounded-full p-0 flex items-center justify-center bg-orange-500">
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">{emp.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-orange-500">{emp.earlyCount} times</Badge>
+                      <p className="text-xs text-muted-foreground mt-1">Avg: {emp.avgEarlyMinutes}min early</p>
+                    </div>
+                  </div>
+                ))}
+                {getEarlyDeparturesByEmployee().length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">
+                    No early departures
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Early Departures by Day Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Daily Early Departures</CardTitle>
+              <CardDescription>Number of early check-outs per day</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={getDailyData().filter(d => !d.isWeekend)}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="date" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-popover border rounded-lg shadow-lg p-3">
+                            <p className="font-medium">{data.fullDate}</p>
+                            <p className="text-sm text-orange-500">
+                              Early: {data.earlyCount}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Total: {data.employees}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar 
+                    dataKey="earlyCount" 
+                    fill="hsl(25 95% 53%)" 
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
