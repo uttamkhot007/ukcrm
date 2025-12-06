@@ -38,8 +38,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2, Download, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -84,6 +85,7 @@ export function QuotationsView() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { formatCurrency, currency: orgCurrency } = useOrganizationSettings();
+  const { formatConvertedAmount } = useExchangeRates();
   const queryClient = useQueryClient();
 
   const { data: quotations, isLoading } = useQuery({
@@ -450,7 +452,20 @@ export function QuotationsView() {
                     </TableCell>
                     <TableCell>{formatCurrency(Number(quotation.subtotal), (quotation as any).currency || orgCurrency)}</TableCell>
                     <TableCell className="font-semibold">
-                      {formatCurrency(Number(quotation.total), (quotation as any).currency || orgCurrency)}
+                      <div>
+                        <span>{formatCurrency(Number(quotation.total), (quotation as any).currency || orgCurrency)}</span>
+                        {(() => {
+                          const qCurrency = (quotation as any).currency || orgCurrency;
+                          const altCurrency = qCurrency === "INR" ? "USD" : "INR";
+                          const converted = formatConvertedAmount(Number(quotation.total), qCurrency, altCurrency, formatCurrency);
+                          return converted ? (
+                            <span className="text-xs text-muted-foreground ml-1 flex items-center gap-1">
+                              <RefreshCw className="w-3 h-3" />
+                              ≈ {converted}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {quotation.valid_until

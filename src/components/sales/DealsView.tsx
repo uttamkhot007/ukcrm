@@ -40,11 +40,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
 import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
 import { AddActivityDialog } from "./AddActivityDialog";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus } from "lucide-react";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -93,7 +94,8 @@ export function DealsView() {
   const [filters, setFilters] = useState<DealFilters>(initialDealFilters);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
+  const { formatCurrency, getCurrencySymbol, currency: orgCurrency } = useOrganizationSettings();
+  const { formatConvertedAmount } = useExchangeRates();
   const queryClient = useQueryClient();
 
   const { data: deals, isLoading } = useQuery({
@@ -270,6 +272,16 @@ export function DealsView() {
             <div>
               <p className="text-sm text-muted-foreground">Total Pipeline</p>
               <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
+              {(() => {
+                const altCurrency = orgCurrency === "INR" ? "USD" : "INR";
+                const converted = formatConvertedAmount(totalValue, orgCurrency, altCurrency, formatCurrency);
+                return converted ? (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" />
+                    ≈ {converted}
+                  </p>
+                ) : null;
+              })()}
             </div>
           </div>
         </Card>
@@ -281,6 +293,16 @@ export function DealsView() {
             <div>
               <p className="text-sm text-muted-foreground">Won This Quarter</p>
               <p className="text-2xl font-bold">{formatCurrency(wonValue)}</p>
+              {(() => {
+                const altCurrency = orgCurrency === "INR" ? "USD" : "INR";
+                const converted = formatConvertedAmount(wonValue, orgCurrency, altCurrency, formatCurrency);
+                return converted ? (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" />
+                    ≈ {converted}
+                  </p>
+                ) : null;
+              })()}
             </div>
           </div>
         </Card>
