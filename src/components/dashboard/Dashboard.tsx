@@ -22,6 +22,7 @@ import { QuickActions } from "./QuickActions";
 import { UpcomingTasks } from "./UpcomingTasks";
 import { SalesWidgets } from "./SalesWidgets";
 import { UpcomingFollowUps } from "./UpcomingFollowUps";
+import { PendingApprovalsWidget } from "./PendingApprovalsWidget";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -243,6 +244,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
           </div>
           <div className="space-y-6">
             <QuickActions />
+            <PendingApprovalsWidget onNavigate={onModuleChange} />
             <UpcomingFollowUps onNavigate={onModuleChange} />
             <UpcomingTasks />
           </div>
