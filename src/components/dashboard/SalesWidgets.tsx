@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { TrendingUp, DollarSign, Users, Target, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 type DealStage = Database["public"]["Enums"]["deal_stage"];
 
@@ -19,6 +20,7 @@ const stageLabels: Record<DealStage, string> = {
 };
 
 export function SalesWidgets() {
+  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
   const { data: deals, isLoading: dealsLoading } = useQuery({
     queryKey: ["sales-widget-deals"],
     queryFn: async () => {
@@ -103,7 +105,7 @@ export function SalesWidgets() {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">Active Pipeline</p>
-              <p className="text-2xl font-bold">${totalPipeline.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalPipeline)}</p>
             </div>
           </div>
         </Card>
@@ -115,7 +117,7 @@ export function SalesWidgets() {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">Closed Won</p>
-              <p className="text-2xl font-bold">${closedWonValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatCurrency(closedWonValue)}</p>
             </div>
           </div>
         </Card>
@@ -157,7 +159,7 @@ export function SalesWidgets() {
                   <span className="text-muted-foreground">{label}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{count}</Badge>
-                    <span className="font-medium">${value.toLocaleString()}</span>
+                    <span className="font-medium">{formatCurrency(value)}</span>
                   </div>
                 </div>
                 <Progress value={percentage} className="h-2" />
@@ -210,7 +212,7 @@ export function SalesWidgets() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">${Number(deal.value).toLocaleString()}</p>
+                <p className="font-semibold">{formatCurrency(Number(deal.value))}</p>
                 <Badge variant="secondary" className="text-xs">
                   {stageLabels[deal.stage]}
                 </Badge>

@@ -1,21 +1,23 @@
 import { cn } from "@/lib/utils";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 interface FunnelStage {
   name: string;
   value: number;
-  amount: string;
+  amount: number;
   color: string;
 }
 
 const stages: FunnelStage[] = [
-  { name: "Leads", value: 2500, amount: "$12.5M", color: "bg-sales/20" },
-  { name: "Qualified", value: 1800, amount: "$9.2M", color: "bg-sales/40" },
-  { name: "Proposal", value: 850, amount: "$5.8M", color: "bg-sales/60" },
-  { name: "Negotiation", value: 420, amount: "$3.2M", color: "bg-sales/80" },
-  { name: "Closed Won", value: 280, amount: "$2.1M", color: "bg-sales" },
+  { name: "Leads", value: 2500, amount: 12500000, color: "bg-sales/20" },
+  { name: "Qualified", value: 1800, amount: 9200000, color: "bg-sales/40" },
+  { name: "Proposal", value: 850, amount: 5800000, color: "bg-sales/60" },
+  { name: "Negotiation", value: 420, amount: 3200000, color: "bg-sales/80" },
+  { name: "Closed Won", value: 280, amount: 2100000, color: "bg-sales" },
 ];
 
 export function SalesFunnel() {
+  const { formatCurrency } = useOrganizationSettings();
   const maxValue = stages[0].value;
 
   return (
@@ -44,7 +46,7 @@ export function SalesFunnel() {
                     {stage.value.toLocaleString()}
                   </span>
                   <span className="text-sm font-semibold text-sales">
-                    {stage.amount}
+                    {formatCurrency(stage.amount)}
                   </span>
                 </div>
               </div>

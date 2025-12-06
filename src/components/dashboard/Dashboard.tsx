@@ -12,6 +12,7 @@ import {
   FolderKanban,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { MetricCard } from "./MetricCard";
 import { ModuleCard } from "./ModuleCard";
 import { ActivityFeed } from "./ActivityFeed";
@@ -32,10 +33,10 @@ interface DashboardProps {
   onModuleChange: (module: string) => void;
 }
 
-const allMetrics = [
+const getMetrics = (formatCurrency: (value: number) => string) => [
   {
     title: "Total Revenue",
-    value: "$2.4M",
+    value: formatCurrency(2400000),
     change: 12.5,
     changeLabel: "vs last month",
     icon: DollarSign,
@@ -89,7 +90,7 @@ const allMetrics = [
   },
 ];
 
-const allModules = [
+const getModules = (formatCurrency: (value: number) => string) => [
   {
     id: "sales",
     title: "Sales",
@@ -97,7 +98,7 @@ const allModules = [
     icon: TrendingUp,
     color: "sales" as const,
     stats: [
-      { label: "Pipeline", value: "$12.5M" },
+      { label: "Pipeline", value: formatCurrency(12500000) },
       { label: "Win Rate", value: "32%" },
     ],
     requiredRoles: ["admin", "manager"],
@@ -109,7 +110,7 @@ const allModules = [
     icon: DollarSign,
     color: "finance" as const,
     stats: [
-      { label: "Receivables", value: "$890K" },
+      { label: "Receivables", value: formatCurrency(890000) },
       { label: "DSO", value: "45 days" },
     ],
     requiredRoles: ["admin", "manager"],
@@ -169,7 +170,7 @@ const allModules = [
     icon: BarChart3,
     color: "management" as const,
     stats: [
-      { label: "Net Profit", value: "$1.2M" },
+      { label: "Net Profit", value: "dynamicNetProfit" },
       { label: "Growth", value: "+18%" },
     ],
     requiredRoles: ["admin"],
@@ -189,12 +190,26 @@ const allModules = [
 
 export function Dashboard({ onModuleChange }: DashboardProps) {
   const { profile, role, isAdmin, isManager, teams } = useAuth();
+  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
 
   const hasAccess = (requiredRoles?: string[]) => {
     if (!requiredRoles) return true;
     if (!role) return false;
     return requiredRoles.includes(role);
   };
+
+  const allMetrics = getMetrics(formatCurrency);
+  const allModules = getModules(formatCurrency).map(m => {
+    if (m.id === "management") {
+      return {
+        ...m,
+        stats: m.stats.map(s => 
+          s.value === "dynamicNetProfit" ? { ...s, value: formatCurrency(1200000) } : s
+        ),
+      };
+    }
+    return m;
+  });
 
   const metrics = allMetrics.filter((m) => hasAccess(m.requiredRoles));
   const modules = allModules.filter((m) => hasAccess(m.requiredRoles));

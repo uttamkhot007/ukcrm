@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 const data = [
   { month: "Jan", revenue: 4200, expenses: 2400 },
@@ -24,6 +25,8 @@ const data = [
 ];
 
 export function RevenueChart() {
+  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
+  
   return (
     <div className="glass rounded-xl p-6 border border-border animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -71,7 +74,7 @@ export function RevenueChart() {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `$${value / 1000}k`}
+              tickFormatter={(value) => `${getCurrencySymbol()}${value / 1000}k`}
             />
             <Tooltip
               contentStyle={{
@@ -80,7 +83,7 @@ export function RevenueChart() {
                 borderRadius: "8px",
                 color: "hsl(210, 40%, 98%)",
               }}
-              formatter={(value: number) => [`$${value.toLocaleString()}`, ""]}
+              formatter={(value: number) => [formatCurrency(value), ""]}
             />
             <Area
               type="monotone"
