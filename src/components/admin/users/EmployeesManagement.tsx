@@ -1,0 +1,590 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import {
+  Users,
+  Check,
+  Loader2,
+  Plus,
+  Search,
+  Edit2,
+  Save,
+  X,
+  Cake,
+  CalendarHeart,
+  MapPin,
+  Briefcase,
+  Building2,
+  UserCheck,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { TeamType } from "@/hooks/useAuth";
+import { format, parseISO } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const TEAMS: { value: TeamType; label: string; color: string }[] = [
+  { value: "sales", label: "Sales", color: "bg-sales/20 text-sales border-sales/30" },
+  { value: "presales", label: "Pre-Sales", color: "bg-primary/20 text-primary border-primary/30" },
+  { value: "inside_sales", label: "Inside Sales", color: "bg-orange-500/20 text-orange-500 border-orange-500/30" },
+  { value: "technical", label: "Technical", color: "bg-tech/20 text-tech border-tech/30" },
+  { value: "managed_services", label: "Managed Services", color: "bg-support/20 text-support border-support/30" },
+  { value: "management", label: "Management", color: "bg-management/20 text-management border-management/30" },
+  { value: "hr", label: "HR", color: "bg-hr/20 text-hr border-hr/30" },
+  { value: "finance", label: "Finance", color: "bg-finance/20 text-finance border-finance/30" },
+  { value: "marketing", label: "Marketing", color: "bg-marketing/20 text-marketing border-marketing/30" },
+];
+
+const SALES_SUB_TEAMS = [
+  { value: "commercial", label: "Commercial" },
+  { value: "enterprise_govt", label: "Enterprise & Govt" },
+  { value: "bfsi", label: "BFSI" },
+  { value: "international", label: "International" },
+  { value: "alliance_india", label: "Alliance-India" },
+];
+
+const EMPLOYMENT_STATUS = [
+  { value: "active", label: "Active", color: "bg-green-500/20 text-green-600 border-green-500/30" },
+  { value: "probation", label: "Probation", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30" },
+  { value: "pip", label: "PIP", color: "bg-red-500/20 text-red-600 border-red-500/30" },
+  { value: "notice_period", label: "Notice Period", color: "bg-orange-500/20 text-orange-600 border-orange-500/30" },
+  { value: "inactive", label: "Inactive", color: "bg-gray-500/20 text-gray-600 border-gray-500/30" },
+  { value: "terminated", label: "Terminated", color: "bg-destructive/20 text-destructive border-destructive/30" },
+];
+
+interface Employee {
+  id: string;
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  birth_date: string | null;
+  hire_date: string | null;
+  job_title: string | null;
+  department: string | null;
+  employee_code: string | null;
+  location: string | null;
+  anniversary_date: string | null;
+  manager_id: string | null;
+  employment_status: string | null;
+  sales_sub_team: string | null;
+  teams: TeamType[];
+}
+
+export function EmployeesManagement() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Employee>>({});
+  const [savingEmployee, setSavingEmployee] = useState(false);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("*");
+
+    if (profilesError) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { data: userTeams, error: teamsError } = await supabase
+      .from("user_teams")
+      .select("*");
+
+    if (teamsError) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch teams",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const employeesWithTeams: Employee[] = profiles.map((profile: any) => {
+      const teams = userTeams
+        .filter((t) => t.user_id === profile.user_id)
+        .map((t) => t.team as TeamType);
+      return {
+        id: profile.id,
+        user_id: profile.user_id,
+        email: profile.email,
+        full_name: profile.full_name,
+        birth_date: profile.birth_date,
+        hire_date: profile.hire_date,
+        job_title: profile.job_title,
+        department: profile.department,
+        employee_code: profile.employee_code,
+        location: profile.location,
+        anniversary_date: profile.anniversary_date,
+        manager_id: profile.manager_id,
+        employment_status: profile.employment_status || "active",
+        sales_sub_team: profile.sales_sub_team,
+        teams,
+      };
+    });
+
+    setEmployees(employeesWithTeams);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const toggleTeam = async (userId: string, team: TeamType, currentTeams: TeamType[]) => {
+    setUpdatingUser(userId);
+
+    const hasTeam = currentTeams.includes(team);
+
+    if (hasTeam) {
+      const { error } = await supabase
+        .from("user_teams")
+        .delete()
+        .eq("user_id", userId)
+        .eq("team", team);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove team",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Removed from ${team.replace("_", " ")} team`,
+        });
+        fetchEmployees();
+      }
+    } else {
+      const { error } = await supabase
+        .from("user_teams")
+        .insert({ user_id: userId, team });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add team",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Added to ${team.replace("_", " ")} team`,
+        });
+        fetchEmployees();
+      }
+    }
+
+    setUpdatingUser(null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = EMPLOYMENT_STATUS.find((s) => s.value === status);
+    return statusConfig?.color || "bg-muted text-muted-foreground";
+  };
+
+  const openEditDialog = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setEditForm({
+      full_name: employee.full_name || "",
+      job_title: employee.job_title || "",
+      department: employee.department || "",
+      location: employee.location || "",
+      employee_code: employee.employee_code || "",
+      birth_date: employee.birth_date || "",
+      hire_date: employee.hire_date || "",
+      anniversary_date: employee.anniversary_date || "",
+      employment_status: employee.employment_status || "active",
+      sales_sub_team: employee.sales_sub_team || "",
+      manager_id: employee.manager_id || "",
+    });
+  };
+
+  const saveEmployee = async () => {
+    if (!editingEmployee) return;
+    setSavingEmployee(true);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: editForm.full_name || null,
+        job_title: editForm.job_title || null,
+        department: editForm.department || null,
+        location: editForm.location || null,
+        employee_code: editForm.employee_code || null,
+        birth_date: editForm.birth_date || null,
+        hire_date: editForm.hire_date || null,
+        anniversary_date: editForm.anniversary_date || null,
+        employment_status: (editForm.employment_status || "active") as any,
+        sales_sub_team: (editForm.sales_sub_team || null) as any,
+        manager_id: editForm.manager_id || null,
+      })
+      .eq("user_id", editingEmployee.user_id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update employee",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Employee updated successfully",
+      });
+      fetchEmployees();
+      setEditingEmployee(null);
+    }
+
+    setSavingEmployee(false);
+  };
+
+  const filteredEmployees = employees.filter((emp) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      emp.full_name?.toLowerCase().includes(query) ||
+      emp.email?.toLowerCase().includes(query) ||
+      emp.employee_code?.toLowerCase().includes(query) ||
+      emp.department?.toLowerCase().includes(query)
+    );
+  });
+
+  const managers = employees.filter((e) => 
+    e.teams.includes("management") || e.job_title?.toLowerCase().includes("manager")
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search employees..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {EMPLOYMENT_STATUS.slice(0, 4).map((status) => (
+            <Badge key={status.value} variant="outline" className={cn("text-xs", status.color)}>
+              {status.label}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass rounded-xl border border-border overflow-hidden">
+        {isLoading ? (
+          <div className="p-8 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {filteredEmployees.map((employee) => (
+              <div
+                key={employee.id}
+                className="p-4 hover:bg-muted/30 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
+                      {employee.full_name?.slice(0, 2).toUpperCase() || "U"}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{employee.full_name || "Unknown"}</p>
+                        {employee.employee_code && (
+                          <Badge variant="outline" className="text-xs">
+                            {employee.employee_code}
+                          </Badge>
+                        )}
+                        <Badge
+                          variant="outline"
+                          className={cn("text-xs", getStatusBadge(employee.employment_status || "active"))}
+                        >
+                          {EMPLOYMENT_STATUS.find((s) => s.value === employee.employment_status)?.label || "Active"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{employee.email}</p>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                        {employee.job_title && (
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="w-3 h-3" />
+                            {employee.job_title}
+                          </span>
+                        )}
+                        {employee.department && (
+                          <span className="flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {employee.department}
+                          </span>
+                        )}
+                        {employee.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {employee.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditDialog(employee)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Teams */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {TEAMS.map((team) => {
+                    const hasTeam = employee.teams.includes(team.value);
+                    return (
+                      <Button
+                        key={team.value}
+                        variant="outline"
+                        size="sm"
+                        disabled={updatingUser === employee.user_id}
+                        onClick={() => toggleTeam(employee.user_id, team.value, employee.teams)}
+                        className={cn(
+                          "text-xs transition-all",
+                          hasTeam && team.color,
+                          hasTeam && "border"
+                        )}
+                      >
+                        {updatingUser === employee.user_id ? (
+                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                        ) : hasTeam ? (
+                          <Check className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Plus className="w-3 h-3 mr-1" />
+                        )}
+                        {team.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                {/* Sales Sub-Team (if in sales) */}
+                {employee.teams.includes("sales") && employee.sales_sub_team && (
+                  <div className="mt-2">
+                    <Badge variant="secondary" className="text-xs">
+                      Sales Team: {SALES_SUB_TEAMS.find((t) => t.value === employee.sales_sub_team)?.label}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Dates Row */}
+                <div className="mt-3 flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Cake className="w-4 h-4 text-pink-500" />
+                    {employee.birth_date ? format(parseISO(employee.birth_date), "MMM d") : "No birthday"}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CalendarHeart className="w-4 h-4 text-purple-500" />
+                    {employee.hire_date ? format(parseISO(employee.hire_date), "MMM d, yyyy") : "No hire date"}
+                  </div>
+                  {employee.manager_id && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <UserCheck className="w-4 h-4 text-blue-500" />
+                      Manager: {employees.find((e) => e.user_id === employee.manager_id)?.full_name || "Unknown"}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {filteredEmployees.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground">
+                No employees found
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={!!editingEmployee} onOpenChange={() => setEditingEmployee(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Employee: {editingEmployee?.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                value={editForm.full_name || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, full_name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Employee Code</Label>
+              <Input
+                value={editForm.employee_code || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, employee_code: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Designation</Label>
+              <Input
+                value={editForm.job_title || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, job_title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Department</Label>
+              <Select
+                value={editForm.department || ""}
+                onValueChange={(value) => setEditForm((prev) => ({ ...prev, department: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Standard User">Standard User</SelectItem>
+                  <SelectItem value="Sales">Sales</SelectItem>
+                  <SelectItem value="Pre-Sales">Pre-Sales</SelectItem>
+                  <SelectItem value="Technical">Technical</SelectItem>
+                  <SelectItem value="Managed Services">Managed Services</SelectItem>
+                  <SelectItem value="Marketing">Marketing</SelectItem>
+                  <SelectItem value="HR">HR</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="Management">Management</SelectItem>
+                  <SelectItem value="Inside Sales">Inside Sales</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                value={editForm.location || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Employment Status</Label>
+              <Select
+                value={editForm.employment_status || "active"}
+                onValueChange={(value) => setEditForm((prev) => ({ ...prev, employment_status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EMPLOYMENT_STATUS.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Birth Date</Label>
+              <Input
+                type="date"
+                value={editForm.birth_date || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, birth_date: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Joining Date</Label>
+              <Input
+                type="date"
+                value={editForm.hire_date || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, hire_date: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Anniversary Date</Label>
+              <Input
+                type="date"
+                value={editForm.anniversary_date || ""}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, anniversary_date: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Manager</Label>
+              <Select
+                value={editForm.manager_id || ""}
+                onValueChange={(value) => setEditForm((prev) => ({ ...prev, manager_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No Manager</SelectItem>
+                  {managers.map((manager) => (
+                    <SelectItem key={manager.user_id} value={manager.user_id}>
+                      {manager.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {editForm.department === "Sales" && (
+              <div className="space-y-2 col-span-2">
+                <Label>Sales Sub-Team</Label>
+                <Select
+                  value={editForm.sales_sub_team || ""}
+                  onValueChange={(value) => setEditForm((prev) => ({ ...prev, sales_sub_team: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select sales team" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SALES_SUB_TEAMS.map((team) => (
+                      <SelectItem key={team.value} value={team.value}>
+                        {team.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="col-span-2">
+              <Button onClick={saveEmployee} disabled={savingEmployee} className="w-full">
+                {savingEmployee ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
