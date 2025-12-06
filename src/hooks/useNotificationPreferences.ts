@@ -20,6 +20,11 @@ export interface NotificationPreferences {
   email_tickets: boolean;
   email_renewals: boolean;
   email_compliance: boolean;
+  sound_enabled: boolean;
+  sound_type: string;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +44,11 @@ const defaultPreferences: Omit<NotificationPreferences, "id" | "user_id" | "crea
   email_tickets: true,
   email_renewals: true,
   email_compliance: true,
+  sound_enabled: true,
+  sound_type: "default",
+  quiet_hours_enabled: false,
+  quiet_hours_start: "22:00:00",
+  quiet_hours_end: "08:00:00",
 };
 
 export function useNotificationPreferences() {

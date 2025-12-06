@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
+import { useNotificationSound, isWithinQuietHours, SoundType } from "@/hooks/useNotificationSound";
+import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 
 interface Notification {
   id: string;
@@ -22,6 +24,8 @@ export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showNotification, isEnabled: browserNotificationsEnabled } = useBrowserNotifications();
+  const { playSound } = useNotificationSound();
+  const { preferences } = useNotificationPreferences();
 
   const { data: notifications = [], isLoading, refetch } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -67,6 +71,18 @@ export function useNotifications() {
               tag: newNotification.id,
             });
           }
+
+          // Play sound if enabled and not in quiet hours
+          if (preferences.sound_enabled && payload.new) {
+            const inQuietHours = isWithinQuietHours(
+              preferences.quiet_hours_enabled,
+              preferences.quiet_hours_start,
+              preferences.quiet_hours_end
+            );
+            if (!inQuietHours) {
+              playSound(preferences.sound_type as SoundType);
+            }
+          }
         }
       )
       .subscribe();
@@ -74,7 +90,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient, browserNotificationsEnabled, showNotification]);
+  }, [user, queryClient, browserNotificationsEnabled, showNotification, preferences, playSound]);
 
   const markAsRead = async (notificationId: string) => {
     await supabase
