@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
+import { useNotificationSound, SoundType } from "@/hooks/useNotificationSound";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Bell,
   Mail,
@@ -19,6 +28,10 @@ import {
   Loader2,
   Monitor,
   BellRing,
+  Volume2,
+  VolumeX,
+  Moon,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -32,11 +45,20 @@ const categories = [
   { key: "compliance", label: "Compliance", icon: Shield, description: "Framework updates, assessments" },
 ] as const;
 
+const soundOptions: { value: SoundType; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "chime", label: "Chime" },
+  { value: "bell", label: "Bell" },
+  { value: "pop", label: "Pop" },
+  { value: "none", label: "None (Silent)" },
+];
+
 type CategoryKey = typeof categories[number]["key"];
 
 export function NotificationPreferences() {
   const { preferences, isLoading, updatePreferences, isUpdating } = useNotificationPreferences();
   const { isSupported, permission, requestPermission, isEnabled } = useBrowserNotifications();
+  const { testSound } = useNotificationSound();
   const [pendingUpdates, setPendingUpdates] = useState<Record<string, boolean>>({});
   const [requestingPermission, setRequestingPermission] = useState(false);
 
@@ -49,6 +71,26 @@ export function NotificationPreferences() {
         return rest;
       });
     }, 500);
+  };
+
+  const handleSelectChange = (key: string, value: string) => {
+    setPendingUpdates(prev => ({ ...prev, [key]: true }));
+    updatePreferences({ [key]: value } as any);
+    setTimeout(() => {
+      setPendingUpdates(prev => {
+        const { [key]: _, ...rest } = prev;
+        return rest;
+      });
+    }, 500);
+  };
+
+  const handleTimeChange = (key: string, value: string) => {
+    const timeValue = value + ":00";
+    handleSelectChange(key, timeValue);
+  };
+
+  const formatTimeForInput = (time: string) => {
+    return time.slice(0, 5);
   };
 
   const handleRequestPermission = async () => {
@@ -197,6 +239,133 @@ export function NotificationPreferences() {
                 </div>
               );
             })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sound & Quiet Hours */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                {preferences.sound_enabled ? (
+                  <Volume2 className="w-5 h-5 text-purple-500" />
+                ) : (
+                  <VolumeX className="w-5 h-5 text-purple-500" />
+                )}
+              </div>
+              <div>
+                <CardTitle className="text-lg">Sound & Quiet Hours</CardTitle>
+                <CardDescription>Customize notification sounds and quiet times</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {pendingUpdates["sound_enabled"] && (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+              <Switch
+                checked={preferences.sound_enabled}
+                onCheckedChange={(v) => handleToggle("sound_enabled", v)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Sound Type */}
+          <div className={cn(
+            "space-y-3 transition-opacity",
+            !preferences.sound_enabled && "opacity-50 pointer-events-none"
+          )}>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Notification Sound</Label>
+                <p className="text-xs text-muted-foreground">Choose a sound for notifications</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {pendingUpdates["sound_type"] && (
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                )}
+                <Select
+                  value={preferences.sound_type}
+                  onValueChange={(v) => handleSelectChange("sound_type", v)}
+                  disabled={!preferences.sound_enabled}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {soundOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => testSound(preferences.sound_type as SoundType)}
+                  disabled={!preferences.sound_enabled || preferences.sound_type === "none"}
+                >
+                  <Play className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quiet Hours */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Moon className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-medium">Quiet Hours (Do Not Disturb)</Label>
+                  <p className="text-xs text-muted-foreground">Mute sounds during specific hours</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {pendingUpdates["quiet_hours_enabled"] && (
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                )}
+                <Switch
+                  checked={preferences.quiet_hours_enabled}
+                  onCheckedChange={(v) => handleToggle("quiet_hours_enabled", v)}
+                />
+              </div>
+            </div>
+            
+            <div className={cn(
+              "flex items-center gap-4 transition-opacity",
+              !preferences.quiet_hours_enabled && "opacity-50 pointer-events-none"
+            )}>
+              <div className="flex-1">
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Start</Label>
+                <Input
+                  type="time"
+                  value={formatTimeForInput(preferences.quiet_hours_start)}
+                  onChange={(e) => handleTimeChange("quiet_hours_start", e.target.value)}
+                  disabled={!preferences.quiet_hours_enabled}
+                  className="w-full"
+                />
+              </div>
+              <span className="text-muted-foreground mt-5">to</span>
+              <div className="flex-1">
+                <Label className="text-xs text-muted-foreground mb-1.5 block">End</Label>
+                <Input
+                  type="time"
+                  value={formatTimeForInput(preferences.quiet_hours_end)}
+                  onChange={(e) => handleTimeChange("quiet_hours_end", e.target.value)}
+                  disabled={!preferences.quiet_hours_enabled}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            {preferences.quiet_hours_enabled && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Sounds will be muted from {formatTimeForInput(preferences.quiet_hours_start)} to {formatTimeForInput(preferences.quiet_hours_end)}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

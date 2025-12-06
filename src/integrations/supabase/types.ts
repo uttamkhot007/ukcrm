@@ -912,6 +912,11 @@ export type Database = {
           in_app_renewals: boolean
           in_app_requests: boolean
           in_app_tickets: boolean
+          quiet_hours_enabled: boolean
+          quiet_hours_end: string
+          quiet_hours_start: string
+          sound_enabled: boolean
+          sound_type: string
           updated_at: string
           user_id: string
         }
@@ -932,6 +937,11 @@ export type Database = {
           in_app_renewals?: boolean
           in_app_requests?: boolean
           in_app_tickets?: boolean
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          sound_enabled?: boolean
+          sound_type?: string
           updated_at?: string
           user_id: string
         }
@@ -952,6 +962,11 @@ export type Database = {
           in_app_renewals?: boolean
           in_app_requests?: boolean
           in_app_tickets?: boolean
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          sound_enabled?: boolean
+          sound_type?: string
           updated_at?: string
           user_id?: string
         }
