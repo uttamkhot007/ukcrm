@@ -45,6 +45,14 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  // Category-based unread counts
+  const unreadCountByCategory = notifications.reduce((acc, n) => {
+    if (!n.is_read && n.category) {
+      acc[n.category] = (acc[n.category] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
   // Subscribe to realtime notifications
   useEffect(() => {
     if (!user) return;
@@ -139,6 +147,7 @@ export function useNotifications() {
   return {
     notifications,
     unreadCount,
+    unreadCountByCategory,
     isLoading,
     markAsRead,
     markAllAsRead,
