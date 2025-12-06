@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X, Mail, Users, Download, ArrowLeft, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { importContacts, importDeals, ImportResult, parseContactsPreview, parseDealsPreview, ParsePreviewResult } from "@/lib/csv-import";
+import { importContactsFromPreview, importDealsFromPreview, ImportResult, parseContactsPreview, parseDealsPreview, ParsePreviewResult, ParsedPreviewRow } from "@/lib/csv-import";
 import { useAuth } from "@/hooks/useAuth";
 import { CSVPreviewTable } from "./CSVPreviewTable";
+
+const VALID_DEAL_STAGES = ["pipeline", "upside", "strong_upside", "commit", "closed_won", "closed_lost"];
 
 const TEMPLATE_URLS = {
   contacts: "/templates/hubspot-contacts-template.csv",
@@ -102,75 +104,93 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
     setPreviewData(null);
   };
 
-  const handleUpload = async () => {
-    if (!source || !dataType || uploadedFiles.length === 0 || !user) return;
+  const handleCellEdit = (rowIndex: number, column: string, value: string) => {
+    if (!previewData) return;
 
-    setIsProcessing(true);
-    setImportErrors([]);
-    let totalSuccessCount = 0;
-    const allErrors: string[] = [];
+    const updatedRows = [...previewData.rows];
+    const row = { ...updatedRows[rowIndex] };
+    row.data = { ...row.data, [column]: value };
 
-    // Process each file
-    for (let i = 0; i < uploadedFiles.length; i++) {
-      setUploadedFiles(prev => prev.map((f, idx) => 
-        idx === i ? { ...f, status: "processing" as const } : f
-      ));
-
-      let result: ImportResult;
-
-      try {
-        if (dataType === "contacts") {
-          result = await importContacts(uploadedFiles[i].file, user.id);
-        } else if (dataType === "deals") {
-          result = await importDeals(uploadedFiles[i].file, user.id);
-        } else {
-          // For emails and activities, show not supported message
-          result = {
-            success: false,
-            recordCount: 0,
-            errors: [`Import for ${dataType} is not yet supported. Please use contacts or deals.`],
-          };
+    // Re-validate the row
+    const errors: string[] = [];
+    
+    if (dataType === "contacts") {
+      if (!row.data.name || row.data.name.trim() === "") {
+        errors.push("Missing required field 'name'");
+      }
+    } else if (dataType === "deals") {
+      if (!row.data.title || row.data.title.trim() === "") {
+        errors.push("Missing required field 'title'");
+      }
+      if (row.data.stage) {
+        const normalizedStage = row.data.stage.toLowerCase().replace(/\s+/g, "_");
+        if (!VALID_DEAL_STAGES.includes(normalizedStage)) {
+          errors.push(`Invalid stage '${row.data.stage}'`);
         }
-
-        if (result.success) {
-          totalSuccessCount += result.recordCount;
-          setUploadedFiles(prev => prev.map((f, idx) => 
-            idx === i ? { ...f, status: "success" as const, recordCount: result.recordCount } : f
-          ));
-        } else {
-          setUploadedFiles(prev => prev.map((f, idx) => 
-            idx === i ? { ...f, status: "error" as const, error: result.errors[0] } : f
-          ));
+      }
+      if (row.data.expected_close_date) {
+        const date = new Date(row.data.expected_close_date);
+        if (isNaN(date.getTime())) {
+          errors.push(`Invalid date format`);
         }
-
-        if (result.errors.length > 0) {
-          allErrors.push(...result.errors.map(e => `${uploadedFiles[i].file.name}: ${e}`));
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        setUploadedFiles(prev => prev.map((f, idx) => 
-          idx === i ? { ...f, status: "error" as const, error: errorMessage } : f
-        ));
-        allErrors.push(`${uploadedFiles[i].file.name}: ${errorMessage}`);
       }
     }
 
-    setIsProcessing(false);
-    setImportErrors(allErrors);
+    row.errors = errors;
+    row.isValid = errors.length === 0;
+    updatedRows[rowIndex] = row;
 
-    if (totalSuccessCount > 0) {
-      toast({
-        title: "Import Complete",
-        description: `Successfully imported ${totalSuccessCount} ${dataType} from ${uploadedFiles.length} file(s).`,
-      });
-      onComplete();
-    } else if (allErrors.length > 0) {
+    setPreviewData({ ...previewData, rows: updatedRows });
+  };
+
+  const handleUpload = async () => {
+    if (!dataType || !previewData || !user) return;
+
+    setIsProcessing(true);
+    setImportErrors([]);
+
+    let result: ImportResult;
+
+    try {
+      if (dataType === "contacts") {
+        result = await importContactsFromPreview(previewData.rows, user.id);
+      } else if (dataType === "deals") {
+        result = await importDealsFromPreview(previewData.rows, user.id);
+      } else {
+        result = {
+          success: false,
+          recordCount: 0,
+          errors: [`Import for ${dataType} is not yet supported.`],
+        };
+      }
+
+      if (result.success) {
+        toast({
+          title: "Import Complete",
+          description: `Successfully imported ${result.recordCount} ${dataType}.`,
+        });
+        onComplete();
+      } else {
+        setImportErrors(result.errors);
+        if (result.errors.length > 0) {
+          toast({
+            title: "Import Failed",
+            description: result.errors[0],
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setImportErrors([errorMessage]);
       toast({
         title: "Import Failed",
-        description: allErrors[0],
+        description: errorMessage,
         variant: "destructive",
       });
     }
+
+    setIsProcessing(false);
   };
 
   const resetForm = () => {
@@ -406,6 +426,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
                 rows={previewData.rows}
                 columns={previewData.columns}
                 requiredColumns={previewData.requiredColumns}
+                onCellEdit={handleCellEdit}
               />
             )}
           </div>

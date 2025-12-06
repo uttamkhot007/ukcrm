@@ -353,3 +353,143 @@ export async function importDeals(file: File, userId: string): Promise<ImportRes
     };
   }
 }
+
+// Import from preview data (edited rows)
+export async function importContactsFromPreview(
+  rows: ParsedPreviewRow[],
+  userId: string
+): Promise<ImportResult> {
+  const errors: string[] = [];
+  let successCount = 0;
+
+  const validRows = rows.filter(r => r.isValid);
+  
+  if (validRows.length === 0) {
+    return { success: false, recordCount: 0, errors: ["No valid rows to import"] };
+  }
+
+  const contactsToInsert = validRows.map((row) => ({
+    name: row.data.name.trim(),
+    email: row.data.email?.trim() || null,
+    phone: row.data.phone?.trim() || null,
+    company: row.data.company?.trim() || null,
+    designation: row.data.designation?.trim() || null,
+    notes: row.data.notes?.trim() || null,
+    user_id: userId,
+  }));
+
+  // Insert in batches of 50
+  const batchSize = 50;
+  for (let i = 0; i < contactsToInsert.length; i += batchSize) {
+    const batch = contactsToInsert.slice(i, i + batchSize);
+    const { error } = await supabase.from("contacts").insert(batch);
+
+    if (error) {
+      errors.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+    } else {
+      successCount += batch.length;
+    }
+  }
+
+  return {
+    success: successCount > 0,
+    recordCount: successCount,
+    errors,
+  };
+}
+
+export async function importDealsFromPreview(
+  rows: ParsedPreviewRow[],
+  userId: string
+): Promise<ImportResult> {
+  const errors: string[] = [];
+  let successCount = 0;
+
+  const validRows = rows.filter(r => r.isValid);
+  
+  if (validRows.length === 0) {
+    return { success: false, recordCount: 0, errors: ["No valid rows to import"] };
+  }
+
+  // Get existing contacts to match by email
+  const { data: existingContacts } = await supabase
+    .from("contacts")
+    .select("id, email, name");
+
+  const contactEmailMap = new Map<string, string>();
+  const contactNameMap = new Map<string, string>();
+  
+  existingContacts?.forEach((contact) => {
+    if (contact.email) {
+      contactEmailMap.set(contact.email.toLowerCase(), contact.id);
+    }
+    if (contact.name) {
+      contactNameMap.set(contact.name.toLowerCase(), contact.id);
+    }
+  });
+
+  const dealsToInsert = validRows.map((row) => {
+    // Try to find matching contact
+    let contactId: string | null = null;
+    if (row.data.contact_email) {
+      contactId = contactEmailMap.get(row.data.contact_email.toLowerCase()) || null;
+    }
+    if (!contactId && row.data.contact_name) {
+      contactId = contactNameMap.get(row.data.contact_name.toLowerCase()) || null;
+    }
+
+    // Validate and normalize stage
+    let stage = "pipeline";
+    if (row.data.stage) {
+      const normalizedStage = row.data.stage.toLowerCase().replace(/\s+/g, "_");
+      if (VALID_DEAL_STAGES.includes(normalizedStage)) {
+        stage = normalizedStage;
+      }
+    }
+
+    // Parse value
+    const value = row.data.value ? parseFloat(row.data.value.replace(/[^0-9.-]/g, "")) || 0 : 0;
+
+    // Parse probability
+    const probability = row.data.probability ? parseInt(row.data.probability.replace(/[^0-9]/g, ""), 10) || 10 : 10;
+
+    // Parse expected close date
+    let expectedCloseDate: string | null = null;
+    if (row.data.expected_close_date) {
+      const date = new Date(row.data.expected_close_date);
+      if (!isNaN(date.getTime())) {
+        expectedCloseDate = date.toISOString().split("T")[0];
+      }
+    }
+
+    return {
+      title: row.data.title.trim(),
+      value,
+      stage: stage as "pipeline" | "upside" | "strong_upside" | "commit" | "closed_won" | "closed_lost",
+      probability,
+      expected_close_date: expectedCloseDate,
+      description: row.data.description?.trim() || null,
+      contact_id: contactId,
+      user_id: userId,
+    };
+  });
+
+  // Insert in batches of 50
+  const batchSize = 50;
+  for (let i = 0; i < dealsToInsert.length; i += batchSize) {
+    const batch = dealsToInsert.slice(i, i + batchSize);
+    const { error } = await supabase.from("deals").insert(batch);
+
+    if (error) {
+      errors.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+    } else {
+      successCount += batch.length;
+    }
+  }
+
+  return {
+    success: successCount > 0,
+    recordCount: successCount,
+    errors,
+  };
+}
