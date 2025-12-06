@@ -6,14 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { ArrowRightLeft, RefreshCw, Loader2, TrendingUp, TrendingDown, History } from "lucide-react";
+import { ArrowRightLeft, RefreshCw, Loader2, TrendingUp, TrendingDown, History, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export function CurrencyConverterWidget() {
   const [amount, setAmount] = useState("1000");
   const [fromCurrency, setFromCurrency] = useState("INR");
   const [toCurrency, setToCurrency] = useState("USD");
-  const [showHistory, setShowHistory] = useState(false);
+  const [viewMode, setViewMode] = useState<"converter" | "history" | "chart">("converter");
   
   const { convert, usdToInrRate, inrToUsdRate, rateDate, isLoading, getHistoryForPair, isLoadingHistory } = useExchangeRates();
   const { formatCurrency } = useOrganizationSettings();
@@ -26,7 +27,13 @@ export function CurrencyConverterWidget() {
   const numericAmount = parseFloat(amount) || 0;
   const convertedAmount = convert(numericAmount, fromCurrency, toCurrency);
 
-  const usdToInrHistory = getHistoryForPair("USD", "INR").slice(0, 7);
+  const usdToInrHistory = getHistoryForPair("USD", "INR").slice(0, 14);
+  
+  // Prepare chart data (reverse to show oldest first)
+  const chartData = [...usdToInrHistory].reverse().map(entry => ({
+    date: format(new Date(entry.rate_date), "MMM d"),
+    rate: Number(entry.rate),
+  }));
   
   // Calculate trend
   const getTrend = () => {
@@ -47,19 +54,36 @@ export function CurrencyConverterWidget() {
             <RefreshCw className="w-5 h-5 text-primary" />
             Currency Converter
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setShowHistory(!showHistory)}
-            className="h-8 text-xs"
-          >
-            <History className="w-3 h-3 mr-1" />
-            {showHistory ? "Hide" : "History"}
-          </Button>
+          <div className="flex gap-1">
+            <Button 
+              variant={viewMode === "converter" ? "secondary" : "ghost"} 
+              size="sm" 
+              onClick={() => setViewMode("converter")}
+              className="h-7 w-7 p-0"
+            >
+              <ArrowRightLeft className="w-3 h-3" />
+            </Button>
+            <Button 
+              variant={viewMode === "chart" ? "secondary" : "ghost"} 
+              size="sm" 
+              onClick={() => setViewMode("chart")}
+              className="h-7 w-7 p-0"
+            >
+              <BarChart3 className="w-3 h-3" />
+            </Button>
+            <Button 
+              variant={viewMode === "history" ? "secondary" : "ghost"} 
+              size="sm" 
+              onClick={() => setViewMode("history")}
+              className="h-7 w-7 p-0"
+            >
+              <History className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!showHistory ? (
+        {viewMode === "converter" && (
           <>
             <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-end">
               <div className="space-y-2">
@@ -145,7 +169,66 @@ export function CurrencyConverterWidget() {
               )}
             </div>
           </>
-        ) : (
+        )}
+
+        {viewMode === "chart" && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">USD → INR Rate Trend</h4>
+            {isLoadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : chartData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">
+                No history available yet. Rates are tracked as you use the converter.
+              </p>
+            ) : (
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 10 }} 
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={45}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Rate']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="rate" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
+                      activeDot={{ r: 5, fill: 'hsl(var(--primary))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {usdToInrRate && (
+              <div className="text-center text-xs text-muted-foreground">
+                Current: ₹{usdToInrRate.toFixed(2)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {viewMode === "history" && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium">USD → INR Rate History</h4>
             {isLoadingHistory ? (
@@ -157,10 +240,10 @@ export function CurrencyConverterWidget() {
                 No history available yet. Rates are tracked as you use the converter.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
                 {usdToInrHistory.map((entry, index) => {
                   const prevRate = usdToInrHistory[index + 1]?.rate;
-                  const change = prevRate ? entry.rate - prevRate : 0;
+                  const change = prevRate ? Number(entry.rate) - Number(prevRate) : 0;
                   return (
                     <div 
                       key={entry.id} 
