@@ -8,6 +8,15 @@ interface ExchangeRateResponse {
   date: string;
 }
 
+interface RateHistoryEntry {
+  id: string;
+  from_currency: string;
+  to_currency: string;
+  rate: number;
+  rate_date: string;
+  fetched_at: string;
+}
+
 export function useExchangeRates() {
   const { data: usdToInr, isLoading: isLoadingUsdToInr } = useQuery({
     queryKey: ["exchange-rate", "USD", "INR"],
@@ -35,6 +44,20 @@ export function useExchangeRates() {
     refetchInterval: 1000 * 60 * 60,
   });
 
+  const { data: rateHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["exchange-rate-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("exchange_rate_history")
+        .select("*")
+        .order("rate_date", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data as RateHistoryEntry[];
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
   const convert = (amount: number, fromCurrency: string, toCurrency: string): number | null => {
     if (fromCurrency === toCurrency) return amount;
     
@@ -60,6 +83,13 @@ export function useExchangeRates() {
     return formatCurrency(converted, toCurrency);
   };
 
+  // Get history for a specific currency pair
+  const getHistoryForPair = (from: string, to: string): RateHistoryEntry[] => {
+    return rateHistory?.filter(
+      (entry) => entry.from_currency === from && entry.to_currency === to
+    ) || [];
+  };
+
   return {
     usdToInrRate: usdToInr?.rate,
     inrToUsdRate: inrToUsd?.rate,
@@ -67,5 +97,8 @@ export function useExchangeRates() {
     isLoading: isLoadingUsdToInr || isLoadingInrToUsd,
     convert,
     formatConvertedAmount,
+    rateHistory,
+    isLoadingHistory,
+    getHistoryForPair,
   };
 }

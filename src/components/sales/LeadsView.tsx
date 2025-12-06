@@ -38,8 +38,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2, User, Download } from "lucide-react";
+import { Plus, Search, Users, TrendingUp, Loader2, MoreHorizontal, Pencil, Trash2, User, Download, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -83,8 +84,12 @@ export function LeadsView() {
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
+  const { formatCurrency, getCurrencySymbol, settings } = useOrganizationSettings();
+  const { convert, isLoading: isLoadingRates } = useExchangeRates();
   const queryClient = useQueryClient();
+  
+  const orgCurrency = settings?.currency || "INR";
+  const alternateCurrency = orgCurrency === "INR" ? "USD" : "INR";
 
   const { data: leads, isLoading } = useQuery({
     queryKey: ["leads"],
@@ -421,7 +426,17 @@ export function LeadsView() {
                     </TableCell>
                     <TableCell>{lead.source || "-"}</TableCell>
                     <TableCell>
-                      {lead.estimated_value ? formatCurrency(Number(lead.estimated_value)) : "-"}
+                      {lead.estimated_value ? (
+                        <div className="space-y-0.5">
+                          <div>{formatCurrency(Number(lead.estimated_value))}</div>
+                          {!isLoadingRates && convert(Number(lead.estimated_value), orgCurrency, alternateCurrency) !== null && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <RefreshCw className="w-3 h-3" />
+                              {formatCurrency(convert(Number(lead.estimated_value), orgCurrency, alternateCurrency)!, alternateCurrency)}
+                            </div>
+                          )}
+                        </div>
+                      ) : "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {format(new Date(lead.created_at), "MMM d, yyyy")}
