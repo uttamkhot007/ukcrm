@@ -19,7 +19,7 @@ import { TicketingModule } from "@/components/ticketing/TicketingModule";
 import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
 import { HRModule } from "@/components/hr/HRModule";
-import { AccountsContractWorkflow } from "@/components/accounts/AccountsContractWorkflow";
+import { AccountsModule } from "@/components/accounts/AccountsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -125,22 +125,16 @@ const Index = () => {
       case "marketing-leads":
         return <PlaceholderModule title="Marketing" section={activeModule} />;
       
-      // Accounts modules - Contract Workflow
+      // Accounts modules
       case "accounts":
       case "accounts-contracts":
-        return <AccountsContractWorkflow initialTab="all" />;
-      case "accounts-odf-request":
-        return <AccountsContractWorkflow initialTab="request_odf" />;
-      case "accounts-odf-approved":
-        return <AccountsContractWorkflow initialTab="odf_approved" />;
-      case "accounts-process-order":
-        return <AccountsContractWorkflow initialTab="process_order" />;
-      case "accounts-get-license":
-        return <AccountsContractWorkflow initialTab="get_license" />;
-      case "accounts-raise-invoice":
-        return <AccountsContractWorkflow initialTab="raise_invoice" />;
-      case "accounts-collect-payment":
-        return <AccountsContractWorkflow initialTab="collect_payment" />;
+        return <AccountsModule initialTab="contracts" />;
+      case "accounts-workflows":
+        return <AccountsModule initialTab="workflows" />;
+      case "accounts-ar-aging":
+        return <AccountsModule initialTab="ar-aging" />;
+      case "accounts-sla-reminders":
+        return <AccountsModule initialTab="sla-reminders" />;
       
       // Admin modules
       case "admin":
