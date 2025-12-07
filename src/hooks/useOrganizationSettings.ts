@@ -1,19 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 
 export function useOrganizationSettings() {
+  const { currentTenant } = useTenant();
+  
   const { data: settings, isLoading } = useQuery({
-    queryKey: ["organization-settings"],
+    queryKey: ["organization-settings", currentTenant?.id],
     queryFn: async () => {
+      if (!currentTenant?.id) return null;
+      
       const { data, error } = await supabase
         .from("organization_settings")
         .select("*")
+        .eq("tenant_id", currentTenant.id)
         .limit(1)
         .single();
-      if (error) throw error;
+      
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    enabled: !!currentTenant?.id,
   });
 
   const currency = settings?.currency || "INR";

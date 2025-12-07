@@ -46,6 +46,7 @@ const CURRENCIES = [
 ];
 
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface SeniorManager {
   name: string;
@@ -76,6 +77,7 @@ interface OrgSettings {
 
 export function OrganizationSettings() {
   const { isAdmin } = useAuth();
+  const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
   const [newCountry, setNewCountry] = useState("");
   const [newCity, setNewCity] = useState("");
@@ -85,20 +87,30 @@ export function OrganizationSettings() {
   const [isFetchingCompanyInfo, setIsFetchingCompanyInfo] = useState(false);
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ["organization-settings"],
+    queryKey: ["organization-settings", currentTenant?.id],
     queryFn: async () => {
+      if (!currentTenant?.id) return null;
+      
       const { data, error } = await supabase
         .from("organization_settings")
         .select("*")
+        .eq("tenant_id", currentTenant.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If no settings exist for this tenant, return default values
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        throw error;
+      }
       const seniorMgmt = data.senior_management;
       return {
         ...data,
         senior_management: Array.isArray(seniorMgmt) ? (seniorMgmt as unknown as SeniorManager[]) : [],
       } as OrgSettings;
     },
+    enabled: !!currentTenant?.id,
   });
 
   const [formData, setFormData] = useState<Partial<OrgSettings>>({});
@@ -119,19 +131,31 @@ export function OrganizationSettings() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<OrgSettings>) => {
+      if (!currentTenant?.id) throw new Error("No tenant selected");
+      
       const updateData = {
         ...data,
         senior_management: data.senior_management ? JSON.parse(JSON.stringify(data.senior_management)) : undefined,
       };
-      const { error } = await supabase
-        .from("organization_settings")
-        .update(updateData)
-        .eq("id", settings?.id);
-
-      if (error) throw error;
+      
+      if (settings?.id) {
+        // Update existing settings
+        const { error } = await supabase
+          .from("organization_settings")
+          .update(updateData)
+          .eq("id", settings.id)
+          .eq("tenant_id", currentTenant.id);
+        if (error) throw error;
+      } else {
+        // Create new settings for this tenant
+        const { error } = await supabase
+          .from("organization_settings")
+          .insert({ ...updateData, tenant_id: currentTenant.id });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["organization-settings", currentTenant?.id] });
       toast.success("Organization settings updated successfully");
     },
     onError: (error) => {
@@ -141,6 +165,8 @@ export function OrganizationSettings() {
 
   const maintenanceMutation = useMutation({
     mutationFn: async ({ mode, message }: { mode: boolean; message: string }) => {
+      if (!currentTenant?.id || !settings?.id) throw new Error("No tenant or settings found");
+      
       const { error } = await supabase
         .from("organization_settings")
         .update({
@@ -149,12 +175,13 @@ export function OrganizationSettings() {
             maintenance_message: message,
           },
         })
-        .eq("id", settings?.id);
+        .eq("id", settings.id)
+        .eq("tenant_id", currentTenant.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["organization-settings", currentTenant?.id] });
       toast.success(maintenanceMode ? "Maintenance mode enabled" : "Maintenance mode disabled");
     },
     onError: (error) => {
