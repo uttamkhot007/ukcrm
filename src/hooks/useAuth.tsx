@@ -72,7 +72,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (profileData) {
-        setProfile(profileData as Profile);
+        setProfile({
+          id: profileData.id,
+          user_id: profileData.user_id,
+          email: profileData.email,
+          full_name: profileData.full_name,
+          avatar_url: profileData.avatar_url,
+          department: profileData.department,
+          job_title: profileData.job_title,
+          user_category: profileData.user_category as UserCategory | null,
+          is_super_admin: (profileData as any).is_super_admin ?? false,
+        });
         
         // Set portal mode based on user category
         if (profileData.user_category === 'customer') {

@@ -76,17 +76,27 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // Super admins can access ALL tenants
         const { data: allTenants, error: tenantsError } = await supabase
           .from('tenants')
-          .select('id, name, slug, tier, logo_url, settings, is_active, created_at')
-          .eq('is_active', true)
+          .select('*')
           .order('name');
 
         if (tenantsError) throw tenantsError;
 
-        formattedMemberships = (allTenants || []).map((tenant) => ({
-          tenant_id: tenant.id,
-          role: 'owner' as TenantMemberRole, // Super admins have owner-level access
-          tenant: tenant as Tenant,
-        }));
+        formattedMemberships = (allTenants || [])
+          .filter((t: any) => t.is_active !== false)
+          .map((tenant: any) => ({
+            tenant_id: tenant.id,
+            role: 'owner' as TenantMemberRole, // Super admins have owner-level access
+            tenant: {
+              id: tenant.id,
+              name: tenant.name,
+              slug: tenant.slug,
+              tier: tenant.tier as TenantTier,
+              logo_url: tenant.logo_url,
+              settings: tenant.settings || {},
+              is_active: tenant.is_active ?? true,
+              created_at: tenant.created_at,
+            } as Tenant,
+          }));
       } else {
         // Regular users only see tenants they're members of
         const { data: memberships, error: membershipError } = await supabase
@@ -94,16 +104,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           .select(`
             tenant_id,
             role,
-            tenant:tenants (
-              id,
-              name,
-              slug,
-              tier,
-              logo_url,
-              settings,
-              is_active,
-              created_at
-            )
+            tenant:tenants (*)
           `)
           .eq('user_id', user.id)
           .eq('status', 'active');
@@ -111,11 +112,20 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         if (membershipError) throw membershipError;
 
         formattedMemberships = (memberships || [])
-          .filter((m: any) => m.tenant && m.tenant.is_active)
+          .filter((m: any) => m.tenant && m.tenant.is_active !== false)
           .map((m: any) => ({
             tenant_id: m.tenant_id,
             role: m.role as TenantMemberRole,
-            tenant: m.tenant as Tenant,
+            tenant: {
+              id: m.tenant.id,
+              name: m.tenant.name,
+              slug: m.tenant.slug,
+              tier: m.tenant.tier as TenantTier,
+              logo_url: m.tenant.logo_url,
+              settings: m.tenant.settings || {},
+              is_active: m.tenant.is_active ?? true,
+              created_at: m.tenant.created_at,
+            } as Tenant,
           }));
       }
 
