@@ -65,6 +65,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
+    
+    // Wait for profile to be loaded before fetching - this ensures isSuperAdmin is accurate
+    if (profile === null) {
+      // Profile not yet loaded, keep loading state
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -191,6 +197,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   };
 
   const hasModule = (moduleKey: string): boolean => {
+    // Super admins have access to all modules
+    if (isSuperAdmin) return true;
     return enabledModules.some((m) => m.module_key === moduleKey && m.is_enabled);
   };
 
@@ -200,7 +208,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchTenantMemberships();
-  }, [user, isSuperAdmin]);
+  }, [user, profile, isSuperAdmin]);
 
   const value: TenantContextType = {
     currentTenant,
