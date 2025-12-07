@@ -124,24 +124,24 @@ export function OrganizationFormFields({
 
       if (error) throw error;
 
-      if (data) {
+      if (data?.data) {
+        const enrichedData = data.data;
         const updates: Partial<OrganizationFormData> = {};
-        
-        if (data.name && !formData.name) updates.name = data.name;
-        if (data.logo_url) updates.logoUrl = data.logo_url;
-        if (data.description) updates.description = data.description;
-        if (data.industry) updates.industry = data.industry.toLowerCase().replace(/\s+/g, '_');
-        if (data.hq_address) updates.address = data.hq_address;
-        if (data.employee_count) updates.employeeCount = data.employee_count;
-        if (data.annual_revenue) updates.annualRevenue = data.annual_revenue;
-        if (data.founded_year) updates.foundedYear = data.founded_year;
-        if (data.linkedin_url) updates.linkedinUrl = data.linkedin_url;
-        if (data.twitter_url) updates.twitterUrl = data.twitter_url;
-        if (data.phone) updates.phone = data.phone;
-        if (data.email) updates.email = data.email;
-        if (data.spf_status) updates.spfStatus = data.spf_status;
-        if (data.dmarc_status) updates.dmarcStatus = data.dmarc_status;
-        if (data.dkim_status) updates.dkimStatus = data.dkim_status;
+        if (enrichedData.name && !formData.name) updates.name = enrichedData.name;
+        if (enrichedData.logo_url) updates.logoUrl = enrichedData.logo_url;
+        if (enrichedData.description) updates.description = enrichedData.description;
+        if (enrichedData.industry) updates.industry = enrichedData.industry.toLowerCase().replace(/\s+/g, '_');
+        if (enrichedData.address) updates.address = enrichedData.address;
+        if (enrichedData.total_employees) updates.employeeCount = String(enrichedData.total_employees);
+        if (enrichedData.annual_revenue) updates.annualRevenue = enrichedData.annual_revenue;
+        if (enrichedData.founded_year) updates.foundedYear = String(enrichedData.founded_year);
+        if (enrichedData.linkedin_url) updates.linkedinUrl = enrichedData.linkedin_url;
+        if (enrichedData.twitter_url) updates.twitterUrl = enrichedData.twitter_url;
+        if (enrichedData.phone) updates.phone = enrichedData.phone;
+        if (enrichedData.email) updates.email = enrichedData.email;
+        if (enrichedData.spf_status) updates.spfStatus = enrichedData.spf_status;
+        if (enrichedData.dmarc_status) updates.dmarcStatus = enrichedData.dmarc_status;
+        if (enrichedData.dkim_status) updates.dkimStatus = enrichedData.dkim_status;
 
         onChange(updates);
         toast.success("Organization enriched with AI");
