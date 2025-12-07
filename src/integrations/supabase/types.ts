@@ -5859,6 +5859,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_view_sales_record: {
+        Args: { record_creator_id: string }
+        Returns: boolean
+      }
       current_user_is_super_admin: { Args: never; Returns: boolean }
       get_user_role: {
         Args: { _user_id: string }
