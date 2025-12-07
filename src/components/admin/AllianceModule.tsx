@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink } from "lucide-react";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
+import { OrganizationProfileSheet } from "./OrganizationProfileSheet";
 
 interface AllianceOrganization {
   id: string;
@@ -797,177 +798,12 @@ export function AllianceModule() {
         </TabsContent>
       </Tabs>
 
-      {/* Organization Details Sheet */}
-      <Sheet open={isOrgSheetOpen} onOpenChange={setIsOrgSheetOpen}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          {selectedOrg && (
-            <>
-              <SheetHeader className="mb-6">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={selectedOrg.logo_url || ""} alt={selectedOrg.name} />
-                    <AvatarFallback className="text-lg">{selectedOrg.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <SheetTitle className="text-xl">{selectedOrg.name}</SheetTitle>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant={getOrgTypeBadgeVariant(selectedOrg.organization_type)}>
-                        {getOrgTypeLabel(selectedOrg.organization_type)}
-                      </Badge>
-                      <Badge variant={selectedOrg.status === "active" ? "default" : "secondary"}>
-                        {selectedOrg.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </SheetHeader>
-
-              <div className="space-y-6">
-                {selectedOrg.description && (
-                  <div>
-                    <Label className="text-muted-foreground text-sm">Description</Label>
-                    <p className="mt-1">{selectedOrg.description}</p>
-                  </div>
-                )}
-
-                {selectedOrg.address && (
-                  <div>
-                    <Label className="text-muted-foreground text-sm">Address</Label>
-                    <p className="mt-1">{selectedOrg.address}</p>
-                  </div>
-                )}
-
-                {selectedOrg.website && (
-                  <div>
-                    <Label className="text-muted-foreground text-sm">Website</Label>
-                    <a 
-                      href={selectedOrg.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-primary hover:underline flex items-center gap-1 mt-1"
-                    >
-                      {selectedOrg.website} <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-
-                {selectedOrg.industry && (
-                  <div>
-                    <Label className="text-muted-foreground text-sm">Industry</Label>
-                    <p className="mt-1">{selectedOrg.industry}</p>
-                  </div>
-                )}
-
-                {selectedOrg.solutions && selectedOrg.solutions.length > 0 && (
-                  <div>
-                    <Label className="text-muted-foreground text-sm">Solutions</Label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedOrg.solutions.map((s, i) => (
-                        <Badge key={i} variant="outline">{s}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedOrg.services && selectedOrg.services.length > 0 && (
-                  <div>
-                    <Label className="text-muted-foreground text-sm">Services</Label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedOrg.services.map((s, i) => (
-                        <Badge key={i} variant="outline">{s}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Users Section */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <Label className="text-muted-foreground text-sm">Users ({getOrgUsers(selectedOrg.id).length})</Label>
-                    <Dialog open={isAddUserToOrgOpen} onOpenChange={setIsAddUserToOrgOpen}>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="outline" className="gap-1">
-                          <UserPlus className="h-3 w-3" />
-                          Add User
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add User to {selectedOrg.name}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAddUserToOrg} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="new-user-name">Name *</Label>
-                              <Input id="new-user-name" name="name" required />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="new-user-email">Email</Label>
-                              <Input id="new-user-email" name="email" type="email" />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="new-user-phone">Phone</Label>
-                              <Input id="new-user-phone" name="phone" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="new-user-location">Location</Label>
-                              <Input id="new-user-location" name="location" />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="new-user-role">Role</Label>
-                            <Input id="new-user-role" name="role" />
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setIsAddUserToOrgOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={userMutation.isPending}>
-                              {userMutation.isPending ? "Adding..." : "Add User"}
-                            </Button>
-                          </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  
-                  {getOrgUsers(selectedOrg.id).length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">No users in this organization</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {getOrgUsers(selectedOrg.id).map(user => (
-                        <div key={user.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div>
-                            <p className="font-medium">{user.name}</p>
-                            <p className="text-sm text-muted-foreground">{user.role || "No role"}</p>
-                            {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={user.status === "active" ? "default" : "secondary"} className="text-xs">
-                              {user.status}
-                            </Badge>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setEditingUser(user);
-                                setIsUserDialogOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Organization Profile Sheet */}
+      <OrganizationProfileSheet 
+        organization={selectedOrg}
+        open={isOrgSheetOpen}
+        onOpenChange={setIsOrgSheetOpen}
+      />
     </div>
   );
 }
