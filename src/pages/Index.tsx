@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { SalesModule } from "@/components/sales/SalesModule";
@@ -27,20 +28,39 @@ import { AccountsModule } from "@/components/accounts/AccountsModule";
 import { SolutionEngineeringModule } from "@/components/presales/SolutionEngineeringModule";
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Menu, X } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { user, isLoading, portalMode, isCustomer, isAdminMode } = useAuth();
+  const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
+  // Redirect to auth if not logged in
   useEffect(() => {
     if (!isLoading && !user) {
       navigate("/auth");
     }
   }, [user, isLoading, navigate]);
+
+  // Redirect to workspace selection if no tenant selected
+  useEffect(() => {
+    if (!isLoading && !tenantLoading && user) {
+      // Super admin with no tenant or users needing to select
+      if (!currentTenant && tenantMemberships.length === 0) {
+        // No workspaces at all - redirect to create one
+        navigate("/workspace/new");
+      } else if (!currentTenant && (isSuperAdmin || tenantMemberships.length > 1)) {
+        // Multiple options or super admin - let them choose
+        navigate("/workspace/select");
+      }
+    }
+  }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isSuperAdmin, navigate]);
 
   // Set initial module based on portal mode
   useEffect(() => {
@@ -53,7 +73,7 @@ const Index = () => {
     }
   }, [isCustomer, portalMode, isAdminMode]);
 
-  if (isLoading) {
+  if (isLoading || tenantLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -260,12 +280,34 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+      </div>
+
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-64">
+          <Sidebar 
+            activeModule={activeModule} 
+            onModuleChange={(module) => {
+              setActiveModule(module);
+              setIsMobileSidebarOpen(false);
+            }} 
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Mobile Header */}
+      <MobileHeader onMenuClick={() => setIsMobileSidebarOpen(true)} />
       
-      <div className={cn("transition-all duration-300 ml-64")}>
-        <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
+      <div className={cn("transition-all duration-300", "md:ml-64")}>
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
+        </div>
         
-        <main className="min-h-[calc(100vh-4rem)]">
+        <main className="min-h-[calc(100vh-4rem)] pb-safe">
           {renderContent()}
         </main>
       </div>
