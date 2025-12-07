@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Building2, Globe, Linkedin, Twitter, MapPin, Users, DollarSign, Plus, X, Save, UserCircle } from "lucide-react";
+import { Building2, Globe, Linkedin, Twitter, MapPin, Users, DollarSign, Plus, X, Save, UserCircle, AlertTriangle } from "lucide-react";
 
 const CURRENCIES = [
   { code: "USD", name: "US Dollar", symbol: "$" },
@@ -52,6 +53,11 @@ interface SeniorManager {
   email: string;
 }
 
+interface MaintenanceSettings {
+  maintenance_mode?: boolean;
+  maintenance_message?: string;
+}
+
 interface OrgSettings {
   id: string;
   name: string;
@@ -74,6 +80,8 @@ export function OrganizationSettings() {
   const [newCountry, setNewCountry] = useState("");
   const [newCity, setNewCity] = useState("");
   const [newManager, setNewManager] = useState<SeniorManager>({ name: "", title: "", email: "" });
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("System maintenance in progress. Some features may be temporarily unavailable.");
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["organization-settings"],
@@ -97,6 +105,14 @@ export function OrganizationSettings() {
   useEffect(() => {
     if (settings) {
       setFormData(settings);
+      // Load maintenance settings from senior_management JSON
+      const seniorMgmt = settings.senior_management as unknown as MaintenanceSettings;
+      if (seniorMgmt && typeof seniorMgmt === 'object' && !Array.isArray(seniorMgmt)) {
+        setMaintenanceMode(seniorMgmt.maintenance_mode || false);
+        if (seniorMgmt.maintenance_message) {
+          setMaintenanceMessage(seniorMgmt.maintenance_message);
+        }
+      }
     }
   }, [settings]);
 
@@ -122,8 +138,40 @@ export function OrganizationSettings() {
     },
   });
 
+  const maintenanceMutation = useMutation({
+    mutationFn: async ({ mode, message }: { mode: boolean; message: string }) => {
+      const { error } = await supabase
+        .from("organization_settings")
+        .update({
+          senior_management: {
+            maintenance_mode: mode,
+            maintenance_message: message,
+          },
+        })
+        .eq("id", settings?.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization-settings"] });
+      toast.success(maintenanceMode ? "Maintenance mode enabled" : "Maintenance mode disabled");
+    },
+    onError: (error) => {
+      toast.error("Failed to update maintenance mode: " + error.message);
+    },
+  });
+
   const handleSave = () => {
     updateMutation.mutate(formData);
+  };
+
+  const handleMaintenanceToggle = (enabled: boolean) => {
+    setMaintenanceMode(enabled);
+    maintenanceMutation.mutate({ mode: enabled, message: maintenanceMessage });
+  };
+
+  const handleMaintenanceMessageSave = () => {
+    maintenanceMutation.mutate({ mode: maintenanceMode, message: maintenanceMessage });
   };
 
   const addCountry = () => {
@@ -486,6 +534,54 @@ export function OrganizationSettings() {
             )}
           </CardContent>
         </Card>
+
+        {/* Maintenance Mode */}
+        {isAdmin && (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                Maintenance Mode
+              </CardTitle>
+              <CardDescription>Display a warning banner to all users</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Shows a warning banner at the top of the portal
+                  </p>
+                </div>
+                <Switch
+                  id="maintenance-mode"
+                  checked={maintenanceMode}
+                  onCheckedChange={handleMaintenanceToggle}
+                  disabled={maintenanceMutation.isPending}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-message">Maintenance Message</Label>
+                <Textarea
+                  id="maintenance-message"
+                  value={maintenanceMessage}
+                  onChange={(e) => setMaintenanceMessage(e.target.value)}
+                  placeholder="Enter maintenance message..."
+                  rows={2}
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleMaintenanceMessageSave}
+                  disabled={maintenanceMutation.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Update Message
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
