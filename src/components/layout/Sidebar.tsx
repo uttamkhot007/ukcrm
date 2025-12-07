@@ -174,12 +174,23 @@ const adminItems: NavItem[] = [
     children: [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
       { id: "admin-center-users", label: "Users", icon: Users },
-      { id: "admin-center-tenants", label: "Tenants", icon: Network },
       { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
       { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
       { id: "admin-center-portal", label: "Admin Portal", icon: Shield },
       { id: "admin-center-health", label: "Platform Health", icon: Activity },
     ],
+  },
+];
+
+// Super admin only items - shown separately
+const superAdminItems: NavItem[] = [
+  {
+    id: "super-admin-tenants",
+    label: "Tenant Management",
+    icon: Network,
+    color: "text-amber-500",
+    isLink: true,
+    linkPath: "/admin/tenants",
   },
 ];
 
@@ -435,6 +446,11 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
       // Admin items (Management & Admin Panel)
       items.push(...adminItems.filter(hasAccess));
+      
+      // Super admin items - only for super admins
+      if (isSuperAdmin) {
+        items.push(...superAdminItems);
+      }
     } else if (portalMode === "customer") {
       // Customer mode - only support
       items.push(...customerPortalItems);
