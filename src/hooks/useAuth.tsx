@@ -39,6 +39,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isManager: boolean;
   isEmployee: boolean;
   isCustomer: boolean;
@@ -98,15 +99,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("user_id", userId)
         .maybeSingle();
 
+      const isSuperAdminUser = (profileData as any)?.is_super_admin === true;
+      
       if (roleData) {
         setRole(roleData.role as AppRole);
-        // Set default portal mode for admins
-        if (roleData.role === 'admin' && profileData?.user_category !== 'customer') {
+        // Set default portal mode for admins and super admins
+        if ((roleData.role === 'admin' || isSuperAdminUser) && profileData?.user_category !== 'customer') {
           setPortalMode('admin');
         }
       } else {
         setRole("employee");
-        if (profileData?.user_category !== 'customer') {
+        // Super admins without explicit role still get admin mode
+        if (isSuperAdminUser) {
+          setPortalMode('admin');
+        } else if (profileData?.user_category !== 'customer') {
           setPortalMode('workspace');
         }
       }
@@ -136,8 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setConsoleAccess(accessSettings);
         
         // Set portal mode based on console access settings
-        // Only allow admin portal mode if user is admin role AND has admin in portal_modes
-        if (roleData?.role === 'admin' && accessSettings.portal_modes.includes('admin')) {
+        // Super admins always get admin mode, regardless of console access
+        const isSuperAdminUser = (profileData as any)?.is_super_admin === true;
+        if (isSuperAdminUser) {
+          setPortalMode('admin');
+        } else if (roleData?.role === 'admin' && accessSettings.portal_modes.includes('admin')) {
           setPortalMode('admin');
         } else if (accessSettings.portal_modes.includes('workspace')) {
           setPortalMode('workspace');
@@ -302,6 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signOut,
     isAdmin: isAdminOrSuperAdmin,
+    isSuperAdmin,
     isManager: role === "manager",
     isEmployee: role === "employee",
     isCustomer,

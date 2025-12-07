@@ -14,17 +14,17 @@ import { Badge } from "@/components/ui/badge";
 type ViewMode = "admin" | "workspace" | "customer";
 
 export function PortalModeSwitcher() {
-  const { portalMode, setPortalMode, isCustomer, isAdmin, role } = useAuth();
+  const { portalMode, setPortalMode, isCustomer, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Customers can only see customer portal - no switcher needed
-  if (isCustomer && !isAdmin) {
+  if (isCustomer && !isAdmin && !isSuperAdmin) {
     return null;
   }
 
-  // Non-admin employees don't need switcher
-  if (!isAdmin) {
+  // Non-admin, non-super-admin employees don't need switcher
+  if (!isAdmin && !isSuperAdmin) {
     return null;
   }
 
