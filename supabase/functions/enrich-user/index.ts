@@ -8,6 +8,7 @@ const corsHeaders = {
 interface UserInfo {
   full_name?: string;
   current_title?: string;
+  designation?: string;
   current_company?: string;
   linkedin_url?: string;
   email?: string;
@@ -23,6 +24,8 @@ interface UserInfo {
   }[];
   certifications?: string[];
   profile_image_url?: string;
+  dob?: string;
+  anniversary_date?: string;
 }
 
 async function enrichUserWithAI(userName: string, organizationName: string): Promise<UserInfo> {
@@ -45,6 +48,7 @@ IMPORTANT SEARCH STRATEGY:
 3. Look for professional profiles, press releases, company announcements
 4. Check industry publications, conferences, speaking engagements
 5. Look for any public bios on company websites
+6. Search for social media profiles with professional information
 
 Find and compile the following information from PUBLIC sources only:
 
@@ -53,14 +57,16 @@ Find and compile the following information from PUBLIC sources only:
 3. Current Company (verify it matches ${organizationName})
 4. LinkedIn Profile URL (must be valid LinkedIn URL format)
 5. Professional Email (if publicly available)
-6. Phone Number (if publicly available)
+6. Phone Number/Mobile (if publicly available)
 7. Location (City, Country)
 8. Professional Bio/Summary
 9. Education History (universities, degrees)
 10. Key Skills & Expertise
 11. Work Experience (previous companies and roles)
 12. Certifications & Awards
-13. Profile Photo URL (if available)
+13. Profile Photo URL (LinkedIn profile photo or company website photo)
+14. Date of Birth (if publicly available, format: YYYY-MM-DD)
+15. Work Anniversary Date (when they joined current company, format: YYYY-MM-DD)
 
 RULES:
 - Only include information that is publicly available
@@ -68,22 +74,27 @@ RULES:
 - LinkedIn URLs must follow format: https://linkedin.com/in/xxx or https://www.linkedin.com/in/xxx
 - Be accurate - wrong information is worse than no information
 - Focus on professional information, not personal
+- For profile images, use direct image URLs if available
+- For DOB/anniversary, only include if clearly stated publicly
 
 Return ONLY a valid JSON object:
 {
   "full_name": "Full verified name",
   "current_title": "Current job title",
+  "designation": "Professional designation/role",
   "current_company": "Current company name",
   "linkedin_url": "LinkedIn profile URL or null",
   "email": "Professional email or null",
-  "phone": "Phone number or null",
+  "phone": "Phone/mobile number or null",
   "location": "City, Country",
   "bio": "Professional summary/bio (2-3 sentences)",
   "education": ["University - Degree - Year"],
   "skills": ["skill1", "skill2", "skill3"],
   "experience": [{"company": "Company Name", "title": "Job Title", "duration": "2020-2023"}],
   "certifications": ["Certification name"],
-  "profile_image_url": "URL to profile image or null"
+  "profile_image_url": "URL to profile image or null",
+  "dob": "YYYY-MM-DD or null",
+  "anniversary_date": "YYYY-MM-DD or null"
 }`;
 
   try {
