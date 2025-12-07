@@ -46,19 +46,11 @@ export function PortalModeSwitcher() {
     },
   ];
 
-  // Map portalMode to viewMode (admin mode is workspace with admin role)
-  const currentMode: ViewMode = portalMode === "customer" ? "customer" : 
-    (role === "admin" && portalMode === "workspace" ? "admin" : "workspace");
-
-  const currentModeData = modes.find(m => m.value === currentMode) || modes[0];
+  const currentModeData = modes.find(m => m.value === portalMode) || modes[0];
   const CurrentIcon = currentModeData.icon;
 
   const handleModeChange = (mode: ViewMode) => {
-    if (mode === "customer") {
-      setPortalMode("customer");
-    } else {
-      setPortalMode("workspace");
-    }
+    setPortalMode(mode);
   };
 
   return (
@@ -75,7 +67,7 @@ export function PortalModeSwitcher() {
       <DropdownMenuContent align="end" className="w-56">
         {modes.map((mode) => {
           const Icon = mode.icon;
-          const isActive = mode.value === currentMode;
+          const isActive = mode.value === portalMode;
           return (
             <DropdownMenuItem
               key={mode.value}
