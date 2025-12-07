@@ -3868,9 +3868,81 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_safe: {
+        Row: {
+          anniversary_date: string | null
+          avatar_url: string | null
+          birth_date: string | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_code: string | null
+          employment_status:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          full_name: string | null
+          hire_date: string | null
+          id: string | null
+          is_super_admin: boolean | null
+          job_title: string | null
+          location: string | null
+          manager_id: string | null
+          sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
+          updated_at: string | null
+          user_category: Database["public"]["Enums"]["user_category"] | null
+          user_id: string | null
+        }
+        Insert: {
+          anniversary_date?: string | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_code?: string | null
+          employment_status?:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          full_name?: string | null
+          hire_date?: string | null
+          id?: string | null
+          is_super_admin?: never
+          job_title?: string | null
+          location?: string | null
+          manager_id?: string | null
+          sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          updated_at?: string | null
+          user_category?: Database["public"]["Enums"]["user_category"] | null
+          user_id?: string | null
+        }
+        Update: {
+          anniversary_date?: string | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_code?: string | null
+          employment_status?:
+            | Database["public"]["Enums"]["employment_status"]
+            | null
+          full_name?: string | null
+          hire_date?: string | null
+          id?: string | null
+          is_super_admin?: never
+          job_title?: string | null
+          location?: string | null
+          manager_id?: string | null
+          sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          updated_at?: string | null
+          user_category?: Database["public"]["Enums"]["user_category"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      current_user_is_super_admin: { Args: never; Returns: boolean }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -3901,6 +3973,7 @@ export type Database = {
       is_customer: { Args: { _user_id: string }; Returns: boolean }
       is_employee_user: { Args: { _user_id: string }; Returns: boolean }
       is_management: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tenant_admin: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
@@ -3910,6 +3983,10 @@ export type Database = {
         Returns: boolean
       }
       promote_to_admin: { Args: { _user_email: string }; Returns: undefined }
+      should_hide_user_from_admins: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       tenant_has_module: {
         Args: { _module_key: string; _tenant_id: string }
         Returns: boolean
