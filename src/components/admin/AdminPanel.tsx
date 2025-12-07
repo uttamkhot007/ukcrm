@@ -42,6 +42,7 @@ const PORTAL_MODES = [
 
 const ADDITIONAL_MODULES = [
   { value: 'sales', label: 'Sales' },
+  { value: 'presales', label: 'Solution Engineering' },
   { value: 'inside_sales', label: 'Inside Sales' },
   { value: 'accounts', label: 'Accounts' },
   { value: 'billing', label: 'Billing' },
