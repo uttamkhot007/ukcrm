@@ -24,9 +24,11 @@ import {
   FileText,
   GitBranch,
   Heart,
+  FolderOpen,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
+import { EmployeeDocumentsView } from "./EmployeeDocumentsView";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
 
@@ -159,10 +161,14 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="directory" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Directory
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4" />
+            Documents
           </TabsTrigger>
           <TabsTrigger value="workflows" className="flex items-center gap-2">
             <GitBranch className="w-4 h-4" />
@@ -249,6 +255,11 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
               ))
             )}
           </div>
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="space-y-4">
+          <EmployeeDocumentsView />
         </TabsContent>
 
         {/* Workflows Tab */}

@@ -125,6 +125,7 @@ const employeePortalItems: NavItem[] = [
     portalMode: "workspace",
     children: [
       { id: "employee-organization", label: "My Organization", icon: Network },
+      { id: "employee-profile", label: "My Profile", icon: UserCircle },
       { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
       { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
       { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },

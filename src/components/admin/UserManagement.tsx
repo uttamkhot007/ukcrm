@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { Users, UserCog, Building, Truck, Headphones } from "lucide-react";
+import { Users, UserCog } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmployeesManagement } from "./users/EmployeesManagement";
 import { ContractorsManagement } from "./users/ContractorsManagement";
-import { VendorsManagement } from "./users/VendorsManagement";
-import { DistributorsManagement } from "./users/DistributorsManagement";
-import { CustomersManagement } from "./users/CustomersManagement";
 
 export function UserManagement() {
   const [activeTab, setActiveTab] = useState("employees");
@@ -19,13 +16,13 @@ export function UserManagement() {
         <div>
           <h2 className="text-xl font-bold">User Management</h2>
           <p className="text-muted-foreground text-sm">
-            Manage employees, contractors, vendors, distributors, and customers
+            Manage employees and contractors
           </p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="employees" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Employees
@@ -33,18 +30,6 @@ export function UserManagement() {
           <TabsTrigger value="contractors" className="flex items-center gap-2">
             <UserCog className="w-4 h-4" />
             Contractors
-          </TabsTrigger>
-          <TabsTrigger value="vendors" className="flex items-center gap-2">
-            <Building className="w-4 h-4" />
-            Vendors
-          </TabsTrigger>
-          <TabsTrigger value="distributors" className="flex items-center gap-2">
-            <Truck className="w-4 h-4" />
-            Distributors
-          </TabsTrigger>
-          <TabsTrigger value="customers" className="flex items-center gap-2">
-            <Headphones className="w-4 h-4" />
-            Customers
           </TabsTrigger>
         </TabsList>
 
@@ -54,18 +39,6 @@ export function UserManagement() {
 
         <TabsContent value="contractors">
           <ContractorsManagement />
-        </TabsContent>
-
-        <TabsContent value="vendors">
-          <VendorsManagement />
-        </TabsContent>
-
-        <TabsContent value="distributors">
-          <DistributorsManagement />
-        </TabsContent>
-
-        <TabsContent value="customers">
-          <CustomersManagement />
         </TabsContent>
       </Tabs>
     </div>

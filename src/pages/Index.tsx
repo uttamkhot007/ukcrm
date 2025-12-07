@@ -19,6 +19,7 @@ import { DocumentationModule } from "@/components/employee/DocumentationModule";
 import { MyOrganization } from "@/components/employee/MyOrganization";
 import { EmployeeWorkflowsModule } from "@/components/employee/EmployeeWorkflowsModule";
 import { EmployeeBenefitsModule } from "@/components/employee/EmployeeBenefitsModule";
+import { EmployeeProfileModule } from "@/components/employee/EmployeeProfileModule";
 import { EmployeeResourcesModule } from "@/components/employee/EmployeeResourcesModule";
 import { TicketingModule } from "@/components/ticketing/TicketingModule";
 import { BillingModule } from "@/components/billing/BillingModule";
@@ -157,6 +158,8 @@ const Index = () => {
         return <EmployeeBenefitsModule />;
       case "employee-resources":
         return <EmployeeResourcesModule />;
+      case "employee-profile":
+        return <EmployeeProfileModule />;
       case "employee-leave":
       case "employee-travel":
         return <RequestsModule />;
@@ -173,6 +176,8 @@ const Index = () => {
         return <HRModule initialTab="salary" />;
       case "hr-onboarding":
         return <HRModule initialTab="onboarding" />;
+      case "hr-documents":
+        return <HRModule initialTab="documents" />;
       
       // Finance modules
       case "finance":
