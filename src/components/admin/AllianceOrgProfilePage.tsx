@@ -282,6 +282,25 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Fetch employees for account manager selection
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-list", currentTenant?.id],
+    queryFn: async () => {
+      let query = supabase
+        .from("profiles")
+        .select("user_id, full_name, email, department")
+        .order("full_name");
+
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as Array<{ user_id: string; full_name: string | null; email: string | null; department: string | null }>;
+    },
+  });
+
   // Fetch contacts
   const { data: contacts = [], refetch: refetchContacts } = useQuery({
     queryKey: ["org-contacts", organization?.id],
@@ -1240,22 +1259,52 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                           <Briefcase className="h-3 w-3" />
                           Account Manager
                         </Label>
-                        <Input 
-                          placeholder="Enter Account Manager name"
+                        <Select 
                           value={teamConfig.accountManager}
-                          onChange={(e) => setTeamConfig({...teamConfig, accountManager: e.target.value})}
-                        />
+                          onValueChange={(value) => setTeamConfig({...teamConfig, accountManager: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Account Manager" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {employees.map(emp => (
+                              <SelectItem key={emp.user_id} value={emp.user_id}>
+                                <div className="flex flex-col">
+                                  <span>{emp.full_name || emp.email}</span>
+                                  {emp.department && (
+                                    <span className="text-xs text-muted-foreground">{emp.department}</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label className="text-xs font-medium flex items-center gap-2">
                           <Headphones className="h-3 w-3" />
                           Technical Account Manager
                         </Label>
-                        <Input 
-                          placeholder="Enter Technical Account Manager name"
+                        <Select 
                           value={teamConfig.technicalAccountManager}
-                          onChange={(e) => setTeamConfig({...teamConfig, technicalAccountManager: e.target.value})}
-                        />
+                          onValueChange={(value) => setTeamConfig({...teamConfig, technicalAccountManager: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Technical Account Manager" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {employees.map(emp => (
+                              <SelectItem key={emp.user_id} value={emp.user_id}>
+                                <div className="flex flex-col">
+                                  <span>{emp.full_name || emp.email}</span>
+                                  {emp.department && (
+                                    <span className="text-xs text-muted-foreground">{emp.department}</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </CardContent>
@@ -1281,12 +1330,30 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label>Collaborator Name *</Label>
-                            <Input 
-                              placeholder="Enter name"
+                            <Label>Collaborator *</Label>
+                            <Select 
                               value={newCollaborator.name}
-                              onChange={(e) => setNewCollaborator({...newCollaborator, name: e.target.value})}
-                            />
+                              onValueChange={(value) => {
+                                const emp = employees.find(e => e.user_id === value);
+                                setNewCollaborator({...newCollaborator, name: emp?.full_name || emp?.email || value});
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select employee" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {employees.map(emp => (
+                                  <SelectItem key={emp.user_id} value={emp.user_id}>
+                                    <div className="flex flex-col">
+                                      <span>{emp.full_name || emp.email}</span>
+                                      {emp.department && (
+                                        <span className="text-xs text-muted-foreground">{emp.department}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="space-y-2">
                             <Label>Team *</Label>
