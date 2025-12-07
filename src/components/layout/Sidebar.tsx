@@ -223,16 +223,27 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     // Super admins and admins always have access (only when in admin portal mode)
     if ((role === "admin" || isSuperAdmin) && portalMode === "admin") return true;
     
-    // If console access is configured, ONLY use console access for module control
-    // Do NOT fall back to team-based access
-    if (consoleAccess) {
+    // If console access exists but user doesn't have full_access, they only get employee modules
+    if (consoleAccess && !consoleAccess.has_full_access) {
+      return false; // No access to team-based modules
+    }
+    
+    // If console access is configured with full access, use module-based control
+    if (consoleAccess && consoleAccess.has_full_access) {
       if (!moduleId) return false;
+      // Empty additional_modules means all modules for configured portal modes
+      if (consoleAccess.additional_modules.length === 0) {
+        return teams.some(t => requiredTeams.includes(t));
+      }
       return consoleAccess.additional_modules.includes(moduleId);
     }
     
-    // Only use team-based access if NO console access is configured
+    // Only use team-based access if NO console access is configured (shouldn't happen with new logic)
     return teams.some(t => requiredTeams.includes(t));
   };
+
+  // Check if user has employee-only access (no console_access configured or no full_access)
+  const isEmployeeOnlyAccess = consoleAccess && !consoleAccess.has_full_access;
 
   // Build navigation based on portal mode and access level
   const getNavItems = (): NavItem[] => {
@@ -448,6 +459,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       items.push(...customerPortalItems);
     } else if (portalMode === "workspace") {
       // Workspace mode: Team-based access control
+      // But if user has employee-only access, skip all team-based modules
       
       // Dashboard is always available
       items.push({
@@ -464,6 +476,29 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: Sparkles,
         color: "text-primary",
       });
+
+      // If employee-only access, show ONLY employee portal and skip all other modules
+      if (isEmployeeOnlyAccess) {
+        items.push({
+          id: "employee",
+          label: "Employee Portal",
+          icon: UserCircle,
+          color: "text-employee",
+          children: [
+            { id: "employee-organization", label: "My Organization", icon: Network },
+            { id: "employee-profile", label: "My Profile", icon: UserCircle },
+            { id: "employee-attendance", label: "Attendance", icon: Clock },
+            { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
+            { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
+            { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
+            { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
+            { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
+            { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
+            { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
+          ],
+        });
+        return items; // Return early - no other modules for employee-only access
+      }
 
       // Sales Portal - for sales, presales, inside_sales teams
       if (hasTeamAccess(["sales", "presales", "inside_sales", "management"], "sales")) {
@@ -660,6 +695,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-employee",
         children: [
           { id: "employee-organization", label: "My Organization", icon: Network },
+          { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
@@ -712,6 +748,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-employee",
         children: [
           { id: "employee-organization", label: "My Organization", icon: Network },
+          { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
           { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
           { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },

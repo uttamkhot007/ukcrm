@@ -22,6 +22,7 @@ interface Profile {
 interface ConsoleAccess {
   portal_modes: string[];
   additional_modules: string[];
+  has_full_access: boolean; // true = full access based on role, false = employee portal only
 }
 
 interface AuthContextType {
@@ -134,16 +135,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("user_id", userId)
         .maybeSingle();
 
+
       if (consoleAccessData) {
-        const accessSettings = {
+        // User has explicit console access configured
+        const accessSettings: ConsoleAccess = {
           portal_modes: consoleAccessData.portal_modes || ['workspace'],
           additional_modules: consoleAccessData.additional_modules || [],
+          has_full_access: true, // They have configured access
         };
         setConsoleAccess(accessSettings);
         
         // Set portal mode based on console access settings
         // Super admins always get admin mode, regardless of console access
-        const isSuperAdminUser = (profileData as any)?.is_super_admin === true;
         if (isSuperAdminUser) {
           setPortalMode('admin');
         } else if (roleData?.role === 'admin' && accessSettings.portal_modes.includes('admin')) {
@@ -156,9 +159,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPortalMode(accessSettings.portal_modes[0] as PortalMode);
         }
       } else {
-        // Default: no specific restrictions (will use role-based access)
-        setConsoleAccess(null);
-        // Keep existing portal mode logic for users without console access configured
+        // No console access configured - DEFAULT TO EMPLOYEE PORTAL ONLY
+        // Exception: Super admins and admins retain their full access
+        if (isSuperAdminUser || roleData?.role === 'admin') {
+          // Admins and super admins keep full access even without console_access record
+          setConsoleAccess({
+            portal_modes: ['admin', 'workspace'],
+            additional_modules: [],
+            has_full_access: true,
+          });
+          setPortalMode('admin');
+        } else if (profileData?.user_category === 'customer') {
+          // Customers get customer portal
+          setConsoleAccess({
+            portal_modes: ['customer'],
+            additional_modules: [],
+            has_full_access: false,
+          });
+          setPortalMode('customer');
+        } else {
+          // Regular users without console_access get EMPLOYEE PORTAL ONLY
+          setConsoleAccess({
+            portal_modes: ['workspace'],
+            additional_modules: ['employee'], // Only employee module access
+            has_full_access: false,
+          });
+          setPortalMode('workspace');
+        }
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -282,14 +309,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user has access to a specific module based on console access settings
   const hasModuleAccess = (moduleId: string): boolean => {
-    // Admins always have access to everything
-    if (role === "admin") return true;
+    // Super admins and admins always have access to everything
+    if (role === "admin" || profile?.is_super_admin) return true;
     
-    // If no console access configured, allow based on team access (legacy behavior)
-    if (!consoleAccess) return true;
+    // If no console access configured or doesn't have full access, restrict to employee modules
+    if (!consoleAccess || !consoleAccess.has_full_access) {
+      // Only allow employee-related modules
+      const employeeModules = [
+        'dashboard', 'employee', 'employee-ai-assistant', 'employee-attendance',
+        'employee-attendance-reports', 'employee-requests', 'employee-approvals',
+        'employee-events', 'employee-documentation', 'employee-organization',
+        'employee-workflows', 'employee-benefits', 'employee-resources',
+        'employee-profile', 'employee-leave', 'employee-travel'
+      ];
+      return employeeModules.some(m => moduleId.startsWith(m) || moduleId === m);
+    }
     
     // Check if module is in the user's additional_modules list
-    return consoleAccess.additional_modules.includes(moduleId);
+    return consoleAccess.additional_modules.includes(moduleId) || 
+           consoleAccess.additional_modules.length === 0; // Empty means all modules for that portal
   };
 
   // Super admins are also considered admins
