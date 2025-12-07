@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { TenantSwitcher } from "@/components/tenant/TenantSwitcher";
-import { LogoutMoodDialog } from "@/components/logout/LogoutMoodDialog";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -197,7 +196,6 @@ const superAdminItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess, isSuperAdmin, user } = useAuth();
   const { currentTenant, tenantMemberships } = useTenant();
   const navigate = useNavigate();
@@ -888,7 +886,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           {!collapsed && <span className="text-sm">Settings</span>}
         </button>
         <button
-          onClick={() => setShowLogoutDialog(true)}
+          onClick={() => signOut()}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all",
             collapsed && "justify-center"
@@ -898,16 +896,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           {!collapsed && <span className="text-sm">Logout</span>}
         </button>
       </div>
-
-      {/* Logout Mood Dialog */}
-      {user && (
-        <LogoutMoodDialog
-          open={showLogoutDialog}
-          onOpenChange={setShowLogoutDialog}
-          onConfirmLogout={signOut}
-          userId={user.id}
-        />
-      )}
     </aside>
   );
 }

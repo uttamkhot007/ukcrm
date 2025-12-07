@@ -140,6 +140,50 @@ export type Database = {
           },
         ]
       }
+      activity_definitions: {
+        Row: {
+          created_at: string
+          department: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          team_type: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          team_type?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          team_type?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_definitions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_workflows: {
         Row: {
           approval_level: number
@@ -185,7 +229,10 @@ export type Database = {
           check_out: string | null
           created_at: string
           id: string
+          mood_check_in: string | null
+          mood_check_out: string | null
           notes: string | null
+          tenant_id: string | null
           user_id: string
           work_hours: number | null
         }
@@ -194,7 +241,10 @@ export type Database = {
           check_out?: string | null
           created_at?: string
           id?: string
+          mood_check_in?: string | null
+          mood_check_out?: string | null
           notes?: string | null
+          tenant_id?: string | null
           user_id: string
           work_hours?: number | null
         }
@@ -203,11 +253,83 @@ export type Database = {
           check_out?: string | null
           created_at?: string
           id?: string
+          mood_check_in?: string | null
+          mood_check_out?: string | null
           notes?: string | null
+          tenant_id?: string | null
           user_id?: string
           work_hours?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "attendance_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_activities: {
+        Row: {
+          activity_id: string
+          attendance_id: string
+          created_at: string
+          duration_minutes: number
+          ended_at: string | null
+          id: string
+          notes: string | null
+          started_at: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          attendance_id: string
+          created_at?: string
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          started_at?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          attendance_id?: string
+          created_at?: string
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          started_at?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_activities_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_activities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compliance_assessments: {
         Row: {
@@ -801,33 +923,57 @@ export type Database = {
       }
       employee_mood_logs: {
         Row: {
+          attendance_id: string | null
           created_at: string
           id: string
           logged_at: string
           mood: string
+          mood_type: string | null
           notes: string | null
           session_duration_minutes: number | null
+          tenant_id: string | null
           user_id: string
         }
         Insert: {
+          attendance_id?: string | null
           created_at?: string
           id?: string
           logged_at?: string
           mood: string
+          mood_type?: string | null
           notes?: string | null
           session_duration_minutes?: number | null
+          tenant_id?: string | null
           user_id: string
         }
         Update: {
+          attendance_id?: string | null
           created_at?: string
           id?: string
           logged_at?: string
           mood?: string
+          mood_type?: string | null
           notes?: string | null
           session_duration_minutes?: number | null
+          tenant_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employee_mood_logs_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_mood_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employee_requests: {
         Row: {
