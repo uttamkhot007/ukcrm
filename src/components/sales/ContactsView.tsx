@@ -24,6 +24,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
@@ -33,7 +34,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { ContactDetailsSheet } from "./ContactDetailsSheet";
-import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye } from "lucide-react";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -61,6 +62,7 @@ export function ContactsView() {
   const [deleteTarget, setDeleteTarget] = useState<ContactWithRelations | null>(null);
   const [selectedContact, setSelectedContact] = useState<ContactWithRelations | null>(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [enrichingContactId, setEnrichingContactId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentTenant } = useTenant();
@@ -144,6 +146,78 @@ export function ContactsView() {
       toast({ title: "Error deleting contact", description: error.message, variant: "destructive" });
     },
   });
+
+  // Enrich contact with AI
+  const enrichContact = async (contact: ContactWithRelations) => {
+    setEnrichingContactId(contact.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('enrich-user', {
+        body: { 
+          userName: contact.name, 
+          organizationName: contact.company || '' 
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.data) {
+        const enrichedData = data.data;
+        
+        // Update the contact with enriched data
+        const updateData: any = {};
+        
+        if (enrichedData.current_title || enrichedData.designation) {
+          if (!contact.designation) {
+            updateData.designation = enrichedData.designation || enrichedData.current_title;
+          }
+        }
+        if (enrichedData.email && !contact.email) {
+          updateData.email = enrichedData.email;
+        }
+        if (enrichedData.phone && !contact.phone) {
+          updateData.phone = enrichedData.phone;
+        }
+        
+        // Add enriched info to notes
+        let enrichmentNotes = [];
+        if (enrichedData.linkedin_url) enrichmentNotes.push(`LinkedIn: ${enrichedData.linkedin_url}`);
+        if (enrichedData.location) enrichmentNotes.push(`Location: ${enrichedData.location}`);
+        if (enrichedData.bio) enrichmentNotes.push(`Bio: ${enrichedData.bio}`);
+        if (enrichedData.education?.length) enrichmentNotes.push(`Education: ${enrichedData.education.join(', ')}`);
+        if (enrichedData.skills?.length) enrichmentNotes.push(`Skills: ${enrichedData.skills.slice(0, 5).join(', ')}`);
+        if (enrichedData.experience?.length) {
+          const recentExp = enrichedData.experience.slice(0, 3).map((e: any) => `${e.title} at ${e.company}`).join('; ');
+          enrichmentNotes.push(`Experience: ${recentExp}`);
+        }
+        
+        if (enrichmentNotes.length > 0) {
+          const existingNotes = contact.notes || '';
+          updateData.notes = existingNotes 
+            ? `${existingNotes}\n\n--- AI Enriched Data ---\n${enrichmentNotes.join('\n')}`
+            : `--- AI Enriched Data ---\n${enrichmentNotes.join('\n')}`;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase
+            .from("contacts")
+            .update(updateData)
+            .eq("id", contact.id);
+          
+          if (updateError) throw updateError;
+          queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
+          queryClient.invalidateQueries({ queryKey: ["contacts"] });
+          toast({ title: `Enriched data for ${contact.name}` });
+        } else {
+          toast({ title: "No additional information found for this contact" });
+        }
+      }
+    } catch (error: any) {
+      console.error("User enrichment error:", error);
+      toast({ title: "Failed to enrich contact data", variant: "destructive" });
+    } finally {
+      setEnrichingContactId(null);
+    }
+  };
 
   const closeDialog = () => {
     setIsDialogOpen(false);
@@ -402,6 +476,18 @@ export function ContactsView() {
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => enrichContact(contact)}
+                            disabled={enrichingContactId === contact.id}
+                          >
+                            {enrichingContactId === contact.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                            )}
+                            Enrich with AI
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => openEditDialog(contact)}>
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
