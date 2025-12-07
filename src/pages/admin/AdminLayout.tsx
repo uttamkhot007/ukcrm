@@ -68,10 +68,10 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-background">
       <Sidebar activeModule={getActiveModule()} onModuleChange={() => {}} />
       
-      <div className={cn("transition-all duration-300 ml-64")}>
+      <div className={cn("transition-all duration-300 ml-64 relative z-10")}>
         <Header onAIToggle={() => {}} />
         
-        <main className="p-6 overflow-auto min-h-[calc(100vh-4rem)]">
+        <main className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative">
           <Outlet />
         </main>
       </div>

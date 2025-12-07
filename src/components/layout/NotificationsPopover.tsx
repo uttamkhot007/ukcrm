@@ -44,7 +44,7 @@ export function NotificationsPopover() {
   const categoriesWithUnread = Object.entries(unreadCountByCategory).filter(([_, count]) => count > 0);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
