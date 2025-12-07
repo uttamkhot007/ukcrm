@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { ExpenseReportsList } from "./ExpenseReportsList";
 import { TravelRequestsList } from "./TravelRequestsList";
 import { ExpenseApprovals } from "./ExpenseApprovals";
 import { ExpenseStats } from "./ExpenseStats";
 import { useAuth } from "@/hooks/useAuth";
+import { Receipt, Plane, CheckCircle, FileText } from "lucide-react";
 
 interface ExpenseModuleProps {
   initialTab?: string;
@@ -15,6 +16,30 @@ export function ExpenseModule({ initialTab = "my-expenses" }: ExpenseModuleProps
   const { role, teams } = useAuth();
   
   const isFinanceOrManager = role === "admin" || role === "manager" || teams.includes("finance");
+
+  const navItems: ModuleNavItem[] = [
+    { value: "my-expenses", label: "My Expenses", icon: Receipt },
+    { value: "travel-requests", label: "Travel Requests", icon: Plane },
+    ...(isFinanceOrManager ? [
+      { value: "approvals", label: "Approvals", icon: CheckCircle },
+      { value: "all-expenses", label: "All Expenses", icon: FileText },
+    ] : []),
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "my-expenses":
+        return <ExpenseReportsList viewMode="personal" />;
+      case "travel-requests":
+        return <TravelRequestsList />;
+      case "approvals":
+        return isFinanceOrManager ? <ExpenseApprovals /> : null;
+      case "all-expenses":
+        return isFinanceOrManager ? <ExpenseReportsList viewMode="all" /> : null;
+      default:
+        return <ExpenseReportsList viewMode="personal" />;
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -27,38 +52,16 @@ export function ExpenseModule({ initialTab = "my-expenses" }: ExpenseModuleProps
 
       <ExpenseStats />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-          <TabsTrigger value="my-expenses">My Expenses</TabsTrigger>
-          <TabsTrigger value="travel-requests">Travel Requests</TabsTrigger>
-          {isFinanceOrManager && (
-            <TabsTrigger value="approvals">Approvals</TabsTrigger>
-          )}
-          {isFinanceOrManager && (
-            <TabsTrigger value="all-expenses">All Expenses</TabsTrigger>
-          )}
-        </TabsList>
-
-        <TabsContent value="my-expenses" className="mt-6">
-          <ExpenseReportsList viewMode="personal" />
-        </TabsContent>
-
-        <TabsContent value="travel-requests" className="mt-6">
-          <TravelRequestsList />
-        </TabsContent>
-
-        {isFinanceOrManager && (
-          <TabsContent value="approvals" className="mt-6">
-            <ExpenseApprovals />
-          </TabsContent>
-        )}
-
-        {isFinanceOrManager && (
-          <TabsContent value="all-expenses" className="mt-6">
-            <ExpenseReportsList viewMode="all" />
-          </TabsContent>
-        )}
-      </Tabs>
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }

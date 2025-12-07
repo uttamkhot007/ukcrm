@@ -2,11 +2,11 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import {
   Users,
   UserPlus,
@@ -14,23 +14,31 @@ import {
   Calendar,
   Search,
   Building2,
-  MapPin,
-  Mail,
-  DollarSign,
-  TrendingUp,
-  Clock,
   CheckCircle2,
-  AlertCircle,
+  Clock,
   FileText,
   GitBranch,
   Heart,
   FolderOpen,
+  TrendingUp,
+  AlertCircle,
+  DollarSign,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
 import { EmployeeDocumentsView } from "./EmployeeDocumentsView";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
+
+const navItems: ModuleNavItem[] = [
+  { value: "directory", label: "Directory", icon: Users },
+  { value: "documents", label: "Documents", icon: FolderOpen },
+  { value: "workflows", label: "Workflows", icon: GitBranch },
+  { value: "mood-analytics", label: "Team Mood", icon: Heart },
+  { value: "people", label: "People Mgmt", icon: UserPlus },
+  { value: "salary", label: "Salary", icon: Briefcase },
+  { value: "onboarding", label: "Onboarding", icon: Calendar },
+];
 
 interface HRModuleProps {
   initialTab?: string;
@@ -50,7 +58,6 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { currentTenant } = useTenant();
 
-  // Sync activeTab with initialTab when route changes
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
@@ -96,6 +103,202 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const formatStatus = (status: string | null) => {
     if (!status) return "Active";
     return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "directory":
+        return (
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search employees..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {isLoading ? (
+                [...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-14 h-14 rounded-full bg-muted" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded w-3/4" />
+                          <div className="h-3 bg-muted rounded w-1/2" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                filteredEmployees.map((employee) => (
+                  <Card key={employee.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={employee.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                            {getInitials(employee.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="font-semibold truncate">{employee.full_name || "Unknown"}</h3>
+                            <Badge className={cn("text-xs", STATUS_COLORS[employee.employment_status || "active"])}>
+                              {formatStatus(employee.employment_status)}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">{employee.job_title || "No title"}</p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            {employee.department && (
+                              <span className="flex items-center gap-1">
+                                <Building2 className="w-3 h-3" />
+                                {employee.department}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      case "documents":
+        return <EmployeeDocumentsView />;
+      case "workflows":
+        return <HRWorkflowsTab />;
+      case "mood-analytics":
+        return <MoodAnalyticsDashboard />;
+      case "people":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                People Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <TrendingUp className="w-8 h-8 mx-auto text-primary mb-2" />
+                    <h4 className="font-medium">Performance Reviews</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Track and manage employee performance</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <AlertCircle className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+                    <h4 className="font-medium">PIP Management</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Performance improvement plans</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="w-8 h-8 mx-auto text-blue-500 mb-2" />
+                    <h4 className="font-medium">Exit Management</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Offboarding and exit interviews</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case "salary":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Salary & Benefits
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <DollarSign className="w-8 h-8 mx-auto text-green-500 mb-2" />
+                    <h4 className="font-medium">Payroll Processing</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Monthly salary processing</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <Briefcase className="w-8 h-8 mx-auto text-purple-500 mb-2" />
+                    <h4 className="font-medium">Benefits Administration</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Insurance, PF, gratuity</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="w-8 h-8 mx-auto text-orange-500 mb-2" />
+                    <h4 className="font-medium">Salary Slips</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Generate and distribute</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case "onboarding":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Onboarding
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <UserPlus className="w-8 h-8 mx-auto text-blue-500 mb-2" />
+                    <h4 className="font-medium">New Hire Checklist</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Onboarding task templates</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
+                    <h4 className="font-medium">Document Collection</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Required documents tracking</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <Calendar className="w-8 h-8 mx-auto text-purple-500 mb-2" />
+                    <h4 className="font-medium">Training Schedule</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Induction programs</p>
+                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -159,239 +362,17 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="directory" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Directory
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4" />
-            Documents
-          </TabsTrigger>
-          <TabsTrigger value="workflows" className="flex items-center gap-2">
-            <GitBranch className="w-4 h-4" />
-            Workflows
-          </TabsTrigger>
-          <TabsTrigger value="mood-analytics" className="flex items-center gap-2">
-            <Heart className="w-4 h-4" />
-            Team Mood
-          </TabsTrigger>
-          <TabsTrigger value="people" className="flex items-center gap-2">
-            <UserPlus className="w-4 h-4" />
-            People Mgmt
-          </TabsTrigger>
-          <TabsTrigger value="salary" className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4" />
-            Salary
-          </TabsTrigger>
-          <TabsTrigger value="onboarding" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Onboarding
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Directory Tab */}
-        <TabsContent value="directory" className="space-y-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search employees..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {isLoading ? (
-              [...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 rounded-full bg-muted" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-muted rounded w-3/4" />
-                        <div className="h-3 bg-muted rounded w-1/2" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              filteredEmployees.map((employee) => (
-                <Card key={employee.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={employee.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {getInitials(employee.full_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-semibold truncate">{employee.full_name || "Unknown"}</h3>
-                          <Badge className={cn("text-xs", STATUS_COLORS[employee.employment_status || "active"])}>
-                            {formatStatus(employee.employment_status)}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">{employee.job_title || "No title"}</p>
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          {employee.department && (
-                            <span className="flex items-center gap-1">
-                              <Building2 className="w-3 h-3" />
-                              {employee.department}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Documents Tab */}
-        <TabsContent value="documents" className="space-y-4">
-          <EmployeeDocumentsView />
-        </TabsContent>
-
-        {/* Workflows Tab */}
-        <TabsContent value="workflows" className="space-y-4">
-          <HRWorkflowsTab />
-        </TabsContent>
-
-        {/* Mood Analytics Tab */}
-        <TabsContent value="mood-analytics">
-          <MoodAnalyticsDashboard />
-        </TabsContent>
-
-        {/* People Management Tab */}
-        <TabsContent value="people" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                People Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <TrendingUp className="w-8 h-8 mx-auto text-primary mb-2" />
-                    <h4 className="font-medium">Performance Reviews</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Track and manage employee performance</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <AlertCircle className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
-                    <h4 className="font-medium">PIP Management</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Performance improvement plans</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-blue-500 mb-2" />
-                    <h4 className="font-medium">Exit Management</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Offboarding and exit interviews</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Salary & Benefits Tab */}
-        <TabsContent value="salary" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Salary & Benefits
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <DollarSign className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                    <h4 className="font-medium">Payroll Processing</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Monthly salary processing</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <Briefcase className="w-8 h-8 mx-auto text-purple-500 mb-2" />
-                    <h4 className="font-medium">Benefits Administration</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Insurance, PF, gratuity</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-orange-500 mb-2" />
-                    <h4 className="font-medium">Salary Slips</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Generate and distribute</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Onboarding Tab */}
-        <TabsContent value="onboarding" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Onboarding
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <UserPlus className="w-8 h-8 mx-auto text-blue-500 mb-2" />
-                    <h4 className="font-medium">New Hire Checklist</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Onboarding task templates</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                    <h4 className="font-medium">Document Collection</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Required documents tracking</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <Calendar className="w-8 h-8 mx-auto text-purple-500 mb-2" />
-                    <h4 className="font-medium">Training Schedule</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Induction programs</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Content with Vertical Nav */}
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }

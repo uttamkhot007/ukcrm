@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { AccountsContractWorkflow } from "./AccountsContractWorkflow";
 import { AccountsWorkflows } from "./AccountsWorkflows";
 import { AccountsARaging } from "./AccountsARAging";
@@ -8,12 +8,40 @@ import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
 import { FileText, GitBranch, Clock, Bell, ShoppingCart, Package } from "lucide-react";
 
+const navItems: ModuleNavItem[] = [
+  { value: "contracts", label: "Contracts", icon: FileText },
+  { value: "workflows", label: "Workflows", icon: GitBranch },
+  { value: "procurement", label: "Procurement", icon: ShoppingCart },
+  { value: "stocking", label: "Stocking", icon: Package },
+  { value: "ar-aging", label: "AR Aging", icon: Clock },
+  { value: "sla-reminders", label: "SLA & Reminders", icon: Bell },
+];
+
 interface AccountsModuleProps {
   initialTab?: string;
 }
 
 export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "contracts":
+        return <AccountsContractWorkflow initialTab="all" />;
+      case "workflows":
+        return <AccountsWorkflows />;
+      case "procurement":
+        return <AccountsProcurement />;
+      case "stocking":
+        return <AccountsStocking />;
+      case "ar-aging":
+        return <AccountsARaging />;
+      case "sla-reminders":
+        return <AccountsSLAReminders />;
+      default:
+        return <AccountsContractWorkflow initialTab="all" />;
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -26,58 +54,16 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 flex-wrap h-auto">
-          <TabsTrigger value="contracts" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Contracts
-          </TabsTrigger>
-          <TabsTrigger value="workflows" className="flex items-center gap-2">
-            <GitBranch className="w-4 h-4" />
-            Workflows
-          </TabsTrigger>
-          <TabsTrigger value="procurement" className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4" />
-            Procurement
-          </TabsTrigger>
-          <TabsTrigger value="stocking" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Stocking
-          </TabsTrigger>
-          <TabsTrigger value="ar-aging" className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            AR Aging
-          </TabsTrigger>
-          <TabsTrigger value="sla-reminders" className="flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            SLA & Reminders
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="contracts" className="m-0">
-          <AccountsContractWorkflow initialTab="all" />
-        </TabsContent>
-
-        <TabsContent value="workflows" className="m-0">
-          <AccountsWorkflows />
-        </TabsContent>
-
-        <TabsContent value="procurement" className="m-0">
-          <AccountsProcurement />
-        </TabsContent>
-
-        <TabsContent value="stocking" className="m-0">
-          <AccountsStocking />
-        </TabsContent>
-
-        <TabsContent value="ar-aging" className="m-0">
-          <AccountsARaging />
-        </TabsContent>
-
-        <TabsContent value="sla-reminders" className="m-0">
-          <AccountsSLAReminders />
-        </TabsContent>
-      </Tabs>
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }
