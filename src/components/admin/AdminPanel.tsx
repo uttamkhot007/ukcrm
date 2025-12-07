@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCog, Check, Loader2, Users2 } from "lucide-react";
+import { Shield, UserCog, Check, Loader2, Users2, Key, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamManagement } from "./TeamManagement";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 type AppRole = "admin" | "manager" | "employee";
 
@@ -21,6 +31,11 @@ export function AdminPanel() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -97,6 +112,62 @@ export function AdminPanel() {
     setUpdatingUser(null);
   };
 
+  const handleSetPassword = async () => {
+    if (!selectedUser) return;
+
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSettingPassword(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("set-user-password", {
+        body: {
+          user_id: selectedUser.user_id,
+          password,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      toast({
+        title: "Success",
+        description: `Password set for ${selectedUser.full_name || selectedUser.email}`,
+      });
+
+      setSelectedUser(null);
+      setPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to set password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSettingPassword(false);
+    }
+  };
+
   const getRoleColor = (role: AppRole) => {
     switch (role) {
       case "admin":
@@ -116,15 +187,19 @@ export function AdminPanel() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-muted-foreground">Manage user roles, teams, and permissions</p>
+          <p className="text-muted-foreground">Manage user roles, teams, and credentials</p>
         </div>
       </div>
 
       <Tabs defaultValue="roles" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="roles" className="flex items-center gap-2">
             <UserCog className="w-4 h-4" />
             User Roles
+          </TabsTrigger>
+          <TabsTrigger value="credentials" className="flex items-center gap-2">
+            <Key className="w-4 h-4" />
+            Credentials
           </TabsTrigger>
           <TabsTrigger value="teams" className="flex items-center gap-2">
             <Users2 className="w-4 h-4" />
@@ -144,55 +219,55 @@ export function AdminPanel() {
               </span>
             </div>
 
-        {isLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {users.map((user) => (
-              <div
-                key={user.id}
-                className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
-                    {user.full_name?.slice(0, 2).toUpperCase() || "U"}
-                  </div>
-                  <div>
-                    <p className="font-medium">{user.full_name || "Unknown"}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {(["admin", "manager", "employee"] as AppRole[]).map((role) => (
-                    <Button
-                      key={role}
-                      variant="outline"
-                      size="sm"
-                      disabled={updatingUser === user.user_id}
-                      onClick={() => updateUserRole(user.user_id, role)}
-                      className={cn(
-                        "capitalize transition-all",
-                        user.role === role && getRoleColor(role),
-                        user.role === role && "border"
-                      )}
-                    >
-                      {updatingUser === user.user_id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : user.role === role ? (
-                        <Check className="w-4 h-4 mr-1" />
-                      ) : null}
-                      {role}
-                    </Button>
-                  ))}
-                </div>
+            {isLoading ? (
+              <div className="p-8 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ))}
+            ) : (
+              <div className="divide-y divide-border">
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
+                        {user.full_name?.slice(0, 2).toUpperCase() || "U"}
+                      </div>
+                      <div>
+                        <p className="font-medium">{user.full_name || "Unknown"}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {(["admin", "manager", "employee"] as AppRole[]).map((role) => (
+                        <Button
+                          key={role}
+                          variant="outline"
+                          size="sm"
+                          disabled={updatingUser === user.user_id}
+                          onClick={() => updateUserRole(user.user_id, role)}
+                          className={cn(
+                            "capitalize transition-all",
+                            user.role === role && getRoleColor(role),
+                            user.role === role && "border"
+                          )}
+                        >
+                          {updatingUser === user.user_id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : user.role === role ? (
+                            <Check className="w-4 h-4 mr-1" />
+                          ) : null}
+                          {role}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
           <div className="glass rounded-xl border border-border p-4">
             <h3 className="font-semibold mb-3">Role Permissions</h3>
@@ -225,10 +300,132 @@ export function AdminPanel() {
           </div>
         </TabsContent>
 
+        <TabsContent value="credentials" className="space-y-6">
+          <div className="glass rounded-xl border border-border overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                User Credentials
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                Set login passwords for users
+              </span>
+            </div>
+
+            {isLoading ? (
+              <div className="p-8 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
+                        {user.full_name?.slice(0, 2).toUpperCase() || "U"}
+                      </div>
+                      <div>
+                        <p className="font-medium">{user.full_name || "Unknown"}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedUser(user)}
+                      className="flex items-center gap-2"
+                    >
+                      <Key className="w-4 h-4" />
+                      Set Password
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="glass rounded-xl border border-border p-4">
+            <h3 className="font-semibold mb-3">Password Guidelines</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+              <li>Minimum 6 characters required</li>
+              <li>Use a mix of letters, numbers, and special characters for stronger security</li>
+              <li>Passwords are securely stored and encrypted</li>
+              <li>Users can login with their email and the password you set</li>
+            </ul>
+          </div>
+        </TabsContent>
+
         <TabsContent value="teams">
           <TeamManagement />
         </TabsContent>
       </Tabs>
+
+      {/* Set Password Dialog */}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Password</DialogTitle>
+            <DialogDescription>
+              Set a login password for {selectedUser?.full_name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedUser(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSetPassword} disabled={isSettingPassword}>
+              {isSettingPassword ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Setting...
+                </>
+              ) : (
+                "Set Password"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
