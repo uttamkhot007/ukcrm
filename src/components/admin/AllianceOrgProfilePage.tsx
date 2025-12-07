@@ -24,7 +24,7 @@ import {
   CheckCircle, Loader2, ChevronDown, ChevronRight, ArrowLeft, 
   FileText, PhoneCall, Video, Sparkles, Copy, Database, Key, Bug,
   Calendar, Clock, Bell, ListTodo, StickyNote, Cake, RotateCcw, Trash2, Edit,
-  Save, X
+  Save, X, Building2, UserCheck, Headphones, CreditCard, RefreshCcw, Crown, UserPlus, Image
 } from "lucide-react";
 import { CONTACT_ROLES } from "@/components/shared/OrganizationFormFields";
 
@@ -167,6 +167,27 @@ interface InfrastructureConfig {
   systemEnvironment: string;
 }
 
+interface Collaborator {
+  id: string;
+  name: string;
+  team: string;
+  expectation: string;
+}
+
+interface TeamConfig {
+  accountManager: string;
+  technicalAccountManager: string;
+  collaborators: Collaborator[];
+}
+
+const COLLABORATIVE_TEAMS = [
+  { id: 'presales', name: 'Presales', icon: Sparkles, expectations: ['Solution Designing', 'Demo', 'POC', 'Technical Assessment'] },
+  { id: 'accounts', name: 'Accounts', icon: CreditCard, expectations: ['Payment Reminders', 'Invoice Management', 'Credit Follow-up'] },
+  { id: 'technical', name: 'Technical Team', icon: Headphones, expectations: ['Technical Issues', 'Support Escalation', 'Implementation'] },
+  { id: 'renewal', name: 'Renewal Team', icon: RefreshCcw, expectations: ['Renewal Reminders', 'Contract Negotiation', 'Upsell Opportunities'] },
+  { id: 'management', name: 'Management', icon: Crown, expectations: ['Executive Connects', 'Strategic Reviews', 'Escalations'] },
+];
+
 const OS_OPTIONS = ['Windows', 'Mac', 'Linux'];
 const ENVIRONMENT_OPTIONS = ['Domain', 'Workgroup', 'Hybrid'];
 
@@ -249,6 +270,13 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [meetingsExpanded, setMeetingsExpanded] = useState(true);
   const [remindersExpanded, setRemindersExpanded] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [teamConfig, setTeamConfig] = useState<TeamConfig>({
+    accountManager: '',
+    technicalAccountManager: '',
+    collaborators: [],
+  });
+  const [isAddCollaboratorOpen, setIsAddCollaboratorOpen] = useState(false);
+  const [newCollaborator, setNewCollaborator] = useState({ name: '', team: '', expectation: '' });
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -1115,38 +1143,286 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   </CardContent>
                 </Card>
 
-                {/* Company Card */}
-                <Card>
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={organization.logo_url || ""} />
-                        <AvatarFallback className="bg-primary/10 text-primary">{organization.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{organization.name}</h3>
-                        {organization.website && (
-                          <a href={organization.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
-                            {websiteClean}<ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
+                {/* Company Card with Enhanced Logo */}
+                <Card className="overflow-hidden">
+                  <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-6 border-b">
+                    <div className="flex items-start gap-6">
+                      {/* Large Logo Display */}
+                      <div className="relative group">
+                        <div className="w-24 h-24 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-card flex items-center justify-center overflow-hidden shadow-md">
+                          {organization.logo_url ? (
+                            <img 
+                              src={organization.logo_url} 
+                              alt={organization.name}
+                              className="w-full h-full object-contain p-2"
+                            />
+                          ) : (
+                            <div className="text-center">
+                              <Image className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                              <p className="text-xs text-muted-foreground mt-1">No Logo</p>
+                            </div>
+                          )}
+                        </div>
+                        <Badge className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground">
+                          {organization.organization_type || 'Customer'}
+                        </Badge>
                       </div>
-                      <div className="text-sm ml-6"><span className="font-medium">Employees</span><p className="text-muted-foreground">--</p></div>
-                      <div className="text-sm ml-4"><span className="font-medium">Annual revenue</span><p className="text-muted-foreground">--</p></div>
+
+                      {/* Company Info */}
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h2 className="text-2xl font-bold">{organization.name}</h2>
+                            <p className="text-muted-foreground">{organization.industry || 'Industry not specified'}</p>
+                            {organization.website && (
+                              <a href={organization.website} target="_blank" rel="noopener noreferrer" 
+                                className="text-primary hover:underline flex items-center gap-1 mt-1">
+                                <Globe className="h-4 w-4" />
+                                {websiteClean}
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                          <Badge variant={organization.status === "active" ? "default" : "secondary"} className="text-sm">
+                            {organization.status}
+                          </Badge>
+                        </div>
+
+                        {/* Quick Info Grid */}
+                        <div className="grid grid-cols-4 gap-4 mt-4">
+                          <div className="text-sm">
+                            <span className="text-muted-foreground block">Employees</span>
+                            <span className="font-semibold">--</span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-muted-foreground block">Annual Revenue</span>
+                            <span className="font-semibold">--</span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-muted-foreground block">Contacts</span>
+                            <span className="font-semibold">{contacts.length}</span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-muted-foreground block">Open Deals</span>
+                            <span className="font-semibold">{deals.length}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Social Links */}
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" className="h-9 w-9"><Facebook className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9"><Linkedin className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9"><Twitter className="h-4 w-4" /></Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="icon"><Facebook className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon"><Linkedin className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon"><Twitter className="h-4 w-4" /></Button>
+                  </div>
+
+                  {organization.description && (
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">{organization.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+
+                {/* Account Management Team */}
+                <Card>
+                  <CardHeader className="flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <UserCheck className="h-4 w-4" />
+                      Account Management
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium flex items-center gap-2">
+                          <Briefcase className="h-3 w-3" />
+                          Account Manager
+                        </Label>
+                        <Input 
+                          placeholder="Enter Account Manager name"
+                          value={teamConfig.accountManager}
+                          onChange={(e) => setTeamConfig({...teamConfig, accountManager: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium flex items-center gap-2">
+                          <Headphones className="h-3 w-3" />
+                          Technical Account Manager
+                        </Label>
+                        <Input 
+                          placeholder="Enter Technical Account Manager name"
+                          value={teamConfig.technicalAccountManager}
+                          onChange={(e) => setTeamConfig({...teamConfig, technicalAccountManager: e.target.value})}
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {organization.description && (
-                  <Card><CardHeader><CardTitle className="text-sm">Description</CardTitle></CardHeader>
-                    <CardContent><p className="text-sm text-muted-foreground">{organization.description}</p></CardContent>
-                  </Card>
-                )}
+                {/* Collaborative Team Section */}
+                <Card>
+                  <CardHeader className="flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Collaborative Team
+                    </CardTitle>
+                    <Dialog open={isAddCollaboratorOpen} onOpenChange={setIsAddCollaboratorOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline" className="gap-1 h-7">
+                          <UserPlus className="h-3 w-3" />
+                          Add Collaborator
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add Collaborator</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Collaborator Name *</Label>
+                            <Input 
+                              placeholder="Enter name"
+                              value={newCollaborator.name}
+                              onChange={(e) => setNewCollaborator({...newCollaborator, name: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Team *</Label>
+                            <Select 
+                              value={newCollaborator.team}
+                              onValueChange={(value) => setNewCollaborator({...newCollaborator, team: value, expectation: ''})}
+                            >
+                              <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
+                              <SelectContent>
+                                {COLLABORATIVE_TEAMS.map(team => (
+                                  <SelectItem key={team.id} value={team.id}>
+                                    <div className="flex items-center gap-2">
+                                      <team.icon className="h-4 w-4" />
+                                      {team.name}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {newCollaborator.team && (
+                            <div className="space-y-2">
+                              <Label>Expectation *</Label>
+                              <Select 
+                                value={newCollaborator.expectation}
+                                onValueChange={(value) => setNewCollaborator({...newCollaborator, expectation: value})}
+                              >
+                                <SelectTrigger><SelectValue placeholder="Select expectation" /></SelectTrigger>
+                                <SelectContent>
+                                  {COLLABORATIVE_TEAMS.find(t => t.id === newCollaborator.team)?.expectations.map(exp => (
+                                    <SelectItem key={exp} value={exp}>{exp}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                          <Button 
+                            className="w-full"
+                            disabled={!newCollaborator.name || !newCollaborator.team || !newCollaborator.expectation}
+                            onClick={() => {
+                              const collaborator: Collaborator = {
+                                id: Date.now().toString(),
+                                name: newCollaborator.name,
+                                team: newCollaborator.team,
+                                expectation: newCollaborator.expectation,
+                              };
+                              setTeamConfig({
+                                ...teamConfig,
+                                collaborators: [...teamConfig.collaborators, collaborator]
+                              });
+                              setNewCollaborator({ name: '', team: '', expectation: '' });
+                              setIsAddCollaboratorOpen(false);
+                              toast.success("Collaborator added successfully");
+                            }}
+                          >
+                            Add Collaborator
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Team Categories */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                      {COLLABORATIVE_TEAMS.map(team => {
+                        const teamCollaborators = teamConfig.collaborators.filter(c => c.team === team.id);
+                        return (
+                          <div key={team.id} className="p-3 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2 mb-2">
+                              <team.icon className="h-4 w-4 text-primary" />
+                              <span className="font-medium text-sm">{team.name}</span>
+                              <Badge variant="outline" className="ml-auto text-xs">{teamCollaborators.length}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {team.expectations.slice(0, 2).join(', ')}...
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Added Collaborators List */}
+                    {teamConfig.collaborators.length === 0 ? (
+                      <div className="text-center py-6 border rounded-lg border-dashed">
+                        <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No collaborators added yet</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click "Add Collaborator" to assign team members</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Assigned Collaborators</Label>
+                        <div className="space-y-2">
+                          {teamConfig.collaborators.map(collaborator => {
+                            const teamInfo = COLLABORATIVE_TEAMS.find(t => t.id === collaborator.team);
+                            const TeamIcon = teamInfo?.icon || Users;
+                            return (
+                              <div key={collaborator.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                      {collaborator.name.substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium text-sm">{collaborator.name}</p>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs gap-1">
+                                        <TeamIcon className="h-3 w-3" />
+                                        {teamInfo?.name}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">{collaborator.expectation}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-7 w-7"
+                                  onClick={() => {
+                                    setTeamConfig({
+                                      ...teamConfig,
+                                      collaborators: teamConfig.collaborators.filter(c => c.id !== collaborator.id)
+                                    });
+                                    toast.success("Collaborator removed");
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 text-muted-foreground" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Notes Section */}
                 <Card>
