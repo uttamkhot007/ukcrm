@@ -129,6 +129,7 @@ const employeePortalItems: NavItem[] = [
     children: [
       { id: "employee-organization", label: "My Organization", icon: Network },
       { id: "employee-requests", label: "My Requests", icon: Ticket },
+      { id: "employee-workflows", label: "Workflows", icon: FolderKanban },
       { id: "employee-training", label: "Trainings", icon: GraduationCap },
       { id: "employee-salary", label: "Salary Slips", icon: FileText },
       { id: "employee-leave", label: "Leave Management", icon: Calendar },
@@ -258,6 +259,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-hr",
         children: [
           { id: "hr-directory", label: "Employee Directory", icon: Users },
+          { id: "hr-workflows", label: "Workflows", icon: FolderKanban },
           { id: "hr-people", label: "People Management", icon: UserPlus },
           { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
           { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
