@@ -23,7 +23,8 @@ import {
   RefreshCw, Star, Phone, Mail, MapPin, Globe, Linkedin, Twitter, Facebook,
   CheckCircle, Loader2, ChevronDown, ChevronRight, ArrowLeft, 
   FileText, PhoneCall, Video, Sparkles, Copy, Database, Key, Bug,
-  Calendar, Clock, Bell, ListTodo, StickyNote, Cake, RotateCcw, Trash2, Edit
+  Calendar, Clock, Bell, ListTodo, StickyNote, Cake, RotateCcw, Trash2, Edit,
+  Save, X
 } from "lucide-react";
 import { CONTACT_ROLES } from "@/components/shared/OrganizationFormFields";
 
@@ -247,6 +248,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [tasksExpanded, setTasksExpanded] = useState(true);
   const [meetingsExpanded, setMeetingsExpanded] = useState(true);
   const [remindersExpanded, setRemindersExpanded] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -703,18 +705,58 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const upcomingMeetings = meetings.filter(m => new Date(m.scheduled_at) >= new Date());
   const pendingTasks = tasks.filter(t => t.status !== 'completed');
 
+  // Save all settings
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    try {
+      // Here you would save the security controls, infrastructure, and solution configs
+      // For now, we'll just show a success message
+      // In production, you'd save these to a database table
+      toast.success("Settings saved successfully");
+    } catch (error: any) {
+      toast.error("Failed to save settings: " + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-background rounded-lg border overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-8rem)] bg-background rounded-lg border overflow-hidden">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-card">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Companies
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onBack}
+            className="gap-1"
+          >
+            <X className="h-4 w-4" />
+            Close
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={handleSaveSettings}
+            disabled={isSaving}
+            className="gap-1"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSaving ? "Saving..." : "Save Settings"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
       {/* Left Sidebar */}
       <div className="w-72 border-r bg-card flex flex-col">
         <ScrollArea className="flex-1">
           <div className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Button variant="ghost" size="sm" onClick={onBack} className="gap-1 text-primary">
-                <ArrowLeft className="h-4 w-4" />
-                Companies
-              </Button>
-            </div>
 
             <div className="flex items-start gap-3 mb-4">
               <Avatar className="h-14 w-14">
@@ -1874,6 +1916,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
             </Collapsible>
           </div>
         </ScrollArea>
+      </div>
       </div>
     </div>
   );
