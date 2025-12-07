@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 
 const navItems: ModuleNavItem[] = [
-  // Contract Workflow stages
   { value: "contracts-all", label: "All Contracts", icon: FileText },
   { value: "contracts-request_odf", label: "Request ODF", icon: ClipboardList },
   { value: "contracts-odf_approved", label: "ODF Approved", icon: CheckCircle },
@@ -30,7 +29,6 @@ const navItems: ModuleNavItem[] = [
   { value: "contracts-raise_invoice", label: "Raise Invoice", icon: Receipt },
   { value: "contracts-collect_payment", label: "Collect Payment", icon: CreditCard },
   { value: "contracts-completed", label: "Completed", icon: CheckCircle },
-  // Other sections
   { value: "workflows", label: "Workflows", icon: GitBranch },
   { value: "procurement", label: "Procurement", icon: ShoppingCart },
   { value: "stocking", label: "Stocking", icon: Package },
@@ -46,7 +44,6 @@ export function AccountsModule({ initialTab = "contracts-all" }: AccountsModuleP
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const renderContent = () => {
-    // Handle contract workflow stages
     if (activeTab.startsWith("contracts-")) {
       const stage = activeTab.replace("contracts-", "");
       return <AccountsContractWorkflow filterStage={stage} />;
@@ -70,24 +67,21 @@ export function AccountsModule({ initialTab = "contracts-all" }: AccountsModuleP
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Accounts Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage contracts, workflows, procurement, stocking, AR aging, and SLA reminders
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Accounts Management</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage contracts, workflows, procurement, stocking, AR aging, and SLA reminders
+        </p>
       </div>
 
-      <div className="flex gap-6">
-        <ModuleVerticalNav
-          items={navItems}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-        <div className="flex-1 min-w-0">
-          {renderContent()}
-        </div>
+      <ModuleVerticalNav
+        items={navItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      <div className="min-w-0">
+        {renderContent()}
       </div>
     </div>
   );

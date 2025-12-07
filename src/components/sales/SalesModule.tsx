@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
@@ -25,12 +25,6 @@ interface SalesModuleProps {
 
 export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -76,15 +70,14 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         <SalesQuickActions />
       </div>
 
-      <div className="flex gap-6">
-        <ModuleVerticalNav
-          items={navItems}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-        <div className="flex-1 min-w-0">
-          {renderContent()}
-        </div>
+      <ModuleVerticalNav
+        items={navItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      <div className="min-w-0">
+        {renderContent()}
       </div>
     </div>
   );
