@@ -41,6 +41,44 @@ interface DashboardProps {
   onModuleChange: (module: string) => void;
 }
 
+interface DashboardHeaderProps {
+  profile: { full_name?: string } | null;
+  isAdmin: boolean;
+  isManager: boolean;
+}
+
+function DashboardHeader({ profile, isAdmin, isManager }: DashboardHeaderProps) {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">
+          Welcome back,{" "}
+          <span className="text-gradient">
+            {profile?.full_name?.split(" ")[0] || "User"}
+          </span>
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          {isAdmin
+            ? "You have full administrative access"
+            : isManager
+            ? "Here's what's happening with your business today"
+            : "Access your personal dashboard and tools"}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="text-sm text-muted-foreground">Today</p>
+        <p className="text-lg font-semibold">
+          {new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard({ onModuleChange }: DashboardProps) {
   const { profile, role, isAdmin, isManager, teams } = useAuth();
   const { currentTenant } = useTenant();
