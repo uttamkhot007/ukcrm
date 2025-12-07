@@ -443,6 +443,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
           { id: "employee-requests", label: "Leave Requests", icon: Calendar },
           { id: "employee-expenses", label: "Expense & Travel", icon: Receipt },
+          { id: "employee-assets", label: "Assets & Inventory", icon: Package },
           { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
           { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
         ],
