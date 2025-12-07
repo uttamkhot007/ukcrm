@@ -17,6 +17,8 @@ import { AttendanceReports } from "@/components/employee/AttendanceReports";
 import { DocumentationModule } from "@/components/employee/DocumentationModule";
 import { MyOrganization } from "@/components/employee/MyOrganization";
 import { EmployeeWorkflowsModule } from "@/components/employee/EmployeeWorkflowsModule";
+import { EmployeeBenefitsModule } from "@/components/employee/EmployeeBenefitsModule";
+import { EmployeeResourcesModule } from "@/components/employee/EmployeeResourcesModule";
 import { TicketingModule } from "@/components/ticketing/TicketingModule";
 import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
@@ -109,6 +111,10 @@ const Index = () => {
         return <MyOrganization />;
       case "employee-workflows":
         return <EmployeeWorkflowsModule />;
+      case "employee-benefits":
+        return <EmployeeBenefitsModule />;
+      case "employee-resources":
+        return <EmployeeResourcesModule />;
       
       // HR modules
       case "hr":
