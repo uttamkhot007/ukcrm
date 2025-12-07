@@ -1825,6 +1825,68 @@ export type Database = {
           },
         ]
       }
+      sales_team_members: {
+        Row: {
+          id: string
+          is_leader: boolean | null
+          joined_at: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_leader?: boolean | null
+          joined_at?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_leader?: boolean | null
+          joined_at?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "sales_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          leader_id: string | null
+          name: string
+          team_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_id?: string | null
+          name: string
+          team_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          leader_id?: string | null
+          name?: string
+          team_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sop_images: {
         Row: {
           created_at: string

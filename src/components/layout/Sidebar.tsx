@@ -51,6 +51,7 @@ import {
   Calculator,
   ShieldCheck,
   Package,
+  Network,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -126,6 +127,7 @@ const employeePortalItems: NavItem[] = [
     color: "text-employee",
     portalMode: "workspace",
     children: [
+      { id: "employee-organization", label: "My Organization", icon: Network },
       { id: "employee-requests", label: "My Requests", icon: Ticket },
       { id: "employee-training", label: "Trainings", icon: GraduationCap },
       { id: "employee-salary", label: "Salary Slips", icon: FileText },
@@ -374,6 +376,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: UserCircle,
         color: "text-employee",
         children: [
+          { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-requests", label: "My Requests", icon: Ticket },
