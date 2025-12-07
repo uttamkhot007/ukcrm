@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
 type TeamType = "sales" | "presales" | "technical" | "managed_services" | "management" | "hr" | "finance" | "inside_sales" | "marketing" | "renewals" | "accounts" | "admin";
-type PortalMode = "workspace" | "customer";
+type PortalMode = "admin" | "workspace" | "customer";
 type UserCategory = "employee" | "contractor" | "vendor" | "distributor" | "customer";
 
 interface Profile {
@@ -36,6 +36,7 @@ interface AuthContextType {
   isManager: boolean;
   isEmployee: boolean;
   isCustomer: boolean;
+  isAdminMode: boolean;
   refreshTeams: () => Promise<void>;
 }
 
@@ -49,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [teams, setTeams] = useState<TeamType[]>([]);
-  const [portalMode, setPortalMode] = useState<PortalMode>("workspace");
+  const [portalMode, setPortalMode] = useState<PortalMode>("admin");
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -67,9 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Set portal mode based on user category
         if (profileData.user_category === 'customer') {
           setPortalMode('customer');
-        } else {
-          setPortalMode('workspace');
         }
+        // Admin users default to admin mode (set after role is fetched)
       }
 
       // Fetch role
@@ -81,8 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (roleData) {
         setRole(roleData.role as AppRole);
+        // Set default portal mode for admins
+        if (roleData.role === 'admin' && profileData?.user_category !== 'customer') {
+          setPortalMode('admin');
+        }
       } else {
         setRole("employee");
+        if (profileData?.user_category !== 'customer') {
+          setPortalMode('workspace');
+        }
       }
 
       // Fetch teams
@@ -206,12 +213,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setRole(null);
     setTeams([]);
-    setPortalMode("workspace");
+    setPortalMode("admin");
   };
 
   const hasSalesAccess = role === "admin" || teams.some(t => SALES_TEAMS.includes(t));
   const isManagement = teams.includes("management") || role === "admin";
   const isCustomer = profile?.user_category === 'customer';
+  const isAdminMode = portalMode === 'admin' && role === 'admin';
 
   const value: AuthContextType = {
     user,
@@ -231,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isManager: role === "manager",
     isEmployee: role === "employee",
     isCustomer,
+    isAdminMode,
     refreshTeams,
   };
 

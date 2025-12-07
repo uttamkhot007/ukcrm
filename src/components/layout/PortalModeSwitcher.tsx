@@ -1,51 +1,112 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Headphones } from "lucide-react";
+import { Building2, Headphones, Shield } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+
+type ViewMode = "admin" | "workspace" | "customer";
 
 export function PortalModeSwitcher() {
-  const { portalMode, setPortalMode, isCustomer, isAdmin } = useAuth();
+  const { portalMode, setPortalMode, isCustomer, isAdmin, role } = useAuth();
 
   // Customers can only see customer portal - no switcher needed
-  if (isCustomer) {
+  if (isCustomer && !isAdmin) {
     return null;
   }
 
-  // Only admins can switch between modes (for testing/support purposes)
+  // Non-admin employees don't need switcher
   if (!isAdmin) {
     return null;
   }
 
+  const modes: { value: ViewMode; label: string; icon: React.ElementType; description: string }[] = [
+    { 
+      value: "admin", 
+      label: "Admin Mode", 
+      icon: Shield,
+      description: "Full access to all modules"
+    },
+    { 
+      value: "workspace", 
+      label: "My Workspace", 
+      icon: Building2,
+      description: "Employee portal view"
+    },
+    { 
+      value: "customer", 
+      label: "Customer Portal", 
+      icon: Headphones,
+      description: "Helpdesk only access"
+    },
+  ];
+
+  // Map portalMode to viewMode (admin mode is workspace with admin role)
+  const currentMode: ViewMode = portalMode === "customer" ? "customer" : 
+    (role === "admin" && portalMode === "workspace" ? "admin" : "workspace");
+
+  const currentModeData = modes.find(m => m.value === currentMode) || modes[0];
+  const CurrentIcon = currentModeData.icon;
+
+  const handleModeChange = (mode: ViewMode) => {
+    if (mode === "customer") {
+      setPortalMode("customer");
+    } else {
+      setPortalMode("workspace");
+    }
+  };
+
   return (
-    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setPortalMode("workspace")}
-        className={cn(
-          "h-8 px-3 text-xs font-medium transition-all",
-          portalMode === "workspace"
-            ? "bg-background shadow-sm text-foreground"
-            : "text-muted-foreground hover:text-foreground"
-        )}
-      >
-        <Building2 className="w-4 h-4 mr-1.5" />
-        My Workspace
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setPortalMode("customer")}
-        className={cn(
-          "h-8 px-3 text-xs font-medium transition-all",
-          portalMode === "customer"
-            ? "bg-background shadow-sm text-foreground"
-            : "text-muted-foreground hover:text-foreground"
-        )}
-      >
-        <Headphones className="w-4 h-4 mr-1.5" />
-        Customer Portal
-      </Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2 h-9">
+          <CurrentIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">{currentModeData.label}</span>
+          <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 hidden lg:flex">
+            Preview
+          </Badge>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {modes.map((mode) => {
+          const Icon = mode.icon;
+          const isActive = mode.value === currentMode;
+          return (
+            <DropdownMenuItem
+              key={mode.value}
+              onClick={() => handleModeChange(mode.value)}
+              className={cn(
+                "flex items-start gap-3 p-3 cursor-pointer",
+                isActive && "bg-accent"
+              )}
+            >
+              <Icon className={cn(
+                "w-5 h-5 mt-0.5",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )} />
+              <div className="flex-1">
+                <div className={cn(
+                  "font-medium text-sm",
+                  isActive && "text-primary"
+                )}>
+                  {mode.label}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {mode.description}
+                </div>
+              </div>
+              {isActive && (
+                <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
+              )}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

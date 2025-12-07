@@ -28,7 +28,7 @@ import { Loader2 } from "lucide-react";
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
   const [isAIOpen, setIsAIOpen] = useState(false);
-  const { user, isLoading, portalMode, isCustomer } = useAuth();
+  const { user, isLoading, portalMode, isCustomer, isAdminMode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,12 +37,16 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Set initial module for customers
+  // Set initial module based on portal mode
   useEffect(() => {
     if (isCustomer || portalMode === 'customer') {
       setActiveModule('customer-support');
+    } else if (portalMode === 'workspace') {
+      setActiveModule('dashboard');
+    } else if (portalMode === 'admin' || isAdminMode) {
+      setActiveModule('dashboard');
     }
-  }, [isCustomer, portalMode]);
+  }, [isCustomer, portalMode, isAdminMode]);
 
   if (isLoading) {
     return (
