@@ -18,6 +18,11 @@ interface Profile {
   user_category: UserCategory | null;
 }
 
+interface ConsoleAccess {
+  portal_modes: string[];
+  additional_modules: string[];
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -38,6 +43,8 @@ interface AuthContextType {
   isCustomer: boolean;
   isAdminMode: boolean;
   refreshTeams: () => Promise<void>;
+  consoleAccess: ConsoleAccess | null;
+  hasModuleAccess: (moduleId: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<TeamType[]>([]);
   const [portalMode, setPortalMode] = useState<PortalMode>("admin");
   const [isLoading, setIsLoading] = useState(true);
+  const [consoleAccess, setConsoleAccess] = useState<ConsoleAccess | null>(null);
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -100,6 +108,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (teamsData) {
         setTeams(teamsData.map(t => t.team as TeamType));
+      }
+
+      // Fetch console access settings
+      const { data: consoleAccessData } = await supabase
+        .from("user_console_access")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (consoleAccessData) {
+        setConsoleAccess({
+          portal_modes: consoleAccessData.portal_modes || ['workspace'],
+          additional_modules: consoleAccessData.additional_modules || [],
+        });
+      } else {
+        // Default: no specific restrictions (will use team-based access)
+        setConsoleAccess(null);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -221,6 +246,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCustomer = profile?.user_category === 'customer';
   const isAdminMode = portalMode === 'admin' && role === 'admin';
 
+  // Check if user has access to a specific module based on console access settings
+  const hasModuleAccess = (moduleId: string): boolean => {
+    // Admins always have access to everything
+    if (role === "admin") return true;
+    
+    // If no console access configured, allow based on team access (legacy behavior)
+    if (!consoleAccess) return true;
+    
+    // Check if module is in the user's additional_modules list
+    return consoleAccess.additional_modules.includes(moduleId);
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -241,6 +278,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isCustomer,
     isAdminMode,
     refreshTeams,
+    consoleAccess,
+    hasModuleAccess,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
