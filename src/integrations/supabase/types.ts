@@ -2388,7 +2388,12 @@ export type Database = {
         | "escalated"
         | "resolved"
         | "closed"
-      user_category: "employee" | "contractor" | "vendor" | "distributor"
+      user_category:
+        | "employee"
+        | "contractor"
+        | "vendor"
+        | "distributor"
+        | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2661,7 +2666,13 @@ export const Constants = {
         "resolved",
         "closed",
       ],
-      user_category: ["employee", "contractor", "vendor", "distributor"],
+      user_category: [
+        "employee",
+        "contractor",
+        "vendor",
+        "distributor",
+        "customer",
+      ],
     },
   },
 } as const
