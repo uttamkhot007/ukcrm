@@ -314,13 +314,13 @@ const Index = () => {
       {/* Mobile Header */}
       <MobileHeader onMenuClick={() => setIsMobileSidebarOpen(true)} />
       
-      <div className={cn("transition-all duration-300", "md:ml-64")}>
+      <div className={cn("transition-all duration-300 relative z-10", "md:ml-64")}>
         {/* Desktop Header */}
         <div className="hidden md:block">
           <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
         </div>
         
-        <main className="min-h-[calc(100vh-4rem)] pb-safe">
+        <main className="min-h-[calc(100vh-4rem)] pb-safe relative">
           {renderContent()}
         </main>
       </div>

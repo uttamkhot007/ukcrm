@@ -65,7 +65,7 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
 
   if (collapsed) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
@@ -114,7 +114,7 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
