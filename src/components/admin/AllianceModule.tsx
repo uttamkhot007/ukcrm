@@ -239,8 +239,8 @@ export function AllianceModule() {
       phone: formData.get("phone") as string,
       location: formData.get("location") as string,
       role: formData.get("role") as string,
-      organization_id: formData.get("organization_id") as string || null,
-      escalation_manager_id: formData.get("escalation_manager_id") as string || null,
+      organization_id: (formData.get("organization_id") as string) === "none" ? null : (formData.get("organization_id") as string) || null,
+      escalation_manager_id: (formData.get("escalation_manager_id") as string) === "none" ? null : (formData.get("escalation_manager_id") as string) || null,
       status: formData.get("status") as string,
       notes: formData.get("notes") as string,
     });
@@ -323,12 +323,12 @@ export function AllianceModule() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="organization_id">Organization</Label>
-                      <Select name="organization_id" defaultValue={editingUser?.organization_id || ""}>
+                      <Select name="organization_id" defaultValue={editingUser?.organization_id || "none"}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select organization" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {organizations.map(org => (
                             <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                           ))}
@@ -339,12 +339,12 @@ export function AllianceModule() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="escalation_manager_id">Escalation Manager</Label>
-                      <Select name="escalation_manager_id" defaultValue={editingUser?.escalation_manager_id || ""}>
+                      <Select name="escalation_manager_id" defaultValue={editingUser?.escalation_manager_id || "none"}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select manager" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {allianceUsers.filter(u => u.id !== editingUser?.id).map(u => (
                             <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                           ))}
