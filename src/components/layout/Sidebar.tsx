@@ -732,7 +732,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col",
+        "h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col",
+        "md:fixed md:left-0 md:top-0 md:z-40",
         collapsed ? "w-16" : "w-64"
       )}
     >
