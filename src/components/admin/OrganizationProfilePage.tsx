@@ -10,12 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { 
   Building2, Globe, Linkedin, Twitter, Facebook, MapPin, Users, DollarSign, 
   Plus, X, Save, Loader2, Search, Shield, ShieldCheck, ShieldX, ShieldAlert,
   Server, Cloud, Database, Lock, UserCircle, Phone, Mail, Calendar, 
-  Briefcase, Building, ExternalLink, RefreshCw, CheckCircle2, AlertCircle
+  Briefcase, Building, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
+  AlertTriangle, Key, Bug, Ticket, Package, FileWarning
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
@@ -41,12 +43,24 @@ interface SecurityTool {
   vendor: string;
 }
 
+interface ThreatIntelligence {
+  breaches: Array<{ name: string; date: string; records: string; severity: string; description: string }>;
+  leakedCredentials: { count: number; sources: string[]; lastSeen: string };
+  vulnerabilities: Array<{ cve: string; severity: string; product: string; description: string }>;
+  exposedServices: Array<{ port: number; service: string; risk: string }>;
+  riskScore: number;
+  lastUpdated: string;
+}
+
 export function OrganizationProfilePage() {
   const { isAdmin } = useAuth();
   const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
   const [isEnriching, setIsEnriching] = useState(false);
   const [newSecurityTool, setNewSecurityTool] = useState<SecurityTool>({ name: "", category: "", vendor: "" });
+  const [threatIntel, setThreatIntel] = useState<ThreatIntelligence | null>(null);
+  const [isLoadingThreat, setIsLoadingThreat] = useState(false);
+  const [lastThreatRefresh, setLastThreatRefresh] = useState<Date | null>(null);
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["organization-profile", currentTenant?.id],
@@ -72,6 +86,75 @@ export function OrganizationProfilePage() {
       setFormData(settings);
     }
   }, [settings]);
+
+  // Fetch support tickets count
+  const { data: ticketStats } = useQuery({
+    queryKey: ["org-ticket-stats", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant?.id) return { total: 0, open: 0, critical: 0 };
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("id, status, priority")
+        .eq("tenant_id", currentTenant.id);
+      if (error) return { total: 0, open: 0, critical: 0 };
+      const total = data?.length || 0;
+      const open = data?.filter(t => t.status === 'open' || t.status === 'in_progress').length || 0;
+      const critical = data?.filter(t => t.priority === 'critical').length || 0;
+      return { total, open, critical };
+    },
+    enabled: !!currentTenant?.id,
+  });
+
+  // Fetch deals/services procured
+  const { data: dealStats } = useQuery({
+    queryKey: ["org-deal-stats", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant?.id) return { total: 0, totalValue: 0, solutions: [] };
+      const { data, error } = await supabase
+        .from("deals")
+        .select("id, title, value, stage")
+        .eq("tenant_id", currentTenant.id)
+        .eq("stage", "closed_won");
+      if (error) return { total: 0, totalValue: 0, solutions: [] };
+      const total = data?.length || 0;
+      const totalValue = data?.reduce((sum, d) => sum + (d.value || 0), 0) || 0;
+      const solutions = data?.map(d => d.title).slice(0, 5) || [];
+      return { total, totalValue, solutions };
+    },
+    enabled: !!currentTenant?.id,
+  });
+
+  // Fetch threat intelligence
+  const fetchThreatIntelligence = async () => {
+    const url = formData.website_url;
+    if (!url) {
+      toast.error("Please enter a website URL first");
+      return;
+    }
+
+    setIsLoadingThreat(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('threat-intelligence', {
+        body: { domain: url, companyName: formData.name || 'Unknown' }
+      });
+      if (error) throw error;
+      setThreatIntel(data);
+      setLastThreatRefresh(new Date());
+      toast.success("Threat intelligence updated");
+    } catch (error: any) {
+      console.error("Threat intel error:", error);
+      toast.error("Failed to fetch threat intelligence");
+    } finally {
+      setIsLoadingThreat(false);
+    }
+  };
+
+  // Auto-fetch threat intel when website changes
+  useEffect(() => {
+    if (formData.website_url && !threatIntel) {
+      fetchThreatIntelligence();
+    }
+  }, [formData.website_url]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
@@ -183,6 +266,23 @@ export function OrganizationProfilePage() {
     }
   };
 
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-500 text-white';
+      case 'high': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-black';
+      case 'low': return 'bg-blue-500 text-white';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getRiskScoreColor = (score: number) => {
+    if (score >= 80) return 'text-red-500';
+    if (score >= 60) return 'text-orange-500';
+    if (score >= 40) return 'text-yellow-500';
+    return 'text-green-500';
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center p-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
@@ -232,11 +332,13 @@ export function OrganizationProfilePage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="contact">Contact & Location</TabsTrigger>
+          <TabsTrigger value="vinca">Vinca Services</TabsTrigger>
+          <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="infrastructure">Infrastructure</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="threats">Threat Intel</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
         </TabsList>
 
@@ -722,6 +824,306 @@ export function OrganizationProfilePage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Vinca Services Tab */}
+        <TabsContent value="vinca" className="space-y-4">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <Package className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{dealStats?.total || 0}</p>
+                    <p className="text-xs text-muted-foreground">Solutions Procured</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <DollarSign className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">₹{((dealStats?.totalValue || 0) / 100000).toFixed(1)}L</p>
+                    <p className="text-xs text-muted-foreground">Total Investment</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                    <Ticket className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{ticketStats?.total || 0}</p>
+                    <p className="text-xs text-muted-foreground">Total Tickets</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+                    <FileWarning className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{ticketStats?.critical || 0}</p>
+                    <p className="text-xs text-muted-foreground">Critical Issues</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="w-4 h-4" /> Solutions & Services from Vinca
+                </CardTitle>
+                <CardDescription>Products and services procured through Vinca</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {dealStats?.solutions && dealStats.solutions.length > 0 ? (
+                  <div className="space-y-2">
+                    {dealStats.solutions.map((solution, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          <span className="font-medium">{solution}</span>
+                        </div>
+                        <Badge variant="secondary">Active</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No solutions procured yet</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Ticket className="w-4 h-4" /> Support Ticket Summary
+                </CardTitle>
+                <CardDescription>Recent support activity</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Open Tickets</span>
+                    <Badge variant={ticketStats?.open ? "destructive" : "secondary"}>{ticketStats?.open || 0}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Critical Priority</span>
+                    <Badge variant={ticketStats?.critical ? "destructive" : "secondary"}>{ticketStats?.critical || 0}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Total Tickets</span>
+                    <Badge variant="outline">{ticketStats?.total || 0}</Badge>
+                  </div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Notable Issues</Label>
+                  <Textarea 
+                    placeholder="Add notable issues or concerns..."
+                    value={formData.notable_issues || ""}
+                    onChange={(e) => updateField('notable_issues', e.target.value)}
+                    rows={3}
+                    disabled={!isAdmin}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Threat Intelligence Tab */}
+        <TabsContent value="threats" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold">External Threat Intelligence</h3>
+              {lastThreatRefresh && (
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {lastThreatRefresh.toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={fetchThreatIntelligence}
+              disabled={isLoadingThreat || !formData.website_url}
+            >
+              {isLoadingThreat ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Refresh Scan
+            </Button>
+          </div>
+
+          {isLoadingThreat ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+                <p className="mt-2 text-sm text-muted-foreground">Scanning threat databases...</p>
+              </div>
+            </div>
+          ) : threatIntel ? (
+            <div className="space-y-4">
+              {/* Risk Score */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className={getRiskScoreColor(threatIntel.riskScore)} />
+                    Overall Risk Score
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <span className={`text-5xl font-bold ${getRiskScoreColor(threatIntel.riskScore)}`}>
+                      {threatIntel.riskScore}
+                    </span>
+                    <div className="flex-1">
+                      <Progress value={threatIntel.riskScore} className="h-3" />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {threatIntel.riskScore < 30 ? 'Low Risk' : threatIntel.riskScore < 60 ? 'Medium Risk' : threatIntel.riskScore < 80 ? 'High Risk' : 'Critical Risk'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Breaches */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Database className="w-4 h-4 text-red-500" />
+                      Data Breaches ({threatIntel.breaches.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {threatIntel.breaches.length === 0 ? (
+                      <p className="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        No known breaches found
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {threatIntel.breaches.map((breach, i) => (
+                          <div key={i} className="p-2 bg-muted rounded flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-sm">{breach.name}</p>
+                              <p className="text-xs text-muted-foreground">{breach.date} - {breach.records} records</p>
+                            </div>
+                            <Badge className={getSeverityColor(breach.severity)}>{breach.severity}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Leaked Credentials */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Key className="w-4 h-4 text-orange-500" />
+                      Leaked Credentials
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {threatIntel.leakedCredentials.count === 0 ? (
+                      <p className="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        No leaked credentials found
+                      </p>
+                    ) : (
+                      <div>
+                        <p className="text-3xl font-bold text-orange-500">{threatIntel.leakedCredentials.count}</p>
+                        <p className="text-xs text-muted-foreground">Last seen: {threatIntel.leakedCredentials.lastSeen}</p>
+                        {threatIntel.leakedCredentials.sources.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {threatIntel.leakedCredentials.sources.map((src, i) => (
+                              <Badge key={i} variant="outline" className="text-xs">{src}</Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Vulnerabilities */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Bug className="w-4 h-4 text-purple-500" />
+                      Vulnerabilities ({threatIntel.vulnerabilities.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {threatIntel.vulnerabilities.length === 0 ? (
+                      <p className="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        No known vulnerabilities
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {threatIntel.vulnerabilities.map((vuln, i) => (
+                          <div key={i} className="p-2 bg-muted rounded">
+                            <div className="flex items-center justify-between">
+                              <code className="text-xs font-mono">{vuln.cve}</code>
+                              <Badge className={getSeverityColor(vuln.severity)}>{vuln.severity}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">{vuln.product}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Exposed Services */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-blue-500" />
+                      Exposed Services ({threatIntel.exposedServices.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1">
+                      {threatIntel.exposedServices.map((svc, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
+                          <span>Port {svc.port}: {svc.service}</span>
+                          <Badge variant={svc.risk === 'Low' ? 'secondary' : 'destructive'}>{svc.risk}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
+              <p className="text-muted-foreground">No threat intelligence available</p>
+              <p className="text-sm text-muted-foreground mt-1">Enter a website URL and click "Refresh Scan" to fetch threat data</p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={fetchThreatIntelligence} disabled={!formData.website_url}>
+                Scan Now
+              </Button>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
