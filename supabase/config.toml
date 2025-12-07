@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.threat-intelligence]
 verify_jwt = false
+
+[functions.enrich-user]
+verify_jwt = false
