@@ -7,6 +7,7 @@ import { PortalModeSwitcher } from "./PortalModeSwitcher";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { NotificationsPopover } from "./NotificationsPopover";
 import { MaintenanceBanner } from "./MaintenanceBanner";
+import { SuperAdminTenantSwitcher } from "./SuperAdminTenantSwitcher";
 
 interface HeaderProps {
   onAIToggle: () => void;
@@ -41,6 +42,8 @@ export function Header({ onAIToggle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <SuperAdminTenantSwitcher />
+          
           <ThemeSwitcher />
           
           <PortalModeSwitcher />
