@@ -258,48 +258,63 @@ export type Database = {
       }
       alliance_users: {
         Row: {
+          anniversary_date: string | null
           created_at: string
           created_by: string
+          designation: string | null
+          dob: string | null
           email: string | null
           escalation_manager_id: string | null
           id: string
+          linkedin_url: string | null
           location: string | null
           name: string
           notes: string | null
           organization_id: string | null
           phone: string | null
+          profile_image_url: string | null
           role: string | null
           status: string | null
           tenant_id: string | null
           updated_at: string
         }
         Insert: {
+          anniversary_date?: string | null
           created_at?: string
           created_by: string
+          designation?: string | null
+          dob?: string | null
           email?: string | null
           escalation_manager_id?: string | null
           id?: string
+          linkedin_url?: string | null
           location?: string | null
           name: string
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          profile_image_url?: string | null
           role?: string | null
           status?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
         Update: {
+          anniversary_date?: string | null
           created_at?: string
           created_by?: string
+          designation?: string | null
+          dob?: string | null
           email?: string | null
           escalation_manager_id?: string | null
           id?: string
+          linkedin_url?: string | null
           location?: string | null
           name?: string
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          profile_image_url?: string | null
           role?: string | null
           status?: string | null
           tenant_id?: string | null

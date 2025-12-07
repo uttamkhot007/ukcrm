@@ -53,6 +53,11 @@ interface AllianceUser {
   role: string | null;
   status: string;
   notes: string | null;
+  profile_image_url: string | null;
+  dob: string | null;
+  anniversary_date: string | null;
+  linkedin_url: string | null;
+  designation: string | null;
 }
 
 interface ThreatIntelligence {
@@ -508,7 +513,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   };
 
   // Enrich user/contact with AI
-  const enrichContact = async (contact: AllianceUser) => {
+  const enrichContact = async (contact: AllianceUser, silent = false) => {
     setEnrichingContactId(contact.id);
     try {
       const { data, error } = await supabase.functions.invoke('enrich-user', {
@@ -525,13 +530,16 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
         
         // Update the contact with enriched data
         const updateData: any = {};
+        
+        // Direct field mappings
         if (enrichedData.linkedin_url) {
-          updateData.notes = contact.notes 
-            ? `${contact.notes}\n\nLinkedIn: ${enrichedData.linkedin_url}` 
-            : `LinkedIn: ${enrichedData.linkedin_url}`;
+          updateData.linkedin_url = enrichedData.linkedin_url;
         }
-        if (enrichedData.current_title && !contact.role) {
-          updateData.role = enrichedData.current_title;
+        if (enrichedData.current_title || enrichedData.designation) {
+          if (!contact.role) {
+            updateData.role = enrichedData.current_title || enrichedData.designation;
+          }
+          updateData.designation = enrichedData.designation || enrichedData.current_title;
         }
         if (enrichedData.email && !contact.email) {
           updateData.email = enrichedData.email;
@@ -541,6 +549,15 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
         }
         if (enrichedData.location) {
           updateData.location = enrichedData.location;
+        }
+        if (enrichedData.profile_image_url) {
+          updateData.profile_image_url = enrichedData.profile_image_url;
+        }
+        if (enrichedData.dob) {
+          updateData.dob = enrichedData.dob;
+        }
+        if (enrichedData.anniversary_date) {
+          updateData.anniversary_date = enrichedData.anniversary_date;
         }
         
         // Add additional enriched info to notes
@@ -554,7 +571,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
         }
         
         if (enrichmentNotes.length > 0) {
-          const existingNotes = updateData.notes || contact.notes || '';
+          const existingNotes = contact.notes || '';
           updateData.notes = existingNotes 
             ? `${existingNotes}\n\n--- AI Enriched Data ---\n${enrichmentNotes.join('\n')}`
             : `--- AI Enriched Data ---\n${enrichmentNotes.join('\n')}`;
@@ -568,14 +585,18 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
           
           if (updateError) throw updateError;
           refetchContacts();
-          toast.success(`Enriched data for ${contact.name}`);
-        } else {
+          if (!silent) {
+            toast.success(`Enriched data for ${contact.name}`);
+          }
+        } else if (!silent) {
           toast.info("No additional information found for this contact");
         }
       }
     } catch (error: any) {
       console.error("User enrichment error:", error);
-      toast.error("Failed to enrich contact data");
+      if (!silent) {
+        toast.error("Failed to enrich contact data");
+      }
     } finally {
       setEnrichingContactId(null);
     }
@@ -590,7 +611,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   // Add contact mutation
   const addContactMutation = useMutation({
     mutationFn: async (contactData: any) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("alliance_users")
         .insert({
           tenant_id: currentTenant?.id,
@@ -602,13 +623,23 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
           notes: contactData.isChampion ? '[CHAMPION]' : null,
           status: 'active',
           created_by: user?.id!,
-        });
+        })
+        .select()
+        .single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       refetchContacts();
       setIsAddContactOpen(false);
-      toast.success("Contact added");
+      toast.success("Contact added - enriching with AI...");
+      
+      // Auto-enrich the newly added contact
+      if (data) {
+        setTimeout(() => {
+          enrichContact(data as AllianceUser, true);
+        }, 500);
+      }
     },
     onError: (error) => {
       toast.error("Failed to add contact: " + error.message);
@@ -2300,21 +2331,42 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                 ) : contacts.map(c => (
                   <Card key={c.id} className="p-3">
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8"><AvatarFallback className="text-xs">{c.name.substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                      <Avatar className="h-10 w-10">
+                        {c.profile_image_url ? (
+                          <AvatarImage src={c.profile_image_url} alt={c.name} />
+                        ) : null}
+                        <AvatarFallback className="text-xs">{c.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1"><p className="font-medium text-sm truncate">{c.name}</p>{c.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}</div>
-                        <p className="text-xs text-muted-foreground">{c.role || 'No role'}</p>
-                        {c.email && <a href={`mailto:${c.email}`} className="text-xs text-primary hover:underline">{c.email}</a>}
-                        {c.notes?.includes('LinkedIn:') && (
+                        <div className="flex items-center gap-1">
+                          <p className="font-medium text-sm truncate">{c.name}</p>
+                          {c.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{c.designation || c.role || 'No role'}</p>
+                        {c.email && <a href={`mailto:${c.email}`} className="text-xs text-primary hover:underline block truncate">{c.email}</a>}
+                        {c.phone && <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</p>}
+                        {c.linkedin_url && (
                           <a 
-                            href={c.notes.match(/LinkedIn:\s*(https?:\/\/[^\s\n]+)/)?.[1] || '#'} 
+                            href={c.linkedin_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
                           >
-                            <Linkedin className="h-3 w-3" /> LinkedIn Profile
+                            <Linkedin className="h-3 w-3" /> LinkedIn
                           </a>
                         )}
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {c.dob && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1" title="Birthday">
+                              <Cake className="h-3 w-3" />{new Date(c.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                            </span>
+                          )}
+                          {c.anniversary_date && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1" title="Work Anniversary">
+                              <Calendar className="h-3 w-3" />{new Date(c.anniversary_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Button
                         variant="ghost"
