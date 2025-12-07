@@ -183,7 +183,7 @@ const adminItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode } = useAuth();
+  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams } = useAuth();
   const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
   const totalEventCount = eventCounts.birthdayCount + eventCounts.anniversaryCount + eventCounts.orgEventCount + eventCounts.achievementCount + eventCounts.performanceCount;
@@ -198,6 +198,12 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     if (!item.requiredRoles) return true;
     if (!role) return false;
     return item.requiredRoles.includes(role);
+  };
+
+  // Helper function to check if user has access to specific team modules
+  const hasTeamAccess = (requiredTeams: TeamType[]): boolean => {
+    if (role === "admin") return true;
+    return teams.some(t => requiredTeams.includes(t));
   };
 
   // Build navigation based on portal mode and access level
@@ -401,17 +407,216 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       // Customer mode - only support
       items.push(...customerPortalItems);
     } else if (portalMode === "workspace") {
-      // Workspace mode: Employee portal + team-based access
-      if (hasSalesAccess) {
-        // Sales team members get both sales and employee portal
-        items.push(...salesPortalItems);
-        items.push(...employeePortalItems.filter(item => item.id !== 'dashboard'));
-      } else {
-        items.push(...employeePortalItems);
+      // Workspace mode: Team-based access control
+      
+      // Dashboard is always available
+      items.push({
+        id: "dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        color: "text-primary",
+      });
+
+      // AI Assistant is always available in Employee Portal
+      items.push({
+        id: "employee-ai-assistant",
+        label: "My AI Assistant",
+        icon: Sparkles,
+        color: "text-primary",
+      });
+
+      // Sales Portal - for sales, presales, inside_sales teams
+      if (hasTeamAccess(["sales", "presales", "inside_sales", "management"])) {
+        items.push({
+          id: "sales",
+          label: "Sales",
+          icon: TrendingUp,
+          color: "text-sales",
+          children: [
+            { id: "sales-funnel", label: "Funnel Management", icon: Target },
+            { id: "sales-quotations", label: "Quotations", icon: FileText },
+            { id: "sales-leads", label: "Lead Tracking", icon: Activity },
+          ],
+        });
+        items.push({
+          id: "contacts",
+          label: "Contacts",
+          icon: Phone,
+          color: "text-primary",
+        });
+      }
+
+      // Inside Sales - specific to inside_sales team
+      if (hasTeamAccess(["inside_sales", "management"])) {
+        items.push({
+          id: "inside-sales",
+          label: "Inside Sales",
+          icon: PhoneOutgoing,
+          color: "text-orange-500",
+        });
+      }
+
+      // HR Module - for hr team
+      if (hasTeamAccess(["hr", "management"])) {
+        items.push({
+          id: "hr",
+          label: "Human Resources",
+          icon: Users,
+          color: "text-hr",
+          children: [
+            { id: "hr-directory", label: "Employee Directory", icon: Users },
+            { id: "hr-workflows", label: "Workflows", icon: FolderKanban },
+            { id: "hr-people", label: "People Management", icon: UserPlus },
+            { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
+            { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
+          ],
+        });
+      }
+
+      // Finance Module - for finance team
+      if (hasTeamAccess(["finance", "management"])) {
+        items.push({
+          id: "finance",
+          label: "Finance",
+          icon: DollarSign,
+          color: "text-finance",
+          children: [
+            { id: "finance-payments", label: "Payment Tracking", icon: CreditCard },
+            { id: "finance-dso", label: "DSO Trends", icon: PieChart },
+            { id: "finance-pnl", label: "Profit & Loss", icon: BarChart3 },
+            { id: "finance-tax", label: "GST Reports", icon: Receipt },
+          ],
+        });
+      }
+
+      // Technical Module - for technical team
+      if (hasTeamAccess(["technical", "managed_services"])) {
+        items.push({
+          id: "tech",
+          label: "Technical",
+          icon: Code,
+          color: "text-tech",
+          children: [
+            { id: "tech-projects", label: "Project Management", icon: FolderKanban },
+            { id: "tech-knowledge", label: "Knowledge Base", icon: BookOpen },
+            { id: "tech-updates", label: "Updates & Alerts", icon: Bell },
+          ],
+        });
+      }
+
+      // Accounts Module - for accounts team
+      if (hasTeamAccess(["accounts", "finance", "management"])) {
+        items.push({
+          id: "accounts",
+          label: "Accounts",
+          icon: Calculator,
+          color: "text-emerald-500",
+          children: [
+            { id: "accounts-contracts", label: "Contracts", icon: FileText },
+            { id: "accounts-workflows", label: "Workflows", icon: RefreshCw },
+            { id: "accounts-ar-aging", label: "AR Aging", icon: Clock },
+            { id: "accounts-sla-reminders", label: "SLA & Reminders", icon: Bell },
+          ],
+        });
+      }
+
+      // Marketing Module - for marketing team
+      if (hasTeamAccess(["marketing", "management"])) {
+        items.push({
+          id: "marketing",
+          label: "Marketing",
+          icon: Megaphone,
+          color: "text-marketing",
+          children: [
+            { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
+            { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
+          ],
+        });
+      }
+
+      // Renewals Module - for renewals team
+      if (hasTeamAccess(["renewals", "sales", "management"])) {
+        items.push({
+          id: "renewals",
+          label: "Renewals",
+          icon: RefreshCw,
+          color: "text-renewals",
+          children: [
+            { id: "renewals-contracts", label: "Contracts", icon: FileText },
+            { id: "renewals-licenses", label: "Licenses", icon: Key },
+            { id: "renewals-subscriptions", label: "Subscriptions", icon: RefreshCw },
+          ],
+        });
+      }
+
+      // Employee Portal - always available for all employees
+      items.push({
+        id: "employee",
+        label: "Employee Portal",
+        icon: UserCircle,
+        color: "text-employee",
+        children: [
+          { id: "employee-organization", label: "My Organization", icon: Network },
+          { id: "employee-attendance", label: "Attendance", icon: Clock },
+          { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
+          { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
+          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
+          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
+          { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
+          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
+          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
+        ],
+      });
+
+      // Admin team gets admin module
+      if (hasTeamAccess(["admin"])) {
+        items.push({
+          id: "admin",
+          label: "Administration",
+          icon: ShieldCheck,
+          color: "text-slate-500",
+          children: [
+            { id: "admin-facilities", label: "Facilities", icon: Building2 },
+            { id: "admin-assets", label: "Asset Management", icon: Briefcase },
+            { id: "admin-vendors", label: "Vendor Management", icon: Users },
+            { id: "admin-procurement", label: "Procurement", icon: FileText },
+          ],
+        });
+      }
+
+      // Manager role gets management access
+      if (role === "manager" || isManagement) {
+        items.push(...adminItems.filter(item => item.id === "management").filter(hasAccess));
       }
     } else {
-      // Default to employee portal for any other case
-      items.push(...employeePortalItems);
+      // Default to basic employee portal
+      items.push({
+        id: "dashboard",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        color: "text-primary",
+      });
+      items.push({
+        id: "employee-ai-assistant",
+        label: "My AI Assistant",
+        icon: Sparkles,
+        color: "text-primary",
+      });
+      items.push({
+        id: "employee",
+        label: "Employee Portal",
+        icon: UserCircle,
+        color: "text-employee",
+        children: [
+          { id: "employee-organization", label: "My Organization", icon: Network },
+          { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
+          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
+          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
+          { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
+          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
+          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
+        ],
+      });
     }
 
     return items;
