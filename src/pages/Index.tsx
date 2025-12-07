@@ -37,7 +37,7 @@ const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { user, isLoading, portalMode, isCustomer, isAdminMode } = useAuth();
+  const { user, isLoading, portalMode, isCustomer, isAdminMode, profile } = useAuth();
   const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
@@ -48,9 +48,13 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
+  // Wait for profile to be loaded before checking super admin status
+  const profileLoaded = !isLoading && profile !== null;
+  
   // Redirect to workspace selection if no tenant selected (non-super-admins only)
   useEffect(() => {
-    if (!isLoading && !tenantLoading && user) {
+    // Don't redirect until we know the user's super admin status
+    if (!isLoading && !tenantLoading && user && profileLoaded) {
       // Super admins bypass all tenant requirements - they manage all tenants from Admin Center
       if (isSuperAdmin) {
         // Super admin can use the app with or without a tenant selected
@@ -66,7 +70,7 @@ const Index = () => {
         navigate("/workspace/select");
       }
     }
-  }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isSuperAdmin, navigate]);
+  }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isSuperAdmin, navigate, profileLoaded]);
 
   // Set initial module based on portal mode
   useEffect(() => {
