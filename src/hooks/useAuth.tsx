@@ -16,6 +16,7 @@ interface Profile {
   department: string | null;
   job_title: string | null;
   user_category: UserCategory | null;
+  is_super_admin: boolean | null;
 }
 
 interface ConsoleAccess {
