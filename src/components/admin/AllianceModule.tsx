@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink } from "lucide-react";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
-import { OrganizationProfileSheet } from "./OrganizationProfileSheet";
+import { AllianceOrgProfilePage } from "./AllianceOrgProfilePage";
 
 interface AllianceOrganization {
   id: string;
@@ -63,7 +63,7 @@ export function AllianceModule() {
   const [editingOrg, setEditingOrg] = useState<AllianceOrganization | null>(null);
   const [editingUser, setEditingUser] = useState<AllianceUser | null>(null);
   const [selectedOrg, setSelectedOrg] = useState<AllianceOrganization | null>(null);
-  const [isOrgSheetOpen, setIsOrgSheetOpen] = useState(false);
+  const [showOrgProfile, setShowOrgProfile] = useState(false);
   const [isAddUserToOrgOpen, setIsAddUserToOrgOpen] = useState(false);
   const [orgTypeFilter, setOrgTypeFilter] = useState<string>("all");
   
@@ -612,7 +612,7 @@ export function AllianceModule() {
                               className="h-auto p-0"
                               onClick={() => {
                                 setSelectedOrg(org);
-                                setIsOrgSheetOpen(true);
+                                setShowOrgProfile(true);
                               }}
                             >
                               {org.name}
@@ -717,7 +717,7 @@ export function AllianceModule() {
                     className="cursor-pointer hover:border-primary/50 transition-colors"
                     onClick={() => {
                       setSelectedOrg(org);
-                      setIsOrgSheetOpen(true);
+                      setShowOrgProfile(true);
                     }}
                   >
                     <CardHeader className="pb-2">
@@ -798,12 +798,15 @@ export function AllianceModule() {
         </TabsContent>
       </Tabs>
 
-      {/* Organization Profile Sheet */}
-      <OrganizationProfileSheet 
-        organization={selectedOrg}
-        open={isOrgSheetOpen}
-        onOpenChange={setIsOrgSheetOpen}
-      />
+      {/* Organization Profile Page */}
+      {showOrgProfile && selectedOrg && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <AllianceOrgProfilePage 
+            organization={selectedOrg}
+            onBack={() => setShowOrgProfile(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }
