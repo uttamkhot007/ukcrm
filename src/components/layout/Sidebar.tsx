@@ -213,6 +213,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   };
 
   const hasAccess = (item: NavItem) => {
+    // Super admins have access to everything
+    if (isSuperAdmin) return true;
     if (!item.requiredRoles) return true;
     if (!role) return false;
     return item.requiredRoles.includes(role);
@@ -221,8 +223,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // Helper function to check if user has access to specific team modules
   // Now also considers console access settings
   const hasTeamAccess = (requiredTeams: TeamType[], moduleId?: string): boolean => {
-    // Admins always have access (only when in admin portal mode)
-    if (role === "admin" && portalMode === "admin") return true;
+    // Super admins and admins always have access (only when in admin portal mode)
+    if ((role === "admin" || isSuperAdmin) && portalMode === "admin") return true;
     
     // If console access is configured, ONLY use console access for module control
     // Do NOT fall back to team-based access
