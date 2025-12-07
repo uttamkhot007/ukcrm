@@ -1086,6 +1086,68 @@ export type Database = {
           },
         ]
       }
+      employee_documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_type: string
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          is_verified: boolean | null
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_type: string
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_verified?: boolean | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_verified?: boolean | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_events: {
         Row: {
           created_at: string
@@ -2739,10 +2801,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           anniversary_date: string | null
           avatar_config: Json | null
           avatar_style: string | null
           avatar_url: string | null
+          bio: string | null
           birth_date: string | null
           city: string | null
           country: string | null
@@ -2752,6 +2816,7 @@ export type Database = {
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
           emergency_contact_relationship: string | null
           employee_code: string | null
           employment_status:
@@ -2759,6 +2824,7 @@ export type Database = {
             | null
           full_name: string | null
           hire_date: string | null
+          hobbies: string[] | null
           id: string
           is_super_admin: boolean | null
           job_title: string | null
@@ -2773,10 +2839,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address?: string | null
           anniversary_date?: string | null
           avatar_config?: Json | null
           avatar_style?: string | null
           avatar_url?: string | null
+          bio?: string | null
           birth_date?: string | null
           city?: string | null
           country?: string | null
@@ -2786,6 +2854,7 @@ export type Database = {
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           emergency_contact_relationship?: string | null
           employee_code?: string | null
           employment_status?:
@@ -2793,6 +2862,7 @@ export type Database = {
             | null
           full_name?: string | null
           hire_date?: string | null
+          hobbies?: string[] | null
           id?: string
           is_super_admin?: boolean | null
           job_title?: string | null
@@ -2807,10 +2877,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address?: string | null
           anniversary_date?: string | null
           avatar_config?: Json | null
           avatar_style?: string | null
           avatar_url?: string | null
+          bio?: string | null
           birth_date?: string | null
           city?: string | null
           country?: string | null
@@ -2820,6 +2892,7 @@ export type Database = {
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           emergency_contact_relationship?: string | null
           employee_code?: string | null
           employment_status?:
@@ -2827,6 +2900,7 @@ export type Database = {
             | null
           full_name?: string | null
           hire_date?: string | null
+          hobbies?: string[] | null
           id?: string
           is_super_admin?: boolean | null
           job_title?: string | null
