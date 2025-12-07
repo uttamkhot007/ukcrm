@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -46,49 +47,53 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onAIToggle={() => {}} />
+      <Sidebar activeModule="admin-center" onModuleChange={() => {}} />
       
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        {/* Vertical Sidebar Navigation */}
-        <aside className="w-64 border-r border-border bg-card/50 p-4 flex flex-col">
-          {/* Admin Center Header */}
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-              <Settings className="w-5 h-5 text-destructive" />
+      <div className={cn("transition-all duration-300 ml-64")}>
+        <Header onAIToggle={() => {}} />
+        
+        <div className="flex min-h-[calc(100vh-4rem)]">
+          {/* Admin Vertical Sub-Navigation */}
+          <aside className="w-56 border-r border-border bg-card/50 p-4 flex flex-col">
+            {/* Admin Center Header */}
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+              <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <Settings className="w-5 h-5 text-destructive" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold">Admin Center</h1>
+                <p className="text-xs text-muted-foreground">System settings</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold">Admin Center</h1>
-              <p className="text-xs text-muted-foreground">System settings</p>
-            </div>
-          </div>
 
-          {/* Vertical Navigation */}
-          <nav className="flex flex-col gap-1 flex-1">
-            {adminTabs.map((tab) => {
-              const isActive = location.pathname === tab.path;
-              return (
-                <NavLink
-                  key={tab.path}
-                  to={tab.path}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                </NavLink>
-              );
-            })}
-          </nav>
-        </aside>
+            {/* Vertical Navigation */}
+            <nav className="flex flex-col gap-1 flex-1">
+              {adminTabs.map((tab) => {
+                const isActive = location.pathname === tab.path;
+                return (
+                  <NavLink
+                    key={tab.path}
+                    to={tab.path}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto">
-          <Outlet />
-        </main>
+          {/* Main Content */}
+          <main className="flex-1 p-6 overflow-auto">
+            <Outlet />
+          </main>
+        </div>
       </div>
     </div>
   );
