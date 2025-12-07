@@ -283,6 +283,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return consoleAccess.additional_modules.includes(moduleId);
   };
 
+  // Super admins are also considered admins
+  const isSuperAdmin = profile?.is_super_admin === true;
+  const isAdminOrSuperAdmin = role === "admin" || isSuperAdmin;
+
   const value: AuthContextType = {
     user,
     session,
@@ -297,7 +301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
-    isAdmin: role === "admin",
+    isAdmin: isAdminOrSuperAdmin,
     isManager: role === "manager",
     isEmployee: role === "employee",
     isCustomer,
