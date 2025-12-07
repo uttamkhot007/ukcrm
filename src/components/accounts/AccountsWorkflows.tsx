@@ -14,7 +14,6 @@ import {
   Clock,
   Play,
   Pause,
-  ChevronRight,
   CreditCard,
   Package,
   Loader2,
@@ -42,8 +41,11 @@ import { AccountsWorkflowStageView } from "./AccountsWorkflowStageView";
 import { OrderRequestDetails } from "./OrderRequestDetails";
 import { getAccountsStageProgress, formatAccountsStageName } from "@/lib/accounts-workflow-templates";
 
-export function AccountsWorkflows() {
-  const [activeTab, setActiveTab] = useState<"all" | "order_processing" | "payment_collection">("all");
+interface AccountsWorkflowsProps {
+  filterType?: string;
+}
+
+export function AccountsWorkflows({ filterType = "all" }: AccountsWorkflowsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const { user } = useAuth();
@@ -98,7 +100,7 @@ export function AccountsWorkflows() {
   };
 
   const filteredWorkflows = workflows.filter((w) => {
-    if (activeTab !== "all" && w.workflow_type !== activeTab) return false;
+    if (filterType !== "all" && w.workflow_type !== filterType) return false;
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       return (
@@ -130,7 +132,7 @@ export function AccountsWorkflows() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="cursor-pointer hover:shadow-md" onClick={() => setActiveTab("order_processing")}>
+        <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <Package className="w-8 h-8 text-blue-500" />
             <div>
@@ -139,7 +141,7 @@ export function AccountsWorkflows() {
             </div>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:shadow-md" onClick={() => setActiveTab("payment_collection")}>
+        <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <CreditCard className="w-8 h-8 text-green-500" />
             <div>
@@ -159,24 +161,15 @@ export function AccountsWorkflows() {
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="order_processing">Order Processing</TabsTrigger>
-            <TabsTrigger value="payment_collection">Payment Collection</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search workflows..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+      {/* Search */}
+      <div className="relative w-full sm:w-64">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search workflows..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {/* Workflows Table */}

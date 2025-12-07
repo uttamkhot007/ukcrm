@@ -23,6 +23,7 @@ import {
   TrendingUp,
   AlertCircle,
   DollarSign,
+  UserMinus,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
@@ -33,11 +34,16 @@ import { useTenant } from "@/contexts/TenantContext";
 const navItems: ModuleNavItem[] = [
   { value: "directory", label: "Directory", icon: Users },
   { value: "documents", label: "Documents", icon: FolderOpen },
-  { value: "workflows", label: "Workflows", icon: GitBranch },
+  // Workflows by type
+  { value: "workflows-all", label: "All Workflows", icon: GitBranch },
+  { value: "workflows-onboarding", label: "Onboarding", icon: UserPlus },
+  { value: "workflows-offboarding", label: "Offboarding", icon: UserMinus },
+  { value: "workflows-retention", label: "Retention", icon: Heart },
+  // Other sections
   { value: "mood-analytics", label: "Team Mood", icon: Heart },
   { value: "people", label: "People Mgmt", icon: UserPlus },
   { value: "salary", label: "Salary", icon: Briefcase },
-  { value: "onboarding", label: "Onboarding", icon: Calendar },
+  { value: "onboarding", label: "Onboarding Setup", icon: Calendar },
 ];
 
 interface HRModuleProps {
@@ -106,6 +112,12 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   };
 
   const renderContent = () => {
+    // Handle workflow types
+    if (activeTab.startsWith("workflows-")) {
+      const workflowType = activeTab.replace("workflows-", "");
+      return <HRWorkflowsTab filterType={workflowType} />;
+    }
+
     switch (activeTab) {
       case "directory":
         return (
@@ -175,8 +187,6 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
         );
       case "documents":
         return <EmployeeDocumentsView />;
-      case "workflows":
-        return <HRWorkflowsTab />;
       case "mood-analytics":
         return <MoodAnalyticsDashboard />;
       case "people":
@@ -263,7 +273,7 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                Onboarding
+                Onboarding Setup
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

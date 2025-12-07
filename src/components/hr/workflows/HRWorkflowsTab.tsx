@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -25,33 +25,28 @@ import { NewOnboardingWorkflowDialog } from "./NewOnboardingWorkflowDialog";
 import { WorkflowDetailsSheet } from "./WorkflowDetailsSheet";
 import { WorkflowSettingsDialog } from "./WorkflowSettingsDialog";
 import { WorkflowTemplateBoards } from "./WorkflowTemplateBoards";
-import { WORKFLOW_TEMPLATES } from "@/lib/workflow-templates";
 
-const WORKFLOW_TYPES = [
-  { id: "all", label: "All Workflows", icon: LayoutGrid },
-  { id: "onboarding", label: "Onboarding", icon: UserPlus },
-  { id: "offboarding", label: "Offboarding", icon: UserMinus },
-  { id: "retention", label: "Retention", icon: Heart },
-];
+interface HRWorkflowsTabProps {
+  filterType?: string;
+}
 
-export function HRWorkflowsTab() {
+export function HRWorkflowsTab({ filterType = "all" }: HRWorkflowsTabProps) {
   const { user, isAdmin, role } = useAuth();
   const [viewMode, setViewMode] = useState<"kanban" | "timeline">("kanban");
-  const [workflowType, setWorkflowType] = useState("all");
   const [showNewWorkflow, setShowNewWorkflow] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
   const { data: workflows = [], isLoading, refetch } = useQuery({
-    queryKey: ["hr-workflows", workflowType],
+    queryKey: ["hr-workflows", filterType],
     queryFn: async () => {
       let query = supabase
         .from("hr_workflows")
         .select("*, onboarding_requests(*), resignation_requests(*)")
         .order("created_at", { ascending: false });
 
-      if (workflowType !== "all") {
-        query = query.eq("workflow_type", workflowType as "onboarding" | "offboarding" | "retention");
+      if (filterType !== "all") {
+        query = query.eq("workflow_type", filterType as "onboarding" | "offboarding" | "retention");
       }
 
       const { data, error } = await query;
@@ -81,6 +76,15 @@ export function HRWorkflowsTab() {
   });
 
   const canManageWorkflows = isAdmin || role === "manager";
+
+  const getTitle = () => {
+    switch (filterType) {
+      case "onboarding": return "Onboarding Workflows";
+      case "offboarding": return "Offboarding Workflows";
+      case "retention": return "Retention Workflows";
+      default: return "All Workflows";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -140,28 +144,9 @@ export function HRWorkflowsTab() {
         </Card>
       </div>
 
-      {/* Filters and Actions */}
+      {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex gap-2 flex-wrap">
-          {WORKFLOW_TYPES.map((type) => (
-            <Button
-              key={type.id}
-              variant={workflowType === type.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWorkflowType(type.id)}
-              className="gap-2"
-            >
-              <type.icon className="w-4 h-4" />
-              {type.label}
-              {type.id !== "all" && stats && (
-                <Badge variant="secondary" className="ml-1">
-                  {type.id === "onboarding" ? stats.onboarding : 
-                   type.id === "offboarding" ? stats.offboarding : stats.retention}
-                </Badge>
-              )}
-            </Button>
-          ))}
-        </div>
+        <h2 className="text-xl font-semibold">{getTitle()}</h2>
         <div className="flex gap-2">
           <div className="flex border rounded-lg p-1">
             <Button
@@ -198,7 +183,7 @@ export function HRWorkflowsTab() {
       {viewMode === "kanban" ? (
         <WorkflowKanbanView
           workflows={workflows}
-          workflowType={workflowType}
+          workflowType={filterType}
           isLoading={isLoading}
           onSelectWorkflow={setSelectedWorkflowId}
         />
