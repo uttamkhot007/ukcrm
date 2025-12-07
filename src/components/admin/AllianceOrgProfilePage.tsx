@@ -276,7 +276,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
     collaborators: [],
   });
   const [isAddCollaboratorOpen, setIsAddCollaboratorOpen] = useState(false);
-  const [newCollaborator, setNewCollaborator] = useState({ name: '', team: '', expectation: '' });
+  const [newCollaborator, setNewCollaborator] = useState({ name: '', team: '', expectation: '', userId: '' });
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -1333,7 +1333,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                             <Label>Team *</Label>
                             <Select 
                               value={newCollaborator.team}
-                              onValueChange={(value) => setNewCollaborator({...newCollaborator, team: value, expectation: '', name: ''})}
+                              onValueChange={(value) => setNewCollaborator({...newCollaborator, team: value, expectation: '', name: '', userId: ''})}
                             >
                               <SelectTrigger><SelectValue placeholder="Select team first" /></SelectTrigger>
                               <SelectContent>
@@ -1352,10 +1352,10 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                             <div className="space-y-2">
                               <Label>Team Member *</Label>
                               <Select 
-                                value={newCollaborator.name}
+                                value={newCollaborator.userId}
                                 onValueChange={(value) => {
                                   const emp = employees.find(e => e.user_id === value);
-                                  setNewCollaborator({...newCollaborator, name: emp?.full_name || emp?.email || value});
+                                  setNewCollaborator({...newCollaborator, userId: value, name: emp?.full_name || emp?.email || value});
                                 }}
                               >
                                 <SelectTrigger>
@@ -1448,7 +1448,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                                 ...teamConfig,
                                 collaborators: [...teamConfig.collaborators, collaborator]
                               });
-                              setNewCollaborator({ name: '', team: '', expectation: '' });
+                              setNewCollaborator({ name: '', team: '', expectation: '', userId: '' });
                               setIsAddCollaboratorOpen(false);
                               toast.success("Collaborator added successfully");
                             }}
