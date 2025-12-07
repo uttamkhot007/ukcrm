@@ -409,11 +409,52 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
     enabled: !!organization?.id,
   });
 
+  // Get logo URL - use Clearbit as fallback
+  const getLogoUrl = (org: AllianceOrganization) => {
+    if (org.logo_url) return org.logo_url;
+    if (org.website) {
+      try {
+        const domain = new URL(org.website.startsWith('http') ? org.website : `https://${org.website}`).hostname.replace('www.', '');
+        return `https://logo.clearbit.com/${domain}`;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Check if threat intel needs refresh (every 8 hours)
+  const shouldRefreshThreatIntel = () => {
+    if (!lastRefresh) return true;
+    const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000);
+    return lastRefresh < eightHoursAgo;
+  };
+
   // Fetch threat intelligence
-  const fetchThreatIntelligence = async () => {
+  const fetchThreatIntelligence = async (forceRefresh = false) => {
     if (!organization?.website) {
       toast.error("No website URL available for threat analysis");
       return;
+    }
+
+    // Check localStorage for cached data
+    const cacheKey = `threat_intel_${organization.id}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    if (cachedData && !forceRefresh) {
+      try {
+        const { data, timestamp } = JSON.parse(cachedData);
+        const cacheTime = new Date(timestamp);
+        const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000);
+        
+        if (cacheTime > eightHoursAgo) {
+          setThreatIntel(data);
+          setLastRefresh(cacheTime);
+          return;
+        }
+      } catch (e) {
+        console.log("Cache parsing error, fetching fresh data");
+      }
     }
 
     setIsLoadingThreat(true);
@@ -424,7 +465,16 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       if (error) throw error;
       setThreatIntel(data);
       setLastRefresh(new Date());
-      toast.success("Threat intelligence updated");
+      
+      // Cache the data
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data,
+        timestamp: new Date().toISOString()
+      }));
+      
+      if (forceRefresh) {
+        toast.success("Threat intelligence updated");
+      }
     } catch (error: any) {
       console.error("Threat intel error:", error);
       toast.error("Failed to fetch threat intelligence");
@@ -457,10 +507,10 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   };
 
   useEffect(() => {
-    if (organization?.website && !threatIntel) {
+    if (organization?.website) {
       fetchThreatIntelligence();
     }
-  }, [organization?.website]);
+  }, [organization?.id]);
 
   // Add contact mutation
   const addContactMutation = useMutation({
@@ -807,7 +857,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
 
             <div className="flex items-start gap-3 mb-4">
               <Avatar className="h-14 w-14">
-                <AvatarImage src={organization.logo_url || ""} alt={organization.name} />
+                <AvatarImage src={getLogoUrl(organization) || ""} alt={organization.name} />
                 <AvatarFallback className="text-lg bg-primary/10 text-primary">
                   {organization.name.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
@@ -2096,7 +2146,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                     <h3 className="font-semibold">Threat Intelligence</h3>
                     {lastRefresh && <p className="text-xs text-muted-foreground">Last updated: {lastRefresh.toLocaleTimeString()}</p>}
                   </div>
-                  <Button size="sm" variant="outline" onClick={fetchThreatIntelligence} disabled={isLoadingThreat} className="gap-1">
+                  <Button size="sm" variant="outline" onClick={() => fetchThreatIntelligence(true)} disabled={isLoadingThreat} className="gap-1">
                     {isLoadingThreat ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Refresh
                   </Button>
                 </div>
@@ -2127,7 +2177,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   <Card className="p-8 text-center">
                     <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">No threat intelligence available</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={fetchThreatIntelligence}>Scan Now</Button>
+                    <Button variant="outline" size="sm" className="mt-2" onClick={() => fetchThreatIntelligence(true)}>Scan Now</Button>
                   </Card>
                 )}
               </div>
