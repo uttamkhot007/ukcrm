@@ -174,6 +174,7 @@ const adminItems: NavItem[] = [
     children: [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
       { id: "admin-center-users", label: "Users", icon: Users },
+      { id: "admin-center-tenants", label: "Tenants", icon: Network },
       { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
       { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
       { id: "admin-center-portal", label: "Admin Portal", icon: Shield },

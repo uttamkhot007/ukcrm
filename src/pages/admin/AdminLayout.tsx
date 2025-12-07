@@ -20,6 +20,7 @@ export default function AdminLayout() {
     if (path.includes("/admin/documentation")) return "admin-center-documentation";
     if (path.includes("/admin/portal")) return "admin-center-portal";
     if (path.includes("/admin/health")) return "admin-center-health";
+    if (path.includes("/admin/tenants")) return "admin-center-tenants";
     return "admin-center";
   };
 

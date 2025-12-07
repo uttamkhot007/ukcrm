@@ -18,6 +18,7 @@ import AdminIntegrations from "./pages/admin/AdminIntegrations";
 import AdminDocumentation from "./pages/admin/AdminDocumentation";
 import AdminPortal from "./pages/admin/AdminPortal";
 import AdminHealth from "./pages/admin/AdminHealth";
+import AdminTenants from "./pages/admin/AdminTenants";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import NotFound from "./pages/NotFound";
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="integrations" element={<AdminIntegrations />} />
                   <Route path="documentation" element={<AdminDocumentation />} />
                   <Route path="portal" element={<AdminPortal />} />
+                  <Route path="tenants" element={<AdminTenants />} />
                   <Route path="health" element={<AdminHealth />} />
                 </Route>
                 
