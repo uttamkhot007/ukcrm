@@ -296,9 +296,8 @@ export function EmployeesManagement() {
     );
   });
 
-  const managers = employees.filter((e) => 
-    e.teams.includes("management") || e.job_title?.toLowerCase().includes("manager")
-  );
+  // Allow any employee to be selected as manager for flexibility
+  const managers = employees;
 
   return (
     <div className="space-y-4">
