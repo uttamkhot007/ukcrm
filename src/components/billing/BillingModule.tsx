@@ -52,15 +52,14 @@ export function BillingModule() {
 
       <BillingStats />
 
-      <div className="flex gap-6">
-        <ModuleVerticalNav
-          items={navItems}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-        <div className="flex-1 min-w-0">
-          {renderContent()}
-        </div>
+      <ModuleVerticalNav
+        items={navItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      <div className="min-w-0">
+        {renderContent()}
       </div>
 
       <NewInvoiceDialog open={isNewInvoiceOpen} onOpenChange={setIsNewInvoiceOpen} />
