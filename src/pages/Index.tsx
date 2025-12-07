@@ -48,13 +48,12 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Redirect to workspace selection if no tenant selected
+  // Redirect to workspace selection if no tenant selected (non-super-admins only)
   useEffect(() => {
     if (!isLoading && !tenantLoading && user) {
-      // Super admins can access the app without a tenant - they manage all tenants
-      if (isSuperAdmin && !currentTenant) {
-        // Super admin without tenant selected - they can still use the app
-        // They'll manage tenants from Admin Center
+      // Super admins bypass all tenant requirements - they manage all tenants from Admin Center
+      if (isSuperAdmin) {
+        // Super admin can use the app with or without a tenant selected
         return;
       }
       
