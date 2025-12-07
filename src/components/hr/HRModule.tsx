@@ -28,6 +28,7 @@ import {
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface HRModuleProps {
   initialTab?: string;
@@ -45,21 +46,26 @@ const STATUS_COLORS: Record<string, string> = {
 export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
+  const { currentTenant } = useTenant();
 
   // Sync activeTab with initialTab when route changes
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+  
   const { data: employees = [], isLoading } = useQuery({
-    queryKey: ["hr-employees"],
+    queryKey: ["hr-employees", currentTenant?.id],
     queryFn: async () => {
+      if (!currentTenant) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
+        .eq("tenant_id", currentTenant.id)
         .order("full_name");
       if (error) throw error;
       return data || [];
     },
+    enabled: !!currentTenant,
   });
 
   const filteredEmployees = useMemo(() => {
