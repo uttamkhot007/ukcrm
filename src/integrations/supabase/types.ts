@@ -353,6 +353,260 @@ export type Database = {
         }
         Relationships: []
       }
+      asset_assignments: {
+        Row: {
+          asset_id: string
+          assigned_at: string
+          assigned_by: string
+          assigned_to: string
+          created_at: string
+          id: string
+          notes: string | null
+          return_condition: string | null
+          returned_at: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          asset_id: string
+          assigned_at?: string
+          assigned_by: string
+          assigned_to: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          return_condition?: string | null
+          returned_at?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          asset_id?: string
+          assigned_at?: string
+          assigned_by?: string
+          assigned_to?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          return_condition?: string | null
+          returned_at?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_assignments_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_categories: {
+        Row: {
+          created_at: string
+          depreciation_rate: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          tenant_id: string | null
+          updated_at: string
+          useful_life_years: number | null
+        }
+        Insert: {
+          created_at?: string
+          depreciation_rate?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+          useful_life_years?: number | null
+        }
+        Update: {
+          created_at?: string
+          depreciation_rate?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+          useful_life_years?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_maintenance: {
+        Row: {
+          asset_id: string
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          maintenance_type: string
+          notes: string | null
+          performed_by: string | null
+          scheduled_date: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          asset_id: string
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          maintenance_type: string
+          notes?: string | null
+          performed_by?: string | null
+          scheduled_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          asset_id?: string
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          maintenance_type?: string
+          notes?: string | null
+          performed_by?: string | null
+          scheduled_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_maintenance_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_maintenance_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assets: {
+        Row: {
+          asset_number: string
+          assigned_at: string | null
+          assigned_to: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string
+          current_value: number | null
+          description: string | null
+          id: string
+          location: string | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_number: string
+          assigned_at?: string | null
+          assigned_to?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by: string
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_number?: string
+          assigned_at?: string | null
+          assigned_to?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           check_in: string
@@ -1844,6 +2098,131 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_restocked_at: string | null
+          location: string | null
+          name: string
+          quantity_on_hand: number
+          reorder_level: number | null
+          reorder_quantity: number | null
+          sku: string
+          supplier: string | null
+          tenant_id: string | null
+          unit: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_restocked_at?: string | null
+          location?: string | null
+          name: string
+          quantity_on_hand?: number
+          reorder_level?: number | null
+          reorder_quantity?: number | null
+          sku: string
+          supplier?: string | null
+          tenant_id?: string | null
+          unit?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_restocked_at?: string | null
+          location?: string | null
+          name?: string
+          quantity_on_hand?: number
+          reorder_level?: number | null
+          reorder_quantity?: number | null
+          sku?: string
+          supplier?: string | null
+          tenant_id?: string | null
+          unit?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          notes: string | null
+          performed_by: string
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          tenant_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          notes?: string | null
+          performed_by: string
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          tenant_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          notes?: string | null
+          performed_by?: string
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          tenant_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_items: {
         Row: {
