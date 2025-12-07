@@ -791,6 +791,8 @@ export type Database = {
           initiated_by: string
           metadata: Json | null
           priority: Database["public"]["Enums"]["request_priority"]
+          source_request_id: string | null
+          source_type: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["hr_workflow_status"]
           target_user_id: string | null
@@ -808,6 +810,8 @@ export type Database = {
           initiated_by: string
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["request_priority"]
+          source_request_id?: string | null
+          source_type?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["hr_workflow_status"]
           target_user_id?: string | null
@@ -825,6 +829,8 @@ export type Database = {
           initiated_by?: string
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["request_priority"]
+          source_request_id?: string | null
+          source_type?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["hr_workflow_status"]
           target_user_id?: string | null
@@ -2751,6 +2757,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      workflow_stage_completions: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          is_current: boolean | null
+          notes: string | null
+          stage_id: string
+          stage_order: number
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_current?: boolean | null
+          notes?: string | null
+          stage_id: string
+          stage_order: number
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_current?: boolean | null
+          notes?: string | null
+          stage_id?: string
+          stage_order?: number
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_stage_completions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workflow_stage_history: {
         Row: {

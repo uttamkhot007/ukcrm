@@ -36,7 +36,14 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
+  Lock,
+  AlertCircle,
 } from "lucide-react";
+import { 
+  getStagesForWorkflowType, 
+  getStageProgress,
+  type WorkflowStage 
+} from "@/lib/workflow-templates";
 
 interface WorkflowDetailsSheetProps {
   workflowId: string | null;
@@ -44,32 +51,6 @@ interface WorkflowDetailsSheetProps {
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
 }
-
-const ONBOARDING_STAGES = [
-  { id: "requirement_submitted", label: "Requirement Submitted" },
-  { id: "hr_sourcing", label: "HR Sourcing" },
-  { id: "profile_review", label: "Profile Review" },
-  { id: "manager_interview", label: "Manager Interview" },
-  { id: "senior_interview", label: "Senior Interview" },
-  { id: "ceo_interview", label: "CEO Interview" },
-  { id: "management_interview", label: "Management Interview" },
-  { id: "offer_preparation", label: "Offer Preparation" },
-  { id: "offer_sent", label: "Offer Sent" },
-  { id: "offer_accepted", label: "Offer Accepted" },
-  { id: "completed", label: "Completed" },
-];
-
-const OFFBOARDING_STAGES = [
-  { id: "resignation_submitted", label: "Resignation Submitted" },
-  { id: "manager_review", label: "Manager Review" },
-  { id: "retention_review", label: "Retention Review" },
-  { id: "exit_approved", label: "Exit Approved" },
-  { id: "knowledge_transfer", label: "Knowledge Transfer" },
-  { id: "asset_return", label: "Asset Return" },
-  { id: "exit_interview", label: "Exit Interview" },
-  { id: "final_settlement", label: "Final Settlement" },
-  { id: "completed", label: "Completed" },
-];
 
 export function WorkflowDetailsSheet({
   workflowId,
@@ -207,10 +188,10 @@ export function WorkflowDetailsSheet({
     return null;
   }
 
-  const stages = workflow.workflow_type === "onboarding" ? ONBOARDING_STAGES : OFFBOARDING_STAGES;
+  const stages = getStagesForWorkflowType(workflow.workflow_type);
   const currentStageIndex = stages.findIndex((s) => s.id === workflow.current_stage);
   const nextStage = stages[currentStageIndex + 1];
-  const progress = Math.round(((currentStageIndex + 1) / stages.length) * 100);
+  const progress = getStageProgress(workflow.current_stage, workflow.workflow_type);
 
   const getWorkflowIcon = () => {
     switch (workflow.workflow_type) {
@@ -268,7 +249,7 @@ export function WorkflowDetailsSheet({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">
-                    Current: {stages.find((s) => s.id === workflow.current_stage)?.label}
+                    Current: {stages.find((s) => s.id === workflow.current_stage)?.name}
                   </span>
                   <span className="text-sm text-muted-foreground">{progress}%</span>
                 </div>
@@ -282,7 +263,7 @@ export function WorkflowDetailsSheet({
                   disabled={advanceStage.isPending}
                 >
                   <ArrowRight className="w-4 h-4" />
-                  Advance to: {nextStage.label}
+                  Advance to: {nextStage.name}
                 </Button>
               )}
 
@@ -331,7 +312,7 @@ export function WorkflowDetailsSheet({
                             (isCompleted || isCurrent) && "font-medium"
                           )}
                         >
-                          {stage.label}
+                          {stage.name}
                         </span>
                       </div>
                     );
