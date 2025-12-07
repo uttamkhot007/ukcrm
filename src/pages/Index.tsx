@@ -115,6 +115,9 @@ const Index = () => {
         return <EmployeeBenefitsModule />;
       case "employee-resources":
         return <EmployeeResourcesModule />;
+      case "employee-leave":
+      case "employee-travel":
+        return <RequestsModule />;
       
       // HR modules
       case "hr":
