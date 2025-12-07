@@ -1448,6 +1448,196 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          expense_type: string
+          gl_code: string | null
+          id: string
+          is_active: boolean | null
+          max_amount: number | null
+          name: string
+          requires_receipt: boolean | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          expense_type?: string
+          gl_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          name: string
+          requires_receipt?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          expense_type?: string
+          gl_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          name?: string
+          requires_receipt?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_items: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          currency: string | null
+          description: string
+          expense_date: string
+          expense_report_id: string
+          id: string
+          is_billable: boolean | null
+          merchant_name: string | null
+          notes: string | null
+          project_id: string | null
+          receipt_file_name: string | null
+          receipt_url: string | null
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          currency?: string | null
+          description: string
+          expense_date: string
+          expense_report_id: string
+          id?: string
+          is_billable?: boolean | null
+          merchant_name?: string | null
+          notes?: string | null
+          project_id?: string | null
+          receipt_file_name?: string | null
+          receipt_url?: string | null
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string
+          expense_date?: string
+          expense_report_id?: string
+          id?: string
+          is_billable?: boolean | null
+          merchant_name?: string | null
+          notes?: string | null
+          project_id?: string | null
+          receipt_file_name?: string | null
+          receipt_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_items_expense_report_id_fkey"
+            columns: ["expense_report_id"]
+            isOneToOne: false
+            referencedRelation: "expense_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_reports: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          finance_approved_at: string | null
+          finance_approved_by: string | null
+          id: string
+          paid_at: string | null
+          rejection_reason: string | null
+          report_number: string
+          status: string
+          submitted_at: string | null
+          tenant_id: string | null
+          title: string
+          total_amount: number
+          travel_request_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          finance_approved_at?: string | null
+          finance_approved_by?: string | null
+          id?: string
+          paid_at?: string | null
+          rejection_reason?: string | null
+          report_number: string
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string | null
+          title: string
+          total_amount?: number
+          travel_request_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          finance_approved_at?: string | null
+          finance_approved_by?: string | null
+          id?: string
+          paid_at?: string | null
+          rejection_reason?: string | null
+          report_number?: string
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string | null
+          title?: string
+          total_amount?: number
+          travel_request_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hr_workflows: {
         Row: {
           assigned_to: string | null
@@ -4165,6 +4355,173 @@ export type Database = {
           },
           {
             foreignKeyName: "tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_bookings: {
+        Row: {
+          amount: number
+          arrival_datetime: string | null
+          booking_details: Json | null
+          booking_reference: string | null
+          booking_type: string
+          created_at: string
+          currency: string | null
+          departure_datetime: string | null
+          from_location: string | null
+          id: string
+          status: string | null
+          to_location: string | null
+          travel_request_id: string
+          vendor_name: string | null
+        }
+        Insert: {
+          amount?: number
+          arrival_datetime?: string | null
+          booking_details?: Json | null
+          booking_reference?: string | null
+          booking_type: string
+          created_at?: string
+          currency?: string | null
+          departure_datetime?: string | null
+          from_location?: string | null
+          id?: string
+          status?: string | null
+          to_location?: string | null
+          travel_request_id: string
+          vendor_name?: string | null
+        }
+        Update: {
+          amount?: number
+          arrival_datetime?: string | null
+          booking_details?: Json | null
+          booking_reference?: string | null
+          booking_type?: string
+          created_at?: string
+          currency?: string | null
+          departure_datetime?: string | null
+          from_location?: string | null
+          id?: string
+          status?: string | null
+          to_location?: string | null
+          travel_request_id?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_bookings_travel_request_id_fkey"
+            columns: ["travel_request_id"]
+            isOneToOne: false
+            referencedRelation: "travel_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_requests: {
+        Row: {
+          additional_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          currency: string | null
+          deal_id: string | null
+          departure_city: string
+          departure_date: string
+          destination_city: string
+          estimated_cost: number | null
+          flight_preference: string | null
+          hotel_preference: string | null
+          id: string
+          project_id: string | null
+          purpose: string
+          rejection_reason: string | null
+          request_number: string
+          requires_cab: boolean | null
+          requires_flight: boolean | null
+          requires_hotel: boolean | null
+          return_date: string
+          status: string
+          submitted_at: string | null
+          tenant_id: string | null
+          title: string
+          travel_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string | null
+          deal_id?: string | null
+          departure_city: string
+          departure_date: string
+          destination_city: string
+          estimated_cost?: number | null
+          flight_preference?: string | null
+          hotel_preference?: string | null
+          id?: string
+          project_id?: string | null
+          purpose: string
+          rejection_reason?: string | null
+          request_number: string
+          requires_cab?: boolean | null
+          requires_flight?: boolean | null
+          requires_hotel?: boolean | null
+          return_date: string
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string | null
+          title: string
+          travel_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string | null
+          deal_id?: string | null
+          departure_city?: string
+          departure_date?: string
+          destination_city?: string
+          estimated_cost?: number | null
+          flight_preference?: string | null
+          hotel_preference?: string | null
+          id?: string
+          project_id?: string | null
+          purpose?: string
+          rejection_reason?: string | null
+          request_number?: string
+          requires_cab?: boolean | null
+          requires_flight?: boolean | null
+          requires_hotel?: boolean | null
+          return_date?: string
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string | null
+          title?: string
+          travel_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_requests_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_requests_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
