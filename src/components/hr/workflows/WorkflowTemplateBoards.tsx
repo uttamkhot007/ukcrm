@@ -252,10 +252,22 @@ export function WorkflowTemplateBoards({ onWorkflowCreated }: WorkflowTemplateBo
             <Card
               key={template.id}
               className={cn(
-                "cursor-pointer transition-all duration-200 border-2",
+                "cursor-pointer transition-all duration-200 border-2 select-none",
                 getTemplateColor(template)
               )}
-              onClick={() => handleTemplateClick(template)}
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleTemplateClick(template);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleTemplateClick(template);
+                }
+              }}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
@@ -274,10 +286,12 @@ export function WorkflowTemplateBoards({ onWorkflowCreated }: WorkflowTemplateBo
                   <Clock className="w-3 h-3" />
                   {template.estimatedDuration}
                 </div>
-                <Button variant="ghost" size="sm" className="w-full mt-2 gap-1">
+                <div 
+                  className="w-full mt-2 flex items-center justify-center gap-1 py-2 text-sm font-medium text-primary hover:text-primary/80"
+                >
                   Start Workflow
                   <ChevronRight className="w-4 h-4" />
-                </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
