@@ -16,12 +16,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { 
   Plus, Users, Briefcase, Shield, AlertTriangle, ExternalLink, 
   RefreshCw, Star, Phone, Mail, MapPin, Globe, Linkedin, Twitter, Facebook,
   CheckCircle, Loader2, ChevronDown, ChevronRight, ArrowLeft, 
-  FileText, PhoneCall, Video, Sparkles, Copy, Database, Key, Bug
+  FileText, PhoneCall, Video, Sparkles, Copy, Database, Key, Bug,
+  Calendar, Clock, Bell, ListTodo, StickyNote, Cake, RotateCcw, Trash2, Edit
 } from "lucide-react";
 import { CONTACT_ROLES } from "@/components/shared/OrganizationFormFields";
 
@@ -80,6 +82,54 @@ interface ThreatIntelligence {
   lastUpdated: string;
 }
 
+interface OrgNote {
+  id: string;
+  content: string;
+  note_type: string;
+  is_pinned: boolean;
+  created_at: string;
+  user_id: string;
+}
+
+interface OrgTask {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  due_date: string | null;
+  assigned_to: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+interface OrgMeeting {
+  id: string;
+  title: string;
+  description: string | null;
+  meeting_type: string;
+  meeting_link: string | null;
+  location: string | null;
+  scheduled_at: string;
+  duration_minutes: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}
+
+interface OrgReminder {
+  id: string;
+  title: string;
+  description: string | null;
+  reminder_type: string;
+  remind_at: string;
+  is_recurring: boolean;
+  recurrence_pattern: string | null;
+  is_completed: boolean;
+  contact_id: string | null;
+  created_at: string;
+}
+
 const SECURITY_CONTROLS = [
   { id: 'firewall', name: 'Next-Gen Firewall', category: 'Network Security' },
   { id: 'siem', name: 'SIEM Solution', category: 'Monitoring' },
@@ -97,6 +147,14 @@ const SECURITY_CONTROLS = [
   { id: 'zero_trust', name: 'Zero Trust Architecture', category: 'Architecture' },
 ];
 
+const REMINDER_TYPES = [
+  { value: 'birthday', label: 'Birthday', icon: Cake },
+  { value: 'meeting', label: 'Meeting', icon: Video },
+  { value: 'renewal', label: 'Renewal', icon: RotateCcw },
+  { value: 'follow_up', label: 'Follow Up', icon: PhoneCall },
+  { value: 'custom', label: 'Custom', icon: Bell },
+];
+
 interface AllianceOrgProfilePageProps {
   organization: AllianceOrganization;
   onBack: () => void;
@@ -106,6 +164,10 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [activeTab, setActiveTab] = useState("overview");
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [isAddDealOpen, setIsAddDealOpen] = useState(false);
+  const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [isAddMeetingOpen, setIsAddMeetingOpen] = useState(false);
+  const [isAddReminderOpen, setIsAddReminderOpen] = useState(false);
   const [selectedControls, setSelectedControls] = useState<string[]>([]);
   const [threatIntel, setThreatIntel] = useState<ThreatIntelligence | null>(null);
   const [isLoadingThreat, setIsLoadingThreat] = useState(false);
@@ -113,6 +175,9 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [isEnriching, setIsEnriching] = useState(false);
   const [contactsExpanded, setContactsExpanded] = useState(true);
   const [dealsExpanded, setDealsExpanded] = useState(true);
+  const [tasksExpanded, setTasksExpanded] = useState(true);
+  const [meetingsExpanded, setMeetingsExpanded] = useState(true);
+  const [remindersExpanded, setRemindersExpanded] = useState(true);
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -155,6 +220,73 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Fetch notes
+  const { data: notes = [], refetch: refetchNotes } = useQuery({
+    queryKey: ["org-notes", organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
+      const { data, error } = await supabase
+        .from("organization_notes")
+        .select("*")
+        .eq("organization_id", organization.id)
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as OrgNote[];
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Fetch tasks
+  const { data: tasks = [], refetch: refetchTasks } = useQuery({
+    queryKey: ["org-tasks", organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
+      const { data, error } = await supabase
+        .from("organization_tasks")
+        .select("*")
+        .eq("organization_id", organization.id)
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as OrgTask[];
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Fetch meetings
+  const { data: meetings = [], refetch: refetchMeetings } = useQuery({
+    queryKey: ["org-meetings", organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
+      const { data, error } = await supabase
+        .from("organization_meetings")
+        .select("*")
+        .eq("organization_id", organization.id)
+        .order("scheduled_at", { ascending: true });
+      if (error) throw error;
+      return data as OrgMeeting[];
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Fetch reminders
+  const { data: reminders = [], refetch: refetchReminders } = useQuery({
+    queryKey: ["org-reminders", organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return [];
+      const { data, error } = await supabase
+        .from("organization_reminders")
+        .select("*")
+        .eq("organization_id", organization.id)
+        .eq("is_completed", false)
+        .order("remind_at", { ascending: true });
+      if (error) throw error;
+      return data as OrgReminder[];
     },
     enabled: !!organization?.id,
   });
@@ -293,6 +425,163 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
     },
   });
 
+  // Add note mutation
+  const addNoteMutation = useMutation({
+    mutationFn: async (noteData: any) => {
+      const { error } = await supabase
+        .from("organization_notes")
+        .insert({
+          tenant_id: currentTenant?.id,
+          organization_id: organization?.id,
+          user_id: user?.id!,
+          content: noteData.content,
+          note_type: noteData.note_type || 'general',
+          is_pinned: noteData.is_pinned || false,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchNotes();
+      setIsAddNoteOpen(false);
+      toast.success("Note added");
+    },
+    onError: (error) => {
+      toast.error("Failed to add note: " + error.message);
+    },
+  });
+
+  // Add task mutation
+  const addTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      const { error } = await supabase
+        .from("organization_tasks")
+        .insert({
+          tenant_id: currentTenant?.id,
+          organization_id: organization?.id,
+          user_id: user?.id!,
+          title: taskData.title,
+          description: taskData.description || null,
+          priority: taskData.priority || 'medium',
+          due_date: taskData.due_date || null,
+          assigned_to: taskData.assigned_to || null,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchTasks();
+      setIsAddTaskOpen(false);
+      toast.success("Task created");
+    },
+    onError: (error) => {
+      toast.error("Failed to create task: " + error.message);
+    },
+  });
+
+  // Toggle task status
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ taskId, completed }: { taskId: string; completed: boolean }) => {
+      const { error } = await supabase
+        .from("organization_tasks")
+        .update({
+          status: completed ? 'completed' : 'pending',
+          completed_at: completed ? new Date().toISOString() : null,
+        })
+        .eq("id", taskId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchTasks();
+    },
+  });
+
+  // Add meeting mutation
+  const addMeetingMutation = useMutation({
+    mutationFn: async (meetingData: any) => {
+      const { error } = await supabase
+        .from("organization_meetings")
+        .insert({
+          tenant_id: currentTenant?.id,
+          organization_id: organization?.id,
+          user_id: user?.id!,
+          title: meetingData.title,
+          description: meetingData.description || null,
+          meeting_type: meetingData.meeting_type || 'general',
+          meeting_link: meetingData.meeting_link || null,
+          location: meetingData.location || null,
+          scheduled_at: meetingData.scheduled_at,
+          duration_minutes: parseInt(meetingData.duration_minutes) || 60,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchMeetings();
+      setIsAddMeetingOpen(false);
+      toast.success("Meeting scheduled");
+    },
+    onError: (error) => {
+      toast.error("Failed to schedule meeting: " + error.message);
+    },
+  });
+
+  // Add reminder mutation
+  const addReminderMutation = useMutation({
+    mutationFn: async (reminderData: any) => {
+      const { error } = await supabase
+        .from("organization_reminders")
+        .insert({
+          tenant_id: currentTenant?.id,
+          organization_id: organization?.id,
+          user_id: user?.id!,
+          title: reminderData.title,
+          description: reminderData.description || null,
+          reminder_type: reminderData.reminder_type,
+          remind_at: reminderData.remind_at,
+          is_recurring: reminderData.is_recurring || false,
+          recurrence_pattern: reminderData.recurrence_pattern || null,
+          contact_id: reminderData.contact_id || null,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchReminders();
+      setIsAddReminderOpen(false);
+      toast.success("Reminder set");
+    },
+    onError: (error) => {
+      toast.error("Failed to set reminder: " + error.message);
+    },
+  });
+
+  // Complete reminder mutation
+  const completeReminderMutation = useMutation({
+    mutationFn: async (reminderId: string) => {
+      const { error } = await supabase
+        .from("organization_reminders")
+        .update({
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", reminderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchReminders();
+      toast.success("Reminder completed");
+    },
+  });
+
+  // Delete note mutation
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase.from("organization_notes").delete().eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchNotes();
+      toast.success("Note deleted");
+    },
+  });
+
   const toggleControl = (controlId: string) => {
     setSelectedControls(prev => 
       prev.includes(controlId) ? prev.filter(c => c !== controlId) : [...prev, controlId]
@@ -326,8 +615,24 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
     }
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      case 'medium': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'low': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getReminderTypeIcon = (type: string) => {
+    const found = REMINDER_TYPES.find(r => r.value === type);
+    return found ? found.icon : Bell;
+  };
+
   const champion = contacts.find(c => c.notes?.includes('[CHAMPION]'));
   const websiteClean = organization.website?.replace(/^https?:\/\//, '').replace(/\/$/, '') || '';
+  const upcomingMeetings = meetings.filter(m => new Date(m.scheduled_at) >= new Date());
+  const pendingTasks = tasks.filter(t => t.status !== 'completed');
 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-background rounded-lg border overflow-hidden">
@@ -361,19 +666,259 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
               </div>
             </div>
 
-            <div className="flex gap-1.5 mb-6 flex-wrap">
-              <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
-                <FileText className="h-3 w-3" />Note
-              </Button>
+            <div className="flex gap-1.5 mb-4 flex-wrap">
+              <Dialog open={isAddNoteOpen} onOpenChange={setIsAddNoteOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
+                    <StickyNote className="h-3 w-3" />Note
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Add Note</DialogTitle></DialogHeader>
+                  <form onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    const fd = new FormData(e.currentTarget); 
+                    addNoteMutation.mutate({ 
+                      content: fd.get('content'), 
+                      note_type: fd.get('note_type'),
+                      is_pinned: fd.get('is_pinned') === 'on'
+                    }); 
+                  }} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Note Type</Label>
+                      <Select name="note_type" defaultValue="general">
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="call">Call Notes</SelectItem>
+                          <SelectItem value="meeting">Meeting Notes</SelectItem>
+                          <SelectItem value="email">Email Summary</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Content *</Label>
+                      <Textarea name="content" required rows={4} placeholder="Enter your note..." />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox name="is_pinned" id="is_pinned" />
+                      <Label htmlFor="is_pinned">Pin this note</Label>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={addNoteMutation.isPending}>
+                      {addNoteMutation.isPending ? "Saving..." : "Save Note"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
               <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
                 <Mail className="h-3 w-3" />Email
               </Button>
               <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
                 <PhoneCall className="h-3 w-3" />Call
               </Button>
-              <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
-                <Video className="h-3 w-3" />Meet
-              </Button>
+              <Dialog open={isAddMeetingOpen} onOpenChange={setIsAddMeetingOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
+                    <Video className="h-3 w-3" />Meet
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Schedule Meeting</DialogTitle></DialogHeader>
+                  <form onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    const fd = new FormData(e.currentTarget); 
+                    addMeetingMutation.mutate({ 
+                      title: fd.get('title'),
+                      description: fd.get('description'),
+                      meeting_type: fd.get('meeting_type'),
+                      meeting_link: fd.get('meeting_link'),
+                      location: fd.get('location'),
+                      scheduled_at: fd.get('scheduled_at'),
+                      duration_minutes: fd.get('duration_minutes'),
+                    }); 
+                  }} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Title *</Label>
+                      <Input name="title" required placeholder={`Meeting with ${organization.name}`} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Type</Label>
+                        <Select name="meeting_type" defaultValue="general">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="general">General</SelectItem>
+                            <SelectItem value="demo">Demo</SelectItem>
+                            <SelectItem value="review">Review</SelectItem>
+                            <SelectItem value="kickoff">Kickoff</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Duration (mins)</Label>
+                        <Select name="duration_minutes" defaultValue="60">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="30">30 mins</SelectItem>
+                            <SelectItem value="60">1 hour</SelectItem>
+                            <SelectItem value="90">1.5 hours</SelectItem>
+                            <SelectItem value="120">2 hours</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Date & Time *</Label>
+                      <Input name="scheduled_at" type="datetime-local" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Meeting Link</Label>
+                      <Input name="meeting_link" placeholder="https://meet.google.com/..." />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <Input name="location" placeholder="Office / Conference Room" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea name="description" rows={2} />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={addMeetingMutation.isPending}>
+                      {addMeetingMutation.isPending ? "Scheduling..." : "Schedule Meeting"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="flex gap-1.5 mb-6 flex-wrap">
+              <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
+                    <ListTodo className="h-3 w-3" />Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Create Task</DialogTitle></DialogHeader>
+                  <form onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    const fd = new FormData(e.currentTarget); 
+                    addTaskMutation.mutate({ 
+                      title: fd.get('title'),
+                      description: fd.get('description'),
+                      priority: fd.get('priority'),
+                      due_date: fd.get('due_date') || null,
+                    }); 
+                  }} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Title *</Label>
+                      <Input name="title" required placeholder="Task title" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Select name="priority" defaultValue="medium">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Due Date</Label>
+                        <Input name="due_date" type="date" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea name="description" rows={3} />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={addTaskMutation.isPending}>
+                      {addTaskMutation.isPending ? "Creating..." : "Create Task"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <Dialog open={isAddReminderOpen} onOpenChange={setIsAddReminderOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 text-xs h-8 flex-1">
+                    <Bell className="h-3 w-3" />Remind
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Set Reminder</DialogTitle></DialogHeader>
+                  <form onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    const fd = new FormData(e.currentTarget); 
+                    addReminderMutation.mutate({ 
+                      title: fd.get('title'),
+                      description: fd.get('description'),
+                      reminder_type: fd.get('reminder_type'),
+                      remind_at: fd.get('remind_at'),
+                      is_recurring: fd.get('is_recurring') === 'on',
+                      recurrence_pattern: fd.get('recurrence_pattern'),
+                      contact_id: fd.get('contact_id') || null,
+                    }); 
+                  }} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Title *</Label>
+                      <Input name="title" required placeholder="Reminder title" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Type *</Label>
+                        <Select name="reminder_type" defaultValue="follow_up">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {REMINDER_TYPES.map(rt => (
+                              <SelectItem key={rt.value} value={rt.value}>{rt.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Contact</Label>
+                        <Select name="contact_id">
+                          <SelectTrigger><SelectValue placeholder="Select contact" /></SelectTrigger>
+                          <SelectContent>
+                            {contacts.map(c => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Remind At *</Label>
+                      <Input name="remind_at" type="datetime-local" required />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Checkbox name="is_recurring" id="is_recurring" />
+                        <Label htmlFor="is_recurring">Recurring</Label>
+                      </div>
+                      <Select name="recurrence_pattern" defaultValue="yearly">
+                        <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea name="description" rows={2} />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={addReminderMutation.isPending}>
+                      {addReminderMutation.isPending ? "Setting..." : "Set Reminder"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="space-y-4">
@@ -399,6 +944,29 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   </div>
                 )}
               </div>
+
+              {/* Quick Stats */}
+              <div className="pt-4 border-t space-y-2">
+                <h3 className="font-semibold text-sm">Quick Stats</h3>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-muted/50 rounded p-2">
+                    <p className="text-muted-foreground">Contacts</p>
+                    <p className="font-bold text-lg">{contacts.length}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded p-2">
+                    <p className="text-muted-foreground">Deals</p>
+                    <p className="font-bold text-lg">{deals.length}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded p-2">
+                    <p className="text-muted-foreground">Tasks</p>
+                    <p className="font-bold text-lg">{pendingTasks.length}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded p-2">
+                    <p className="text-muted-foreground">Meetings</p>
+                    <p className="font-bold text-lg">{upcomingMeetings.length}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </ScrollArea>
@@ -411,6 +979,8 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
             <TabsList className="h-11 bg-transparent border-0 p-0 gap-4">
               <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Overview</TabsTrigger>
               <TabsTrigger value="activities" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Activities</TabsTrigger>
+              <TabsTrigger value="tasks" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Tasks</TabsTrigger>
+              <TabsTrigger value="calendar" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Calendar</TabsTrigger>
               <TabsTrigger value="intelligence" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Intelligence</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -467,6 +1037,46 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   </Card>
                 )}
 
+                {/* Notes Section */}
+                <Card>
+                  <CardHeader className="flex-row items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <StickyNote className="h-4 w-4" />
+                      Notes ({notes.length})
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => setIsAddNoteOpen(true)} className="gap-1 text-primary h-7">
+                      <Plus className="h-4 w-4" />Add
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {notes.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">No notes yet</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {notes.slice(0, 5).map(note => (
+                          <div key={note.id} className={`p-3 rounded-lg border ${note.is_pinned ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800' : 'bg-muted/30'}`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {note.is_pinned && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                                  <Badge variant="outline" className="text-xs">{note.note_type}</Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(note.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                  </span>
+                                </div>
+                                <p className="text-sm">{note.content}</p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteNoteMutation.mutate(note.id)}>
+                                <Trash2 className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 {(organization.solutions?.length || organization.services?.length) && (
                   <Card><CardHeader><CardTitle className="text-sm">Solutions & Services</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
@@ -508,10 +1118,199 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
             )}
 
             {activeTab === "activities" && (
-              <Card className="p-8 text-center">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Activity timeline coming soon</p>
-              </Card>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Activity Timeline</h3>
+                </div>
+                
+                {/* Notes as activities */}
+                {notes.length === 0 && meetings.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">No activities yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Add notes, meetings, or tasks to see activity</p>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {[...notes, ...meetings].sort((a, b) => 
+                      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                    ).map((item: any) => (
+                      <Card key={item.id} className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-full ${item.scheduled_at ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-muted'}`}>
+                            {item.scheduled_at ? <Calendar className="h-4 w-4 text-blue-600" /> : <StickyNote className="h-4 w-4 text-muted-foreground" />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {item.scheduled_at ? 'Meeting' : item.note_type || 'Note'}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            <p className="text-sm mt-1">{item.content || item.title}</p>
+                            {item.scheduled_at && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Scheduled: {new Date(item.scheduled_at).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "tasks" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Tasks ({tasks.length})</h3>
+                  <Button size="sm" onClick={() => setIsAddTaskOpen(true)} className="gap-1">
+                    <Plus className="h-4 w-4" />Add Task
+                  </Button>
+                </div>
+
+                {tasks.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <ListTodo className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">No tasks yet</p>
+                  </Card>
+                ) : (
+                  <div className="space-y-2">
+                    {tasks.map(task => (
+                      <Card key={task.id} className={`p-4 ${task.status === 'completed' ? 'opacity-60' : ''}`}>
+                        <div className="flex items-start gap-3">
+                          <Checkbox 
+                            checked={task.status === 'completed'}
+                            onCheckedChange={(checked) => toggleTaskMutation.mutate({ taskId: task.id, completed: !!checked })}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className={`font-medium ${task.status === 'completed' ? 'line-through' : ''}`}>{task.title}</p>
+                              <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                            </div>
+                            {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
+                            {task.due_date && (
+                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Due: {new Date(task.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "calendar" && (
+              <div className="space-y-6">
+                {/* Upcoming Meetings */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Upcoming Meetings ({upcomingMeetings.length})
+                    </h3>
+                    <Button size="sm" onClick={() => setIsAddMeetingOpen(true)} className="gap-1">
+                      <Plus className="h-4 w-4" />Schedule
+                    </Button>
+                  </div>
+
+                  {upcomingMeetings.length === 0 ? (
+                    <Card className="p-8 text-center">
+                      <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground">No upcoming meetings</p>
+                    </Card>
+                  ) : (
+                    <div className="space-y-2">
+                      {upcomingMeetings.map(meeting => (
+                        <Card key={meeting.id} className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                              <Video className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{meeting.title}</p>
+                              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {new Date(meeting.scheduled_at).toLocaleString('en-GB', { 
+                                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+                                  })}
+                                </span>
+                                <span>{meeting.duration_minutes} mins</span>
+                                {meeting.meeting_link && (
+                                  <a href={meeting.meeting_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                    Join <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                            <Badge variant="outline">{meeting.meeting_type}</Badge>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Reminders */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Bell className="h-5 w-5" />
+                      Reminders ({reminders.length})
+                    </h3>
+                    <Button size="sm" variant="outline" onClick={() => setIsAddReminderOpen(true)} className="gap-1">
+                      <Plus className="h-4 w-4" />Add
+                    </Button>
+                  </div>
+
+                  {reminders.length === 0 ? (
+                    <Card className="p-6 text-center">
+                      <Bell className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground text-sm">No reminders set</p>
+                    </Card>
+                  ) : (
+                    <div className="space-y-2">
+                      {reminders.map(reminder => {
+                        const ReminderIcon = getReminderTypeIcon(reminder.reminder_type);
+                        const isOverdue = new Date(reminder.remind_at) < new Date();
+                        return (
+                          <Card key={reminder.id} className={`p-4 ${isOverdue ? 'border-red-300 bg-red-50/50 dark:bg-red-950/20' : ''}`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2 rounded-full ${isOverdue ? 'bg-red-100 dark:bg-red-900/30' : 'bg-muted'}`}>
+                                <ReminderIcon className={`h-4 w-4 ${isOverdue ? 'text-red-600' : 'text-muted-foreground'}`} />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium">{reminder.title}</p>
+                                  <Badge variant="outline" className="text-xs">{reminder.reminder_type}</Badge>
+                                  {reminder.is_recurring && <Badge variant="secondary" className="text-xs">Recurring</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(reminder.remind_at).toLocaleString('en-GB', { 
+                                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+                                  })}
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => completeReminderMutation.mutate(reminder.id)} className="gap-1">
+                                <CheckCircle className="h-4 w-4" />Done
+                              </Button>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             {activeTab === "intelligence" && (
@@ -651,6 +1450,79 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                     </div>
                   </Card>
                 ))}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Tasks Quick View */}
+            <Collapsible open={tasksExpanded} onOpenChange={setTasksExpanded}>
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger className="flex items-center gap-1 font-semibold text-sm hover:text-primary">
+                  {tasksExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  Tasks ({pendingTasks.length})
+                </CollapsibleTrigger>
+                <Button variant="ghost" size="sm" className="text-primary gap-1 h-7" onClick={() => setIsAddTaskOpen(true)}>
+                  <Plus className="h-4 w-4" />Add
+                </Button>
+              </div>
+              <CollapsibleContent className="mt-3 space-y-2">
+                {pendingTasks.length === 0 ? (
+                  <div className="text-center py-4"><ListTodo className="h-8 w-8 mx-auto text-muted-foreground mb-2" /><p className="text-xs text-muted-foreground">No pending tasks</p></div>
+                ) : pendingTasks.slice(0, 3).map(task => (
+                  <Card key={task.id} className="p-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox 
+                        checked={task.status === 'completed'}
+                        onCheckedChange={(checked) => toggleTaskMutation.mutate({ taskId: task.id, completed: !!checked })}
+                        className="h-4 w-4"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">{task.title}</p>
+                        {task.due_date && <p className="text-xs text-muted-foreground">{new Date(task.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                {pendingTasks.length > 3 && (
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setActiveTab('tasks')}>
+                    View all {pendingTasks.length} tasks
+                  </Button>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Reminders Quick View */}
+            <Collapsible open={remindersExpanded} onOpenChange={setRemindersExpanded}>
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger className="flex items-center gap-1 font-semibold text-sm hover:text-primary">
+                  {remindersExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  Reminders ({reminders.length})
+                </CollapsibleTrigger>
+                <Button variant="ghost" size="sm" className="text-primary gap-1 h-7" onClick={() => setIsAddReminderOpen(true)}>
+                  <Plus className="h-4 w-4" />Add
+                </Button>
+              </div>
+              <CollapsibleContent className="mt-3 space-y-2">
+                {reminders.length === 0 ? (
+                  <div className="text-center py-4"><Bell className="h-8 w-8 mx-auto text-muted-foreground mb-2" /><p className="text-xs text-muted-foreground">No reminders</p></div>
+                ) : reminders.slice(0, 3).map(reminder => {
+                  const ReminderIcon = getReminderTypeIcon(reminder.reminder_type);
+                  return (
+                    <Card key={reminder.id} className="p-2">
+                      <div className="flex items-center gap-2">
+                        <ReminderIcon className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm truncate">{reminder.title}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(reminder.remind_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+                {reminders.length > 3 && (
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setActiveTab('calendar')}>
+                    View all {reminders.length} reminders
+                  </Button>
+                )}
               </CollapsibleContent>
             </Collapsible>
           </div>
