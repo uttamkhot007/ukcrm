@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.enrich-company]
 verify_jwt = false
+
+[functions.threat-intelligence]
+verify_jwt = false
