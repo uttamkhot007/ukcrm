@@ -196,36 +196,51 @@ export type Database = {
       }
       alliance_organizations: {
         Row: {
+          address: string | null
           created_at: string
           created_by: string
           description: string | null
           id: string
           industry: string | null
+          logo_url: string | null
           name: string
+          organization_type: string | null
+          services: string[] | null
+          solutions: string[] | null
           status: string | null
           tenant_id: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          address?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
           industry?: string | null
+          logo_url?: string | null
           name: string
+          organization_type?: string | null
+          services?: string[] | null
+          solutions?: string[] | null
           status?: string | null
           tenant_id?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          address?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
           industry?: string | null
+          logo_url?: string | null
           name?: string
+          organization_type?: string | null
+          services?: string[] | null
+          solutions?: string[] | null
           status?: string | null
           tenant_id?: string | null
           updated_at?: string
@@ -1273,6 +1288,7 @@ export type Database = {
           gst_number: string | null
           id: string
           notes: string | null
+          oem_brand_name: string | null
           pan_number: string | null
           payment_terms: string | null
           phone: string | null
@@ -1297,6 +1313,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           notes?: string | null
+          oem_brand_name?: string | null
           pan_number?: string | null
           payment_terms?: string | null
           phone?: string | null
@@ -1321,6 +1338,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           notes?: string | null
+          oem_brand_name?: string | null
           pan_number?: string | null
           payment_terms?: string | null
           phone?: string | null

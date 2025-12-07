@@ -13,8 +13,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Building2, Users, Search, Pencil, Trash2, Globe, UserPlus, ExternalLink } from "lucide-react";
+
+const ORGANIZATION_TYPES = [
+  { value: "customer", label: "Customer" },
+  { value: "distributor", label: "Distributor" },
+  { value: "oem", label: "OEM" },
+  { value: "partner", label: "Partner" },
+  { value: "location", label: "Location" },
+];
 
 interface AllianceOrganization {
   id: string;
@@ -26,6 +36,11 @@ interface AllianceOrganization {
   status: string;
   created_at: string;
   created_by: string;
+  organization_type: string | null;
+  logo_url: string | null;
+  address: string | null;
+  solutions: string[] | null;
+  services: string[] | null;
 }
 
 interface AllianceUser {
@@ -53,6 +68,10 @@ export function AllianceModule() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<AllianceOrganization | null>(null);
   const [editingUser, setEditingUser] = useState<AllianceUser | null>(null);
+  const [selectedOrg, setSelectedOrg] = useState<AllianceOrganization | null>(null);
+  const [isOrgSheetOpen, setIsOrgSheetOpen] = useState(false);
+  const [isAddUserToOrgOpen, setIsAddUserToOrgOpen] = useState(false);
+  const [orgTypeFilter, setOrgTypeFilter] = useState<string>("all");
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -90,9 +109,31 @@ export function AllianceModule() {
     enabled: !!currentTenant,
   });
 
+  // Fetch metadata from URL
+  const fetchMetadataFromUrl = async (url: string) => {
+    if (!url) return null;
+    try {
+      // Using a simple approach - in production, you'd use a proper metadata API
+      const domain = new URL(url).hostname;
+      const logoUrl = `https://logo.clearbit.com/${domain}`;
+      return { logoUrl };
+    } catch {
+      return null;
+    }
+  };
+
   // Create/Update organization mutation
   const orgMutation = useMutation({
     mutationFn: async (orgData: Partial<AllianceOrganization>) => {
+      // Try to fetch logo from website
+      let logoUrl = orgData.logo_url;
+      if (orgData.website && !logoUrl) {
+        const metadata = await fetchMetadataFromUrl(orgData.website);
+        if (metadata?.logoUrl) {
+          logoUrl = metadata.logoUrl;
+        }
+      }
+
       if (editingOrg) {
         const { error } = await supabase
           .from("alliance_organizations")
@@ -102,6 +143,11 @@ export function AllianceModule() {
             website: orgData.website,
             industry: orgData.industry,
             status: orgData.status,
+            organization_type: orgData.organization_type,
+            logo_url: logoUrl,
+            address: orgData.address,
+            solutions: orgData.solutions,
+            services: orgData.services,
           })
           .eq("id", editingOrg.id);
         if (error) throw error;
@@ -116,6 +162,11 @@ export function AllianceModule() {
             industry: orgData.industry,
             status: orgData.status || "active",
             created_by: user?.id!,
+            organization_type: orgData.organization_type,
+            logo_url: logoUrl,
+            address: orgData.address,
+            solutions: orgData.solutions,
+            services: orgData.services,
           });
         if (error) throw error;
       }
@@ -172,6 +223,7 @@ export function AllianceModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
       setIsUserDialogOpen(false);
+      setIsAddUserToOrgOpen(false);
       setEditingUser(null);
       toast.success(editingUser ? "User updated" : "User created");
     },
@@ -209,24 +261,40 @@ export function AllianceModule() {
     },
   });
 
-  const filteredOrgs = organizations.filter(org =>
-    org.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOrgs = organizations.filter(org => {
+    const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = orgTypeFilter === "all" || org.organization_type === orgTypeFilter;
+    return matchesSearch && matchesType;
+  });
 
   const filteredUsers = allianceUsers.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getOrgUsers = (orgId: string) => allianceUsers.filter(u => u.organization_id === orgId);
+
   const handleOrgSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const orgType = formData.get("organization_type") as string;
+    
+    // Parse solutions and services for OEM type
+    const solutionsInput = formData.get("solutions") as string;
+    const servicesInput = formData.get("services") as string;
+    const solutions = solutionsInput ? solutionsInput.split(",").map(s => s.trim()).filter(Boolean) : null;
+    const services = servicesInput ? servicesInput.split(",").map(s => s.trim()).filter(Boolean) : null;
+
     orgMutation.mutate({
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       website: formData.get("website") as string,
       industry: formData.get("industry") as string,
       status: formData.get("status") as string,
+      organization_type: orgType === "none" ? null : orgType,
+      address: formData.get("address") as string,
+      solutions,
+      services,
     });
   };
 
@@ -244,6 +312,37 @@ export function AllianceModule() {
       status: formData.get("status") as string,
       notes: formData.get("notes") as string,
     });
+  };
+
+  const handleAddUserToOrg = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedOrg) return;
+    const formData = new FormData(e.currentTarget);
+    userMutation.mutate({
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      location: formData.get("location") as string,
+      role: formData.get("role") as string,
+      organization_id: selectedOrg.id,
+      status: "active",
+    });
+  };
+
+  const getOrgTypeLabel = (type: string | null) => {
+    const found = ORGANIZATION_TYPES.find(t => t.value === type);
+    return found?.label || type || "Unknown";
+  };
+
+  const getOrgTypeBadgeVariant = (type: string | null): "default" | "secondary" | "outline" | "destructive" => {
+    switch (type) {
+      case "customer": return "default";
+      case "distributor": return "secondary";
+      case "oem": return "outline";
+      case "partner": return "default";
+      case "location": return "secondary";
+      default: return "outline";
+    }
   };
 
   return (
@@ -403,43 +502,60 @@ export function AllianceModule() {
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No users found</TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map(user => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email || "-"}</TableCell>
-                      <TableCell>{user.phone || "-"}</TableCell>
-                      <TableCell>{user.location || "-"}</TableCell>
-                      <TableCell>{user.role || "-"}</TableCell>
-                      <TableCell>{(user.organization as any)?.name || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.status === "active" ? "default" : "secondary"}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingUser(user);
-                              setIsUserDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => deleteUserMutation.mutate(user.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredUsers.map(user => {
+                    const org = organizations.find(o => o.id === user.organization_id);
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell>{user.email || "-"}</TableCell>
+                        <TableCell>{user.phone || "-"}</TableCell>
+                        <TableCell>{user.location || "-"}</TableCell>
+                        <TableCell>{user.role || "-"}</TableCell>
+                        <TableCell>
+                          {org ? (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0"
+                              onClick={() => {
+                                setSelectedOrg(org);
+                                setIsOrgSheetOpen(true);
+                              }}
+                            >
+                              {org.name}
+                            </Button>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.status === "active" ? "default" : "secondary"}>
+                            {user.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingUser(user);
+                                setIsUserDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => deleteUserMutation.mutate(user.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -447,62 +563,121 @@ export function AllianceModule() {
         </TabsContent>
 
         <TabsContent value="organizations" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-4 flex-wrap">
             <h3 className="text-lg font-semibold">Alliance Organizations ({filteredOrgs.length})</h3>
-            <Dialog open={isOrgDialogOpen} onOpenChange={(open) => {
-              setIsOrgDialogOpen(open);
-              if (!open) setEditingOrg(null);
-            }}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Organization
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{editingOrg ? "Edit Organization" : "Add New Organization"}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleOrgSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="org-name">Name *</Label>
-                    <Input id="org-name" name="name" required defaultValue={editingOrg?.name} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="org-description">Description</Label>
-                    <Textarea id="org-description" name="description" defaultValue={editingOrg?.description || ""} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="org-website">Website</Label>
-                      <Input id="org-website" name="website" defaultValue={editingOrg?.website || ""} />
+            <div className="flex items-center gap-3">
+              <Select value={orgTypeFilter} onValueChange={setOrgTypeFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {ORGANIZATION_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Dialog open={isOrgDialogOpen} onOpenChange={(open) => {
+                setIsOrgDialogOpen(open);
+                if (!open) setEditingOrg(null);
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Organization
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingOrg ? "Edit Organization" : "Add New Organization"}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleOrgSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="org-name">Name *</Label>
+                        <Input id="org-name" name="name" required defaultValue={editingOrg?.name} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="org-type">Organization Type</Label>
+                        <Select name="organization_type" defaultValue={editingOrg?.organization_type || "none"}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {ORGANIZATION_TYPES.map(type => (
+                              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="org-industry">Industry</Label>
-                      <Input id="org-industry" name="industry" defaultValue={editingOrg?.industry || ""} />
+                      <Label htmlFor="org-description">Description</Label>
+                      <Textarea id="org-description" name="description" defaultValue={editingOrg?.description || ""} />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="org-status">Status</Label>
-                    <Select name="status" defaultValue={editingOrg?.status || "active"}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={orgMutation.isPending}>
-                      {orgMutation.isPending ? "Saving..." : "Save"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="org-website">Website (Logo will be fetched automatically)</Label>
+                        <div className="flex gap-2">
+                          <Input id="org-website" name="website" defaultValue={editingOrg?.website || ""} placeholder="https://example.com" />
+                          <Globe className="h-4 w-4 text-muted-foreground mt-3" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="org-industry">Industry</Label>
+                        <Input id="org-industry" name="industry" defaultValue={editingOrg?.industry || ""} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="org-address">Address</Label>
+                      <Textarea id="org-address" name="address" defaultValue={editingOrg?.address || ""} rows={2} />
+                    </div>
+                    
+                    {/* Solutions & Services for OEM type */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="org-solutions">Solutions (comma-separated)</Label>
+                        <Input 
+                          id="org-solutions" 
+                          name="solutions" 
+                          defaultValue={editingOrg?.solutions?.join(", ") || ""} 
+                          placeholder="Solution 1, Solution 2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="org-services">Services (comma-separated)</Label>
+                        <Input 
+                          id="org-services" 
+                          name="services" 
+                          defaultValue={editingOrg?.services?.join(", ") || ""} 
+                          placeholder="Service 1, Service 2"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="org-status">Status</Label>
+                      <Select name="status" defaultValue={editingOrg?.status || "active"}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancel</Button>
+                      <Button type="submit" disabled={orgMutation.isPending}>
+                        {orgMutation.isPending ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -511,61 +686,266 @@ export function AllianceModule() {
             ) : filteredOrgs.length === 0 ? (
               <p className="text-muted-foreground col-span-full text-center py-8">No organizations found</p>
             ) : (
-              filteredOrgs.map(org => (
-                <Card key={org.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{org.name}</CardTitle>
-                        <CardDescription>{org.industry || "No industry"}</CardDescription>
+              filteredOrgs.map(org => {
+                const orgUsers = getOrgUsers(org.id);
+                return (
+                  <Card 
+                    key={org.id} 
+                    className="cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => {
+                      setSelectedOrg(org);
+                      setIsOrgSheetOpen(true);
+                    }}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={org.logo_url || ""} alt={org.name} />
+                            <AvatarFallback>{org.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <CardTitle className="text-lg">{org.name}</CardTitle>
+                            <CardDescription>{org.industry || "No industry"}</CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge variant={getOrgTypeBadgeVariant(org.organization_type)}>
+                            {getOrgTypeLabel(org.organization_type)}
+                          </Badge>
+                          <Badge variant={org.status === "active" ? "default" : "secondary"} className="text-xs">
+                            {org.status}
+                          </Badge>
+                        </div>
                       </div>
-                      <Badge variant={org.status === "active" ? "default" : "secondary"}>{org.status}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {org.description && (
-                      <p className="text-sm text-muted-foreground">{org.description}</p>
-                    )}
-                    {org.website && (
-                      <p className="text-sm">
-                        <span className="text-muted-foreground">Website:</span>{" "}
-                        <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          {org.website}
-                        </a>
-                      </p>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      {allianceUsers.filter(u => u.organization_id === org.id).length} user(s)
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingOrg(org);
-                          setIsOrgDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => deleteOrgMutation.mutate(org.id)}
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {org.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{org.description}</p>
+                      )}
+                      {org.address && (
+                        <p className="text-sm text-muted-foreground line-clamp-1">{org.address}</p>
+                      )}
+                      {org.website && (
+                        <p className="text-sm flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          <a 
+                            href={org.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-primary hover:underline truncate"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {org.website.replace(/^https?:\/\//, "")}
+                          </a>
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {orgUsers.length} user(s)
+                        </p>
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingOrg(org);
+                              setIsOrgDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => deleteOrgMutation.mutate(org.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Organization Details Sheet */}
+      <Sheet open={isOrgSheetOpen} onOpenChange={setIsOrgSheetOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {selectedOrg && (
+            <>
+              <SheetHeader className="mb-6">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={selectedOrg.logo_url || ""} alt={selectedOrg.name} />
+                    <AvatarFallback className="text-lg">{selectedOrg.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <SheetTitle className="text-xl">{selectedOrg.name}</SheetTitle>
+                    <div className="flex gap-2 mt-1">
+                      <Badge variant={getOrgTypeBadgeVariant(selectedOrg.organization_type)}>
+                        {getOrgTypeLabel(selectedOrg.organization_type)}
+                      </Badge>
+                      <Badge variant={selectedOrg.status === "active" ? "default" : "secondary"}>
+                        {selectedOrg.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="space-y-6">
+                {selectedOrg.description && (
+                  <div>
+                    <Label className="text-muted-foreground text-sm">Description</Label>
+                    <p className="mt-1">{selectedOrg.description}</p>
+                  </div>
+                )}
+
+                {selectedOrg.address && (
+                  <div>
+                    <Label className="text-muted-foreground text-sm">Address</Label>
+                    <p className="mt-1">{selectedOrg.address}</p>
+                  </div>
+                )}
+
+                {selectedOrg.website && (
+                  <div>
+                    <Label className="text-muted-foreground text-sm">Website</Label>
+                    <a 
+                      href={selectedOrg.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-primary hover:underline flex items-center gap-1 mt-1"
+                    >
+                      {selectedOrg.website} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+
+                {selectedOrg.industry && (
+                  <div>
+                    <Label className="text-muted-foreground text-sm">Industry</Label>
+                    <p className="mt-1">{selectedOrg.industry}</p>
+                  </div>
+                )}
+
+                {selectedOrg.solutions && selectedOrg.solutions.length > 0 && (
+                  <div>
+                    <Label className="text-muted-foreground text-sm">Solutions</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedOrg.solutions.map((s, i) => (
+                        <Badge key={i} variant="outline">{s}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedOrg.services && selectedOrg.services.length > 0 && (
+                  <div>
+                    <Label className="text-muted-foreground text-sm">Services</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedOrg.services.map((s, i) => (
+                        <Badge key={i} variant="outline">{s}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Users Section */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-muted-foreground text-sm">Users ({getOrgUsers(selectedOrg.id).length})</Label>
+                    <Dialog open={isAddUserToOrgOpen} onOpenChange={setIsAddUserToOrgOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline" className="gap-1">
+                          <UserPlus className="h-3 w-3" />
+                          Add User
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add User to {selectedOrg.name}</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleAddUserToOrg} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="new-user-name">Name *</Label>
+                              <Input id="new-user-name" name="name" required />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="new-user-email">Email</Label>
+                              <Input id="new-user-email" name="email" type="email" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="new-user-phone">Phone</Label>
+                              <Input id="new-user-phone" name="phone" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="new-user-location">Location</Label>
+                              <Input id="new-user-location" name="location" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="new-user-role">Role</Label>
+                            <Input id="new-user-role" name="role" />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setIsAddUserToOrgOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={userMutation.isPending}>
+                              {userMutation.isPending ? "Adding..." : "Add User"}
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  
+                  {getOrgUsers(selectedOrg.id).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">No users in this organization</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {getOrgUsers(selectedOrg.id).map(user => (
+                        <div key={user.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-sm text-muted-foreground">{user.role || "No role"}</p>
+                            {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={user.status === "active" ? "default" : "secondary"} className="text-xs">
+                              {user.status}
+                            </Badge>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setEditingUser(user);
+                                setIsUserDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -63,6 +63,7 @@ interface Distributor {
   pan_number: string | null;
   notes: string | null;
   status: string | null;
+  oem_brand_name: string | null;
   created_at: string;
 }
 
@@ -83,6 +84,7 @@ const initialFormState = {
   pan_number: "",
   notes: "",
   status: "active",
+  oem_brand_name: "",
 };
 
 export function DistributorsManagement() {
@@ -140,6 +142,7 @@ export function DistributorsManagement() {
       pan_number: distributor.pan_number || "",
       notes: distributor.notes || "",
       status: distributor.status || "active",
+      oem_brand_name: distributor.oem_brand_name || "",
     });
     setDialogOpen(true);
   };
@@ -169,6 +172,7 @@ export function DistributorsManagement() {
       pan_number: form.pan_number || null,
       notes: form.notes || null,
       status: form.status || "active",
+      oem_brand_name: form.oem_brand_name || null,
     };
 
     if (editingDistributor) {
@@ -277,6 +281,11 @@ export function DistributorsManagement() {
                         >
                           {distributor.status}
                         </Badge>
+                        {distributor.oem_brand_name && (
+                          <Badge variant="secondary" className="text-xs">
+                            OEM: {distributor.oem_brand_name}
+                          </Badge>
+                        )}
                       </div>
                       {distributor.contact_name && (
                         <p className="text-sm text-muted-foreground">{distributor.contact_name}</p>
@@ -452,6 +461,14 @@ export function DistributorsManagement() {
               <Input
                 value={form.pan_number}
                 onChange={(e) => setForm((prev) => ({ ...prev, pan_number: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>OEM Brand Name</Label>
+              <Input
+                value={form.oem_brand_name}
+                onChange={(e) => setForm((prev) => ({ ...prev, oem_brand_name: e.target.value }))}
+                placeholder="e.g., Cisco, Microsoft"
               />
             </div>
             <div className="space-y-2">
