@@ -197,8 +197,8 @@ const superAdminItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess } = useAuth();
-  const { currentTenant, tenantMemberships, isSuperAdmin } = useTenant();
+  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess, isSuperAdmin } = useAuth();
+  const { currentTenant, tenantMemberships } = useTenant();
   const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
   const totalEventCount = eventCounts.birthdayCount + eventCounts.anniversaryCount + eventCounts.orgEventCount + eventCounts.achievementCount + eventCounts.performanceCount;
@@ -241,8 +241,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const getNavItems = (): NavItem[] => {
     const items: NavItem[] = [];
 
-    // Admin mode shows ALL modules
-    if (portalMode === "admin") {
+    // Admin mode OR super admin shows ALL modules
+    if (portalMode === "admin" || isSuperAdmin) {
       // Dashboard first
       items.push({
         id: "dashboard",
