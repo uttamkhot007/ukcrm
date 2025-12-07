@@ -17,8 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,138 +26,23 @@ import {
   Plus, 
   User, 
   Building2, 
-  Lightbulb, 
-  Shield, 
-  ShieldCheck, 
-  Wrench,
   Loader2,
-  Globe
 } from "lucide-react";
+import { OrganizationFormFields, useOrganizationFormState } from "@/components/shared/OrganizationFormFields";
 
 const QUICK_ADD_OPTIONS = [
   { id: "contact", label: "Contact", icon: User },
   { id: "organization", label: "Organization", icon: Building2 },
 ];
 
-const ORGANIZATION_TYPES = [
-  { value: "customer", label: "Customer" },
-  { value: "distributor", label: "Distributor" },
-  { value: "oem", label: "OEM" },
-  { value: "partner", label: "Partner" },
-  { value: "location", label: "Location" },
-];
-
-const INDUSTRY_TYPES = [
-  { value: "banking", label: "Banking" },
-  { value: "financial_services", label: "Financial Services" },
-  { value: "government", label: "Government" },
-  { value: "ites", label: "ITES" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "pharma", label: "Pharma" },
-  { value: "healthcare", label: "Healthcare Management" },
-  { value: "hospitals", label: "Hospitals" },
-  { value: "education", label: "Education" },
-  { value: "retail", label: "Retail" },
-  { value: "telecom", label: "Telecom" },
-  { value: "energy", label: "Energy & Utilities" },
-  { value: "logistics", label: "Logistics & Transportation" },
-  { value: "media", label: "Media & Entertainment" },
-  { value: "real_estate", label: "Real Estate" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "other", label: "Other" },
-];
-
 export function SalesQuickActions() {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
-  const [orgWebsite, setOrgWebsite] = useState("");
-  const [orgName, setOrgName] = useState("");
-  const [orgLogo, setOrgLogo] = useState("");
-  const [orgAddress, setOrgAddress] = useState("");
-  const [orgIndustry, setOrgIndustry] = useState("");
-  const [isFetchingOrg, setIsFetchingOrg] = useState(false);
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  // Fetch offerings for dropdowns
-  const { data: solutions = [] } = useQuery({
-    queryKey: ["offerings", "solutions", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data } = await supabase.from("offerings_solutions").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
-      return data || [];
-    },
-    enabled: !!currentTenant,
-  });
-
-  const { data: offensiveServices = [] } = useQuery({
-    queryKey: ["offerings", "offensive_security", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data } = await supabase.from("offerings_offensive_security").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
-      return data || [];
-    },
-    enabled: !!currentTenant,
-  });
-
-  const { data: managedServices = [] } = useQuery({
-    queryKey: ["offerings", "managed_security", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data } = await supabase.from("offerings_managed_security").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
-      return data || [];
-    },
-    enabled: !!currentTenant,
-  });
-
-  const { data: professionalServices = [] } = useQuery({
-    queryKey: ["offerings", "professional_services", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data } = await supabase.from("offerings_professional_services").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
-      return data || [];
-    },
-    enabled: !!currentTenant,
-  });
-
-  // Fetch organization details from URL using Clearbit
-  const fetchOrgFromUrl = async () => {
-    if (!orgWebsite) return;
-    setIsFetchingOrg(true);
-    try {
-      let url = orgWebsite;
-      if (!url.startsWith("http")) {
-        url = "https://" + url;
-      }
-      
-      const domain = new URL(url).hostname.replace("www.", "");
-      const companyName = domain.split(".")[0];
-      const formattedName = companyName.charAt(0).toUpperCase() + companyName.slice(1);
-      
-      setOrgName(formattedName);
-      setOrgLogo(`https://logo.clearbit.com/${domain}`);
-      
-      // Try to fetch company data from Clearbit
-      try {
-        const response = await fetch(`https://company.clearbit.com/v2/companies/find?domain=${domain}`, {
-          headers: { 'Authorization': 'Bearer sk_clearbit_placeholder' }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.category?.industry) setOrgIndustry(data.category.industry.toLowerCase().replace(/\s+/g, '_'));
-          if (data.geo?.streetAddress) setOrgAddress(`${data.geo.streetAddress}, ${data.geo.city}, ${data.geo.country}`);
-        }
-      } catch {
-        // Clearbit API might not be available, continue with basic info
-      }
-      
-      toast.success("Organization details fetched from URL");
-    } catch (error) {
-      toast.error("Failed to parse URL");
-    } finally {
-      setIsFetchingOrg(false);
-    }
-  };
+  
+  // Use shared organization form state
+  const { formData: orgFormData, updateFormData: updateOrgFormData, resetFormData: resetOrgForm } = useOrganizationFormState();
 
   // Contact mutation
   const contactMutation = useMutation({
@@ -186,7 +70,17 @@ export function SalesQuickActions() {
 
   // Organization mutation
   const orgMutation = useMutation({
-    mutationFn: async (data: { name: string; organization_type?: string; website?: string; industry?: string; address?: string; logo_url?: string }) => {
+    mutationFn: async (data: {
+      name: string;
+      organization_type?: string;
+      website?: string;
+      industry?: string;
+      address?: string;
+      logo_url?: string;
+      description?: string;
+      solutions?: string[] | null;
+      services?: string[] | null;
+    }) => {
       const { error } = await supabase.from("alliance_organizations").insert({
         tenant_id: currentTenant?.id,
         created_by: user?.id!,
@@ -196,6 +90,9 @@ export function SalesQuickActions() {
         industry: data.industry || null,
         address: data.address || null,
         logo_url: data.logo_url || null,
+        description: data.description || null,
+        solutions: data.solutions,
+        services: data.services,
         status: "active",
       });
       if (error) throw error;
@@ -211,52 +108,6 @@ export function SalesQuickActions() {
     },
   });
 
-  // Offerings mutation - saves to actual offerings tables
-  const offeringMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string; type: string }) => {
-      const insertData = {
-        tenant_id: currentTenant?.id,
-        created_by: user?.id!,
-        name: data.name,
-        description: data.description || null,
-        status: "active",
-      };
-
-      let error;
-      switch (data.type) {
-        case "solution":
-          ({ error } = await supabase.from("offerings_solutions").insert({ ...insertData, category: null }));
-          break;
-        case "offensive_security":
-          ({ error } = await supabase.from("offerings_offensive_security").insert({ ...insertData, service_type: null }));
-          break;
-        case "managed_security":
-          ({ error } = await supabase.from("offerings_managed_security").insert({ ...insertData, service_type: null }));
-          break;
-        case "professional_services":
-          ({ error } = await supabase.from("offerings_professional_services").insert({ ...insertData, service_type: null }));
-          break;
-      }
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["offerings", variables.type] });
-      toast.success("Offering created successfully");
-      setActiveDialog(null);
-    },
-    onError: (error) => {
-      toast.error("Failed to create offering: " + error.message);
-    },
-  });
-
-  const resetOrgForm = () => {
-    setOrgWebsite("");
-    setOrgName("");
-    setOrgLogo("");
-    setOrgAddress("");
-    setOrgIndustry("");
-  };
-
   const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -271,37 +122,27 @@ export function SalesQuickActions() {
 
   const handleOrgSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const orgType = formData.get("organization_type") as string;
-    const industryValue = formData.get("industry") as string;
+    
+    const solutions = orgFormData.solutions ? orgFormData.solutions.split(",").map(s => s.trim()).filter(Boolean) : null;
+    const services = orgFormData.services ? orgFormData.services.split(",").map(s => s.trim()).filter(Boolean) : null;
+    
     orgMutation.mutate({
-      name: orgName || formData.get("name") as string,
-      organization_type: orgType === "none" ? undefined : orgType,
-      website: orgWebsite || formData.get("website") as string,
-      industry: industryValue === "none" ? undefined : industryValue,
-      address: orgAddress || formData.get("address") as string,
-      logo_url: orgLogo,
-    });
-  };
-
-  const handleOfferingSubmit = (e: React.FormEvent<HTMLFormElement>, type: string) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    offeringMutation.mutate({
-      name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      type,
+      name: orgFormData.name,
+      organization_type: orgFormData.organizationType === "none" ? undefined : orgFormData.organizationType,
+      website: orgFormData.website,
+      industry: orgFormData.industry === "none" ? undefined : orgFormData.industry,
+      address: orgFormData.address,
+      logo_url: orgFormData.logoUrl,
+      description: orgFormData.description,
+      solutions,
+      services,
     });
   };
 
   const getDialogTitle = () => {
     switch (activeDialog) {
-      case "contact": return "Quick Add Contact";
-      case "organization": return "Quick Add Organization";
-      case "solution": return "Quick Add Solution";
-      case "offensive_security": return "Quick Add Offensive Security Service";
-      case "managed_security": return "Quick Add Managed Security Service";
-      case "professional_services": return "Quick Add Professional Services";
+      case "contact": return "Add New Contact";
+      case "organization": return "Add New Organization";
       default: return "Quick Add";
     }
   };
@@ -387,99 +228,27 @@ export function SalesQuickActions() {
         </DialogContent>
       </Dialog>
 
-      {/* Organization Dialog */}
+      {/* Organization Dialog - uses shared form */}
       <Dialog open={activeDialog === "organization"} onOpenChange={(open) => {
         if (!open) {
           setActiveDialog(null);
           resetOrgForm();
         }
       }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{getDialogTitle()}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleOrgSubmit} className="space-y-4">
-            {/* URL Fetch Section */}
-            <div className="space-y-2">
-              <Label htmlFor="org-website-fetch">Fetch from URL</Label>
-              <div className="flex gap-2">
-                <Input 
-                  id="org-website-fetch" 
-                  value={orgWebsite}
-                  onChange={(e) => setOrgWebsite(e.target.value)}
-                  placeholder="https://example.com" 
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={fetchOrgFromUrl}
-                  disabled={isFetchingOrg || !orgWebsite}
-                >
-                  {isFetchingOrg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-
-            {/* Show fetched logo */}
-            {orgLogo && (
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
-                <img src={orgLogo} alt="Logo" className="w-10 h-10 rounded object-contain bg-white" onError={() => setOrgLogo("")} />
-                <span className="text-sm text-muted-foreground">Logo fetched from website</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="org-name">Name *</Label>
-                <Input 
-                  id="org-name" 
-                  name="name" 
-                  required 
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="org-type">Type</Label>
-                <Select name="organization_type" defaultValue="none">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {ORGANIZATION_TYPES.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="org-industry">Industry</Label>
-              <Select name="industry" value={orgIndustry || "none"} onValueChange={setOrgIndustry}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Select Industry</SelectItem>
-                  {INDUSTRY_TYPES.map(type => (
-                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="org-address">Address</Label>
-              <Textarea 
-                id="org-address" 
-                name="address" 
-                rows={2}
-                value={orgAddress}
-                onChange={(e) => setOrgAddress(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => { setActiveDialog(null); resetOrgForm(); }}>Cancel</Button>
+            <OrganizationFormFields 
+              formData={orgFormData}
+              onChange={updateOrgFormData}
+              showExtendedFields={true}
+            />
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={() => { setActiveDialog(null); resetOrgForm(); }}>
+                Cancel
+              </Button>
               <Button type="submit" disabled={orgMutation.isPending}>
                 {orgMutation.isPending ? "Creating..." : "Create Organization"}
               </Button>
@@ -487,33 +256,6 @@ export function SalesQuickActions() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Solution/Service Dialogs */}
-      {["solution", "offensive_security", "managed_security", "professional_services"].map(type => (
-        <Dialog key={type} open={activeDialog === type} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{getDialogTitle()}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={(e) => handleOfferingSubmit(e, type)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor={`${type}-name`}>Name *</Label>
-                <Input id={`${type}-name`} name="name" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`${type}-description`}>Description</Label>
-                <Textarea id={`${type}-description`} name="description" rows={3} />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setActiveDialog(null)}>Cancel</Button>
-                <Button type="submit" disabled={offeringMutation.isPending}>
-                  {offeringMutation.isPending ? "Creating..." : "Create"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      ))}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
@@ -16,35 +16,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2, Globe, UserPlus, ExternalLink, Loader2 } from "lucide-react";
-
-const ORGANIZATION_TYPES = [
-  { value: "customer", label: "Customer" },
-  { value: "distributor", label: "Distributor" },
-  { value: "oem", label: "OEM" },
-  { value: "partner", label: "Partner" },
-  { value: "location", label: "Location" },
-];
-
-const INDUSTRY_TYPES = [
-  { value: "banking", label: "Banking" },
-  { value: "financial_services", label: "Financial Services" },
-  { value: "government", label: "Government" },
-  { value: "ites", label: "ITES" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "pharma", label: "Pharma" },
-  { value: "healthcare", label: "Healthcare Management" },
-  { value: "hospitals", label: "Hospitals" },
-  { value: "education", label: "Education" },
-  { value: "retail", label: "Retail" },
-  { value: "telecom", label: "Telecom" },
-  { value: "energy", label: "Energy & Utilities" },
-  { value: "logistics", label: "Logistics & Transportation" },
-  { value: "media", label: "Media & Entertainment" },
-  { value: "real_estate", label: "Real Estate" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "other", label: "Other" },
-];
+import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink } from "lucide-react";
+import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
 
 interface AllianceOrganization {
   id: string;
@@ -93,17 +66,40 @@ export function AllianceModule() {
   const [isAddUserToOrgOpen, setIsAddUserToOrgOpen] = useState(false);
   const [orgTypeFilter, setOrgTypeFilter] = useState<string>("all");
   
-  // URL fetch state for organizations
-  const [orgFormUrl, setOrgFormUrl] = useState("");
-  const [orgFormName, setOrgFormName] = useState("");
-  const [orgFormLogo, setOrgFormLogo] = useState("");
-  const [orgFormAddress, setOrgFormAddress] = useState("");
-  const [orgFormIndustry, setOrgFormIndustry] = useState("");
-  const [isFetchingOrg, setIsFetchingOrg] = useState(false);
+  // Use shared organization form state
+  const { formData: orgFormData, updateFormData: updateOrgFormData, resetFormData: resetOrgFormData, setFormData: setOrgFormData } = useOrganizationFormState();
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Update form when editing organization changes
+  useEffect(() => {
+    if (editingOrg) {
+      setOrgFormData({
+        name: editingOrg.name || "",
+        website: editingOrg.website || "",
+        logoUrl: editingOrg.logo_url || "",
+        organizationType: editingOrg.organization_type || "none",
+        industry: editingOrg.industry || "none",
+        description: editingOrg.description || "",
+        address: editingOrg.address || "",
+        solutions: editingOrg.solutions?.join(", ") || "",
+        services: editingOrg.services?.join(", ") || "",
+        status: editingOrg.status || "active",
+        employeeCount: "",
+        annualRevenue: "",
+        foundedYear: "",
+        linkedinUrl: "",
+        twitterUrl: "",
+        phone: "",
+        email: "",
+        spfStatus: "",
+        dmarcStatus: "",
+        dkimStatus: "",
+      });
+    }
+  }, [editingOrg, setOrgFormData]);
 
   // Fetch organizations
   const { data: organizations = [], isLoading: orgsLoading } = useQuery({
@@ -302,75 +298,26 @@ export function AllianceModule() {
 
   const getOrgUsers = (orgId: string) => allianceUsers.filter(u => u.organization_id === orgId);
 
-  // Fetch organization details from URL using Clearbit
-  const fetchOrgFromUrl = async () => {
-    if (!orgFormUrl) return;
-    setIsFetchingOrg(true);
-    try {
-      let url = orgFormUrl;
-      if (!url.startsWith("http")) {
-        url = "https://" + url;
-      }
-      
-      const domain = new URL(url).hostname.replace("www.", "");
-      const companyName = domain.split(".")[0];
-      const formattedName = companyName.charAt(0).toUpperCase() + companyName.slice(1);
-      
-      setOrgFormName(formattedName);
-      setOrgFormLogo(`https://logo.clearbit.com/${domain}`);
-      
-      // Try to fetch company data from Clearbit
-      try {
-        const response = await fetch(`https://company.clearbit.com/v2/companies/find?domain=${domain}`, {
-          headers: { 'Authorization': 'Bearer sk_clearbit_placeholder' }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.category?.industry) setOrgFormIndustry(data.category.industry.toLowerCase().replace(/\s+/g, '_'));
-          if (data.geo?.streetAddress) setOrgFormAddress(`${data.geo.streetAddress}, ${data.geo.city}, ${data.geo.country}`);
-        }
-      } catch {
-        // Clearbit API might not be available, continue with basic info
-      }
-      
-      toast.success("Organization details fetched from URL");
-    } catch (error) {
-      toast.error("Failed to parse URL");
-    } finally {
-      setIsFetchingOrg(false);
-    }
-  };
-
   const resetOrgForm = () => {
-    setOrgFormUrl("");
-    setOrgFormName("");
-    setOrgFormLogo("");
-    setOrgFormAddress("");
-    setOrgFormIndustry("");
+    resetOrgFormData();
     setEditingOrg(null);
   };
 
   const handleOrgSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const orgType = formData.get("organization_type") as string;
-    const industryValue = formData.get("industry") as string;
     
-    // Parse solutions and services for OEM type
-    const solutionsInput = formData.get("solutions") as string;
-    const servicesInput = formData.get("services") as string;
-    const solutions = solutionsInput ? solutionsInput.split(",").map(s => s.trim()).filter(Boolean) : null;
-    const services = servicesInput ? servicesInput.split(",").map(s => s.trim()).filter(Boolean) : null;
+    const solutions = orgFormData.solutions ? orgFormData.solutions.split(",").map(s => s.trim()).filter(Boolean) : null;
+    const services = orgFormData.services ? orgFormData.services.split(",").map(s => s.trim()).filter(Boolean) : null;
 
     orgMutation.mutate({
-      name: orgFormName || formData.get("name") as string,
-      description: formData.get("description") as string,
-      website: orgFormUrl || formData.get("website") as string,
-      industry: industryValue === "none" ? null : industryValue,
-      status: formData.get("status") as string,
-      organization_type: orgType === "none" ? null : orgType,
-      address: orgFormAddress || formData.get("address") as string,
-      logo_url: orgFormLogo,
+      name: orgFormData.name,
+      description: orgFormData.description,
+      website: orgFormData.website,
+      industry: orgFormData.industry === "none" ? null : orgFormData.industry,
+      status: orgFormData.status,
+      organization_type: orgFormData.organizationType === "none" ? null : orgFormData.organizationType,
+      address: orgFormData.address,
+      logo_url: orgFormData.logoUrl,
       solutions,
       services,
     });
@@ -670,130 +617,13 @@ export function AllianceModule() {
                     <DialogTitle>{editingOrg ? "Edit Organization" : "Add New Organization"}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleOrgSubmit} className="space-y-4">
-                    {/* URL Fetch Section */}
-                    <div className="space-y-2">
-                      <Label htmlFor="org-website-fetch">Fetch Organization from URL</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          id="org-website-fetch" 
-                          value={orgFormUrl || editingOrg?.website || ""}
-                          onChange={(e) => setOrgFormUrl(e.target.value)}
-                          placeholder="https://example.com" 
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={fetchOrgFromUrl}
-                          disabled={isFetchingOrg || !orgFormUrl}
-                        >
-                          {isFetchingOrg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Show fetched logo */}
-                    {(orgFormLogo || editingOrg?.logo_url) && (
-                      <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
-                        <img 
-                          src={orgFormLogo || editingOrg?.logo_url || ""} 
-                          alt="Logo" 
-                          className="w-10 h-10 rounded object-contain bg-white" 
-                          onError={(e) => { e.currentTarget.style.display = 'none'; setOrgFormLogo(""); }}
-                        />
-                        <span className="text-sm text-muted-foreground">Logo fetched from website</span>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="org-name">Name *</Label>
-                        <Input 
-                          id="org-name" 
-                          name="name" 
-                          required 
-                          value={orgFormName || editingOrg?.name || ""}
-                          onChange={(e) => setOrgFormName(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="org-type">Organization Type</Label>
-                        <Select name="organization_type" defaultValue={editingOrg?.organization_type || "none"}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            {ORGANIZATION_TYPES.map(type => (
-                              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="org-description">Description</Label>
-                      <Textarea id="org-description" name="description" defaultValue={editingOrg?.description || ""} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="org-industry">Industry</Label>
-                      <Select name="industry" value={orgFormIndustry || editingOrg?.industry || "none"} onValueChange={setOrgFormIndustry}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Select Industry</SelectItem>
-                          {INDUSTRY_TYPES.map(type => (
-                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="org-address">Address</Label>
-                      <Textarea 
-                        id="org-address" 
-                        name="address" 
-                        rows={2}
-                        value={orgFormAddress || editingOrg?.address || ""}
-                        onChange={(e) => setOrgFormAddress(e.target.value)}
-                      />
-                    </div>
-                    
-                    {/* Solutions & Services for OEM type */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="org-solutions">Solutions (comma-separated)</Label>
-                        <Input 
-                          id="org-solutions" 
-                          name="solutions" 
-                          defaultValue={editingOrg?.solutions?.join(", ") || ""} 
-                          placeholder="Solution 1, Solution 2"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="org-services">Services (comma-separated)</Label>
-                        <Input 
-                          id="org-services" 
-                          name="services" 
-                          defaultValue={editingOrg?.services?.join(", ") || ""} 
-                          placeholder="Service 1, Service 2"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="org-status">Status</Label>
-                      <Select name="status" defaultValue={editingOrg?.status || "active"}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end gap-2">
+                    <OrganizationFormFields 
+                      formData={orgFormData}
+                      onChange={updateOrgFormData}
+                      showExtendedFields={true}
+                      isEditing={!!editingOrg}
+                    />
+                    <div className="flex justify-end gap-2 pt-4 border-t">
                       <Button type="button" variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancel</Button>
                       <Button type="submit" disabled={orgMutation.isPending}>
                         {orgMutation.isPending ? "Saving..." : "Save"}
