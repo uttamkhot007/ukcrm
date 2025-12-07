@@ -195,10 +195,9 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // Build navigation based on portal mode and access level
   const getNavItems = (): NavItem[] => {
     const items: NavItem[] = [];
-    const isFullAccess = isAdminMode || (role === "admin" && portalMode === "admin") || (isManagement && portalMode !== "customer");
 
-    // Admin mode or Management see ALL modules
-    if (isFullAccess && portalMode !== "customer" && portalMode !== "workspace") {
+    // Admin mode shows ALL modules
+    if (portalMode === "admin") {
       // Dashboard first
       items.push({
         id: "dashboard",
