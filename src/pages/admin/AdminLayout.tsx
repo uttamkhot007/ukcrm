@@ -1,24 +1,27 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation, Outlet, NavLink } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { Loader2, Building2, Users, Puzzle, BookOpen, Shield, Activity } from "lucide-react";
-
-const adminTabs = [
-  { path: "/admin/organization", label: "Organization", icon: Building2 },
-  { path: "/admin/users", label: "Users", icon: Users },
-  { path: "/admin/integrations", label: "Integrations", icon: Puzzle },
-  { path: "/admin/documentation", label: "Documentation", icon: BookOpen },
-  { path: "/admin/portal", label: "Admin Portal", icon: Shield },
-  { path: "/admin/health", label: "Platform Health", icon: Activity },
-];
+import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
   const { user, isLoading, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Map route to module id for sidebar highlighting
+  const getActiveModule = () => {
+    const path = location.pathname;
+    if (path.includes("/admin/organization")) return "admin-center-organization";
+    if (path.includes("/admin/users")) return "admin-center-users";
+    if (path.includes("/admin/integrations")) return "admin-center-integrations";
+    if (path.includes("/admin/documentation")) return "admin-center-documentation";
+    if (path.includes("/admin/portal")) return "admin-center-portal";
+    if (path.includes("/admin/health")) return "admin-center-health";
+    return "admin-center";
+  };
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -46,42 +49,14 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar activeModule="admin-center" onModuleChange={() => {}} />
+      <Sidebar activeModule={getActiveModule()} onModuleChange={() => {}} />
       
       <div className={cn("transition-all duration-300 ml-64")}>
         <Header onAIToggle={() => {}} />
         
-        <div className="flex min-h-[calc(100vh-4rem)]">
-          {/* Admin Vertical Sub-Navigation */}
-          <aside className="w-56 border-r border-border bg-card/50 p-4 flex flex-col">
-            {/* Vertical Navigation */}
-            <nav className="flex flex-col gap-1 flex-1">
-              {adminTabs.map((tab) => {
-                const isActive = location.pathname === tab.path;
-                return (
-                  <NavLink
-                    key={tab.path}
-                    to={tab.path}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    {tab.label}
-                  </NavLink>
-                );
-              })}
-            </nav>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1 p-6 overflow-auto">
-            <Outlet />
-          </main>
-        </div>
+        <main className="p-6 overflow-auto min-h-[calc(100vh-4rem)]">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
