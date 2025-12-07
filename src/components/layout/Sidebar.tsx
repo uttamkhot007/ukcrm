@@ -183,7 +183,7 @@ const adminItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams } = useAuth();
+  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess } = useAuth();
   const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
   const totalEventCount = eventCounts.birthdayCount + eventCounts.anniversaryCount + eventCounts.orgEventCount + eventCounts.achievementCount + eventCounts.performanceCount;
@@ -201,8 +201,16 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   };
 
   // Helper function to check if user has access to specific team modules
-  const hasTeamAccess = (requiredTeams: TeamType[]): boolean => {
+  // Now also considers console access settings
+  const hasTeamAccess = (requiredTeams: TeamType[], moduleId?: string): boolean => {
     if (role === "admin") return true;
+    
+    // If console access is configured, use it for module access control
+    if (consoleAccess && moduleId) {
+      return consoleAccess.additional_modules.includes(moduleId);
+    }
+    
+    // Fallback to team-based access
     return teams.some(t => requiredTeams.includes(t));
   };
 
@@ -440,7 +448,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       });
 
       // Sales Portal - for sales, presales, inside_sales teams
-      if (hasTeamAccess(["sales", "presales", "inside_sales", "management"])) {
+      if (hasTeamAccess(["sales", "presales", "inside_sales", "management"], "sales")) {
         items.push({
           id: "sales",
           label: "Sales",
@@ -461,7 +469,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Solution Engineering - for presales team
-      if (hasTeamAccess(["presales", "sales", "management"])) {
+      if (hasTeamAccess(["presales", "sales", "management"], "presales")) {
         items.push({
           id: "presales",
           label: "Solution Engineering",
@@ -477,7 +485,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Inside Sales - specific to inside_sales team
-      if (hasTeamAccess(["inside_sales", "management"])) {
+      if (hasTeamAccess(["inside_sales", "management"], "inside_sales")) {
         items.push({
           id: "inside-sales",
           label: "Inside Sales",
@@ -487,7 +495,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // HR Module - for hr team
-      if (hasTeamAccess(["hr", "management"])) {
+      if (hasTeamAccess(["hr", "management"], "hr")) {
         items.push({
           id: "hr",
           label: "Human Resources",
@@ -504,7 +512,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Finance Module - for finance team
-      if (hasTeamAccess(["finance", "management"])) {
+      if (hasTeamAccess(["finance", "management"], "finance")) {
         items.push({
           id: "finance",
           label: "Finance",
@@ -520,7 +528,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Technical Module - for technical team
-      if (hasTeamAccess(["technical", "managed_services"])) {
+      if (hasTeamAccess(["technical", "managed_services"], "technical")) {
         items.push({
           id: "tech",
           label: "Technical",
@@ -535,7 +543,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Accounts Module - for accounts team
-      if (hasTeamAccess(["accounts", "finance", "management"])) {
+      if (hasTeamAccess(["accounts", "finance", "management"], "accounts")) {
         items.push({
           id: "accounts",
           label: "Accounts",
@@ -551,7 +559,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Marketing Module - for marketing team
-      if (hasTeamAccess(["marketing", "management"])) {
+      if (hasTeamAccess(["marketing", "management"], "marketing")) {
         items.push({
           id: "marketing",
           label: "Marketing",
@@ -565,7 +573,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       }
 
       // Renewals Module - for renewals team
-      if (hasTeamAccess(["renewals", "sales", "management"])) {
+      if (hasTeamAccess(["renewals", "sales", "management"], "renewals")) {
         items.push({
           id: "renewals",
           label: "Renewals",
@@ -575,6 +583,53 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "renewals-contracts", label: "Contracts", icon: FileText },
             { id: "renewals-licenses", label: "Licenses", icon: Key },
             { id: "renewals-subscriptions", label: "Subscriptions", icon: RefreshCw },
+          ],
+        });
+      }
+
+      // Legal Module
+      if (hasTeamAccess(["management"], "legal")) {
+        items.push({
+          id: "legal",
+          label: "Legal",
+          icon: Scale,
+          color: "text-legal",
+          children: [
+            { id: "legal-documents", label: "Documents", icon: FileText },
+            { id: "legal-approvals", label: "Approvals", icon: FileCheck },
+          ],
+        });
+      }
+
+      // Compliance Module
+      if (hasTeamAccess(["management"], "compliance")) {
+        items.push({
+          id: "compliance",
+          label: "Compliance",
+          icon: ClipboardCheck,
+          color: "text-green-500",
+        });
+      }
+
+      // Billing Module
+      if (hasTeamAccess(["finance", "accounts", "management"], "billing")) {
+        items.push({
+          id: "billing",
+          label: "Billing",
+          icon: CreditCard,
+          color: "text-finance",
+        });
+      }
+
+      // Ticketing Module
+      if (hasTeamAccess(["technical", "managed_services", "management"], "ticketing")) {
+        items.push({
+          id: "helpdesk",
+          label: "Help Desk",
+          icon: HeadphonesIcon,
+          color: "text-support",
+          children: [
+            { id: "helpdesk-tickets", label: "Tickets", icon: Ticket },
           ],
         });
       }
