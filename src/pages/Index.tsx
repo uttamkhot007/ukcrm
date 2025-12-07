@@ -27,6 +27,8 @@ import { HRModule } from "@/components/hr/HRModule";
 import { AccountsModule } from "@/components/accounts/AccountsModule";
 import { SolutionEngineeringModule } from "@/components/presales/SolutionEngineeringModule";
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
+import { AllianceModule } from "@/components/admin/AllianceModule";
+import { OfferingsModule } from "@/components/admin/OfferingsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
@@ -108,10 +110,16 @@ const Index = () => {
         return <SalesModule initialTab="quotations" />;
       case "sales-leads":
         return <SalesModule initialTab="leads" />;
-      case "contacts":
-        return <SalesModule initialTab="contacts" />;
       case "inside-sales":
         return <InsideSalesModule />;
+      
+      // Alliance module
+      case "admin-center-alliance":
+        return <AllianceModule />;
+      
+      // Offerings module
+      case "admin-center-offerings":
+        return <OfferingsModule />;
       
       // Legal module
       case "legal":
