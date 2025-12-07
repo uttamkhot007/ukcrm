@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
+import { TenantSwitcher } from "@/components/tenant/TenantSwitcher";
 // Package icon imported below for accounts module
 import {
   LayoutDashboard,
@@ -184,9 +186,13 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
   const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess } = useAuth();
+  const { currentTenant, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
   const totalEventCount = eventCounts.birthdayCount + eventCounts.anniversaryCount + eventCounts.orgEventCount + eventCounts.achievementCount + eventCounts.performanceCount;
+  
+  // Show tenant switcher if user is super admin OR has multiple tenant memberships
+  const showTenantSwitcher = isSuperAdmin || tenantMemberships.length > 1;
 
   const toggleExpand = (id: string) => {
     setExpandedItems((prev) =>
@@ -768,6 +774,13 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               </span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tenant Switcher - shown for super admins or users with multiple workspaces */}
+      {showTenantSwitcher && (
+        <div className="px-3 py-2 border-b border-sidebar-border">
+          <TenantSwitcher collapsed={collapsed} />
         </div>
       )}
 
