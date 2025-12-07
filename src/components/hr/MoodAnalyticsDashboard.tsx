@@ -1,20 +1,23 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { useTenant } from "@/contexts/TenantContext";
+import { format, subDays, startOfDay } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Users, Calendar, Smile, Frown, Meh, Brain, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Calendar, Smile, Frown } from "lucide-react";
 import { Avatar3D } from "@/components/profile/Avatar3D";
+import { Sparkles } from "lucide-react";
 
 interface MoodLog {
   id: string;
   user_id: string;
   mood: string;
+  mood_type: string | null;
   logged_at: string;
   notes: string | null;
+  tenant_id: string | null;
 }
 
 interface MoodStats {
@@ -28,6 +31,7 @@ interface DailyTrend {
   interesting: number;
   good: number;
   informative: number;
+  productive: number;
   boring: number;
   stressful: number;
   total: number;
@@ -47,13 +51,15 @@ const moodConfig = {
   interesting: { emoji: "🤩", color: "#F59E0B", label: "Interesting" },
   good: { emoji: "😊", color: "#22C55E", label: "Good" },
   informative: { emoji: "🧠", color: "#3B82F6", label: "Informative" },
+  productive: { emoji: "💪", color: "#8B5CF6", label: "Productive" },
   boring: { emoji: "😐", color: "#6B7280", label: "Boring" },
-  stressful: { emoji: "😫", color: "#EF4444", label: "Stressful" },
+  stressful: { emoji: "😓", color: "#EF4444", label: "Stressful" },
 };
 
-const COLORS = ["#F59E0B", "#22C55E", "#3B82F6", "#6B7280", "#EF4444"];
+const COLORS = ["#F59E0B", "#22C55E", "#3B82F6", "#8B5CF6", "#6B7280", "#EF4444"];
 
 export function MoodAnalyticsDashboard() {
+  const { currentTenant } = useTenant();
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [moodStats, setMoodStats] = useState<MoodStats[]>([]);
   const [dailyTrends, setDailyTrends] = useState<DailyTrend[]>([]);
@@ -62,19 +68,24 @@ export function MoodAnalyticsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchMoodData();
-  }, [dateRange]);
+    if (currentTenant?.id) {
+      fetchMoodData();
+    }
+  }, [dateRange, currentTenant?.id]);
 
   const fetchMoodData = async () => {
+    if (!currentTenant?.id) return;
+    
     setIsLoading(true);
     const days = parseInt(dateRange);
     const startDate = startOfDay(subDays(new Date(), days));
 
     try {
-      // Fetch mood logs
+      // Fetch mood logs for current tenant
       const { data: logs, error } = await supabase
         .from("employee_mood_logs")
         .select("*")
+        .eq("tenant_id", currentTenant!.id)
         .gte("logged_at", startDate.toISOString())
         .order("logged_at", { ascending: false });
 
@@ -105,6 +116,7 @@ export function MoodAnalyticsDashboard() {
           interesting: 0,
           good: 0,
           informative: 0,
+          productive: 0,
           boring: 0,
           stressful: 0,
           total: 0,
@@ -115,7 +127,7 @@ export function MoodAnalyticsDashboard() {
         const date = format(new Date(log.logged_at), "MMM dd");
         if (dailyData[date]) {
           const mood = log.mood;
-          if (mood === 'interesting' || mood === 'good' || mood === 'informative' || mood === 'boring' || mood === 'stressful') {
+          if (mood === 'interesting' || mood === 'good' || mood === 'informative' || mood === 'productive' || mood === 'boring' || mood === 'stressful') {
             dailyData[date][mood] += 1;
           }
           dailyData[date].total += 1;

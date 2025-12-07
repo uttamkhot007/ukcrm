@@ -5,29 +5,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { format, parseISO, differenceInMinutes, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isToday } from "date-fns";
-import { Clock, LogIn, LogOut, Calendar, Timer, TrendingUp } from "lucide-react";
+import { format, parseISO, differenceInMinutes, startOfMonth, endOfMonth, isToday } from "date-fns";
+import { Clock, LogIn, LogOut, Calendar, Timer, TrendingUp, Smile, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
+import { AttendanceMoodDialog } from "./AttendanceMoodDialog";
+import { AttendanceActivityLogger } from "./AttendanceActivityLogger";
 
 interface AttendanceRecord {
   id: string;
   user_id: string;
+  tenant_id: string | null;
   check_in: string;
   check_out: string | null;
   work_hours: number | null;
   notes: string | null;
+  mood_check_in: string | null;
+  mood_check_out: string | null;
   created_at: string;
 }
 
+const moodEmojis: Record<string, string> = {
+  interesting: "🤩",
+  good: "😊",
+  informative: "🧠",
+  productive: "💪",
+  boring: "😐",
+  stressful: "😓",
+};
+
 export function AttendanceModule() {
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
+  const [showMoodDialog, setShowMoodDialog] = useState(false);
+  const [moodType, setMoodType] = useState<"check_in" | "check_out">("check_in");
+  const [pendingMood, setPendingMood] = useState<string | null>(null);
 
   // Get today's attendance
   const { data: todayAttendance, isLoading: loadingToday } = useQuery({
-    queryKey: ["attendance-today", user?.id],
-    enabled: !!user,
+    queryKey: ["attendance-today", user?.id, currentTenant?.id],
+    enabled: !!user && !!currentTenant,
     queryFn: async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -36,6 +55,7 @@ export function AttendanceModule() {
         .from("attendance")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("tenant_id", currentTenant!.id)
         .gte("check_in", today.toISOString())
         .order("check_in", { ascending: false })
         .limit(1);
@@ -47,13 +67,14 @@ export function AttendanceModule() {
 
   // Get attendance history
   const { data: attendanceHistory = [] } = useQuery({
-    queryKey: ["attendance-history", user?.id],
-    enabled: !!user,
+    queryKey: ["attendance-history", user?.id, currentTenant?.id],
+    enabled: !!user && !!currentTenant,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("attendance")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("tenant_id", currentTenant!.id)
         .order("check_in", { ascending: false })
         .limit(30);
 
@@ -64,8 +85,8 @@ export function AttendanceModule() {
 
   // Get monthly stats
   const { data: monthlyStats } = useQuery({
-    queryKey: ["attendance-monthly", user?.id],
-    enabled: !!user,
+    queryKey: ["attendance-monthly", user?.id, currentTenant?.id],
+    enabled: !!user && !!currentTenant,
     queryFn: async () => {
       const monthStart = startOfMonth(new Date());
       const monthEnd = endOfMonth(new Date());
@@ -74,6 +95,7 @@ export function AttendanceModule() {
         .from("attendance")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("tenant_id", currentTenant!.id)
         .gte("check_in", monthStart.toISOString())
         .lte("check_in", monthEnd.toISOString());
 
@@ -88,12 +110,30 @@ export function AttendanceModule() {
   });
 
   const checkInMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("attendance").insert({
-        user_id: user!.id,
-        check_in: new Date().toISOString(),
-      });
+    mutationFn: async (mood: string) => {
+      const { data, error } = await supabase
+        .from("attendance")
+        .insert({
+          user_id: user!.id,
+          tenant_id: currentTenant!.id,
+          check_in: new Date().toISOString(),
+          mood_check_in: mood,
+        })
+        .select()
+        .single();
+
       if (error) throw error;
+
+      // Log mood to employee_mood_logs
+      await supabase.from("employee_mood_logs").insert({
+        user_id: user!.id,
+        tenant_id: currentTenant!.id,
+        attendance_id: data.id,
+        mood: mood,
+        mood_type: "check_in",
+      });
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attendance-today"] });
@@ -107,7 +147,7 @@ export function AttendanceModule() {
   });
 
   const checkOutMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (mood: string) => {
       if (!todayAttendance) return;
 
       const checkOutTime = new Date();
@@ -120,10 +160,21 @@ export function AttendanceModule() {
         .update({
           check_out: checkOutTime.toISOString(),
           work_hours: workHours,
+          mood_check_out: mood,
         })
         .eq("id", todayAttendance.id);
 
       if (error) throw error;
+
+      // Log mood to employee_mood_logs
+      await supabase.from("employee_mood_logs").insert({
+        user_id: user!.id,
+        tenant_id: currentTenant!.id,
+        attendance_id: todayAttendance.id,
+        mood: mood,
+        mood_type: "check_out",
+        session_duration_minutes: workMinutes,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attendance-today"] });
@@ -149,6 +200,24 @@ export function AttendanceModule() {
     return `${hours}h ${mins}m`;
   };
 
+  const handleCheckInClick = () => {
+    setMoodType("check_in");
+    setShowMoodDialog(true);
+  };
+
+  const handleCheckOutClick = () => {
+    setMoodType("check_out");
+    setShowMoodDialog(true);
+  };
+
+  const handleMoodSubmit = (mood: string) => {
+    if (moodType === "check_in") {
+      checkInMutation.mutate(mood);
+    } else {
+      checkOutMutation.mutate(mood);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -157,7 +226,7 @@ export function AttendanceModule() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Attendance</h1>
-          <p className="text-muted-foreground">Track your daily work hours</p>
+          <p className="text-muted-foreground">Track your daily work hours and activities</p>
         </div>
       </div>
 
@@ -172,15 +241,27 @@ export function AttendanceModule() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
-                <Badge
-                  variant={isCheckedIn ? "default" : isCheckedOut ? "secondary" : "outline"}
-                  className={cn(
-                    isCheckedIn && "bg-green-500 hover:bg-green-500/80",
-                    isCheckedOut && "bg-blue-500 hover:bg-blue-500/80"
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={isCheckedIn ? "default" : isCheckedOut ? "secondary" : "outline"}
+                    className={cn(
+                      isCheckedIn && "bg-green-500 hover:bg-green-500/80",
+                      isCheckedOut && "bg-blue-500 hover:bg-blue-500/80"
+                    )}
+                  >
+                    {isCheckedIn ? "Working" : isCheckedOut ? "Completed" : "Not Started"}
+                  </Badge>
+                  {todayAttendance?.mood_check_in && (
+                    <span className="text-xl" title="Check-in mood">
+                      {moodEmojis[todayAttendance.mood_check_in] || ""}
+                    </span>
                   )}
-                >
-                  {isCheckedIn ? "Working" : isCheckedOut ? "Completed" : "Not Started"}
-                </Badge>
+                  {todayAttendance?.mood_check_out && (
+                    <span className="text-xl" title="Check-out mood">
+                      {moodEmojis[todayAttendance.mood_check_out] || ""}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Work Time</p>
@@ -209,7 +290,7 @@ export function AttendanceModule() {
 
             <div className="flex gap-3 pt-2">
               <Button
-                onClick={() => checkInMutation.mutate()}
+                onClick={handleCheckInClick}
                 disabled={!!todayAttendance || checkInMutation.isPending}
                 className="flex-1 bg-green-500 hover:bg-green-600"
               >
@@ -217,7 +298,7 @@ export function AttendanceModule() {
                 Check In
               </Button>
               <Button
-                onClick={() => checkOutMutation.mutate()}
+                onClick={handleCheckOutClick}
                 disabled={!isCheckedIn || checkOutMutation.isPending}
                 variant="destructive"
                 className="flex-1"
@@ -259,6 +340,14 @@ export function AttendanceModule() {
         </Card>
       </div>
 
+      {/* Activity Logger - only show when checked in */}
+      {todayAttendance && (
+        <AttendanceActivityLogger
+          attendanceId={todayAttendance.id}
+          isEditable={isCheckedIn || false}
+        />
+      )}
+
       {/* Attendance History */}
       <Card>
         <CardHeader>
@@ -281,7 +370,7 @@ export function AttendanceModule() {
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-center">
+                    <div className="text-center min-w-[40px]">
                       <p className="text-xs text-muted-foreground">
                         {format(parseISO(record.check_in), "EEE")}
                       </p>
@@ -294,11 +383,17 @@ export function AttendanceModule() {
                       <div className="flex items-center gap-2 text-sm">
                         <LogIn className="w-3 h-3 text-green-500" />
                         <span>{format(parseISO(record.check_in), "hh:mm a")}</span>
+                        {record.mood_check_in && (
+                          <span title="Check-in mood">{moodEmojis[record.mood_check_in]}</span>
+                        )}
                         {record.check_out && (
                           <>
                             <span className="text-muted-foreground">→</span>
                             <LogOut className="w-3 h-3 text-red-500" />
                             <span>{format(parseISO(record.check_out), "hh:mm a")}</span>
+                            {record.mood_check_out && (
+                              <span title="Check-out mood">{moodEmojis[record.mood_check_out]}</span>
+                            )}
                           </>
                         )}
                       </div>
@@ -319,6 +414,14 @@ export function AttendanceModule() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Mood Dialog */}
+      <AttendanceMoodDialog
+        open={showMoodDialog}
+        onOpenChange={setShowMoodDialog}
+        type={moodType}
+        onSubmit={handleMoodSubmit}
+      />
     </div>
   );
 }
