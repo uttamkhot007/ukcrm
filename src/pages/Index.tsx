@@ -22,6 +22,7 @@ import { EmployeeBenefitsModule } from "@/components/employee/EmployeeBenefitsMo
 import { EmployeeProfileModule } from "@/components/employee/EmployeeProfileModule";
 import { EmployeeResourcesModule } from "@/components/employee/EmployeeResourcesModule";
 import { TicketingModule } from "@/components/ticketing/TicketingModule";
+import { EmployeeTicketSection } from "@/components/ticketing/EmployeeTicketSection";
 import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
 import { HRModule } from "@/components/hr/HRModule";
@@ -33,6 +34,7 @@ import { OfferingsModule } from "@/components/admin/OfferingsModule";
 import { ExpenseModule } from "@/components/expenses/ExpenseModule";
 import { AssetsModule } from "@/components/assets/AssetsModule";
 import { ProjectsModule } from "@/components/projects/ProjectsModule";
+import { ITModule } from "@/components/it/ITModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
@@ -165,6 +167,8 @@ const Index = () => {
         return <EmployeeProfileModule />;
       case "employee-leave":
         return <RequestsModule />;
+      case "employee-tickets":
+        return <EmployeeTicketSection />;
       case "employee-travel":
       case "employee-expenses":
         return <ExpenseModule />;
@@ -172,6 +176,14 @@ const Index = () => {
         return <AssetsModule />;
       case "employee-projects":
         return <ProjectsModule />;
+      
+      // IT Module
+      case "it":
+      case "it-tickets":
+      case "it-assets":
+      case "it-inventory":
+      case "it-workflows":
+        return <ITModule />;
       
       // HR modules
       case "hr":
