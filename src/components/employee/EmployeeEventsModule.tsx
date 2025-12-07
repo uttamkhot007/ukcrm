@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cake, Award, Trophy, PartyPopper, CalendarHeart } from "lucide-react";
+import { Cake, Award, Trophy, PartyPopper, CalendarHeart, Heart } from "lucide-react";
 import { EventsList } from "./EventsList";
 import { OrgAnnouncements } from "./OrgAnnouncements";
 import { useUnreadEventCounts } from "@/hooks/useUnreadEventCounts";
@@ -16,16 +16,16 @@ export function EmployeeEventsModule() {
           <PartyPopper className="w-6 h-6 text-pink-500" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Events & Celebrations</h1>
-          <p className="text-muted-foreground">Birthdays, anniversaries, and organizational events</p>
+          <h1 className="text-2xl font-bold">Events & Recognition</h1>
+          <p className="text-muted-foreground">Birthdays, anniversaries, celebrations & peer appreciation</p>
         </div>
       </div>
 
       <Tabs defaultValue="birthdays" className="space-y-6">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        <TabsList className="grid w-full max-w-4xl grid-cols-6">
           <TabsTrigger value="birthdays" className="flex items-center gap-2 relative">
             <Cake className="w-4 h-4" />
-            Birthdays
+            <span className="hidden sm:inline">Birthdays</span>
             {birthdayCount > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
                 {birthdayCount}
@@ -34,7 +34,7 @@ export function EmployeeEventsModule() {
           </TabsTrigger>
           <TabsTrigger value="anniversaries" className="flex items-center gap-2 relative">
             <CalendarHeart className="w-4 h-4" />
-            Anniversaries
+            <span className="hidden sm:inline">Anniversaries</span>
             {anniversaryCount > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
                 {anniversaryCount}
@@ -43,7 +43,7 @@ export function EmployeeEventsModule() {
           </TabsTrigger>
           <TabsTrigger value="org-events" className="flex items-center gap-2 relative">
             <PartyPopper className="w-4 h-4" />
-            Org Events
+            <span className="hidden sm:inline">Events</span>
             {orgEventCount > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
                 {orgEventCount}
@@ -52,7 +52,7 @@ export function EmployeeEventsModule() {
           </TabsTrigger>
           <TabsTrigger value="achievements" className="flex items-center gap-2 relative">
             <Trophy className="w-4 h-4" />
-            Achievements
+            <span className="hidden sm:inline">Achievements</span>
             {achievementCount > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
                 {achievementCount}
@@ -61,12 +61,16 @@ export function EmployeeEventsModule() {
           </TabsTrigger>
           <TabsTrigger value="performance" className="flex items-center gap-2 relative">
             <Award className="w-4 h-4" />
-            Performance
+            <span className="hidden sm:inline">Performance</span>
             {performanceCount > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
                 {performanceCount}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="appreciation" className="flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            <span className="hidden sm:inline">Appreciation</span>
           </TabsTrigger>
         </TabsList>
 
@@ -88,6 +92,10 @@ export function EmployeeEventsModule() {
 
         <TabsContent value="performance">
           <OrgAnnouncements eventType="performance" title="Exceptional Performances" icon={Award} color="text-green-500" />
+        </TabsContent>
+
+        <TabsContent value="appreciation">
+          <OrgAnnouncements eventType="appreciation" title="Peer Appreciation" icon={Heart} color="text-rose-500" />
         </TabsContent>
       </Tabs>
     </div>
