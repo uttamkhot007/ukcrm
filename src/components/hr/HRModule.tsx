@@ -23,8 +23,10 @@ import {
   AlertCircle,
   FileText,
   GitBranch,
+  Heart,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
+import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
 import { cn } from "@/lib/utils";
 
 interface HRModuleProps {
@@ -151,7 +153,7 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="directory" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Directory
@@ -160,13 +162,17 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
             <GitBranch className="w-4 h-4" />
             Workflows
           </TabsTrigger>
+          <TabsTrigger value="mood-analytics" className="flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Team Mood
+          </TabsTrigger>
           <TabsTrigger value="people" className="flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
-            People Management
+            People Mgmt
           </TabsTrigger>
           <TabsTrigger value="salary" className="flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
-            Salary & Benefits
+            Salary
           </TabsTrigger>
           <TabsTrigger value="onboarding" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
@@ -242,6 +248,11 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
         {/* Workflows Tab */}
         <TabsContent value="workflows" className="space-y-4">
           <HRWorkflowsTab />
+        </TabsContent>
+
+        {/* Mood Analytics Tab */}
+        <TabsContent value="mood-analytics">
+          <MoodAnalyticsDashboard />
         </TabsContent>
 
         {/* People Management Tab */}
