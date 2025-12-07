@@ -780,6 +780,60 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_workflows: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          current_stage: string
+          description: string | null
+          id: string
+          initiated_by: string
+          metadata: Json | null
+          priority: Database["public"]["Enums"]["request_priority"]
+          started_at: string | null
+          status: Database["public"]["Enums"]["hr_workflow_status"]
+          target_user_id: string | null
+          title: string
+          updated_at: string
+          workflow_type: Database["public"]["Enums"]["hr_workflow_type"]
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_stage: string
+          description?: string | null
+          id?: string
+          initiated_by: string
+          metadata?: Json | null
+          priority?: Database["public"]["Enums"]["request_priority"]
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["hr_workflow_status"]
+          target_user_id?: string | null
+          title: string
+          updated_at?: string
+          workflow_type: Database["public"]["Enums"]["hr_workflow_type"]
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_stage?: string
+          description?: string | null
+          id?: string
+          initiated_by?: string
+          metadata?: Json | null
+          priority?: Database["public"]["Enums"]["request_priority"]
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["hr_workflow_status"]
+          target_user_id?: string | null
+          title?: string
+          updated_at?: string
+          workflow_type?: Database["public"]["Enums"]["hr_workflow_type"]
+        }
+        Relationships: []
+      }
       inside_sales_prospects: {
         Row: {
           assigned_to: string | null
@@ -1316,6 +1370,83 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_requests: {
+        Row: {
+          budget_approved: boolean | null
+          created_at: string
+          department: string | null
+          employment_type: string | null
+          expected_salary: number | null
+          expected_start_date: string | null
+          headcount_approved: boolean | null
+          id: string
+          job_description: string | null
+          job_title: string
+          justification: string | null
+          location: string | null
+          reports_to: string | null
+          requesting_manager_id: string
+          requirements: string | null
+          salary_range_max: number | null
+          salary_range_min: number | null
+          updated_at: string
+          urgency: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          budget_approved?: boolean | null
+          created_at?: string
+          department?: string | null
+          employment_type?: string | null
+          expected_salary?: number | null
+          expected_start_date?: string | null
+          headcount_approved?: boolean | null
+          id?: string
+          job_description?: string | null
+          job_title: string
+          justification?: string | null
+          location?: string | null
+          reports_to?: string | null
+          requesting_manager_id: string
+          requirements?: string | null
+          salary_range_max?: number | null
+          salary_range_min?: number | null
+          updated_at?: string
+          urgency?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          budget_approved?: boolean | null
+          created_at?: string
+          department?: string | null
+          employment_type?: string | null
+          expected_salary?: number | null
+          expected_start_date?: string | null
+          headcount_approved?: boolean | null
+          id?: string
+          job_description?: string | null
+          job_title?: string
+          justification?: string | null
+          location?: string | null
+          reports_to?: string | null
+          requesting_manager_id?: string
+          requirements?: string | null
+          salary_range_max?: number | null
+          salary_range_min?: number | null
+          updated_at?: string
+          urgency?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_requests_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_settings: {
         Row: {
           address: string | null
@@ -1825,6 +1956,59 @@ export type Database = {
           },
         ]
       }
+      resignation_requests: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          last_working_date: string | null
+          manager_action: string | null
+          manager_notes: string | null
+          notice_period_days: number | null
+          reason: string | null
+          retention_attempted: boolean | null
+          retention_outcome: string | null
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          last_working_date?: string | null
+          manager_action?: string | null
+          manager_notes?: string | null
+          notice_period_days?: number | null
+          reason?: string | null
+          retention_attempted?: boolean | null
+          retention_outcome?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          last_working_date?: string | null
+          manager_action?: string | null
+          manager_notes?: string | null
+          notice_period_days?: number | null
+          reason?: string | null
+          retention_attempted?: boolean | null
+          retention_outcome?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resignation_requests_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_team_members: {
         Row: {
           id: string
@@ -2251,6 +2435,188 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_candidates: {
+        Row: {
+          candidate_name: string
+          created_at: string
+          current_company: string | null
+          current_designation: string | null
+          email: string | null
+          expected_salary: number | null
+          experience_years: number | null
+          id: string
+          notes: string | null
+          notice_period_days: number | null
+          onboarding_request_id: string | null
+          phone: string | null
+          rejection_reason: string | null
+          resume_url: string | null
+          selected: boolean | null
+          skills: string[] | null
+          status: string | null
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          candidate_name: string
+          created_at?: string
+          current_company?: string | null
+          current_designation?: string | null
+          email?: string | null
+          expected_salary?: number | null
+          experience_years?: number | null
+          id?: string
+          notes?: string | null
+          notice_period_days?: number | null
+          onboarding_request_id?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          resume_url?: string | null
+          selected?: boolean | null
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          candidate_name?: string
+          created_at?: string
+          current_company?: string | null
+          current_designation?: string | null
+          email?: string | null
+          expected_salary?: number | null
+          experience_years?: number | null
+          id?: string
+          notes?: string | null
+          notice_period_days?: number | null
+          onboarding_request_id?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          resume_url?: string | null
+          selected?: boolean | null
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_candidates_onboarding_request_id_fkey"
+            columns: ["onboarding_request_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_candidates_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          user_id: string
+          workflow_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          user_id: string
+          workflow_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          user_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_comments_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_interviews: {
+        Row: {
+          candidate_id: string | null
+          completed_at: string | null
+          created_at: string
+          feedback: string | null
+          id: string
+          interview_level: number | null
+          interview_type: string
+          interviewer_id: string
+          rating: number | null
+          recommendation: string | null
+          scheduled_at: string | null
+          status: string | null
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          candidate_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          interview_level?: number | null
+          interview_type: string
+          interviewer_id: string
+          rating?: number | null
+          recommendation?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          candidate_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          interview_level?: number | null
+          interview_type?: string
+          interviewer_id?: string
+          rating?: number | null
+          recommendation?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_interviews_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_interviews_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_logs: {
         Row: {
           action: string
@@ -2286,6 +2652,143 @@ export type Database = {
           workflow_type?: string
         }
         Relationships: []
+      }
+      workflow_offers: {
+        Row: {
+          accepted_at: string | null
+          benefits: string | null
+          candidate_id: string | null
+          created_at: string
+          department: string | null
+          id: string
+          job_title: string
+          joining_date: string | null
+          location: string | null
+          offer_letter_url: string | null
+          offer_salary: number
+          rejected_at: string | null
+          rejection_reason: string | null
+          sent_at: string | null
+          status: string | null
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          benefits?: string | null
+          candidate_id?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          job_title: string
+          joining_date?: string | null
+          location?: string | null
+          offer_letter_url?: string | null
+          offer_salary: number
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          benefits?: string | null
+          candidate_id?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          job_title?: string
+          joining_date?: string | null
+          location?: string | null
+          offer_letter_url?: string | null
+          offer_salary?: number
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_offers_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_offers_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_settings: {
+        Row: {
+          created_at: string
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      workflow_stage_history: {
+        Row: {
+          changed_by: string
+          created_at: string
+          from_stage: string | null
+          id: string
+          notes: string | null
+          to_stage: string
+          workflow_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          from_stage?: string | null
+          id?: string
+          notes?: string | null
+          to_stage: string
+          workflow_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          from_stage?: string | null
+          id?: string
+          notes?: string | null
+          to_stage?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_stage_history_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -2364,6 +2867,15 @@ export type Database = {
         | "gdpr"
         | "nist"
         | "other"
+      hr_workflow_status:
+        | "draft"
+        | "active"
+        | "pending_approval"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "cancelled"
+      hr_workflow_type: "onboarding" | "offboarding" | "retention"
       invoice_status:
         | "draft"
         | "sent"
@@ -2389,6 +2901,28 @@ export type Database = {
         | "agreement"
         | "policy"
         | "compliance"
+      offboarding_stage:
+        | "resignation_submitted"
+        | "manager_review"
+        | "retention_review"
+        | "exit_approved"
+        | "knowledge_transfer"
+        | "asset_return"
+        | "exit_interview"
+        | "final_settlement"
+        | "completed"
+      onboarding_stage:
+        | "requirement_submitted"
+        | "hr_sourcing"
+        | "profile_review"
+        | "manager_interview"
+        | "senior_interview"
+        | "ceo_interview"
+        | "management_interview"
+        | "offer_preparation"
+        | "offer_sent"
+        | "offer_accepted"
+        | "completed"
       quotation_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
       renewal_status:
         | "active"
@@ -2630,6 +3164,16 @@ export const Constants = {
         "nist",
         "other",
       ],
+      hr_workflow_status: [
+        "draft",
+        "active",
+        "pending_approval",
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ],
+      hr_workflow_type: ["onboarding", "offboarding", "retention"],
       invoice_status: [
         "draft",
         "sent",
@@ -2658,6 +3202,30 @@ export const Constants = {
         "agreement",
         "policy",
         "compliance",
+      ],
+      offboarding_stage: [
+        "resignation_submitted",
+        "manager_review",
+        "retention_review",
+        "exit_approved",
+        "knowledge_transfer",
+        "asset_return",
+        "exit_interview",
+        "final_settlement",
+        "completed",
+      ],
+      onboarding_stage: [
+        "requirement_submitted",
+        "hr_sourcing",
+        "profile_review",
+        "manager_interview",
+        "senior_interview",
+        "ceo_interview",
+        "management_interview",
+        "offer_preparation",
+        "offer_sent",
+        "offer_accepted",
+        "completed",
       ],
       quotation_status: ["draft", "sent", "accepted", "rejected", "expired"],
       renewal_status: [

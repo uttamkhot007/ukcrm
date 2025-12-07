@@ -22,7 +22,9 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  GitBranch,
 } from "lucide-react";
+import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { cn } from "@/lib/utils";
 
 interface HRModuleProps {
@@ -149,10 +151,14 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="directory" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Directory
+          </TabsTrigger>
+          <TabsTrigger value="workflows" className="flex items-center gap-2">
+            <GitBranch className="w-4 h-4" />
+            Workflows
           </TabsTrigger>
           <TabsTrigger value="people" className="flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
@@ -231,6 +237,11 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
               ))
             )}
           </div>
+        </TabsContent>
+
+        {/* Workflows Tab */}
+        <TabsContent value="workflows" className="space-y-4">
+          <HRWorkflowsTab />
         </TabsContent>
 
         {/* People Management Tab */}
