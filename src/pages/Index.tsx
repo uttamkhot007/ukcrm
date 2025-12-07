@@ -30,6 +30,7 @@ import { SolutionEngineeringModule } from "@/components/presales/SolutionEnginee
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { AllianceModule } from "@/components/admin/AllianceModule";
 import { OfferingsModule } from "@/components/admin/OfferingsModule";
+import { ExpenseModule } from "@/components/expenses/ExpenseModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
@@ -161,8 +162,10 @@ const Index = () => {
       case "employee-profile":
         return <EmployeeProfileModule />;
       case "employee-leave":
-      case "employee-travel":
         return <RequestsModule />;
+      case "employee-travel":
+      case "employee-expenses":
+        return <ExpenseModule />;
       
       // HR modules
       case "hr":
