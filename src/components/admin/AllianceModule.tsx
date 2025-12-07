@@ -73,33 +73,57 @@ export function AllianceModule() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Fetch existing contacts for organization when editing
+  const fetchOrgContacts = async (orgId: string) => {
+    const { data } = await supabase
+      .from('alliance_users')
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('tenant_id', currentTenant?.id);
+    return data || [];
+  };
+
   // Update form when editing organization changes
   useEffect(() => {
-    if (editingOrg) {
-      setOrgFormData({
-        name: editingOrg.name || "",
-        website: editingOrg.website || "",
-        logoUrl: editingOrg.logo_url || "",
-        organizationType: editingOrg.organization_type || "none",
-        industry: editingOrg.industry || "none",
-        description: editingOrg.description || "",
-        address: editingOrg.address || "",
-        solutions: editingOrg.solutions?.join(", ") || "",
-        services: editingOrg.services?.join(", ") || "",
-        status: editingOrg.status || "active",
-        employeeCount: "",
-        annualRevenue: "",
-        foundedYear: "",
-        linkedinUrl: "",
-        twitterUrl: "",
-        phone: "",
-        email: "",
-        spfStatus: "",
-        dmarcStatus: "",
-        dkimStatus: "",
-      });
-    }
-  }, [editingOrg, setOrgFormData]);
+    const loadEditingOrg = async () => {
+      if (editingOrg) {
+        const existingContacts = await fetchOrgContacts(editingOrg.id);
+        const formattedContacts = existingContacts.map(c => ({
+          id: c.id,
+          name: c.name,
+          email: c.email || '',
+          phone: c.phone || '',
+          role: c.role || 'other',
+          isChampion: c.notes?.includes('[CHAMPION]') || false,
+        }));
+
+        setOrgFormData({
+          name: editingOrg.name || "",
+          website: editingOrg.website || "",
+          logoUrl: editingOrg.logo_url || "",
+          organizationType: editingOrg.organization_type || "none",
+          industry: editingOrg.industry || "none",
+          description: editingOrg.description || "",
+          address: editingOrg.address || "",
+          solutions: editingOrg.solutions?.join(", ") || "",
+          services: editingOrg.services?.join(", ") || "",
+          status: editingOrg.status || "active",
+          employeeCount: "",
+          annualRevenue: "",
+          foundedYear: "",
+          linkedinUrl: "",
+          twitterUrl: "",
+          phone: "",
+          email: "",
+          spfStatus: "",
+          dmarcStatus: "",
+          dkimStatus: "",
+          contacts: formattedContacts,
+        });
+      }
+    };
+    loadEditingOrg();
+  }, [editingOrg, setOrgFormData, currentTenant?.id]);
 
   // Fetch organizations
   const { data: organizations = [], isLoading: orgsLoading } = useQuery({
@@ -148,7 +172,7 @@ export function AllianceModule() {
 
   // Create/Update organization mutation
   const orgMutation = useMutation({
-    mutationFn: async (orgData: Partial<AllianceOrganization>) => {
+    mutationFn: async (orgData: Partial<AllianceOrganization> & { contacts?: any[] }) => {
       // Try to fetch logo from website
       let logoUrl = orgData.logo_url;
       if (orgData.website && !logoUrl) {
@@ -157,6 +181,8 @@ export function AllianceModule() {
           logoUrl = metadata.logoUrl;
         }
       }
+
+      let orgId = editingOrg?.id;
 
       if (editingOrg) {
         const { error } = await supabase
@@ -176,7 +202,7 @@ export function AllianceModule() {
           .eq("id", editingOrg.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: newOrg, error } = await supabase
           .from("alliance_organizations")
           .insert({
             tenant_id: currentTenant?.id,
@@ -191,12 +217,52 @@ export function AllianceModule() {
             address: orgData.address,
             solutions: orgData.solutions,
             services: orgData.services,
-          });
+          })
+          .select('id')
+          .single();
         if (error) throw error;
+        orgId = newOrg.id;
+      }
+
+      // Handle contacts
+      if (orgData.contacts && orgData.contacts.length > 0 && orgId) {
+        for (const contact of orgData.contacts) {
+          const contactNotes = contact.isChampion ? '[CHAMPION] ' + (contact.notes || '') : contact.notes || '';
+          
+          if (contact.id) {
+            // Update existing contact
+            await supabase
+              .from('alliance_users')
+              .update({
+                name: contact.name,
+                email: contact.email || null,
+                phone: contact.phone || null,
+                role: contact.role,
+                notes: contactNotes,
+              })
+              .eq('id', contact.id);
+          } else if (contact.name) {
+            // Create new contact
+            await supabase
+              .from('alliance_users')
+              .insert({
+                tenant_id: currentTenant?.id,
+                organization_id: orgId,
+                name: contact.name,
+                email: contact.email || null,
+                phone: contact.phone || null,
+                role: contact.role,
+                notes: contactNotes,
+                status: 'active',
+                created_by: user?.id!,
+              });
+          }
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
       setIsOrgDialogOpen(false);
       resetOrgForm();
       toast.success(editingOrg ? "Organization updated" : "Organization created");
@@ -320,7 +386,8 @@ export function AllianceModule() {
       logo_url: orgFormData.logoUrl,
       solutions,
       services,
-    });
+      contacts: orgFormData.contacts,
+    } as any);
   };
 
   const handleUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
