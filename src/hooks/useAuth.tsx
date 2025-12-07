@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
 type TeamType = "sales" | "presales" | "technical" | "managed_services" | "management" | "hr" | "finance" | "inside_sales" | "marketing" | "renewals" | "accounts" | "admin";
-type PortalMode = "employee" | "sales";
+type PortalMode = "workspace" | "customer";
+type UserCategory = "employee" | "contractor" | "vendor" | "distributor" | "customer";
 
 interface Profile {
   id: string;
@@ -14,6 +15,7 @@ interface Profile {
   avatar_url: string | null;
   department: string | null;
   job_title: string | null;
+  user_category: UserCategory | null;
 }
 
 interface AuthContextType {
@@ -33,6 +35,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isManager: boolean;
   isEmployee: boolean;
+  isCustomer: boolean;
   refreshTeams: () => Promise<void>;
 }
 
@@ -46,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [teams, setTeams] = useState<TeamType[]>([]);
-  const [portalMode, setPortalMode] = useState<PortalMode>("employee");
+  const [portalMode, setPortalMode] = useState<PortalMode>("workspace");
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -59,7 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (profileData) {
-        setProfile(profileData);
+        setProfile(profileData as Profile);
+        
+        // Set portal mode based on user category
+        if (profileData.user_category === 'customer') {
+          setPortalMode('customer');
+        } else {
+          setPortalMode('workspace');
+        }
       }
 
       // Fetch role
@@ -196,11 +206,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setRole(null);
     setTeams([]);
-    setPortalMode("employee");
+    setPortalMode("workspace");
   };
 
   const hasSalesAccess = role === "admin" || teams.some(t => SALES_TEAMS.includes(t));
   const isManagement = teams.includes("management") || role === "admin";
+  const isCustomer = profile?.user_category === 'customer';
 
   const value: AuthContextType = {
     user,
@@ -219,6 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: role === "admin",
     isManager: role === "manager",
     isEmployee: role === "employee",
+    isCustomer,
     refreshTeams,
   };
 
@@ -233,4 +245,4 @@ export function useAuth() {
   return context;
 }
 
-export type { TeamType, PortalMode, AppRole };
+export type { TeamType, PortalMode, AppRole, UserCategory };

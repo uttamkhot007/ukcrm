@@ -1,14 +1,18 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Briefcase, UserCircle } from "lucide-react";
+import { Building2, Headphones } from "lucide-react";
 
 export function PortalModeSwitcher() {
-  const { portalMode, setPortalMode, hasSalesAccess, isManagement, isAdmin } = useAuth();
+  const { portalMode, setPortalMode, isCustomer, isAdmin } = useAuth();
 
-  // Hide for Admin/Management - they see all modules
-  // Only show for sales team users who need to switch
-  if (!hasSalesAccess || isManagement || isAdmin) {
+  // Customers can only see customer portal - no switcher needed
+  if (isCustomer) {
+    return null;
+  }
+
+  // Only admins can switch between modes (for testing/support purposes)
+  if (!isAdmin) {
     return null;
   }
 
@@ -17,30 +21,30 @@ export function PortalModeSwitcher() {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setPortalMode("employee")}
+        onClick={() => setPortalMode("workspace")}
         className={cn(
           "h-8 px-3 text-xs font-medium transition-all",
-          portalMode === "employee"
+          portalMode === "workspace"
             ? "bg-background shadow-sm text-foreground"
             : "text-muted-foreground hover:text-foreground"
         )}
       >
-        <UserCircle className="w-4 h-4 mr-1.5" />
-        Employee
+        <Building2 className="w-4 h-4 mr-1.5" />
+        My Workspace
       </Button>
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setPortalMode("sales")}
+        onClick={() => setPortalMode("customer")}
         className={cn(
           "h-8 px-3 text-xs font-medium transition-all",
-          portalMode === "sales"
+          portalMode === "customer"
             ? "bg-background shadow-sm text-foreground"
             : "text-muted-foreground hover:text-foreground"
         )}
       >
-        <Briefcase className="w-4 h-4 mr-1.5" />
-        Sales
+        <Headphones className="w-4 h-4 mr-1.5" />
+        Customer Portal
       </Button>
     </div>
   );

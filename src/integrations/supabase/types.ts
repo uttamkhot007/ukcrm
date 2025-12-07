@@ -2256,6 +2256,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_customer: { Args: { _user_id: string }; Returns: boolean }
+      is_employee_user: { Args: { _user_id: string }; Returns: boolean }
       is_management: { Args: { _user_id: string }; Returns: boolean }
       promote_to_admin: { Args: { _user_email: string }; Returns: undefined }
     }
