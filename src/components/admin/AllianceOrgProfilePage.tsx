@@ -141,11 +141,33 @@ const SECURITY_CONTROLS = [
   { id: 'casb', name: 'CASB', category: 'Cloud Security' },
   { id: 'waf', name: 'Web Application Firewall', category: 'Application Security' },
   { id: 'vapt', name: 'Vulnerability Assessment', category: 'Risk Management' },
-  { id: 'soar', name: 'SOAR Platform', category: 'Automation' },
+  { id: 'secops', name: 'SecOps', category: 'Operations' },
+  { id: 'patch_mgmt', name: 'Patch Management', category: 'Vulnerability Management' },
   { id: 'backup', name: 'Backup & Recovery', category: 'Business Continuity' },
   { id: 'email_security', name: 'Email Security Gateway', category: 'Email Security' },
   { id: 'zero_trust', name: 'Zero Trust Architecture', category: 'Architecture' },
 ];
+
+interface SolutionConfig {
+  oem: string;
+  partner: string;
+  renewalMonth: string;
+  renewalYear: string;
+  isManagedService: boolean;
+}
+
+interface InfrastructureConfig {
+  locations: string;
+  endpoints: string;
+  servers: string;
+  endpointOS: string[];
+  serverOS: string[];
+  networkDevices: string;
+  systemEnvironment: string;
+}
+
+const OS_OPTIONS = ['Windows', 'Mac', 'Linux'];
+const ENVIRONMENT_OPTIONS = ['Domain', 'Workgroup', 'Hybrid'];
 
 const OEM_OPTIONS = [
   'Palo Alto Networks',
@@ -205,11 +227,17 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [isAddMeetingOpen, setIsAddMeetingOpen] = useState(false);
   const [isAddReminderOpen, setIsAddReminderOpen] = useState(false);
   const [selectedControls, setSelectedControls] = useState<string[]>([]);
-  const [selectedOEMs, setSelectedOEMs] = useState<string[]>([]);
-  const [existingPartner, setExistingPartner] = useState<string>('Not a Partner');
-  const [isManagedService, setIsManagedService] = useState<boolean>(false);
-  const [renewalMonth, setRenewalMonth] = useState<string>('');
-  const [renewalYear, setRenewalYear] = useState<string>('');
+  const [solutionConfigs, setSolutionConfigs] = useState<Record<string, SolutionConfig>>({});
+  const [infrastructure, setInfrastructure] = useState<InfrastructureConfig>({
+    locations: '',
+    endpoints: '',
+    servers: '',
+    endpointOS: [],
+    serverOS: [],
+    networkDevices: '',
+    systemEnvironment: '',
+  });
+  const [expandedSolutions, setExpandedSolutions] = useState<string[]>([]);
   const [threatIntel, setThreatIntel] = useState<ThreatIntelligence | null>(null);
   const [isLoadingThreat, setIsLoadingThreat] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -1135,129 +1163,302 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   </Card>
                 )}
 
+                {/* Infrastructure Section */}
                 <Card>
                   <CardHeader className="flex-row items-center justify-between">
-                    <CardTitle className="text-sm">Security Controls</CardTitle>
-                    <Badge variant="outline">{selectedControls.length} selected</Badge>
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      Infrastructure
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* OEM, Partner, Managed Service, Renewal */}
-                    <div className="grid grid-cols-2 gap-4">
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-xs font-medium">OEM / Vendor</Label>
-                        <Select value={selectedOEMs[0] || ''} onValueChange={(val) => {
-                          if (val && !selectedOEMs.includes(val)) {
-                            setSelectedOEMs([...selectedOEMs, val]);
-                          }
-                        }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select OEM" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {OEM_OPTIONS.map(oem => (
-                              <SelectItem key={oem} value={oem}>{oem}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {selectedOEMs.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {selectedOEMs.map(oem => (
-                              <Badge key={oem} variant="secondary" className="gap-1">
-                                {oem}
-                                <button onClick={() => setSelectedOEMs(selectedOEMs.filter(o => o !== oem))} className="ml-1 hover:text-destructive">×</button>
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
+                        <Label className="text-xs font-medium">No. of Locations</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          value={infrastructure.locations}
+                          onChange={(e) => setInfrastructure({...infrastructure, locations: e.target.value})}
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs font-medium">Existing Partner</Label>
-                        <Select value={existingPartner} onValueChange={setExistingPartner}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PARTNER_OPTIONS.map(partner => (
-                              <SelectItem key={partner} value={partner}>{partner}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-xs font-medium">No. of Endpoints</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          value={infrastructure.endpoints}
+                          onChange={(e) => setInfrastructure({...infrastructure, endpoints: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">No. of Servers</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          value={infrastructure.servers}
+                          onChange={(e) => setInfrastructure({...infrastructure, servers: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">No. of Network Devices</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          value={infrastructure.networkDevices}
+                          onChange={(e) => setInfrastructure({...infrastructure, networkDevices: e.target.value})}
+                        />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-xs font-medium">Managed Service</Label>
-                        <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/30">
-                          <button
-                            onClick={() => setIsManagedService(false)}
-                            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                              !isManagedService 
-                                ? 'bg-destructive text-destructive-foreground' 
-                                : 'bg-muted hover:bg-muted/80'
-                            }`}
-                          >
-                            No
-                          </button>
-                          <button
-                            onClick={() => setIsManagedService(true)}
-                            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                              isManagedService 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-muted hover:bg-muted/80'
-                            }`}
-                          >
-                            Yes
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-medium">Renewal Date</Label>
+                        <Label className="text-xs font-medium">Endpoint OS Platforms</Label>
                         <div className="flex gap-2">
-                          <Select value={renewalMonth} onValueChange={setRenewalMonth}>
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Month" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {MONTHS.map((month, i) => (
-                                <SelectItem key={month} value={String(i + 1).padStart(2, '0')}>{month}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Select value={renewalYear} onValueChange={setRenewalYear}>
-                            <SelectTrigger className="w-24">
-                              <SelectValue placeholder="Year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {OS_OPTIONS.map(os => (
+                            <Button
+                              key={os}
+                              type="button"
+                              size="sm"
+                              variant={infrastructure.endpointOS.includes(os) ? "default" : "outline"}
+                              className={infrastructure.endpointOS.includes(os) ? "bg-primary" : ""}
+                              onClick={() => {
+                                const newOS = infrastructure.endpointOS.includes(os)
+                                  ? infrastructure.endpointOS.filter(o => o !== os)
+                                  : [...infrastructure.endpointOS, os];
+                                setInfrastructure({...infrastructure, endpointOS: newOS});
+                              }}
+                            >
+                              {os}
+                            </Button>
+                          ))}
                         </div>
-                        {renewalMonth && renewalYear && (
-                          <p className="text-xs text-muted-foreground">
-                            Renewal: {MONTHS[parseInt(renewalMonth) - 1]} {renewalYear}
-                          </p>
-                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Server OS Platforms</Label>
+                        <div className="flex gap-2">
+                          {OS_OPTIONS.map(os => (
+                            <Button
+                              key={os}
+                              type="button"
+                              size="sm"
+                              variant={infrastructure.serverOS.includes(os) ? "default" : "outline"}
+                              className={infrastructure.serverOS.includes(os) ? "bg-primary" : ""}
+                              onClick={() => {
+                                const newOS = infrastructure.serverOS.includes(os)
+                                  ? infrastructure.serverOS.filter(o => o !== os)
+                                  : [...infrastructure.serverOS, os];
+                                setInfrastructure({...infrastructure, serverOS: newOS});
+                              }}
+                            >
+                              {os}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="border-t pt-4">
-                      <Label className="text-xs font-medium mb-3 block">Security Solutions</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {SECURITY_CONTROLS.map(control => (
-                          <Button key={control.id} variant={selectedControls.includes(control.id) ? "default" : "outline"}
-                            className={`justify-start h-auto py-2 px-3 ${selectedControls.includes(control.id) ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
-                            onClick={() => toggleControl(control.id)}>
-                            <div className="flex items-center gap-2 w-full">
-                              {selectedControls.includes(control.id) ? <CheckCircle className="h-4 w-4" /> : <Shield className="h-4 w-4 text-muted-foreground" />}
-                              <div className="text-left"><p className="text-sm font-medium">{control.name}</p><p className="text-xs opacity-75">{control.category}</p></div>
-                            </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">System Environment</Label>
+                      <div className="flex gap-2">
+                        {ENVIRONMENT_OPTIONS.map(env => (
+                          <Button
+                            key={env}
+                            type="button"
+                            size="sm"
+                            variant={infrastructure.systemEnvironment === env ? "default" : "outline"}
+                            className={infrastructure.systemEnvironment === env ? "bg-primary" : ""}
+                            onClick={() => setInfrastructure({...infrastructure, systemEnvironment: env})}
+                          >
+                            {env}
                           </Button>
                         ))}
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Security Controls */}
+                <Card>
+                  <CardHeader className="flex-row items-center justify-between">
+                    <CardTitle className="text-sm">Security Solutions</CardTitle>
+                    <Badge variant="outline">{selectedControls.length} selected</Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {SECURITY_CONTROLS.map(control => {
+                      const isSelected = selectedControls.includes(control.id);
+                      const isExpanded = expandedSolutions.includes(control.id);
+                      const config = solutionConfigs[control.id] || { oem: '', partner: '', renewalMonth: '', renewalYear: '', isManagedService: false };
+                      
+                      return (
+                        <div key={control.id} className={`border rounded-lg transition-all ${isSelected ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20' : ''}`}>
+                          <div 
+                            className="flex items-center justify-between p-3 cursor-pointer"
+                            onClick={() => {
+                              if (!isSelected) {
+                                setSelectedControls([...selectedControls, control.id]);
+                                setExpandedSolutions([...expandedSolutions, control.id]);
+                              } else {
+                                setExpandedSolutions(
+                                  isExpanded 
+                                    ? expandedSolutions.filter(id => id !== control.id)
+                                    : [...expandedSolutions, control.id]
+                                );
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-full ${isSelected ? 'bg-green-500 text-white' : 'bg-muted'}`}>
+                                {isSelected ? <CheckCircle className="h-4 w-4" /> : <Shield className="h-4 w-4 text-muted-foreground" />}
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{control.name}</p>
+                                <p className="text-xs text-muted-foreground">{control.category}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isSelected && config.oem && (
+                                <Badge variant="secondary" className="text-xs">{config.oem}</Badge>
+                              )}
+                              {isSelected && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedControls(selectedControls.filter(id => id !== control.id));
+                                    setExpandedSolutions(expandedSolutions.filter(id => id !== control.id));
+                                    const newConfigs = {...solutionConfigs};
+                                    delete newConfigs[control.id];
+                                    setSolutionConfigs(newConfigs);
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                              )}
+                              {isSelected && (
+                                isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                          </div>
+                          
+                          {isSelected && isExpanded && (
+                            <div className="px-4 pb-4 pt-1 border-t bg-muted/20">
+                              <div className="grid grid-cols-2 gap-3 mt-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">OEM / Vendor</Label>
+                                  <Select 
+                                    value={config.oem} 
+                                    onValueChange={(val) => setSolutionConfigs({
+                                      ...solutionConfigs, 
+                                      [control.id]: {...config, oem: val}
+                                    })}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Select OEM" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {OEM_OPTIONS.map(oem => (
+                                        <SelectItem key={oem} value={oem}>{oem}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Partner</Label>
+                                  <Select 
+                                    value={config.partner} 
+                                    onValueChange={(val) => setSolutionConfigs({
+                                      ...solutionConfigs, 
+                                      [control.id]: {...config, partner: val}
+                                    })}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Select Partner" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {PARTNER_OPTIONS.map(partner => (
+                                        <SelectItem key={partner} value={partner}>{partner}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-3 mt-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Renewal Date</Label>
+                                  <div className="flex gap-1">
+                                    <Select 
+                                      value={config.renewalMonth} 
+                                      onValueChange={(val) => setSolutionConfigs({
+                                        ...solutionConfigs, 
+                                        [control.id]: {...config, renewalMonth: val}
+                                      })}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs flex-1">
+                                        <SelectValue placeholder="Month" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {MONTHS.map((month, i) => (
+                                          <SelectItem key={month} value={String(i + 1).padStart(2, '0')}>{month.slice(0, 3)}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <Select 
+                                      value={config.renewalYear} 
+                                      onValueChange={(val) => setSolutionConfigs({
+                                        ...solutionConfigs, 
+                                        [control.id]: {...config, renewalYear: val}
+                                      })}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs w-20">
+                                        <SelectValue placeholder="Year" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                                          <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Managed Service</Label>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant={config.isManagedService === false ? "default" : "outline"}
+                                      className={`flex-1 h-8 text-xs ${config.isManagedService === false ? 'bg-destructive hover:bg-destructive/90' : ''}`}
+                                      onClick={() => setSolutionConfigs({
+                                        ...solutionConfigs, 
+                                        [control.id]: {...config, isManagedService: false}
+                                      })}
+                                    >
+                                      No
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant={config.isManagedService === true ? "default" : "outline"}
+                                      className={`flex-1 h-8 text-xs ${config.isManagedService === true ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                                      onClick={() => setSolutionConfigs({
+                                        ...solutionConfigs, 
+                                        [control.id]: {...config, isManagedService: true}
+                                      })}
+                                    >
+                                      Yes
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </CardContent>
                 </Card>
               </>
