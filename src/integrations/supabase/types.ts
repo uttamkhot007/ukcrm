@@ -2739,6 +2739,55 @@ export type Database = {
           },
         ]
       }
+      oem_technologies: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          oem_id: string
+          technology_id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          oem_id: string
+          technology_id: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          oem_id?: string
+          technology_id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oem_technologies_oem_id_fkey"
+            columns: ["oem_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_oems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oem_technologies_technology_id_fkey"
+            columns: ["technology_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_technologies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oem_technologies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offerings_managed_security: {
         Row: {
           created_at: string
@@ -2967,7 +3016,9 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          oem_id: string | null
           status: string | null
+          technology_id: string | null
           tenant_id: string | null
           updated_at: string
         }
@@ -2978,7 +3029,9 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          oem_id?: string | null
           status?: string | null
+          technology_id?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -2989,11 +3042,27 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          oem_id?: string | null
           status?: string | null
+          technology_id?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "offerings_solutions_oem_id_fkey"
+            columns: ["oem_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_oems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offerings_solutions_technology_id_fkey"
+            columns: ["technology_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_technologies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "offerings_solutions_tenant_id_fkey"
             columns: ["tenant_id"]
