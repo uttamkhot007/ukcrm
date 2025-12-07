@@ -368,6 +368,20 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
+      // Solution Engineering / Presales Module
+      items.push({
+        id: "presales",
+        label: "Solution Engineering",
+        icon: Puzzle,
+        color: "text-presales",
+        children: [
+          { id: "presales-poc", label: "POC Requests", icon: Target },
+          { id: "presales-demos", label: "Demos", icon: Activity },
+          { id: "presales-assessments", label: "Assessments", icon: ClipboardCheck },
+          { id: "presales-rfp", label: "RFP/RFI", icon: FileText },
+        ],
+      });
+
       // Admin Module
       items.push({
         id: "admin",
@@ -449,15 +463,15 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       // Solution Engineering - for presales team
       if (hasTeamAccess(["presales", "sales", "management"])) {
         items.push({
-          id: "solution-engineering",
+          id: "presales",
           label: "Solution Engineering",
           icon: Puzzle,
           color: "text-presales",
           children: [
-            { id: "se-poc", label: "POC Requests", icon: Target },
-            { id: "se-demos", label: "Demos", icon: Activity },
-            { id: "se-assessments", label: "Assessments", icon: ClipboardCheck },
-            { id: "se-rfp", label: "RFP/RFI", icon: FileText },
+            { id: "presales-poc", label: "POC Requests", icon: Target },
+            { id: "presales-demos", label: "Demos", icon: Activity },
+            { id: "presales-assessments", label: "Assessments", icon: ClipboardCheck },
+            { id: "presales-rfp", label: "RFP/RFI", icon: FileText },
           ],
         });
       }
