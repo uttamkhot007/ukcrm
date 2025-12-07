@@ -85,7 +85,7 @@ export function SuperAdminTenantSwitcher() {
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 bg-popover border-border z-50" align="end">
+      <PopoverContent className="w-72 p-0 bg-popover border-border z-[60]" align="end">
         <Command className="bg-popover">
           <CommandInput placeholder="Search all workspaces..." className="border-0" />
           <CommandList className="max-h-[300px]">
