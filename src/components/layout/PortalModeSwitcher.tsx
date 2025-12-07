@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Building2, Headphones, Shield } from "lucide-react";
@@ -14,6 +15,8 @@ type ViewMode = "admin" | "workspace" | "customer";
 
 export function PortalModeSwitcher() {
   const { portalMode, setPortalMode, isCustomer, isAdmin, role } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Customers can only see customer portal - no switcher needed
   if (isCustomer && !isAdmin) {
@@ -51,6 +54,10 @@ export function PortalModeSwitcher() {
 
   const handleModeChange = (mode: ViewMode) => {
     setPortalMode(mode);
+    // Navigate to home when switching modes (especially when on /admin routes)
+    if (location.pathname.startsWith('/admin')) {
+      navigate('/');
+    }
   };
 
   return (
