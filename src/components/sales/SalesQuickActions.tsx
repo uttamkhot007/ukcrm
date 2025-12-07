@@ -38,10 +38,6 @@ import {
 const QUICK_ADD_OPTIONS = [
   { id: "contact", label: "Contact", icon: User },
   { id: "organization", label: "Organization", icon: Building2 },
-  { id: "solution", label: "Solution", icon: Lightbulb },
-  { id: "offensive_security", label: "Offensive Security Service", icon: Shield },
-  { id: "managed_security", label: "Managed Security Service", icon: ShieldCheck },
-  { id: "professional_services", label: "Professional Services", icon: Wrench },
 ];
 
 const ORGANIZATION_TYPES = [
