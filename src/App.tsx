@@ -19,6 +19,8 @@ import AdminDocumentation from "./pages/admin/AdminDocumentation";
 import AdminPortal from "./pages/admin/AdminPortal";
 import AdminHealth from "./pages/admin/AdminHealth";
 import AdminTenants from "./pages/admin/AdminTenants";
+import AdminAlliance from "./pages/admin/AdminAlliance";
+import AdminOfferings from "./pages/admin/AdminOfferings";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import NotFound from "./pages/NotFound";
@@ -50,6 +52,8 @@ const App = () => (
                   <Route index element={<Navigate to="/admin/organization" replace />} />
                   <Route path="organization" element={<AdminOrganization />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="alliance" element={<AdminAlliance />} />
+                  <Route path="offerings" element={<AdminOfferings />} />
                   <Route path="integrations" element={<AdminIntegrations />} />
                   <Route path="documentation" element={<AdminDocumentation />} />
                   <Route path="portal" element={<AdminPortal />} />
