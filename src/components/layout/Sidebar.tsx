@@ -175,7 +175,7 @@ const adminItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement } = useAuth();
+  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode } = useAuth();
   const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
   const totalEventCount = eventCounts.birthdayCount + eventCounts.anniversaryCount + eventCounts.orgEventCount + eventCounts.achievementCount + eventCounts.performanceCount;
@@ -195,10 +195,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // Build navigation based on portal mode and access level
   const getNavItems = (): NavItem[] => {
     const items: NavItem[] = [];
-    const isFullAccess = role === "admin" || isManagement;
+    const isFullAccess = isAdminMode || (role === "admin" && portalMode === "admin") || (isManagement && portalMode !== "customer");
 
-    // Admin/Management see ALL modules regardless of portal mode
-    if (isFullAccess) {
+    // Admin mode or Management see ALL modules
+    if (isFullAccess && portalMode !== "customer" && portalMode !== "workspace") {
       // Dashboard first
       items.push({
         id: "dashboard",
@@ -395,8 +395,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     } else if (portalMode === "customer") {
       // Customer mode - only support
       items.push(...customerPortalItems);
-    } else {
-      // Regular users in workspace mode: show based on team access
+    } else if (portalMode === "workspace") {
+      // Workspace mode: Employee portal + team-based access
       if (hasSalesAccess) {
         // Sales team members get both sales and employee portal
         items.push(...salesPortalItems);
@@ -404,6 +404,9 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       } else {
         items.push(...employeePortalItems);
       }
+    } else {
+      // Default to employee portal for any other case
+      items.push(...employeePortalItems);
     }
 
     return items;
