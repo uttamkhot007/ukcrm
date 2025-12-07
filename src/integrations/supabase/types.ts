@@ -2080,6 +2080,7 @@ export type Database = {
           full_name: string | null
           hire_date: string | null
           id: string
+          is_super_admin: boolean | null
           job_title: string | null
           location: string | null
           manager_id: string | null
@@ -2103,6 +2104,7 @@ export type Database = {
           full_name?: string | null
           hire_date?: string | null
           id?: string
+          is_super_admin?: boolean | null
           job_title?: string | null
           location?: string | null
           manager_id?: string | null
@@ -2126,6 +2128,7 @@ export type Database = {
           full_name?: string | null
           hire_date?: string | null
           id?: string
+          is_super_admin?: boolean | null
           job_title?: string | null
           location?: string | null
           manager_id?: string | null
