@@ -51,12 +51,19 @@ const Index = () => {
   // Redirect to workspace selection if no tenant selected
   useEffect(() => {
     if (!isLoading && !tenantLoading && user) {
-      // Super admin with no tenant or users needing to select
+      // Super admins can access the app without a tenant - they manage all tenants
+      if (isSuperAdmin && !currentTenant) {
+        // Super admin without tenant selected - they can still use the app
+        // They'll manage tenants from Admin Center
+        return;
+      }
+      
+      // Non-super-admin users need a tenant
       if (!currentTenant && tenantMemberships.length === 0) {
         // No workspaces at all - redirect to create one
         navigate("/workspace/new");
-      } else if (!currentTenant && (isSuperAdmin || tenantMemberships.length > 1)) {
-        // Multiple options or super admin - let them choose
+      } else if (!currentTenant && tenantMemberships.length > 1) {
+        // Multiple options - let them choose
         navigate("/workspace/select");
       }
     }
