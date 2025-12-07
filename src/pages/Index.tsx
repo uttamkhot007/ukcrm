@@ -24,6 +24,7 @@ import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
 import { HRModule } from "@/components/hr/HRModule";
 import { AccountsModule } from "@/components/accounts/AccountsModule";
+import { SolutionEngineeringModule } from "@/components/presales/SolutionEngineeringModule";
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -163,6 +164,17 @@ const Index = () => {
         return <AccountsModule initialTab="ar-aging" />;
       case "accounts-sla-reminders":
         return <AccountsModule initialTab="sla-reminders" />;
+      
+      // Solution Engineering / Presales modules
+      case "presales":
+      case "presales-poc":
+        return <SolutionEngineeringModule />;
+      case "presales-demos":
+        return <SolutionEngineeringModule />;
+      case "presales-assessments":
+        return <SolutionEngineeringModule />;
+      case "presales-rfp":
+        return <SolutionEngineeringModule />;
       
       // Admin modules
       case "admin":
