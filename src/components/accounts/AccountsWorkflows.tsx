@@ -39,6 +39,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountsWorkflowBoards } from "./AccountsWorkflowBoards";
 import { AccountsWorkflowStageView } from "./AccountsWorkflowStageView";
+import { OrderRequestDetails } from "./OrderRequestDetails";
 import { getAccountsStageProgress, formatAccountsStageName } from "@/lib/accounts-workflow-templates";
 
 export function AccountsWorkflows() {
@@ -284,7 +285,7 @@ export function AccountsWorkflows() {
 
       {/* Workflow Details Sheet */}
       <Sheet open={!!selectedWorkflow} onOpenChange={() => setSelectedWorkflow(null)}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               {selectedWorkflow?.workflow_type === "order_processing" ? (
@@ -300,17 +301,38 @@ export function AccountsWorkflows() {
           </SheetHeader>
 
           {selectedWorkflow && (
-            <div className="mt-6">
-              <AccountsWorkflowStageView
-                workflowId={selectedWorkflow.id}
-                workflowType={selectedWorkflow.workflow_type}
-                currentStage={selectedWorkflow.current_stage}
-                onStageComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: ["accounts-workflows"] });
-                  setSelectedWorkflow(null);
-                }}
-              />
-            </div>
+            <Tabs defaultValue="stages" className="mt-6">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="stages">Workflow Stages</TabsTrigger>
+                <TabsTrigger value="details">Order Details</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="stages" className="mt-4">
+                <AccountsWorkflowStageView
+                  workflowId={selectedWorkflow.id}
+                  workflowType={selectedWorkflow.workflow_type}
+                  currentStage={selectedWorkflow.current_stage}
+                  onStageComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ["accounts-workflows"] });
+                    setSelectedWorkflow(null);
+                  }}
+                />
+              </TabsContent>
+              
+              <TabsContent value="details" className="mt-4">
+                {selectedWorkflow.order_request_id ? (
+                  <OrderRequestDetails
+                    orderRequestId={selectedWorkflow.order_request_id}
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["accounts-workflows"] })}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No order request details available</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </SheetContent>
       </Sheet>
