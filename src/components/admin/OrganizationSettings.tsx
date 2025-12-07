@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Building2, Globe, Linkedin, Twitter, MapPin, Users, DollarSign, Plus, X, Save, UserCircle, AlertTriangle } from "lucide-react";
+import { Building2, Globe, Linkedin, Twitter, MapPin, Users, DollarSign, Plus, X, Save, UserCircle, AlertTriangle, Loader2, Search } from "lucide-react";
 
 const CURRENCIES = [
   { code: "USD", name: "US Dollar", symbol: "$" },
@@ -82,6 +82,7 @@ export function OrganizationSettings() {
   const [newManager, setNewManager] = useState<SeniorManager>({ name: "", title: "", email: "" });
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState("System maintenance in progress. Some features may be temporarily unavailable.");
+  const [isFetchingCompanyInfo, setIsFetchingCompanyInfo] = useState(false);
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["organization-settings"],
@@ -172,6 +173,44 @@ export function OrganizationSettings() {
 
   const handleMaintenanceMessageSave = () => {
     maintenanceMutation.mutate({ mode: maintenanceMode, message: maintenanceMessage });
+  };
+
+  const fetchCompanyInfo = async () => {
+    const url = formData.website_url;
+    if (!url) {
+      toast.error("Please enter a website URL first");
+      return;
+    }
+
+    setIsFetchingCompanyInfo(true);
+    try {
+      const response = await supabase.functions.invoke('fetch-company-info', {
+        body: { url }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const { data } = response.data;
+      if (data) {
+        setFormData(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          logo_url: data.logo_url || prev.logo_url,
+          linkedin_url: data.linkedin_url || prev.linkedin_url,
+          twitter_url: data.twitter_url || prev.twitter_url,
+          address: data.address || prev.address,
+          website_url: data.website_url || prev.website_url,
+        }));
+        toast.success("Company information fetched successfully");
+      }
+    } catch (error: any) {
+      console.error('Error fetching company info:', error);
+      toast.error("Failed to fetch company info: " + (error.message || "Unknown error"));
+    } finally {
+      setIsFetchingCompanyInfo(false);
+    }
   };
 
   const addCountry = () => {
@@ -350,13 +389,35 @@ export function OrganizationSettings() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="website">Website URL</Label>
-              <Input
-                id="website"
-                value={formData.website_url || ""}
-                onChange={(e) => setFormData((prev) => ({ ...prev, website_url: e.target.value }))}
-                placeholder="https://yourcompany.com"
-                disabled={!isAdmin}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="website"
+                  value={formData.website_url || ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, website_url: e.target.value }))}
+                  placeholder="https://yourcompany.com"
+                  disabled={!isAdmin}
+                  className="flex-1"
+                />
+                {isAdmin && (
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={fetchCompanyInfo}
+                    disabled={isFetchingCompanyInfo || !formData.website_url}
+                    title="Fetch company details from website"
+                  >
+                    {isFetchingCompanyInfo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Fetch Info</span>
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Enter website URL and click "Fetch Info" to auto-populate company details
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="linkedin" className="flex items-center gap-2">
