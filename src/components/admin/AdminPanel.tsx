@@ -77,8 +77,9 @@ export function AdminPanel() {
   const fetchUsers = async () => {
     setIsLoading(true);
     
+    // Use profiles_safe view to hide super admin status from non-super-admins
     const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
+      .from("profiles_safe")
       .select("*");
 
     if (profilesError) {
@@ -105,16 +106,19 @@ export function AdminPanel() {
       return;
     }
 
-    const usersWithRoles: UserWithRole[] = profiles.map((profile) => {
-      const userRole = roles.find((r) => r.user_id === profile.user_id);
-      return {
-        id: profile.id,
-        user_id: profile.user_id,
-        email: profile.email,
-        full_name: profile.full_name,
-        role: (userRole?.role as AppRole) || "employee",
-      };
-    });
+    // Filter out super admin users - they won't be visible to regular admins
+    const usersWithRoles: UserWithRole[] = profiles
+      .filter((profile: any) => !profile.is_super_admin)
+      .map((profile: any) => {
+        const userRole = roles.find((r) => r.user_id === profile.user_id);
+        return {
+          id: profile.id,
+          user_id: profile.user_id,
+          email: profile.email,
+          full_name: profile.full_name,
+          role: (userRole?.role as AppRole) || "employee",
+        };
+      });
 
     setUsers(usersWithRoles);
     setIsLoading(false);

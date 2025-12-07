@@ -126,8 +126,9 @@ export function EmployeesManagement() {
   const fetchEmployees = async () => {
     setIsLoading(true);
 
+    // Use profiles_safe view to hide super admin status from non-super-admins
     const [profilesResult, userTeamsResult, salesTeamsResult] = await Promise.all([
-      supabase.from("profiles").select("*"),
+      supabase.from("profiles_safe").select("*"),
       supabase.from("user_teams").select("*"),
       supabase.from("sales_teams").select("*"),
     ]);
@@ -156,28 +157,32 @@ export function EmployeesManagement() {
       setSalesTeams(salesTeamsResult.data);
     }
 
-    const employeesWithTeams: Employee[] = profilesResult.data.map((profile: any) => {
-      const teams = userTeamsResult.data
-        .filter((t) => t.user_id === profile.user_id)
-        .map((t) => t.team as TeamType);
-      return {
-        id: profile.id,
-        user_id: profile.user_id,
-        email: profile.email,
-        full_name: profile.full_name,
-        birth_date: profile.birth_date,
-        hire_date: profile.hire_date,
-        job_title: profile.job_title,
-        department: profile.department,
-        employee_code: profile.employee_code,
-        location: profile.location,
-        anniversary_date: profile.anniversary_date,
-        manager_id: profile.manager_id,
-        employment_status: profile.employment_status || "active",
-        sales_sub_team: profile.sales_sub_team,
-        teams,
-      };
-    });
+    // Filter out super admin users - they won't be visible to regular admins
+    // (is_super_admin will always be false for non-super-admins due to the view)
+    const employeesWithTeams: Employee[] = profilesResult.data
+      .filter((profile: any) => !profile.is_super_admin)
+      .map((profile: any) => {
+        const teams = userTeamsResult.data
+          .filter((t) => t.user_id === profile.user_id)
+          .map((t) => t.team as TeamType);
+        return {
+          id: profile.id,
+          user_id: profile.user_id,
+          email: profile.email,
+          full_name: profile.full_name,
+          birth_date: profile.birth_date,
+          hire_date: profile.hire_date,
+          job_title: profile.job_title,
+          department: profile.department,
+          employee_code: profile.employee_code,
+          location: profile.location,
+          anniversary_date: profile.anniversary_date,
+          manager_id: profile.manager_id,
+          employment_status: profile.employment_status || "active",
+          sales_sub_team: profile.sales_sub_team,
+          teams,
+        };
+      });
 
     setEmployees(employeesWithTeams);
     setIsLoading(false);
