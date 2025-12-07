@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2, Globe, UserPlus, ExternalLink } from "lucide-react";
+import { Plus, Building2, Users, Search, Pencil, Trash2, Globe, UserPlus, ExternalLink, Loader2 } from "lucide-react";
 
 const ORGANIZATION_TYPES = [
   { value: "customer", label: "Customer" },
@@ -72,6 +72,13 @@ export function AllianceModule() {
   const [isOrgSheetOpen, setIsOrgSheetOpen] = useState(false);
   const [isAddUserToOrgOpen, setIsAddUserToOrgOpen] = useState(false);
   const [orgTypeFilter, setOrgTypeFilter] = useState<string>("all");
+  
+  // URL fetch state for organizations
+  const [orgFormUrl, setOrgFormUrl] = useState("");
+  const [orgFormName, setOrgFormName] = useState("");
+  const [orgFormLogo, setOrgFormLogo] = useState("");
+  const [orgFormAddress, setOrgFormAddress] = useState("");
+  const [isFetchingOrg, setIsFetchingOrg] = useState(false);
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -174,7 +181,7 @@ export function AllianceModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
       setIsOrgDialogOpen(false);
-      setEditingOrg(null);
+      resetOrgForm();
       toast.success(editingOrg ? "Organization updated" : "Organization created");
     },
     onError: (error) => {
@@ -274,6 +281,39 @@ export function AllianceModule() {
 
   const getOrgUsers = (orgId: string) => allianceUsers.filter(u => u.organization_id === orgId);
 
+  // Fetch organization details from URL
+  const fetchOrgFromUrl = async () => {
+    if (!orgFormUrl) return;
+    setIsFetchingOrg(true);
+    try {
+      let url = orgFormUrl;
+      if (!url.startsWith("http")) {
+        url = "https://" + url;
+      }
+      
+      const domain = new URL(url).hostname.replace("www.", "");
+      const companyName = domain.split(".")[0];
+      const formattedName = companyName.charAt(0).toUpperCase() + companyName.slice(1);
+      
+      setOrgFormName(formattedName);
+      setOrgFormLogo(`https://logo.clearbit.com/${domain}`);
+      
+      toast.success("Organization details fetched from URL");
+    } catch (error) {
+      toast.error("Failed to parse URL");
+    } finally {
+      setIsFetchingOrg(false);
+    }
+  };
+
+  const resetOrgForm = () => {
+    setOrgFormUrl("");
+    setOrgFormName("");
+    setOrgFormLogo("");
+    setOrgFormAddress("");
+    setEditingOrg(null);
+  };
+
   const handleOrgSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -286,13 +326,14 @@ export function AllianceModule() {
     const services = servicesInput ? servicesInput.split(",").map(s => s.trim()).filter(Boolean) : null;
 
     orgMutation.mutate({
-      name: formData.get("name") as string,
+      name: orgFormName || formData.get("name") as string,
       description: formData.get("description") as string,
-      website: formData.get("website") as string,
+      website: orgFormUrl || formData.get("website") as string,
       industry: formData.get("industry") as string,
       status: formData.get("status") as string,
       organization_type: orgType === "none" ? null : orgType,
-      address: formData.get("address") as string,
+      address: orgFormAddress || formData.get("address") as string,
+      logo_url: orgFormLogo,
       solutions,
       services,
     });
@@ -579,7 +620,7 @@ export function AllianceModule() {
               </Select>
               <Dialog open={isOrgDialogOpen} onOpenChange={(open) => {
                 setIsOrgDialogOpen(open);
-                if (!open) setEditingOrg(null);
+                if (!open) resetOrgForm();
               }}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
@@ -592,10 +633,50 @@ export function AllianceModule() {
                     <DialogTitle>{editingOrg ? "Edit Organization" : "Add New Organization"}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleOrgSubmit} className="space-y-4">
+                    {/* URL Fetch Section */}
+                    <div className="space-y-2">
+                      <Label htmlFor="org-website-fetch">Fetch Organization from URL</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          id="org-website-fetch" 
+                          value={orgFormUrl || editingOrg?.website || ""}
+                          onChange={(e) => setOrgFormUrl(e.target.value)}
+                          placeholder="https://example.com" 
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={fetchOrgFromUrl}
+                          disabled={isFetchingOrg || !orgFormUrl}
+                        >
+                          {isFetchingOrg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Show fetched logo */}
+                    {(orgFormLogo || editingOrg?.logo_url) && (
+                      <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
+                        <img 
+                          src={orgFormLogo || editingOrg?.logo_url || ""} 
+                          alt="Logo" 
+                          className="w-10 h-10 rounded object-contain bg-white" 
+                          onError={(e) => { e.currentTarget.style.display = 'none'; setOrgFormLogo(""); }}
+                        />
+                        <span className="text-sm text-muted-foreground">Logo fetched from website</span>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="org-name">Name *</Label>
-                        <Input id="org-name" name="name" required defaultValue={editingOrg?.name} />
+                        <Input 
+                          id="org-name" 
+                          name="name" 
+                          required 
+                          value={orgFormName || editingOrg?.name || ""}
+                          onChange={(e) => setOrgFormName(e.target.value)}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="org-type">Organization Type</Label>
@@ -616,22 +697,19 @@ export function AllianceModule() {
                       <Label htmlFor="org-description">Description</Label>
                       <Textarea id="org-description" name="description" defaultValue={editingOrg?.description || ""} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="org-website">Website (Logo will be fetched automatically)</Label>
-                        <div className="flex gap-2">
-                          <Input id="org-website" name="website" defaultValue={editingOrg?.website || ""} placeholder="https://example.com" />
-                          <Globe className="h-4 w-4 text-muted-foreground mt-3" />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="org-industry">Industry</Label>
-                        <Input id="org-industry" name="industry" defaultValue={editingOrg?.industry || ""} />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="org-industry">Industry</Label>
+                      <Input id="org-industry" name="industry" defaultValue={editingOrg?.industry || ""} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="org-address">Address</Label>
-                      <Textarea id="org-address" name="address" defaultValue={editingOrg?.address || ""} rows={2} />
+                      <Textarea 
+                        id="org-address" 
+                        name="address" 
+                        rows={2}
+                        value={orgFormAddress || editingOrg?.address || ""}
+                        onChange={(e) => setOrgFormAddress(e.target.value)}
+                      />
                     </div>
                     
                     {/* Solutions & Services for OEM type */}
