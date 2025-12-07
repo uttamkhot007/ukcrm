@@ -116,21 +116,31 @@ export default function AdminTenants() {
 
       if (membersError) throw membersError;
 
-      // Fetch profiles for members
+      // Fetch profiles for members using the safe view that hides super admin status
       const userIds = members?.map(m => m.user_id) || [];
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email, avatar_url')
+        .from('profiles_safe')
+        .select('user_id, full_name, email, avatar_url, is_super_admin')
         .in('user_id', userIds);
 
-      const membersWithProfiles: TenantMember[] = (members || []).map(m => ({
-        id: m.id,
-        user_id: m.user_id,
-        role: m.role as 'owner' | 'admin' | 'member',
-        status: m.status,
-        created_at: m.created_at,
-        profile: profiles?.find(p => p.user_id === m.user_id),
-      }));
+      // Filter out super admins from the member list (they won't be visible to non-super-admins anyway)
+      // Super admins accessing this will see all members
+      const membersWithProfiles: TenantMember[] = (members || [])
+        .filter(m => {
+          const profile = profiles?.find(p => p.user_id === m.user_id);
+          // Keep member if profile is not a super admin (or if current user is super admin - they see all)
+          return !profile?.is_super_admin;
+        })
+        .map(m => ({
+          id: m.id,
+          user_id: m.user_id,
+          role: m.role as 'owner' | 'admin' | 'member',
+          status: m.status,
+          created_at: m.created_at,
+          profile: profiles?.find(p => p.user_id === m.user_id),
+        }));
+
+      setTenantMembers(membersWithProfiles);
 
       // Fetch tenant modules
       const { data: tenantMods, error: modsError } = await supabase
