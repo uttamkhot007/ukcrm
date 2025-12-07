@@ -2783,6 +2783,53 @@ export type Database = {
           },
         ]
       }
+      offerings_oems: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          partnership_level: string | null
+          status: string | null
+          tenant_id: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          partnership_level?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          partnership_level?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offerings_oems_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offerings_offensive_security: {
         Row: {
           created_at: string
@@ -2820,6 +2867,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "offerings_offensive_security_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offerings_problem_areas: {
+        Row: {
+          area_type: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          status: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          area_type?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          area_type?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offerings_problem_areas_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -2908,6 +2996,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "offerings_solutions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offerings_technologies: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          status: string | null
+          tenant_id: string | null
+          vendor: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          tenant_id?: string | null
+          vendor?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          tenant_id?: string | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offerings_technologies_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
