@@ -32,6 +32,7 @@ import { AllianceModule } from "@/components/admin/AllianceModule";
 import { OfferingsModule } from "@/components/admin/OfferingsModule";
 import { ExpenseModule } from "@/components/expenses/ExpenseModule";
 import { AssetsModule } from "@/components/assets/AssetsModule";
+import { ProjectsModule } from "@/components/projects/ProjectsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
@@ -169,6 +170,8 @@ const Index = () => {
         return <ExpenseModule />;
       case "employee-assets":
         return <AssetsModule />;
+      case "employee-projects":
+        return <ProjectsModule />;
       
       // HR modules
       case "hr":
