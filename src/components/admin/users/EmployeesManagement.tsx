@@ -106,8 +106,16 @@ interface Employee {
   teams: TeamType[];
 }
 
+interface SalesTeam {
+  id: string;
+  team_code: string;
+  name: string;
+  leader_id: string | null;
+}
+
 export function EmployeesManagement() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [salesTeams, setSalesTeams] = useState<SalesTeam[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
@@ -118,11 +126,13 @@ export function EmployeesManagement() {
   const fetchEmployees = async () => {
     setIsLoading(true);
 
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("*");
+    const [profilesResult, userTeamsResult, salesTeamsResult] = await Promise.all([
+      supabase.from("profiles").select("*"),
+      supabase.from("user_teams").select("*"),
+      supabase.from("sales_teams").select("*"),
+    ]);
 
-    if (profilesError) {
+    if (profilesResult.error) {
       toast({
         title: "Error",
         description: "Failed to fetch employees",
@@ -132,11 +142,7 @@ export function EmployeesManagement() {
       return;
     }
 
-    const { data: userTeams, error: teamsError } = await supabase
-      .from("user_teams")
-      .select("*");
-
-    if (teamsError) {
+    if (userTeamsResult.error) {
       toast({
         title: "Error",
         description: "Failed to fetch teams",
@@ -146,8 +152,12 @@ export function EmployeesManagement() {
       return;
     }
 
-    const employeesWithTeams: Employee[] = profiles.map((profile: any) => {
-      const teams = userTeams
+    if (salesTeamsResult.data) {
+      setSalesTeams(salesTeamsResult.data);
+    }
+
+    const employeesWithTeams: Employee[] = profilesResult.data.map((profile: any) => {
+      const teams = userTeamsResult.data
         .filter((t) => t.user_id === profile.user_id)
         .map((t) => t.team as TeamType);
       return {
@@ -298,6 +308,50 @@ export function EmployeesManagement() {
 
   // Allow any employee to be selected as manager for flexibility
   const managers = employees;
+
+  // Get sales team leader info for auto-population
+  const getSalesTeamForManager = (managerId: string): string | null => {
+    const salesTeam = salesTeams.find(t => t.leader_id === managerId);
+    return salesTeam?.team_code || null;
+  };
+
+  const getManagerForSalesTeam = (teamCode: string): string | null => {
+    const salesTeam = salesTeams.find(t => t.team_code === teamCode);
+    return salesTeam?.leader_id || null;
+  };
+
+  // Handle manager change with auto-population
+  const handleManagerChange = (managerId: string) => {
+    const newManagerId = managerId === "none" ? "" : managerId;
+    const updates: Partial<Employee> = { manager_id: newManagerId };
+    
+    // If manager is a sales team leader, auto-set the sales sub-team
+    if (newManagerId) {
+      const salesTeamCode = getSalesTeamForManager(newManagerId);
+      if (salesTeamCode) {
+        updates.sales_sub_team = salesTeamCode;
+        // Also set department to Sales if not already
+        if (editForm.department !== "Sales") {
+          updates.department = "Sales";
+        }
+      }
+    }
+    
+    setEditForm(prev => ({ ...prev, ...updates }));
+  };
+
+  // Handle sales sub-team change with auto-population
+  const handleSalesSubTeamChange = (teamCode: string) => {
+    const updates: Partial<Employee> = { sales_sub_team: teamCode };
+    
+    // Auto-set the manager to the team leader
+    const leaderId = getManagerForSalesTeam(teamCode);
+    if (leaderId) {
+      updates.manager_id = leaderId;
+    }
+    
+    setEditForm(prev => ({ ...prev, ...updates }));
+  };
 
   return (
     <div className="space-y-4">
@@ -561,39 +615,59 @@ export function EmployeesManagement() {
               <Label>Manager</Label>
               <Select
                 value={editForm.manager_id || "none"}
-                onValueChange={(value) => setEditForm((prev) => ({ ...prev, manager_id: value === "none" ? "" : value }))}
+                onValueChange={handleManagerChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select manager" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No Manager</SelectItem>
-                  {managers.map((manager) => (
-                    <SelectItem key={manager.user_id} value={manager.user_id}>
-                      {manager.full_name}
-                    </SelectItem>
-                  ))}
+                  {managers
+                    .filter(m => m.user_id !== editingEmployee?.user_id)
+                    .map((manager) => {
+                      const isTeamLeader = salesTeams.some(t => t.leader_id === manager.user_id);
+                      const teamName = salesTeams.find(t => t.leader_id === manager.user_id)?.name;
+                      return (
+                        <SelectItem key={manager.user_id} value={manager.user_id}>
+                          {manager.full_name}
+                          {isTeamLeader && ` (${teamName} Leader)`}
+                        </SelectItem>
+                      );
+                    })}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Selecting a sales team leader will auto-set the sub-team
+              </p>
             </div>
             {editForm.department === "Sales" && (
               <div className="space-y-2 col-span-2">
                 <Label>Sales Sub-Team</Label>
                 <Select
                   value={editForm.sales_sub_team || ""}
-                  onValueChange={(value) => setEditForm((prev) => ({ ...prev, sales_sub_team: value }))}
+                  onValueChange={handleSalesSubTeamChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select sales team" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SALES_SUB_TEAMS.map((team) => (
-                      <SelectItem key={team.value} value={team.value}>
-                        {team.label}
-                      </SelectItem>
-                    ))}
+                    {SALES_SUB_TEAMS.map((team) => {
+                      const salesTeam = salesTeams.find(t => t.team_code === team.value);
+                      const leader = salesTeam?.leader_id 
+                        ? employees.find(e => e.user_id === salesTeam.leader_id)?.full_name
+                        : null;
+                      return (
+                        <SelectItem key={team.value} value={team.value}>
+                          {team.label}
+                          {leader && ` (Leader: ${leader})`}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Selecting a team will auto-set the manager to the team leader
+                </p>
               </div>
             )}
             <div className="col-span-2">
