@@ -799,6 +799,36 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_mood_logs: {
+        Row: {
+          created_at: string
+          id: string
+          logged_at: string
+          mood: string
+          notes: string | null
+          session_duration_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logged_at?: string
+          mood: string
+          notes?: string | null
+          session_duration_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logged_at?: string
+          mood?: string
+          notes?: string | null
+          session_duration_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       employee_requests: {
         Row: {
           advance_amount: number | null
@@ -2068,11 +2098,19 @@ export type Database = {
       profiles: {
         Row: {
           anniversary_date: string | null
+          avatar_config: Json | null
+          avatar_style: string | null
           avatar_url: string | null
           birth_date: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          current_address: string | null
           department: string | null
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
           employee_code: string | null
           employment_status:
             | Database["public"]["Enums"]["employment_status"]
@@ -2084,7 +2122,9 @@ export type Database = {
           job_title: string | null
           location: string | null
           manager_id: string | null
+          postal_code: string | null
           sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
+          state: string | null
           tenant_id: string | null
           updated_at: string
           user_category: Database["public"]["Enums"]["user_category"] | null
@@ -2092,11 +2132,19 @@ export type Database = {
         }
         Insert: {
           anniversary_date?: string | null
+          avatar_config?: Json | null
+          avatar_style?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          current_address?: string | null
           department?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
           employee_code?: string | null
           employment_status?:
             | Database["public"]["Enums"]["employment_status"]
@@ -2108,7 +2156,9 @@ export type Database = {
           job_title?: string | null
           location?: string | null
           manager_id?: string | null
+          postal_code?: string | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          state?: string | null
           tenant_id?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
@@ -2116,11 +2166,19 @@ export type Database = {
         }
         Update: {
           anniversary_date?: string | null
+          avatar_config?: Json | null
+          avatar_style?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          current_address?: string | null
           department?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
           employee_code?: string | null
           employment_status?:
             | Database["public"]["Enums"]["employment_status"]
@@ -2132,7 +2190,9 @@ export type Database = {
           job_title?: string | null
           location?: string | null
           manager_id?: string | null
+          postal_code?: string | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          state?: string | null
           tenant_id?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null

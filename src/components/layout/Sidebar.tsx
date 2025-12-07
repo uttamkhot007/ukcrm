@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { TenantSwitcher } from "@/components/tenant/TenantSwitcher";
-// Package icon imported below for accounts module
+import { LogoutMoodDialog } from "@/components/logout/LogoutMoodDialog";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -197,7 +197,8 @@ const superAdminItems: NavItem[] = [
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
-  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess, isSuperAdmin } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess, isSuperAdmin, user } = useAuth();
   const { currentTenant, tenantMemberships } = useTenant();
   const navigate = useNavigate();
   const eventCounts = useUnreadEventCounts();
@@ -887,7 +888,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           {!collapsed && <span className="text-sm">Settings</span>}
         </button>
         <button
-          onClick={signOut}
+          onClick={() => setShowLogoutDialog(true)}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all",
             collapsed && "justify-center"
@@ -897,6 +898,16 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           {!collapsed && <span className="text-sm">Logout</span>}
         </button>
       </div>
+
+      {/* Logout Mood Dialog */}
+      {user && (
+        <LogoutMoodDialog
+          open={showLogoutDialog}
+          onOpenChange={setShowLogoutDialog}
+          onConfirmLogout={signOut}
+          userId={user.id}
+        />
+      )}
     </aside>
   );
 }
