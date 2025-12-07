@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts_workflow_stage_completions: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          is_current: boolean | null
+          notes: string | null
+          stage_id: string
+          stage_order: number
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_current?: boolean | null
+          notes?: string | null
+          stage_id: string
+          stage_order: number
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_current?: boolean | null
+          notes?: string | null
+          stage_id?: string
+          stage_order?: number
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_workflow_stage_completions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts_workflows: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          current_stage: string
+          deal_id: string | null
+          description: string | null
+          id: string
+          initiated_by: string
+          metadata: Json | null
+          order_request_id: string | null
+          parent_workflow_id: string | null
+          priority: string | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          workflow_type: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_stage: string
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          initiated_by: string
+          metadata?: Json | null
+          order_request_id?: string | null
+          parent_workflow_id?: string | null
+          priority?: string | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          workflow_type: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_stage?: string
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          initiated_by?: string
+          metadata?: Json | null
+          order_request_id?: string | null
+          parent_workflow_id?: string | null
+          priority?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          workflow_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_workflows_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_workflows_order_request_id_fkey"
+            columns: ["order_request_id"]
+            isOneToOne: false
+            referencedRelation: "order_processing_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_workflows_parent_workflow_id_fkey"
+            columns: ["parent_workflow_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_workflows: {
         Row: {
           approval_level: number
@@ -1449,6 +1575,166 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "hr_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_processing_requests: {
+        Row: {
+          accounts_po_date: string | null
+          accounts_po_number: string | null
+          accounts_po_shared_at: string | null
+          accounts_po_shared_to: string | null
+          accounts_po_url: string | null
+          buying_cost: number | null
+          contact_id: string | null
+          created_at: string
+          created_by: string
+          current_stage: string
+          customer_commitments: string | null
+          customer_payment_terms: string | null
+          customer_po_date: string | null
+          customer_po_number: string | null
+          customer_po_url: string | null
+          deal_id: string | null
+          distri_oem_payment_terms: string | null
+          distri_oem_quote_number: string | null
+          distri_oem_quote_url: string | null
+          distributor_oem_name: string | null
+          has_msa: boolean | null
+          has_nda: boolean | null
+          has_sla: boolean | null
+          has_sow: boolean | null
+          id: string
+          license_delivery_date: string | null
+          license_delivery_notes: string | null
+          margin_amount: number | null
+          margin_percentage: number | null
+          order_committee_approved: boolean | null
+          order_committee_approved_at: string | null
+          order_committee_approved_by: string | null
+          order_committee_notes: string | null
+          other_documents: Json | null
+          other_prerequisites: string | null
+          prerequisite_documents: Json | null
+          referral_fees: number | null
+          selling_cost: number | null
+          service_delivery_date: string | null
+          service_delivery_notes: string | null
+          status: string
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          accounts_po_date?: string | null
+          accounts_po_number?: string | null
+          accounts_po_shared_at?: string | null
+          accounts_po_shared_to?: string | null
+          accounts_po_url?: string | null
+          buying_cost?: number | null
+          contact_id?: string | null
+          created_at?: string
+          created_by: string
+          current_stage?: string
+          customer_commitments?: string | null
+          customer_payment_terms?: string | null
+          customer_po_date?: string | null
+          customer_po_number?: string | null
+          customer_po_url?: string | null
+          deal_id?: string | null
+          distri_oem_payment_terms?: string | null
+          distri_oem_quote_number?: string | null
+          distri_oem_quote_url?: string | null
+          distributor_oem_name?: string | null
+          has_msa?: boolean | null
+          has_nda?: boolean | null
+          has_sla?: boolean | null
+          has_sow?: boolean | null
+          id?: string
+          license_delivery_date?: string | null
+          license_delivery_notes?: string | null
+          margin_amount?: number | null
+          margin_percentage?: number | null
+          order_committee_approved?: boolean | null
+          order_committee_approved_at?: string | null
+          order_committee_approved_by?: string | null
+          order_committee_notes?: string | null
+          other_documents?: Json | null
+          other_prerequisites?: string | null
+          prerequisite_documents?: Json | null
+          referral_fees?: number | null
+          selling_cost?: number | null
+          service_delivery_date?: string | null
+          service_delivery_notes?: string | null
+          status?: string
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          accounts_po_date?: string | null
+          accounts_po_number?: string | null
+          accounts_po_shared_at?: string | null
+          accounts_po_shared_to?: string | null
+          accounts_po_url?: string | null
+          buying_cost?: number | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string
+          current_stage?: string
+          customer_commitments?: string | null
+          customer_payment_terms?: string | null
+          customer_po_date?: string | null
+          customer_po_number?: string | null
+          customer_po_url?: string | null
+          deal_id?: string | null
+          distri_oem_payment_terms?: string | null
+          distri_oem_quote_number?: string | null
+          distri_oem_quote_url?: string | null
+          distributor_oem_name?: string | null
+          has_msa?: boolean | null
+          has_nda?: boolean | null
+          has_sla?: boolean | null
+          has_sow?: boolean | null
+          id?: string
+          license_delivery_date?: string | null
+          license_delivery_notes?: string | null
+          margin_amount?: number | null
+          margin_percentage?: number | null
+          order_committee_approved?: boolean | null
+          order_committee_approved_at?: string | null
+          order_committee_approved_by?: string | null
+          order_committee_notes?: string | null
+          other_documents?: Json | null
+          other_prerequisites?: string | null
+          prerequisite_documents?: Json | null
+          referral_fees?: number | null
+          selling_cost?: number | null
+          service_delivery_date?: string | null
+          service_delivery_notes?: string | null
+          status?: string
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_processing_requests_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_processing_requests_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_processing_requests_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_logs"
             referencedColumns: ["id"]
           },
         ]
