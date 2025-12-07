@@ -20,6 +20,7 @@ import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
 import { HRModule } from "@/components/hr/HRModule";
 import { AccountsModule } from "@/components/accounts/AccountsModule";
+import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -27,7 +28,7 @@ import { Loader2 } from "lucide-react";
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
   const [isAIOpen, setIsAIOpen] = useState(false);
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, portalMode, isCustomer } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,6 +37,12 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
+  // Set initial module for customers
+  useEffect(() => {
+    if (isCustomer || portalMode === 'customer') {
+      setActiveModule('customer-support');
+    }
+  }, [isCustomer, portalMode]);
 
   if (isLoading) {
     return (
@@ -163,7 +170,15 @@ const Index = () => {
       case "management-cashflow":
         return <PlaceholderModule title="Management" section={activeModule} />;
       
+      // Customer Portal
+      case "customer-support":
+        return <CustomerPortal />;
+      
       default:
+        // Customers should only see their portal
+        if (isCustomer || portalMode === 'customer') {
+          return <CustomerPortal />;
+        }
         return <Dashboard onModuleChange={setActiveModule} />;
     }
   };

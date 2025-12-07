@@ -73,21 +73,21 @@ interface NavItem {
   linkPath?: string;
 }
 
-// Sales Portal Items
+// Sales-enabled employees see these items (under workspace mode)
 const salesPortalItems: NavItem[] = [
   {
     id: "dashboard",
     label: "Sales Dashboard",
     icon: LayoutDashboard,
     color: "text-primary",
-    portalMode: "sales",
+    portalMode: "workspace",
   },
   {
     id: "sales",
     label: "Sales",
     icon: TrendingUp,
     color: "text-sales",
-    portalMode: "sales",
+    portalMode: "workspace",
     children: [
       { id: "sales-funnel", label: "Funnel Management", icon: Target },
       { id: "sales-quotations", label: "Quotations", icon: FileText },
@@ -99,32 +99,32 @@ const salesPortalItems: NavItem[] = [
     label: "Contacts",
     icon: Phone,
     color: "text-primary",
-    portalMode: "sales",
+    portalMode: "workspace",
   },
 ];
 
-// Employee Portal Items
+// Regular employee portal items (under workspace mode)
 const employeePortalItems: NavItem[] = [
   {
     id: "dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
     color: "text-primary",
-    portalMode: "employee",
+    portalMode: "workspace",
   },
   {
     id: "employee-ai-assistant",
     label: "My AI Assistant",
     icon: Sparkles,
     color: "text-primary",
-    portalMode: "employee",
+    portalMode: "workspace",
   },
   {
     id: "employee",
     label: "Employee Portal",
     icon: UserCircle,
     color: "text-employee",
-    portalMode: "employee",
+    portalMode: "workspace",
     children: [
       { id: "employee-requests", label: "My Requests", icon: Ticket },
       { id: "employee-training", label: "Trainings", icon: GraduationCap },
@@ -134,6 +134,17 @@ const employeePortalItems: NavItem[] = [
       { id: "employee-appreciation", label: "Peer Appreciation", icon: Award },
       { id: "employee-profile", label: "CV & Certifications", icon: FileUser },
     ],
+  },
+];
+
+// Customer portal items (for customers)
+const customerPortalItems: NavItem[] = [
+  {
+    id: "customer-support",
+    label: "Support Center",
+    icon: HeadphonesIcon,
+    color: "text-primary",
+    portalMode: "customer",
   },
 ];
 
@@ -381,10 +392,15 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
       // Admin items (Management & Admin Panel)
       items.push(...adminItems.filter(hasAccess));
+    } else if (portalMode === "customer") {
+      // Customer mode - only support
+      items.push(...customerPortalItems);
     } else {
-      // Regular users: show based on portal mode
-      if (portalMode === "sales" && hasSalesAccess) {
+      // Regular users in workspace mode: show based on team access
+      if (hasSalesAccess) {
+        // Sales team members get both sales and employee portal
         items.push(...salesPortalItems);
+        items.push(...employeePortalItems.filter(item => item.id !== 'dashboard'));
       } else {
         items.push(...employeePortalItems);
       }
