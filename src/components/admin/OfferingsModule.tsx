@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2 } from "lucide-react";
 
 interface Offering {
   id: string;
@@ -23,18 +23,25 @@ interface Offering {
   description: string | null;
   category?: string | null;
   service_type?: string | null;
+  area_type?: string | null;
+  vendor?: string | null;
+  website?: string | null;
+  partnership_level?: string | null;
   status: string;
   created_at: string;
   created_by: string;
 }
 
-type OfferingType = "solutions" | "offensive_security" | "managed_security" | "professional_services";
+type OfferingType = "solutions" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
 
 const offeringTabs: { value: OfferingType; label: string; icon: React.ElementType; table: string }[] = [
   { value: "solutions", label: "Solutions", icon: Package, table: "offerings_solutions" },
-  { value: "offensive_security", label: "Offensive Security Services", icon: Shield, table: "offerings_offensive_security" },
-  { value: "managed_security", label: "Managed Security Services", icon: Server, table: "offerings_managed_security" },
+  { value: "offensive_security", label: "Offensive Security", icon: Shield, table: "offerings_offensive_security" },
+  { value: "managed_security", label: "Managed Security", icon: Server, table: "offerings_managed_security" },
   { value: "professional_services", label: "Professional Services", icon: Briefcase, table: "offerings_professional_services" },
+  { value: "problem_areas", label: "Problem & Requirement Areas", icon: Target, table: "offerings_problem_areas" },
+  { value: "technologies", label: "Technologies", icon: Cpu, table: "offerings_technologies" },
+  { value: "oems", label: "OEMs", icon: Building2, table: "offerings_oems" },
 ];
 
 export function OfferingsModule() {
@@ -68,6 +75,15 @@ export function OfferingsModule() {
         case "professional_services":
           query = supabase.from("offerings_professional_services").select("*").eq("tenant_id", currentTenant.id).order("name");
           break;
+        case "problem_areas":
+          query = supabase.from("offerings_problem_areas").select("*").eq("tenant_id", currentTenant.id).order("name");
+          break;
+        case "technologies":
+          query = supabase.from("offerings_technologies").select("*").eq("tenant_id", currentTenant.id).order("name");
+          break;
+        case "oems":
+          query = supabase.from("offerings_oems").select("*").eq("tenant_id", currentTenant.id).order("name");
+          break;
         default:
           return [];
       }
@@ -81,38 +97,57 @@ export function OfferingsModule() {
   // Create/Update mutation
   const mutation = useMutation({
     mutationFn: async (itemData: Partial<Offering>) => {
-      const updateData: any = {
+      const baseData: any = {
         name: itemData.name,
         description: itemData.description,
         status: itemData.status,
       };
+      
+      // Add type-specific fields
       if (activeTab === "solutions") {
-        updateData.category = itemData.category;
+        baseData.category = itemData.category;
+      } else if (activeTab === "problem_areas") {
+        baseData.area_type = itemData.area_type;
+      } else if (activeTab === "technologies") {
+        baseData.category = itemData.category;
+        baseData.vendor = itemData.vendor;
+      } else if (activeTab === "oems") {
+        baseData.website = itemData.website;
+        baseData.partnership_level = itemData.partnership_level;
       } else {
-        updateData.service_type = itemData.service_type;
+        baseData.service_type = itemData.service_type;
       }
 
       if (editingItem) {
         let updateQuery;
         switch (activeTab) {
           case "solutions":
-            updateQuery = supabase.from("offerings_solutions").update(updateData).eq("id", editingItem.id);
+            updateQuery = supabase.from("offerings_solutions").update(baseData).eq("id", editingItem.id);
             break;
           case "offensive_security":
-            updateQuery = supabase.from("offerings_offensive_security").update(updateData).eq("id", editingItem.id);
+            updateQuery = supabase.from("offerings_offensive_security").update(baseData).eq("id", editingItem.id);
             break;
           case "managed_security":
-            updateQuery = supabase.from("offerings_managed_security").update(updateData).eq("id", editingItem.id);
+            updateQuery = supabase.from("offerings_managed_security").update(baseData).eq("id", editingItem.id);
             break;
           case "professional_services":
-            updateQuery = supabase.from("offerings_professional_services").update(updateData).eq("id", editingItem.id);
+            updateQuery = supabase.from("offerings_professional_services").update(baseData).eq("id", editingItem.id);
+            break;
+          case "problem_areas":
+            updateQuery = supabase.from("offerings_problem_areas").update(baseData).eq("id", editingItem.id);
+            break;
+          case "technologies":
+            updateQuery = supabase.from("offerings_technologies").update(baseData).eq("id", editingItem.id);
+            break;
+          case "oems":
+            updateQuery = supabase.from("offerings_oems").update(baseData).eq("id", editingItem.id);
             break;
         }
         const { error } = await updateQuery!;
         if (error) throw error;
       } else {
         const insertData: any = {
-          ...updateData,
+          ...baseData,
           tenant_id: currentTenant?.id,
           created_by: user?.id!,
         };
@@ -129,6 +164,15 @@ export function OfferingsModule() {
             break;
           case "professional_services":
             insertQuery = supabase.from("offerings_professional_services").insert(insertData);
+            break;
+          case "problem_areas":
+            insertQuery = supabase.from("offerings_problem_areas").insert(insertData);
+            break;
+          case "technologies":
+            insertQuery = supabase.from("offerings_technologies").insert(insertData);
+            break;
+          case "oems":
+            insertQuery = supabase.from("offerings_oems").insert(insertData);
             break;
         }
         const { error } = await insertQuery!;
@@ -163,6 +207,15 @@ export function OfferingsModule() {
         case "professional_services":
           deleteQuery = supabase.from("offerings_professional_services").delete().eq("id", id);
           break;
+        case "problem_areas":
+          deleteQuery = supabase.from("offerings_problem_areas").delete().eq("id", id);
+          break;
+        case "technologies":
+          deleteQuery = supabase.from("offerings_technologies").delete().eq("id", id);
+          break;
+        case "oems":
+          deleteQuery = supabase.from("offerings_oems").delete().eq("id", id);
+          break;
       }
       const { error } = await deleteQuery!;
       if (error) throw error;
@@ -188,8 +241,113 @@ export function OfferingsModule() {
       description: formData.get("description") as string,
       category: formData.get("category") as string,
       service_type: formData.get("service_type") as string,
+      area_type: formData.get("area_type") as string,
+      vendor: formData.get("vendor") as string,
+      website: formData.get("website") as string,
+      partnership_level: formData.get("partnership_level") as string,
       status: formData.get("status") as string,
     });
+  };
+
+  const getSecondaryColumnHeader = () => {
+    switch (activeTab) {
+      case "solutions":
+        return "Category";
+      case "problem_areas":
+        return "Area Type";
+      case "technologies":
+        return "Vendor";
+      case "oems":
+        return "Partnership Level";
+      default:
+        return "Service Type";
+    }
+  };
+
+  const getSecondaryColumnValue = (item: Offering) => {
+    switch (activeTab) {
+      case "solutions":
+        return item.category;
+      case "problem_areas":
+        return item.area_type;
+      case "technologies":
+        return item.vendor;
+      case "oems":
+        return item.partnership_level;
+      default:
+        return item.service_type;
+    }
+  };
+
+  const renderFormFields = () => {
+    switch (activeTab) {
+      case "solutions":
+        return (
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Input id="category" name="category" defaultValue={editingItem?.category || ""} />
+          </div>
+        );
+      case "problem_areas":
+        return (
+          <div className="space-y-2">
+            <Label htmlFor="area_type">Area Type</Label>
+            <Select name="area_type" defaultValue={editingItem?.area_type || "problem"}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="problem">Problem Area</SelectItem>
+                <SelectItem value="requirement">Requirement Area</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+      case "technologies":
+        return (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Input id="category" name="category" defaultValue={editingItem?.category || ""} placeholder="e.g., Security, Cloud, DevOps" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vendor">Vendor</Label>
+              <Input id="vendor" name="vendor" defaultValue={editingItem?.vendor || ""} />
+            </div>
+          </>
+        );
+      case "oems":
+        return (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input id="website" name="website" type="url" defaultValue={editingItem?.website || ""} placeholder="https://..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="partnership_level">Partnership Level</Label>
+              <Select name="partnership_level" defaultValue={editingItem?.partnership_level || "partner"}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="platinum">Platinum</SelectItem>
+                  <SelectItem value="gold">Gold</SelectItem>
+                  <SelectItem value="silver">Silver</SelectItem>
+                  <SelectItem value="partner">Partner</SelectItem>
+                  <SelectItem value="reseller">Reseller</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+      default:
+        return (
+          <div className="space-y-2">
+            <Label htmlFor="service_type">Service Type</Label>
+            <Input id="service_type" name="service_type" defaultValue={editingItem?.service_type || ""} />
+          </div>
+        );
+    }
   };
 
   return (
@@ -197,7 +355,7 @@ export function OfferingsModule() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Offerings Management</h2>
-          <p className="text-muted-foreground">Manage your solutions and services catalog</p>
+          <p className="text-muted-foreground">Manage your solutions, services, technologies and OEM partnerships</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -213,7 +371,7 @@ export function OfferingsModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as OfferingType)}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="flex flex-wrap h-auto gap-1">
           {offeringTabs.map(tab => (
             <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
               <tab.icon className="h-4 w-4" />
@@ -233,12 +391,12 @@ export function OfferingsModule() {
                 <DialogTrigger asChild>
                   <Button className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Add {tab.label.replace(" Services", "")}
+                    Add {tab.label.includes("&") ? tab.label.split("&")[0].trim() : tab.label.replace(" Services", "").replace("s", "")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{editingItem ? "Edit" : "Add"} {tab.label.replace(" Services", "")}</DialogTitle>
+                    <DialogTitle>{editingItem ? "Edit" : "Add"} {tab.label.includes("&") ? "Item" : tab.label.replace(" Services", "")}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -249,17 +407,7 @@ export function OfferingsModule() {
                       <Label htmlFor="description">Description</Label>
                       <Textarea id="description" name="description" defaultValue={editingItem?.description || ""} />
                     </div>
-                    {activeTab === "solutions" ? (
-                      <div className="space-y-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Input id="category" name="category" defaultValue={editingItem?.category || ""} />
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Label htmlFor="service_type">Service Type</Label>
-                        <Input id="service_type" name="service_type" defaultValue={editingItem?.service_type || ""} />
-                      </div>
-                    )}
+                    {renderFormFields()}
                     <div className="space-y-2">
                       <Label htmlFor="status">Status</Label>
                       <Select name="status" defaultValue={editingItem?.status || "active"}>
@@ -289,7 +437,7 @@ export function OfferingsModule() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead>{activeTab === "solutions" ? "Category" : "Service Type"}</TableHead>
+                    <TableHead>{getSecondaryColumnHeader()}</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
@@ -308,7 +456,7 @@ export function OfferingsModule() {
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell className="max-w-xs truncate">{item.description || "-"}</TableCell>
-                        <TableCell>{activeTab === "solutions" ? item.category : item.service_type || "-"}</TableCell>
+                        <TableCell>{getSecondaryColumnValue(item) || "-"}</TableCell>
                         <TableCell>
                           <Badge variant={item.status === "active" ? "default" : "secondary"}>
                             {item.status}
