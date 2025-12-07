@@ -730,6 +730,97 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean | null
+          attendees: string[] | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          is_public: boolean | null
+          location: string | null
+          meeting_link: string | null
+          owner_id: string
+          related_contact_id: string | null
+          related_deal_id: string | null
+          reminder_minutes: number | null
+          start_time: string
+          status: string | null
+          team_type: string | null
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean | null
+          attendees?: string[] | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          is_public?: boolean | null
+          location?: string | null
+          meeting_link?: string | null
+          owner_id: string
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          reminder_minutes?: number | null
+          start_time: string
+          status?: string | null
+          team_type?: string | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean | null
+          attendees?: string[] | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          is_public?: boolean | null
+          location?: string | null
+          meeting_link?: string | null
+          owner_id?: string
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          reminder_minutes?: number | null
+          start_time?: string
+          status?: string | null
+          team_type?: string | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_related_contact_id_fkey"
+            columns: ["related_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_related_deal_id_fkey"
+            columns: ["related_deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_assessments: {
         Row: {
           assessment_date: string
@@ -3984,6 +4075,66 @@ export type Database = {
           },
         ]
       }
+      presales_opportunities: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          deal_id: string | null
+          id: string
+          involvement_type: string
+          notes: string | null
+          outcome: string | null
+          presales_member_id: string
+          started_at: string | null
+          status: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          involvement_type: string
+          notes?: string | null
+          outcome?: string | null
+          presales_member_id: string
+          started_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          involvement_type?: string
+          notes?: string | null
+          outcome?: string | null
+          presales_member_id?: string
+          started_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presales_opportunities_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presales_opportunities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -5163,6 +5314,68 @@ export type Database = {
           },
         ]
       }
+      team_reminders: {
+        Row: {
+          created_at: string
+          created_by: string
+          due_date: string
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string
+          priority: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          reminder_type: string
+          target_team: string | null
+          target_user_id: string
+          tenant_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          due_date: string
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message: string
+          priority?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          reminder_type: string
+          target_team?: string | null
+          target_user_id: string
+          tenant_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          due_date?: string
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          priority?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          reminder_type?: string
+          target_team?: string | null
+          target_user_id?: string
+          tenant_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_reminders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technical_assessments: {
         Row: {
           assessed_by: string
@@ -5752,6 +5965,115 @@ export type Database = {
           },
           {
             foreignKeyName: "tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_registrations: {
+        Row: {
+          attended_at: string | null
+          feedback: string | null
+          id: string
+          rating: number | null
+          registered_at: string | null
+          status: string | null
+          training_id: string
+          user_id: string
+        }
+        Insert: {
+          attended_at?: string | null
+          feedback?: string | null
+          id?: string
+          rating?: number | null
+          registered_at?: string | null
+          status?: string | null
+          training_id: string
+          user_id: string
+        }
+        Update: {
+          attended_at?: string | null
+          feedback?: string | null
+          id?: string
+          rating?: number | null
+          registered_at?: string | null
+          status?: string | null
+          training_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_registrations_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_sessions: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          location: string | null
+          materials_url: string | null
+          max_attendees: number | null
+          meeting_link: string | null
+          scheduled_date: string
+          status: string | null
+          target_team: string | null
+          tenant_id: string | null
+          title: string
+          trainer_id: string | null
+          training_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          location?: string | null
+          materials_url?: string | null
+          max_attendees?: number | null
+          meeting_link?: string | null
+          scheduled_date: string
+          status?: string | null
+          target_team?: string | null
+          tenant_id?: string | null
+          title: string
+          trainer_id?: string | null
+          training_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          location?: string | null
+          materials_url?: string | null
+          max_attendees?: number | null
+          meeting_link?: string | null
+          scheduled_date?: string
+          status?: string | null
+          target_team?: string | null
+          tenant_id?: string | null
+          title?: string
+          trainer_id?: string | null
+          training_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_sessions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

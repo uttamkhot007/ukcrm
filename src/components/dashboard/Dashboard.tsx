@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricCard } from "./MetricCard";
@@ -32,6 +33,9 @@ import { TeamSpecificWidgets } from "./TeamSpecificWidgets";
 import { NotificationCenterWidget } from "./NotificationCenterWidget";
 import { UpcomingEventsWidget } from "./UpcomingEventsWidget";
 import { CurrencyConverterWidget } from "./CurrencyConverterWidget";
+import { SalesRepDashboard } from "./SalesRepDashboard";
+import { SalesManagerDashboard } from "./SalesManagerDashboard";
+import { PresalesDashboard } from "./PresalesDashboard";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -41,9 +45,47 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
   const { profile, role, isAdmin, isManager, teams } = useAuth();
   const { currentTenant } = useTenant();
   const { formatCurrency } = useOrganizationSettings();
+  const { dashboardType } = useTeamRole();
   
   // Get current tenant ID
   const currentTenantId = currentTenant?.id;
+
+  // Render role-specific dashboards
+  if (dashboardType === "sales_rep") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <SalesRepDashboard onNavigate={onModuleChange} />
+      </div>
+    );
+  }
+
+  if (dashboardType === "sales_manager") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <SalesManagerDashboard onNavigate={onModuleChange} />
+      </div>
+    );
+  }
+
+  if (dashboardType === "presales_rep") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <PresalesDashboard onNavigate={onModuleChange} isManager={false} />
+      </div>
+    );
+  }
+
+  if (dashboardType === "presales_manager") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <PresalesDashboard onNavigate={onModuleChange} isManager={true} />
+      </div>
+    );
+  }
 
   // Fetch real metrics from database (filtered by tenant)
   const { data: realMetrics } = useQuery({
@@ -204,33 +246,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
   return (
     <div className="space-y-6 p-6">
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Welcome back,{" "}
-            <span className="text-gradient">
-              {profile?.full_name?.split(" ")[0] || "User"}
-            </span>
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {isAdmin
-              ? "You have full administrative access"
-              : isManager
-              ? "Here's what's happening with your business today"
-              : "Access your personal dashboard and tools"}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Today</p>
-          <p className="text-lg font-semibold">
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
-      </div>
+      <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
 
       {/* Metrics Grid - Only for Admin/Manager */}
       {metrics.length > 0 && (
