@@ -446,6 +446,22 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         });
       }
 
+      // Solution Engineering - for presales team
+      if (hasTeamAccess(["presales", "sales", "management"])) {
+        items.push({
+          id: "solution-engineering",
+          label: "Solution Engineering",
+          icon: Puzzle,
+          color: "text-presales",
+          children: [
+            { id: "se-poc", label: "POC Requests", icon: Target },
+            { id: "se-demos", label: "Demos", icon: Activity },
+            { id: "se-assessments", label: "Assessments", icon: ClipboardCheck },
+            { id: "se-rfp", label: "RFP/RFI", icon: FileText },
+          ],
+        });
+      }
+
       // Inside Sales - specific to inside_sales team
       if (hasTeamAccess(["inside_sales", "management"])) {
         items.push({
