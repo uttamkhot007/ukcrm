@@ -153,13 +153,9 @@ export function EmployeesManagement() {
 
     const tenantUserIds = tenantMembersResult.data.map(m => m.user_id);
 
-    // Build filter based on tenant membership
-    const profilesFilter = tenantUserIds.length > 0
-      ? `tenant_id.eq.${currentTenant.id},user_id.in.(${tenantUserIds.join(',')})`
-      : `tenant_id.eq.${currentTenant.id}`;
-
+    // Filter employees strictly by tenant_id for proper data isolation
     const [profilesResult, userTeamsResult, salesTeamsResult] = await Promise.all([
-      supabase.from("profiles_safe").select("*").or(profilesFilter),
+      supabase.from("profiles_safe").select("*").eq("tenant_id", currentTenant.id),
       supabase.from("user_teams").select("*"),
       supabase.from("sales_teams").select("*"),
     ]);
