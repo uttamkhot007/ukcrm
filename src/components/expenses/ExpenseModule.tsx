@@ -1,33 +1,20 @@
-import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { ExpenseReportsList } from "./ExpenseReportsList";
 import { TravelRequestsList } from "./TravelRequestsList";
 import { ExpenseApprovals } from "./ExpenseApprovals";
 import { ExpenseStats } from "./ExpenseStats";
 import { useAuth } from "@/hooks/useAuth";
-import { Receipt, Plane, CheckCircle, FileText } from "lucide-react";
 
 interface ExpenseModuleProps {
   initialTab?: string;
 }
 
 export function ExpenseModule({ initialTab = "my-expenses" }: ExpenseModuleProps) {
-  const [activeTab, setActiveTab] = useState(initialTab);
   const { role, teams } = useAuth();
   
   const isFinanceOrManager = role === "admin" || role === "manager" || teams.includes("finance");
 
-  const navItems: ModuleNavItem[] = [
-    { value: "my-expenses", label: "My Expenses", icon: Receipt },
-    { value: "travel-requests", label: "Travel Requests", icon: Plane },
-    ...(isFinanceOrManager ? [
-      { value: "approvals", label: "Approvals", icon: CheckCircle },
-      { value: "all-expenses", label: "All Expenses", icon: FileText },
-    ] : []),
-  ];
-
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "my-expenses":
         return <ExpenseReportsList viewMode="personal" />;
       case "travel-requests":
@@ -51,12 +38,6 @@ export function ExpenseModule({ initialTab = "my-expenses" }: ExpenseModuleProps
       </div>
 
       <ExpenseStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

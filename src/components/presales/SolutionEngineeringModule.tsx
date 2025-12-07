@@ -1,25 +1,17 @@
-import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
-import { Lightbulb, Presentation, ClipboardCheck, FileText, GitBranch } from "lucide-react";
+import { Lightbulb } from "lucide-react";
 import { POCRequestsTab } from "./POCRequestsTab";
 import { DemoSchedulesTab } from "./DemoSchedulesTab";
 import { TechnicalAssessmentsTab } from "./TechnicalAssessmentsTab";
 import { RFPResponsesTab } from "./RFPResponsesTab";
 import { PresalesWorkflowsTab } from "./PresalesWorkflowsTab";
 
-const navItems: ModuleNavItem[] = [
-  { value: "poc", label: "POC Requests", icon: Lightbulb },
-  { value: "demos", label: "Demos", icon: Presentation },
-  { value: "assessments", label: "Assessments", icon: ClipboardCheck },
-  { value: "rfp", label: "RFP/RFI", icon: FileText },
-  { value: "workflows", label: "Workflows", icon: GitBranch },
-];
+interface SolutionEngineeringModuleProps {
+  initialTab?: string;
+}
 
-export function SolutionEngineeringModule() {
-  const [activeTab, setActiveTab] = useState("poc");
-
+export function SolutionEngineeringModule({ initialTab = "poc" }: SolutionEngineeringModuleProps) {
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "poc":
         return <POCRequestsTab />;
       case "demos":
@@ -46,12 +38,6 @@ export function SolutionEngineeringModule() {
           <p className="text-muted-foreground">Manage POCs, demos, assessments, and presales workflows</p>
         </div>
       </div>
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

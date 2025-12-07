@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, FileText, ShoppingCart } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { ProcurementStats } from "./ProcurementStats";
@@ -11,14 +10,12 @@ import { PurchaseOrdersList } from "./PurchaseOrdersList";
 import { NewProcurementRequestDialog } from "./NewProcurementRequestDialog";
 import { ProcurementRequestDetailsSheet } from "./ProcurementRequestDetailsSheet";
 
-const navItems: ModuleNavItem[] = [
-  { value: "requests", label: "Requests", icon: FileText },
-  { value: "purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
-];
+interface ProcurementModuleProps {
+  initialTab?: string;
+}
 
-export function ProcurementModule() {
+export function ProcurementModule({ initialTab = "requests" }: ProcurementModuleProps) {
   const { currentTenant } = useTenant();
-  const [activeTab, setActiveTab] = useState("requests");
   const [requests, setRequests] = useState<any[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +72,7 @@ export function ProcurementModule() {
   };
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "requests":
         return (
           <div className="space-y-4">
@@ -129,12 +126,6 @@ export function ProcurementModule() {
       </div>
 
       <ProcurementStats stats={stats} />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

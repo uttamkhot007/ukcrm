@@ -1,27 +1,21 @@
 import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { InvoicesList } from "./InvoicesList";
 import { BillingStats } from "./BillingStats";
 import { NewInvoiceDialog } from "./NewInvoiceDialog";
 import { InvoiceDetailsSheet } from "./InvoiceDetailsSheet";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Plus } from "lucide-react";
 
-const navItems: ModuleNavItem[] = [
-  { value: "all", label: "All Invoices", icon: FileText },
-  { value: "draft", label: "Drafts", icon: Clock },
-  { value: "sent", label: "Sent", icon: FileText },
-  { value: "overdue", label: "Overdue", icon: AlertTriangle },
-  { value: "paid", label: "Paid", icon: CheckCircle },
-];
+interface BillingModuleProps {
+  initialTab?: string;
+}
 
-export function BillingModule() {
-  const [activeTab, setActiveTab] = useState("all");
+export function BillingModule({ initialTab = "all" }: BillingModuleProps) {
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "all":
         return <InvoicesList statusFilter={null} onInvoiceSelect={setSelectedInvoiceId} />;
       case "draft":
@@ -51,12 +45,6 @@ export function BillingModule() {
       </div>
 
       <BillingStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

@@ -179,11 +179,15 @@ const Index = () => {
       
       // IT Module
       case "it":
+        return <ITModule defaultTab="assets" />;
       case "it-tickets":
+        return <ITModule defaultTab="support" />;
       case "it-assets":
+        return <ITModule defaultTab="assets" />;
       case "it-inventory":
+        return <ITModule defaultTab="inventory" />;
       case "it-workflows":
-        return <ITModule />;
+        return <ITModule defaultTab="workflows" />;
       
       // HR modules
       case "hr":
@@ -260,14 +264,15 @@ const Index = () => {
       
       // Solution Engineering / Presales modules
       case "presales":
+        return <SolutionEngineeringModule initialTab="poc" />;
       case "presales-poc":
-        return <SolutionEngineeringModule />;
+        return <SolutionEngineeringModule initialTab="poc" />;
       case "presales-demos":
-        return <SolutionEngineeringModule />;
+        return <SolutionEngineeringModule initialTab="demos" />;
       case "presales-assessments":
-        return <SolutionEngineeringModule />;
+        return <SolutionEngineeringModule initialTab="assessments" />;
       case "presales-rfp":
-        return <SolutionEngineeringModule />;
+        return <SolutionEngineeringModule initialTab="rfp" />;
       
       // Admin modules
       case "admin":
@@ -279,8 +284,9 @@ const Index = () => {
       
       // Help Desk
       case "helpdesk":
+        return <TicketingModule initialTab="all" />;
       case "helpdesk-tickets":
-        return <TicketingModule />;
+        return <TicketingModule initialTab="all" />;
       
       // Billing
       case "billing":

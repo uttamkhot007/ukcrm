@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
-import { Monitor, Package, Warehouse, Wrench, Ticket, FolderKanban, History } from "lucide-react";
+import { Monitor } from "lucide-react";
 import { AssetsStats } from "@/components/assets/AssetsStats";
 import { AssetsList } from "@/components/assets/AssetsList";
 import { InventoryList } from "@/components/assets/InventoryList";
@@ -9,24 +7,13 @@ import { AssetAssignmentHistory } from "@/components/assets/AssetAssignmentHisto
 import { ITSupportTickets } from "./ITSupportTickets";
 import { ITWorkflows } from "./ITWorkflows";
 
-const navItems: ModuleNavItem[] = [
-  { value: "assets", label: "Assets", icon: Package },
-  { value: "inventory", label: "Inventory", icon: Warehouse },
-  { value: "maintenance", label: "Maintenance", icon: Wrench },
-  { value: "support", label: "IT Support", icon: Ticket },
-  { value: "workflows", label: "Workflows", icon: FolderKanban },
-  { value: "history", label: "History", icon: History },
-];
-
 interface ITModuleProps {
   defaultTab?: string;
 }
 
 export function ITModule({ defaultTab = "assets" }: ITModuleProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
-
   const renderContent = () => {
-    switch (activeTab) {
+    switch (defaultTab) {
       case "assets":
         return <AssetsList />;
       case "inventory":
@@ -59,12 +46,6 @@ export function ITModule({ defaultTab = "assets" }: ITModuleProps) {
       </div>
 
       <AssetsStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

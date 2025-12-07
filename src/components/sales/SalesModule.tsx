@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
 import { ContactsView } from "./ContactsView";
@@ -8,26 +6,14 @@ import { ActivityTimeline } from "./ActivityTimeline";
 import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
-import { Handshake, Users, UserPlus, FileText, Clock, BarChart3 } from "lucide-react";
-
-const navItems: ModuleNavItem[] = [
-  { value: "deals", label: "Deals", icon: Handshake },
-  { value: "leads", label: "Leads", icon: UserPlus },
-  { value: "contacts", label: "Contacts", icon: Users },
-  { value: "quotations", label: "Quotations", icon: FileText },
-  { value: "activity", label: "Activity", icon: Clock },
-  { value: "reports", label: "Reports", icon: BarChart3 },
-];
 
 interface SalesModuleProps {
   initialTab?: string;
 }
 
 export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
-  const [activeTab, setActiveTab] = useState(initialTab);
-
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "deals":
         return <DealsView />;
       case "leads":
@@ -69,12 +55,6 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         </div>
         <SalesQuickActions />
       </div>
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}
