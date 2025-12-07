@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { useTenant } from "@/contexts/TenantContext";
 import { Badge } from "@/components/ui/badge";
 import {
   Users,
@@ -114,6 +115,7 @@ interface SalesTeam {
 }
 
 export function EmployeesManagement() {
+  const { currentTenant, isSuperAdmin } = useTenant();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [salesTeams, setSalesTeams] = useState<SalesTeam[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,11 +126,36 @@ export function EmployeesManagement() {
   const [savingEmployee, setSavingEmployee] = useState(false);
 
   const fetchEmployees = async () => {
+    if (!currentTenant) {
+      setEmployees([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
 
-    // Use profiles_safe view to hide super admin status from non-super-admins
+    // Get tenant members first to know which users belong to this tenant
+    const tenantMembersResult = await supabase
+      .from("tenant_members")
+      .select("user_id")
+      .eq("tenant_id", currentTenant.id)
+      .eq("status", "active");
+
+    if (tenantMembersResult.error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch tenant members",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const tenantUserIds = tenantMembersResult.data.map(m => m.user_id);
+
+    // Also fetch profiles that have tenant_id set directly
     const [profilesResult, userTeamsResult, salesTeamsResult] = await Promise.all([
-      supabase.from("profiles_safe").select("*"),
+      supabase.from("profiles_safe").select("*").or(`tenant_id.eq.${currentTenant.id},user_id.in.(${tenantUserIds.join(',')})`),
       supabase.from("user_teams").select("*"),
       supabase.from("sales_teams").select("*"),
     ]);
@@ -190,7 +217,7 @@ export function EmployeesManagement() {
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [currentTenant]);
 
   const toggleTeam = async (userId: string, team: TeamType, currentTeams: TeamType[]) => {
     setUpdatingUser(userId);
