@@ -836,6 +836,56 @@ export type Database = {
           },
         ]
       }
+      canned_responses: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          shortcut: string | null
+          tenant_id: string | null
+          title: string
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          shortcut?: string | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          shortcut?: string | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canned_responses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_assessments: {
         Row: {
           assessment_date: string
@@ -5918,13 +5968,18 @@ export type Database = {
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
+          satisfaction_comment: string | null
+          satisfaction_rating: number | null
           sla_deadline: string | null
           sla_hours: number
+          source: string | null
           status: Database["public"]["Enums"]["ticket_status"]
+          tags: string[] | null
           tenant_id: string | null
           ticket_number: string
           title: string
           updated_at: string
+          watchers: string[] | null
         }
         Insert: {
           assigned_to?: string | null
@@ -5940,13 +5995,18 @@ export type Database = {
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
+          satisfaction_comment?: string | null
+          satisfaction_rating?: number | null
           sla_deadline?: string | null
           sla_hours?: number
+          source?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: string[] | null
           tenant_id?: string | null
           ticket_number: string
           title: string
           updated_at?: string
+          watchers?: string[] | null
         }
         Update: {
           assigned_to?: string | null
@@ -5962,13 +6022,18 @@ export type Database = {
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
+          satisfaction_comment?: string | null
+          satisfaction_rating?: number | null
           sla_deadline?: string | null
           sla_hours?: number
+          source?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: string[] | null
           tenant_id?: string | null
           ticket_number?: string
           title?: string
           updated_at?: string
+          watchers?: string[] | null
         }
         Relationships: [
           {
