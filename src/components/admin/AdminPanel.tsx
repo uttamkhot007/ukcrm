@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCog, Check, Loader2, Users2, Key, Eye, EyeOff } from "lucide-react";
+import { Shield, UserCog, Check, Loader2, Users2, Key, Eye, EyeOff, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamManagement } from "./TeamManagement";
@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type AppRole = "admin" | "manager" | "employee";
 
@@ -27,6 +28,30 @@ interface UserWithRole {
   role: AppRole;
 }
 
+interface UserConsoleAccess {
+  user_id: string;
+  portal_modes: string[];
+  additional_modules: string[];
+}
+
+const PORTAL_MODES = [
+  { value: 'admin', label: 'Admin Portal' },
+  { value: 'workspace', label: 'Workspace Portal' },
+  { value: 'customer', label: 'Customer Portal' },
+];
+
+const ADDITIONAL_MODULES = [
+  { value: 'sales', label: 'Sales' },
+  { value: 'inside_sales', label: 'Inside Sales' },
+  { value: 'accounts', label: 'Accounts' },
+  { value: 'billing', label: 'Billing' },
+  { value: 'renewals', label: 'Renewals' },
+  { value: 'hr', label: 'HR' },
+  { value: 'legal', label: 'Legal' },
+  { value: 'compliance', label: 'Compliance' },
+  { value: 'ticketing', label: 'Ticketing' },
+];
+
 export function AdminPanel() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +61,13 @@ export function AdminPanel() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [consoleAccess, setConsoleAccess] = useState<Record<string, UserConsoleAccess>>({});
+  const [selectedConsoleUser, setSelectedConsoleUser] = useState<UserWithRole | null>(null);
+  const [editingAccess, setEditingAccess] = useState<{ portal_modes: string[]; additional_modules: string[] }>({
+    portal_modes: ['workspace'],
+    additional_modules: [],
+  });
+  const [isSavingAccess, setIsSavingAccess] = useState(false);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -83,8 +115,27 @@ export function AdminPanel() {
     setIsLoading(false);
   };
 
+  const fetchConsoleAccess = async () => {
+    const { data, error } = await supabase
+      .from("user_console_access")
+      .select("*");
+
+    if (!error && data) {
+      const accessMap: Record<string, UserConsoleAccess> = {};
+      data.forEach((item: any) => {
+        accessMap[item.user_id] = {
+          user_id: item.user_id,
+          portal_modes: item.portal_modes || ['workspace'],
+          additional_modules: item.additional_modules || [],
+        };
+      });
+      setConsoleAccess(accessMap);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchConsoleAccess();
   }, []);
 
   const updateUserRole = async (userId: string, newRole: AppRole) => {
@@ -179,6 +230,67 @@ export function AdminPanel() {
     }
   };
 
+  const openConsoleAccessDialog = (user: UserWithRole) => {
+    const existingAccess = consoleAccess[user.user_id];
+    setEditingAccess({
+      portal_modes: existingAccess?.portal_modes || ['workspace'],
+      additional_modules: existingAccess?.additional_modules || [],
+    });
+    setSelectedConsoleUser(user);
+  };
+
+  const handleSaveConsoleAccess = async () => {
+    if (!selectedConsoleUser) return;
+
+    setIsSavingAccess(true);
+
+    try {
+      const { error } = await supabase
+        .from("user_console_access")
+        .upsert({
+          user_id: selectedConsoleUser.user_id,
+          portal_modes: editingAccess.portal_modes,
+          additional_modules: editingAccess.additional_modules,
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Console access updated for ${selectedConsoleUser.full_name || selectedConsoleUser.email}`,
+      });
+
+      fetchConsoleAccess();
+      setSelectedConsoleUser(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update console access",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingAccess(false);
+    }
+  };
+
+  const togglePortalMode = (mode: string) => {
+    setEditingAccess((prev) => ({
+      ...prev,
+      portal_modes: prev.portal_modes.includes(mode)
+        ? prev.portal_modes.filter((m) => m !== mode)
+        : [...prev.portal_modes, mode],
+    }));
+  };
+
+  const toggleModule = (module: string) => {
+    setEditingAccess((prev) => ({
+      ...prev,
+      additional_modules: prev.additional_modules.includes(module)
+        ? prev.additional_modules.filter((m) => m !== module)
+        : [...prev.additional_modules, module],
+    }));
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -192,18 +304,22 @@ export function AdminPanel() {
       </div>
 
       <Tabs defaultValue="roles" className="space-y-6">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="roles" className="flex items-center gap-2">
             <UserCog className="w-4 h-4" />
-            User Roles
+            Roles
           </TabsTrigger>
           <TabsTrigger value="credentials" className="flex items-center gap-2">
             <Key className="w-4 h-4" />
             Credentials
           </TabsTrigger>
+          <TabsTrigger value="console" className="flex items-center gap-2">
+            <Monitor className="w-4 h-4" />
+            Console Access
+          </TabsTrigger>
           <TabsTrigger value="teams" className="flex items-center gap-2">
             <Users2 className="w-4 h-4" />
-            Team Assignment
+            Teams
           </TabsTrigger>
         </TabsList>
 
@@ -359,6 +475,74 @@ export function AdminPanel() {
           </div>
         </TabsContent>
 
+        <TabsContent value="console" className="space-y-6">
+          <div className="glass rounded-xl border border-border overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                Console Access Configuration
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                Configure portal modes & module access per user
+              </span>
+            </div>
+
+            {isLoading ? (
+              <div className="p-8 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {users.map((user) => {
+                  const access = consoleAccess[user.user_id];
+                  return (
+                    <div
+                      key={user.id}
+                      className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
+                          {user.full_name?.slice(0, 2).toUpperCase() || "U"}
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.full_name || "Unknown"}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right text-sm">
+                          <p className="text-muted-foreground">
+                            Portals: {access?.portal_modes?.length || 1} | Modules: {access?.additional_modules?.length || 0}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openConsoleAccessDialog(user)}
+                          className="flex items-center gap-2"
+                        >
+                          <Monitor className="w-4 h-4" />
+                          Configure
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="glass rounded-xl border border-border p-4">
+            <h3 className="font-semibold mb-3">Console Access Guidelines</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p><strong>Portal Modes:</strong> Define which portals (Admin, Workspace, Customer) a user can access.</p>
+              <p><strong>Additional Modules:</strong> Grant access to specific modules beyond the Employee Portal in Workspace mode.</p>
+              <p>By default, all users have access to the Workspace portal with Employee Portal modules.</p>
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="teams">
           <TeamManagement />
         </TabsContent>
@@ -421,6 +605,74 @@ export function AdminPanel() {
                 </>
               ) : (
                 "Set Password"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Console Access Dialog */}
+      <Dialog open={!!selectedConsoleUser} onOpenChange={(open) => !open && setSelectedConsoleUser(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Configure Console Access</DialogTitle>
+            <DialogDescription>
+              Set portal modes and module access for {selectedConsoleUser?.full_name || selectedConsoleUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Portal Modes</Label>
+              <p className="text-sm text-muted-foreground">Select which portals this user can access</p>
+              <div className="grid grid-cols-1 gap-3">
+                {PORTAL_MODES.map((mode) => (
+                  <div key={mode.value} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`portal-${mode.value}`}
+                      checked={editingAccess.portal_modes.includes(mode.value)}
+                      onCheckedChange={() => togglePortalMode(mode.value)}
+                    />
+                    <Label htmlFor={`portal-${mode.value}`} className="font-normal cursor-pointer">
+                      {mode.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Additional Workspace Modules</Label>
+              <p className="text-sm text-muted-foreground">Select additional modules beyond Employee Portal</p>
+              <div className="grid grid-cols-2 gap-3">
+                {ADDITIONAL_MODULES.map((module) => (
+                  <div key={module.value} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`module-${module.value}`}
+                      checked={editingAccess.additional_modules.includes(module.value)}
+                      onCheckedChange={() => toggleModule(module.value)}
+                    />
+                    <Label htmlFor={`module-${module.value}`} className="font-normal cursor-pointer">
+                      {module.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedConsoleUser(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveConsoleAccess} disabled={isSavingAccess}>
+              {isSavingAccess ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Access"
               )}
             </Button>
           </DialogFooter>

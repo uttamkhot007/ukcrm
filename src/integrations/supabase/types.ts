@@ -2622,6 +2622,33 @@ export type Database = {
           },
         ]
       }
+      user_console_access: {
+        Row: {
+          additional_modules: string[] | null
+          created_at: string
+          id: string
+          portal_modes: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_modules?: string[] | null
+          created_at?: string
+          id?: string
+          portal_modes?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_modules?: string[] | null
+          created_at?: string
+          id?: string
+          portal_modes?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
