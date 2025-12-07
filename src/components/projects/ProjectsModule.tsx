@@ -1,28 +1,16 @@
-import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
-import { FolderKanban, ListTodo, Milestone, Clock } from "lucide-react";
 import { ProjectsStats } from "./ProjectsStats";
 import { ProjectsList } from "./ProjectsList";
 import { ProjectTasksView } from "./ProjectTasksView";
 import { ProjectMilestones } from "./ProjectMilestones";
 import { TimeEntriesView } from "./TimeEntriesView";
 
-const navItems: ModuleNavItem[] = [
-  { value: "projects", label: "Projects", icon: FolderKanban },
-  { value: "tasks", label: "My Tasks", icon: ListTodo },
-  { value: "milestones", label: "Milestones", icon: Milestone },
-  { value: "timesheet", label: "Timesheet", icon: Clock },
-];
-
 interface ProjectsModuleProps {
   defaultTab?: string;
 }
 
 export function ProjectsModule({ defaultTab = "projects" }: ProjectsModuleProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
-
   const renderContent = () => {
-    switch (activeTab) {
+    switch (defaultTab) {
       case "projects":
         return <ProjectsList />;
       case "tasks":
@@ -46,12 +34,6 @@ export function ProjectsModule({ defaultTab = "projects" }: ProjectsModuleProps)
       </div>
 
       <ProjectsStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

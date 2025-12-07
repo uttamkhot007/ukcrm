@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { TicketsList } from "./TicketsList";
 import { TicketStats } from "./TicketStats";
 import { NewTicketDialog } from "./NewTicketDialog";
@@ -7,24 +6,18 @@ import { TicketDetailsSheet } from "./TicketDetailsSheet";
 import { TicketAnalytics } from "./TicketAnalytics";
 import { TicketAutomation } from "./TicketAutomation";
 import { Button } from "@/components/ui/button";
-import { Plus, Ticket, Clock, AlertTriangle, CheckCircle, BarChart3, Zap } from "lucide-react";
+import { Plus } from "lucide-react";
 
-const navItems: ModuleNavItem[] = [
-  { value: "all", label: "All Tickets", icon: Ticket },
-  { value: "open", label: "Open", icon: Clock },
-  { value: "escalated", label: "Escalated", icon: AlertTriangle },
-  { value: "resolved", label: "Resolved", icon: CheckCircle },
-  { value: "analytics", label: "Analytics", icon: BarChart3 },
-  { value: "automation", label: "Automation", icon: Zap },
-];
+interface TicketingModuleProps {
+  initialTab?: string;
+}
 
-export function TicketingModule() {
-  const [activeTab, setActiveTab] = useState("all");
+export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "all":
         return <TicketsList statusFilter={null} onTicketSelect={setSelectedTicketId} />;
       case "open":
@@ -56,12 +49,6 @@ export function TicketingModule() {
       </div>
 
       <TicketStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

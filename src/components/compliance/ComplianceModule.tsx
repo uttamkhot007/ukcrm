@@ -1,26 +1,21 @@
 import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { FrameworksList } from "./FrameworksList";
 import { ComplianceStats } from "./ComplianceStats";
 import { NewFrameworkDialog } from "./NewFrameworkDialog";
 import { FrameworkDetailsSheet } from "./FrameworkDetailsSheet";
 import { Button } from "@/components/ui/button";
-import { Plus, Shield, ClipboardCheck, AlertTriangle, CheckCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 
-const navItems: ModuleNavItem[] = [
-  { value: "all", label: "All Frameworks", icon: Shield },
-  { value: "in_progress", label: "In Progress", icon: ClipboardCheck },
-  { value: "non_compliant", label: "Non-Compliant", icon: AlertTriangle },
-  { value: "compliant", label: "Compliant", icon: CheckCircle },
-];
+interface ComplianceModuleProps {
+  initialTab?: string;
+}
 
-export function ComplianceModule() {
-  const [activeTab, setActiveTab] = useState("all");
+export function ComplianceModule({ initialTab = "all" }: ComplianceModuleProps) {
   const [isNewFrameworkOpen, setIsNewFrameworkOpen] = useState(false);
   const [selectedFrameworkId, setSelectedFrameworkId] = useState<string | null>(null);
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (initialTab) {
       case "all":
         return <FrameworksList statusFilter={null} onFrameworkSelect={setSelectedFrameworkId} />;
       case "in_progress":
@@ -48,12 +43,6 @@ export function ComplianceModule() {
       </div>
 
       <ComplianceStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

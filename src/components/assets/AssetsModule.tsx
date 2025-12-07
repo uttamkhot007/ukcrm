@@ -1,28 +1,16 @@
-import { useState } from "react";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
-import { Package, Wrench, Warehouse, History } from "lucide-react";
 import { AssetsStats } from "./AssetsStats";
 import { AssetsList } from "./AssetsList";
 import { InventoryList } from "./InventoryList";
 import { MaintenanceList } from "./MaintenanceList";
 import { AssetAssignmentHistory } from "./AssetAssignmentHistory";
 
-const navItems: ModuleNavItem[] = [
-  { value: "assets", label: "Assets", icon: Package },
-  { value: "inventory", label: "Inventory", icon: Warehouse },
-  { value: "maintenance", label: "Maintenance", icon: Wrench },
-  { value: "history", label: "Assignment History", icon: History },
-];
-
 interface AssetsModuleProps {
   defaultTab?: string;
 }
 
 export function AssetsModule({ defaultTab = "assets" }: AssetsModuleProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
-
   const renderContent = () => {
-    switch (activeTab) {
+    switch (defaultTab) {
       case "assets":
         return <AssetsList />;
       case "inventory":
@@ -46,12 +34,6 @@ export function AssetsModule({ defaultTab = "assets" }: AssetsModuleProps) {
       </div>
 
       <AssetsStats />
-
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <div className="min-w-0">
         {renderContent()}

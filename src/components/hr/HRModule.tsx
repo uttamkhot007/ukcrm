@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import {
   Users,
   UserPlus,
@@ -31,19 +30,6 @@ import { EmployeeDocumentsView } from "./EmployeeDocumentsView";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
 
-const navItems: ModuleNavItem[] = [
-  { value: "directory", label: "Directory", icon: Users },
-  { value: "documents", label: "Documents", icon: FolderOpen },
-  { value: "workflows-all", label: "All Workflows", icon: GitBranch },
-  { value: "workflows-onboarding", label: "Onboarding", icon: UserPlus },
-  { value: "workflows-offboarding", label: "Offboarding", icon: UserMinus },
-  { value: "workflows-retention", label: "Retention", icon: Heart },
-  { value: "mood-analytics", label: "Team Mood", icon: Heart },
-  { value: "people", label: "People Mgmt", icon: UserPlus },
-  { value: "salary", label: "Salary", icon: Briefcase },
-  { value: "onboarding", label: "Onboarding Setup", icon: Calendar },
-];
-
 interface HRModuleProps {
   initialTab?: string;
 }
@@ -58,13 +44,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function HRModule({ initialTab = "directory" }: HRModuleProps) {
-  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const { currentTenant } = useTenant();
-
-  useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
   
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["hr-employees", currentTenant?.id],
@@ -110,12 +91,12 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   };
 
   const renderContent = () => {
-    if (activeTab.startsWith("workflows-")) {
-      const workflowType = activeTab.replace("workflows-", "");
+    if (initialTab.startsWith("workflows-")) {
+      const workflowType = initialTab.replace("workflows-", "");
       return <HRWorkflowsTab filterType={workflowType} />;
     }
 
-    switch (activeTab) {
+    switch (initialTab) {
       case "directory":
         return (
           <div className="space-y-4">
@@ -368,13 +349,6 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Horizontal Nav */}
-      <ModuleVerticalNav
-        items={navItems}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       {/* Content */}
       <div className="min-w-0">
