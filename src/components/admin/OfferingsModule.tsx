@@ -12,10 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Offering {
   id: string;
@@ -31,15 +32,27 @@ interface Offering {
   status: string;
   created_at: string;
   created_by: string;
-  oem_id?: string | null;
-  technology_id?: string | null;
 }
 
-interface OemTechnology {
+interface JunctionRecord {
   id: string;
+  tenant_id: string | null;
+  created_by: string;
+}
+
+interface OemTechnology extends JunctionRecord {
   oem_id: string;
   technology_id: string;
-  tenant_id: string | null;
+}
+
+interface SolutionOem extends JunctionRecord {
+  solution_id: string;
+  oem_id: string;
+}
+
+interface SolutionTechnology extends JunctionRecord {
+  solution_id: string;
+  technology_id: string;
 }
 
 type OfferingType = "solutions" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
@@ -59,17 +72,16 @@ export function OfferingsModule() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Offering | null>(null);
-  const [expandedOems, setExpandedOems] = useState<Set<string>>(new Set());
-  const [linkTechDialogOpen, setLinkTechDialogOpen] = useState(false);
-  const [selectedOemForLink, setSelectedOemForLink] = useState<Offering | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "solution-oem" | "solution-tech" | "tech-oem" | "tech-solution">("oem-tech");
+  const [selectedItemForLink, setSelectedItemForLink] = useState<Offering | null>(null);
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const currentTabConfig = offeringTabs.find(t => t.value === activeTab)!;
-
-  // Fetch OEMs for dropdown
+  // Fetch OEMs
   const { data: oems = [] } = useQuery({
     queryKey: ["offerings", "oems", currentTenant?.id],
     queryFn: async () => {
@@ -78,7 +90,6 @@ export function OfferingsModule() {
         .from("offerings_oems")
         .select("*")
         .eq("tenant_id", currentTenant.id)
-        .eq("status", "active")
         .order("name");
       if (error) throw error;
       return data as Offering[];
@@ -86,7 +97,7 @@ export function OfferingsModule() {
     enabled: !!currentTenant,
   });
 
-  // Fetch Technologies for dropdown
+  // Fetch Technologies
   const { data: technologies = [] } = useQuery({
     queryKey: ["offerings", "technologies", currentTenant?.id],
     queryFn: async () => {
@@ -95,7 +106,6 @@ export function OfferingsModule() {
         .from("offerings_technologies")
         .select("*")
         .eq("tenant_id", currentTenant.id)
-        .eq("status", "active")
         .order("name");
       if (error) throw error;
       return data as Offering[];
@@ -103,24 +113,9 @@ export function OfferingsModule() {
     enabled: !!currentTenant,
   });
 
-  // Fetch OEM-Technology relationships
-  const { data: oemTechnologies = [] } = useQuery({
-    queryKey: ["oem_technologies", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data, error } = await supabase
-        .from("oem_technologies")
-        .select("*")
-        .eq("tenant_id", currentTenant.id);
-      if (error) throw error;
-      return data as OemTechnology[];
-    },
-    enabled: !!currentTenant,
-  });
-
-  // Fetch all solutions for OEM view
-  const { data: allSolutions = [] } = useQuery({
-    queryKey: ["offerings", "solutions", "all", currentTenant?.id],
+  // Fetch Solutions
+  const { data: solutions = [] } = useQuery({
+    queryKey: ["offerings", "solutions", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant) return [];
       const { data, error } = await supabase
@@ -130,6 +125,40 @@ export function OfferingsModule() {
         .order("name");
       if (error) throw error;
       return data as Offering[];
+    },
+    enabled: !!currentTenant,
+  });
+
+  // Fetch junction tables
+  const { data: oemTechnologies = [] } = useQuery({
+    queryKey: ["oem_technologies", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant) return [];
+      const { data, error } = await supabase.from("oem_technologies").select("*").eq("tenant_id", currentTenant.id);
+      if (error) throw error;
+      return data as OemTechnology[];
+    },
+    enabled: !!currentTenant,
+  });
+
+  const { data: solutionOems = [] } = useQuery({
+    queryKey: ["solution_oems", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant) return [];
+      const { data, error } = await supabase.from("solution_oems").select("*").eq("tenant_id", currentTenant.id);
+      if (error) throw error;
+      return data as SolutionOem[];
+    },
+    enabled: !!currentTenant,
+  });
+
+  const { data: solutionTechnologies = [] } = useQuery({
+    queryKey: ["solution_technologies", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant) return [];
+      const { data, error } = await supabase.from("solution_technologies").select("*").eq("tenant_id", currentTenant.id);
+      if (error) throw error;
+      return data as SolutionTechnology[];
     },
     enabled: !!currentTenant,
   });
@@ -172,12 +201,11 @@ export function OfferingsModule() {
     enabled: !!currentTenant,
   });
 
-  // Link technology to OEM mutation
-  const linkTechMutation = useMutation({
-    mutationFn: async ({ oemId, technologyId }: { oemId: string; technologyId: string }) => {
-      const { error } = await supabase.from("oem_technologies").insert({
-        oem_id: oemId,
-        technology_id: technologyId,
+  // Generic link mutation
+  const linkMutation = useMutation({
+    mutationFn: async ({ table, data }: { table: string; data: any }) => {
+      const { error } = await supabase.from(table as any).insert({
+        ...data,
         tenant_id: currentTenant?.id,
         created_by: user?.id!,
       });
@@ -185,26 +213,30 @@ export function OfferingsModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["oem_technologies"] });
-      toast.success("Technology linked to OEM");
+      queryClient.invalidateQueries({ queryKey: ["solution_oems"] });
+      queryClient.invalidateQueries({ queryKey: ["solution_technologies"] });
+      toast.success("Link created");
     },
     onError: (error: any) => {
       if (error.message?.includes("duplicate")) {
-        toast.error("This technology is already linked to this OEM");
+        toast.error("This link already exists");
       } else {
         toast.error("Failed to link: " + error.message);
       }
     },
   });
 
-  // Unlink technology from OEM mutation
-  const unlinkTechMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("oem_technologies").delete().eq("id", id);
+  // Generic unlink mutation
+  const unlinkMutation = useMutation({
+    mutationFn: async ({ table, id }: { table: string; id: string }) => {
+      const { error } = await supabase.from(table as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["oem_technologies"] });
-      toast.success("Technology unlinked from OEM");
+      queryClient.invalidateQueries({ queryKey: ["solution_oems"] });
+      queryClient.invalidateQueries({ queryKey: ["solution_technologies"] });
+      toast.success("Link removed");
     },
     onError: (error) => {
       toast.error("Failed to unlink: " + error.message);
@@ -220,11 +252,8 @@ export function OfferingsModule() {
         status: itemData.status,
       };
       
-      // Add type-specific fields
       if (activeTab === "solutions") {
         baseData.category = itemData.category;
-        baseData.oem_id = itemData.oem_id || null;
-        baseData.technology_id = itemData.technology_id || null;
       } else if (activeTab === "problem_areas") {
         baseData.area_type = itemData.area_type;
       } else if (activeTab === "technologies") {
@@ -299,8 +328,7 @@ export function OfferingsModule() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["offerings", activeTab] });
-      queryClient.invalidateQueries({ queryKey: ["offerings", "solutions", "all"] });
+      queryClient.invalidateQueries({ queryKey: ["offerings"] });
       setIsDialogOpen(false);
       setEditingItem(null);
       toast.success(editingItem ? "Item updated" : "Item created");
@@ -341,8 +369,7 @@ export function OfferingsModule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["offerings", activeTab] });
-      queryClient.invalidateQueries({ queryKey: ["offerings", "solutions", "all"] });
+      queryClient.invalidateQueries({ queryKey: ["offerings"] });
       toast.success("Item deleted");
     },
     onError: (error) => {
@@ -367,116 +394,167 @@ export function OfferingsModule() {
       website: formData.get("website") as string,
       partnership_level: formData.get("partnership_level") as string,
       status: formData.get("status") as string,
-      oem_id: formData.get("oem_id") as string || null,
-      technology_id: formData.get("technology_id") as string || null,
     });
   };
 
-  const getSecondaryColumnHeader = () => {
-    switch (activeTab) {
-      case "solutions":
-        return "OEM / Technology";
-      case "problem_areas":
-        return "Area Type";
-      case "technologies":
-        return "Vendor";
-      case "oems":
-        return "Partnership Level";
-      default:
-        return "Service Type";
-    }
-  };
-
-  const getSecondaryColumnValue = (item: Offering) => {
-    switch (activeTab) {
-      case "solutions":
-        const oem = oems.find(o => o.id === item.oem_id);
-        const tech = technologies.find(t => t.id === item.technology_id);
-        if (oem && tech) return `${oem.name} / ${tech.name}`;
-        if (oem) return oem.name;
-        if (tech) return tech.name;
-        return item.category || "-";
-      case "problem_areas":
-        return item.area_type;
-      case "technologies":
-        return item.vendor;
-      case "oems":
-        return item.partnership_level;
-      default:
-        return item.service_type;
-    }
-  };
-
-  const toggleOemExpanded = (oemId: string) => {
-    const newExpanded = new Set(expandedOems);
-    if (newExpanded.has(oemId)) {
-      newExpanded.delete(oemId);
+  const toggleExpanded = (id: string) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
     } else {
-      newExpanded.add(oemId);
+      newExpanded.add(id);
     }
-    setExpandedOems(newExpanded);
+    setExpandedItems(newExpanded);
   };
 
-  const getOemTechnologies = (oemId: string) => {
-    const linkedTechIds = oemTechnologies
-      .filter(ot => ot.oem_id === oemId)
-      .map(ot => ot.technology_id);
-    return technologies.filter(t => linkedTechIds.includes(t.id));
+  // Helper functions for relationships
+  const getOemTechs = (oemId: string) => {
+    const linkedIds = oemTechnologies.filter(ot => ot.oem_id === oemId).map(ot => ot.technology_id);
+    return technologies.filter(t => linkedIds.includes(t.id));
   };
 
   const getOemSolutions = (oemId: string) => {
-    return allSolutions.filter(s => s.oem_id === oemId);
+    const linkedIds = solutionOems.filter(so => so.oem_id === oemId).map(so => so.solution_id);
+    return solutions.filter(s => linkedIds.includes(s.id));
   };
 
-  const getTechnologySolutions = (oemId: string, techId: string) => {
-    return allSolutions.filter(s => s.oem_id === oemId && s.technology_id === techId);
+  const getTechOems = (techId: string) => {
+    const linkedIds = oemTechnologies.filter(ot => ot.technology_id === techId).map(ot => ot.oem_id);
+    return oems.filter(o => linkedIds.includes(o.id));
   };
 
-  const getUnlinkedTechnologies = (oemId: string) => {
-    const linkedTechIds = oemTechnologies
-      .filter(ot => ot.oem_id === oemId)
-      .map(ot => ot.technology_id);
-    return technologies.filter(t => !linkedTechIds.includes(t.id));
+  const getTechSolutions = (techId: string) => {
+    const linkedIds = solutionTechnologies.filter(st => st.technology_id === techId).map(st => st.solution_id);
+    return solutions.filter(s => linkedIds.includes(s.id));
+  };
+
+  const getSolutionOems = (solutionId: string) => {
+    const linkedIds = solutionOems.filter(so => so.solution_id === solutionId).map(so => so.oem_id);
+    return oems.filter(o => linkedIds.includes(o.id));
+  };
+
+  const getSolutionTechs = (solutionId: string) => {
+    const linkedIds = solutionTechnologies.filter(st => st.solution_id === solutionId).map(st => st.technology_id);
+    return technologies.filter(t => linkedIds.includes(t.id));
+  };
+
+  const getUnlinkedItems = (type: typeof linkDialogType, itemId: string) => {
+    switch (type) {
+      case "oem-tech":
+        const linkedTechIds = oemTechnologies.filter(ot => ot.oem_id === itemId).map(ot => ot.technology_id);
+        return technologies.filter(t => !linkedTechIds.includes(t.id) && t.status === "active");
+      case "solution-oem":
+        const linkedOemIds = solutionOems.filter(so => so.solution_id === itemId).map(so => so.oem_id);
+        return oems.filter(o => !linkedOemIds.includes(o.id) && o.status === "active");
+      case "solution-tech":
+        const linkedTechIds2 = solutionTechnologies.filter(st => st.solution_id === itemId).map(st => st.technology_id);
+        return technologies.filter(t => !linkedTechIds2.includes(t.id) && t.status === "active");
+      case "tech-oem":
+        const linkedOemIds2 = oemTechnologies.filter(ot => ot.technology_id === itemId).map(ot => ot.oem_id);
+        return oems.filter(o => !linkedOemIds2.includes(o.id) && o.status === "active");
+      case "tech-solution":
+        const linkedSolIds = solutionTechnologies.filter(st => st.technology_id === itemId).map(st => st.solution_id);
+        return solutions.filter(s => !linkedSolIds.includes(s.id) && s.status === "active");
+      default:
+        return [];
+    }
+  };
+
+  const handleLink = (targetId: string) => {
+    if (!selectedItemForLink) return;
+    
+    let table = "";
+    let data: any = {};
+    
+    switch (linkDialogType) {
+      case "oem-tech":
+        table = "oem_technologies";
+        data = { oem_id: selectedItemForLink.id, technology_id: targetId };
+        break;
+      case "solution-oem":
+        table = "solution_oems";
+        data = { solution_id: selectedItemForLink.id, oem_id: targetId };
+        break;
+      case "solution-tech":
+        table = "solution_technologies";
+        data = { solution_id: selectedItemForLink.id, technology_id: targetId };
+        break;
+      case "tech-oem":
+        table = "oem_technologies";
+        data = { technology_id: selectedItemForLink.id, oem_id: targetId };
+        break;
+      case "tech-solution":
+        table = "solution_technologies";
+        data = { technology_id: selectedItemForLink.id, solution_id: targetId };
+        break;
+    }
+    
+    linkMutation.mutate({ table, data });
+  };
+
+  const handleUnlink = (type: string, itemId: string, linkedId: string) => {
+    let table = "";
+    let record: JunctionRecord | undefined;
+    
+    switch (type) {
+      case "oem-tech":
+        table = "oem_technologies";
+        record = oemTechnologies.find(ot => ot.oem_id === itemId && ot.technology_id === linkedId);
+        break;
+      case "solution-oem":
+        table = "solution_oems";
+        record = solutionOems.find(so => so.solution_id === itemId && so.oem_id === linkedId);
+        break;
+      case "solution-tech":
+        table = "solution_technologies";
+        record = solutionTechnologies.find(st => st.solution_id === itemId && st.technology_id === linkedId);
+        break;
+      case "tech-oem":
+        table = "oem_technologies";
+        record = oemTechnologies.find(ot => ot.technology_id === itemId && ot.oem_id === linkedId);
+        break;
+      case "tech-solution":
+        table = "solution_technologies";
+        record = solutionTechnologies.find(st => st.technology_id === itemId && st.solution_id === linkedId);
+        break;
+    }
+    
+    if (record) {
+      unlinkMutation.mutate({ table, id: record.id });
+    }
+  };
+
+  const openLinkDialog = (item: Offering, type: typeof linkDialogType) => {
+    setSelectedItemForLink(item);
+    setLinkDialogType(type);
+    setLinkDialogOpen(true);
+  };
+
+  const getLinkDialogTitle = () => {
+    switch (linkDialogType) {
+      case "oem-tech":
+        return `Link Technologies to ${selectedItemForLink?.name}`;
+      case "solution-oem":
+        return `Link OEMs to ${selectedItemForLink?.name}`;
+      case "solution-tech":
+        return `Link Technologies to ${selectedItemForLink?.name}`;
+      case "tech-oem":
+        return `Link OEMs to ${selectedItemForLink?.name}`;
+      case "tech-solution":
+        return `Link Solutions to ${selectedItemForLink?.name}`;
+      default:
+        return "Link Items";
+    }
   };
 
   const renderFormFields = () => {
     switch (activeTab) {
       case "solutions":
         return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="oem_id">OEM</Label>
-              <Select name="oem_id" defaultValue={editingItem?.oem_id || ""}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select OEM" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {oems.map(oem => (
-                    <SelectItem key={oem.id} value={oem.id}>{oem.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="technology_id">Technology</Label>
-              <Select name="technology_id" defaultValue={editingItem?.technology_id || ""}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Technology" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {technologies.map(tech => (
-                    <SelectItem key={tech.id} value={tech.id}>{tech.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input id="category" name="category" defaultValue={editingItem?.category || ""} />
-            </div>
-          </>
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Input id="category" name="category" defaultValue={editingItem?.category || ""} />
+          </div>
         );
       case "problem_areas":
         return (
@@ -540,138 +618,175 @@ export function OfferingsModule() {
     }
   };
 
-  const renderOemsTable = () => {
+  const renderLinkedBadges = (items: Offering[], type: string, parentId: string, icon: React.ElementType) => {
+    const Icon = icon;
     return (
-      <div className="space-y-4">
-        {filteredOfferings.map(oem => {
-          const isExpanded = expandedOems.has(oem.id);
-          const oemTechs = getOemTechnologies(oem.id);
-          const oemSolutions = getOemSolutions(oem.id);
-
-          return (
-            <Card key={oem.id} className="overflow-hidden">
-              <Collapsible open={isExpanded} onOpenChange={() => toggleOemExpanded(oem.id)}>
-                <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      <div>
-                        <div className="font-medium flex items-center gap-2">
-                          {oem.name}
-                          <Badge variant={oem.status === "active" ? "default" : "secondary"} className="text-xs">
-                            {oem.status}
-                          </Badge>
-                          {oem.partnership_level && (
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {oem.partnership_level}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {oemTechs.length} technologies · {oemSolutions.length} solutions
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1"
-                        onClick={() => {
-                          setSelectedOemForLink(oem);
-                          setLinkTechDialogOpen(true);
-                        }}
-                      >
-                        <Link className="h-3 w-3" />
-                        Link Technology
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingItem(oem);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => deleteMutation.mutate(oem.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="border-t bg-muted/30 p-4">
-                    {oemTechs.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        No technologies linked yet. Click "Link Technology" to add.
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {oemTechs.map(tech => {
-                          const techSolutions = getTechnologySolutions(oem.id, tech.id);
-                          const linkRecord = oemTechnologies.find(
-                            ot => ot.oem_id === oem.id && ot.technology_id === tech.id
-                          );
-                          
-                          return (
-                            <div key={tech.id} className="bg-background rounded-lg p-3 border">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <Cpu className="h-4 w-4 text-primary" />
-                                  <span className="font-medium">{tech.name}</span>
-                                  {tech.category && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {tech.category}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-destructive hover:text-destructive h-7"
-                                  onClick={() => linkRecord && unlinkTechMutation.mutate(linkRecord.id)}
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Unlink
-                                </Button>
-                              </div>
-                              {techSolutions.length > 0 ? (
-                                <div className="ml-6 space-y-1">
-                                  <p className="text-xs text-muted-foreground mb-1">Solutions:</p>
-                                  {techSolutions.map(sol => (
-                                    <div key={sol.id} className="flex items-center gap-2 text-sm">
-                                      <Package className="h-3 w-3 text-muted-foreground" />
-                                      <span>{sol.name}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="ml-6 text-xs text-muted-foreground">No solutions mapped to this technology</p>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-          );
-        })}
-        {filteredOfferings.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">No OEMs found</div>
-        )}
+      <div className="flex flex-wrap gap-1">
+        {items.map(item => (
+          <Badge key={item.id} variant="secondary" className="gap-1 pr-1">
+            <Icon className="h-3 w-3" />
+            {item.name}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleUnlink(type, parentId, item.id);
+              }}
+              className="ml-1 hover:bg-destructive/20 rounded p-0.5"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
       </div>
     );
   };
+
+  const renderExpandableCard = (item: Offering) => {
+    const isExpanded = expandedItems.has(item.id);
+    
+    let linkedTechs: Offering[] = [];
+    let linkedOems: Offering[] = [];
+    let linkedSolutions: Offering[] = [];
+    
+    if (activeTab === "oems") {
+      linkedTechs = getOemTechs(item.id);
+      linkedSolutions = getOemSolutions(item.id);
+    } else if (activeTab === "technologies") {
+      linkedOems = getTechOems(item.id);
+      linkedSolutions = getTechSolutions(item.id);
+    } else if (activeTab === "solutions") {
+      linkedOems = getSolutionOems(item.id);
+      linkedTechs = getSolutionTechs(item.id);
+    }
+
+    return (
+      <Card key={item.id} className="overflow-hidden">
+        <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(item.id)}>
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium flex items-center gap-2 flex-wrap">
+                    {item.name}
+                    <Badge variant={item.status === "active" ? "default" : "secondary"} className="text-xs">
+                      {item.status}
+                    </Badge>
+                    {activeTab === "oems" && item.partnership_level && (
+                      <Badge variant="outline" className="text-xs capitalize">{item.partnership_level}</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {activeTab === "oems" && `${linkedTechs.length} technologies · ${linkedSolutions.length} solutions`}
+                    {activeTab === "technologies" && `${linkedOems.length} OEMs · ${linkedSolutions.length} solutions`}
+                    {activeTab === "solutions" && `${linkedOems.length} OEMs · ${linkedTechs.length} technologies`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                {activeTab === "oems" && (
+                  <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "oem-tech")}>
+                    <Link className="h-3 w-3" />
+                    <span className="hidden sm:inline">Technology</span>
+                  </Button>
+                )}
+                {activeTab === "technologies" && (
+                  <>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-oem")}>
+                      <Link className="h-3 w-3" />
+                      <span className="hidden sm:inline">OEM</span>
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-solution")}>
+                      <Link className="h-3 w-3" />
+                      <span className="hidden sm:inline">Solution</span>
+                    </Button>
+                  </>
+                )}
+                {activeTab === "solutions" && (
+                  <>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "solution-oem")}>
+                      <Link className="h-3 w-3" />
+                      <span className="hidden sm:inline">OEM</span>
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "solution-tech")}>
+                      <Link className="h-3 w-3" />
+                      <span className="hidden sm:inline">Technology</span>
+                    </Button>
+                  </>
+                )}
+                <Button size="icon" variant="ghost" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(item.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="border-t bg-muted/30 p-4 space-y-4">
+              {item.description && (
+                <p className="text-sm text-muted-foreground">{item.description}</p>
+              )}
+              
+              {activeTab === "oems" && (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Technologies</p>
+                    {linkedTechs.length > 0 ? renderLinkedBadges(linkedTechs, "oem-tech", item.id, Cpu) : (
+                      <p className="text-sm text-muted-foreground">No technologies linked</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Solutions</p>
+                    {linkedSolutions.length > 0 ? renderLinkedBadges(linkedSolutions, "solution-oem", item.id, Package) : (
+                      <p className="text-sm text-muted-foreground">No solutions linked</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "technologies" && (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked OEMs</p>
+                    {linkedOems.length > 0 ? renderLinkedBadges(linkedOems, "tech-oem", item.id, Building2) : (
+                      <p className="text-sm text-muted-foreground">No OEMs linked</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Solutions</p>
+                    {linkedSolutions.length > 0 ? renderLinkedBadges(linkedSolutions, "tech-solution", item.id, Package) : (
+                      <p className="text-sm text-muted-foreground">No solutions linked</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "solutions" && (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked OEMs</p>
+                    {linkedOems.length > 0 ? renderLinkedBadges(linkedOems, "solution-oem", item.id, Building2) : (
+                      <p className="text-sm text-muted-foreground">No OEMs linked</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Technologies</p>
+                    {linkedTechs.length > 0 ? renderLinkedBadges(linkedTechs, "solution-tech", item.id, Cpu) : (
+                      <p className="text-sm text-muted-foreground">No technologies linked</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  };
+
+  const shouldShowExpandableView = activeTab === "oems" || activeTab === "technologies" || activeTab === "solutions";
 
   return (
     <div className="space-y-6">
@@ -754,8 +869,16 @@ export function OfferingsModule() {
               </Dialog>
             </div>
 
-            {tab.value === "oems" ? (
-              renderOemsTable()
+            {shouldShowExpandableView && tab.value === activeTab ? (
+              <div className="space-y-3">
+                {isLoading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : filteredOfferings.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No items found</div>
+                ) : (
+                  filteredOfferings.map(item => renderExpandableCard(item))
+                )}
+              </div>
             ) : (
               <Card>
                 <Table>
@@ -763,7 +886,9 @@ export function OfferingsModule() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead>{getSecondaryColumnHeader()}</TableHead>
+                      <TableHead>
+                        {tab.value === "problem_areas" ? "Area Type" : "Service Type"}
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-[100px]">Actions</TableHead>
                     </TableRow>
@@ -782,7 +907,7 @@ export function OfferingsModule() {
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="max-w-xs truncate">{item.description || "-"}</TableCell>
-                          <TableCell>{getSecondaryColumnValue(item) || "-"}</TableCell>
+                          <TableCell>{item.area_type || item.service_type || "-"}</TableCell>
                           <TableCell>
                             <Badge variant={item.status === "active" ? "default" : "secondary"}>
                               {item.status}
@@ -821,32 +946,28 @@ export function OfferingsModule() {
         ))}
       </Tabs>
 
-      {/* Link Technology Dialog */}
-      <Dialog open={linkTechDialogOpen} onOpenChange={setLinkTechDialogOpen}>
-        <DialogContent>
+      {/* Link Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Link Technology to {selectedOemForLink?.name}</DialogTitle>
+            <DialogTitle>{getLinkDialogTitle()}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedOemForLink && getUnlinkedTechnologies(selectedOemForLink.id).length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">All technologies are already linked to this OEM.</p>
+            {selectedItemForLink && getUnlinkedItems(linkDialogType, selectedItemForLink.id).length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">All items are already linked.</p>
             ) : (
               <div className="space-y-2">
-                {selectedOemForLink && getUnlinkedTechnologies(selectedOemForLink.id).map(tech => (
-                  <div key={tech.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                {selectedItemForLink && getUnlinkedItems(linkDialogType, selectedItemForLink.id).map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
                     <div>
-                      <p className="font-medium">{tech.name}</p>
-                      {tech.category && <p className="text-sm text-muted-foreground">{tech.category}</p>}
+                      <p className="font-medium">{item.name}</p>
+                      {item.category && <p className="text-sm text-muted-foreground">{item.category}</p>}
+                      {item.partnership_level && <p className="text-sm text-muted-foreground capitalize">{item.partnership_level}</p>}
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => {
-                        linkTechMutation.mutate({
-                          oemId: selectedOemForLink.id,
-                          technologyId: tech.id,
-                        });
-                      }}
-                      disabled={linkTechMutation.isPending}
+                      onClick={() => handleLink(item.id)}
+                      disabled={linkMutation.isPending}
                     >
                       Link
                     </Button>
@@ -855,7 +976,7 @@ export function OfferingsModule() {
               </div>
             )}
             <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setLinkTechDialogOpen(false)}>Close</Button>
+              <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Close</Button>
             </div>
           </div>
         </DialogContent>

@@ -4545,6 +4545,104 @@ export type Database = {
         }
         Relationships: []
       }
+      solution_oems: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          oem_id: string
+          solution_id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          oem_id: string
+          solution_id: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          oem_id?: string
+          solution_id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solution_oems_oem_id_fkey"
+            columns: ["oem_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_oems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_oems_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_solutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_oems_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solution_technologies: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          solution_id: string
+          technology_id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          solution_id: string
+          technology_id: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          solution_id?: string
+          technology_id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solution_technologies_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_solutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_technologies_technology_id_fkey"
+            columns: ["technology_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_technologies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_technologies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_images: {
         Row: {
           created_at: string
