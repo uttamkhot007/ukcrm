@@ -52,12 +52,33 @@ const ORGANIZATION_TYPES = [
   { value: "location", label: "Location" },
 ];
 
+const INDUSTRY_TYPES = [
+  { value: "banking", label: "Banking" },
+  { value: "financial_services", label: "Financial Services" },
+  { value: "government", label: "Government" },
+  { value: "ites", label: "ITES" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "pharma", label: "Pharma" },
+  { value: "healthcare", label: "Healthcare Management" },
+  { value: "hospitals", label: "Hospitals" },
+  { value: "education", label: "Education" },
+  { value: "retail", label: "Retail" },
+  { value: "telecom", label: "Telecom" },
+  { value: "energy", label: "Energy & Utilities" },
+  { value: "logistics", label: "Logistics & Transportation" },
+  { value: "media", label: "Media & Entertainment" },
+  { value: "real_estate", label: "Real Estate" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "other", label: "Other" },
+];
+
 export function SalesQuickActions() {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [orgWebsite, setOrgWebsite] = useState("");
   const [orgName, setOrgName] = useState("");
   const [orgLogo, setOrgLogo] = useState("");
   const [orgAddress, setOrgAddress] = useState("");
+  const [orgIndustry, setOrgIndustry] = useState("");
   const [isFetchingOrg, setIsFetchingOrg] = useState(false);
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -104,7 +125,7 @@ export function SalesQuickActions() {
     enabled: !!currentTenant,
   });
 
-  // Fetch organization details from URL
+  // Fetch organization details from URL using Clearbit
   const fetchOrgFromUrl = async () => {
     if (!orgWebsite) return;
     setIsFetchingOrg(true);
@@ -120,6 +141,20 @@ export function SalesQuickActions() {
       
       setOrgName(formattedName);
       setOrgLogo(`https://logo.clearbit.com/${domain}`);
+      
+      // Try to fetch company data from Clearbit
+      try {
+        const response = await fetch(`https://company.clearbit.com/v2/companies/find?domain=${domain}`, {
+          headers: { 'Authorization': 'Bearer sk_clearbit_placeholder' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.category?.industry) setOrgIndustry(data.category.industry.toLowerCase().replace(/\s+/g, '_'));
+          if (data.geo?.streetAddress) setOrgAddress(`${data.geo.streetAddress}, ${data.geo.city}, ${data.geo.country}`);
+        }
+      } catch {
+        // Clearbit API might not be available, continue with basic info
+      }
       
       toast.success("Organization details fetched from URL");
     } catch (error) {
@@ -223,6 +258,7 @@ export function SalesQuickActions() {
     setOrgName("");
     setOrgLogo("");
     setOrgAddress("");
+    setOrgIndustry("");
   };
 
   const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -241,11 +277,12 @@ export function SalesQuickActions() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const orgType = formData.get("organization_type") as string;
+    const industryValue = formData.get("industry") as string;
     orgMutation.mutate({
       name: orgName || formData.get("name") as string,
       organization_type: orgType === "none" ? undefined : orgType,
       website: orgWebsite || formData.get("website") as string,
-      industry: formData.get("industry") as string,
+      industry: industryValue === "none" ? undefined : industryValue,
       address: orgAddress || formData.get("address") as string,
       logo_url: orgLogo,
     });
@@ -423,7 +460,17 @@ export function SalesQuickActions() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="org-industry">Industry</Label>
-              <Input id="org-industry" name="industry" />
+              <Select name="industry" value={orgIndustry || "none"} onValueChange={setOrgIndustry}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Select Industry</SelectItem>
+                  {INDUSTRY_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="org-address">Address</Label>

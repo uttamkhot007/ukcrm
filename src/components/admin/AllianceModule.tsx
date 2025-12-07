@@ -26,6 +26,26 @@ const ORGANIZATION_TYPES = [
   { value: "location", label: "Location" },
 ];
 
+const INDUSTRY_TYPES = [
+  { value: "banking", label: "Banking" },
+  { value: "financial_services", label: "Financial Services" },
+  { value: "government", label: "Government" },
+  { value: "ites", label: "ITES" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "pharma", label: "Pharma" },
+  { value: "healthcare", label: "Healthcare Management" },
+  { value: "hospitals", label: "Hospitals" },
+  { value: "education", label: "Education" },
+  { value: "retail", label: "Retail" },
+  { value: "telecom", label: "Telecom" },
+  { value: "energy", label: "Energy & Utilities" },
+  { value: "logistics", label: "Logistics & Transportation" },
+  { value: "media", label: "Media & Entertainment" },
+  { value: "real_estate", label: "Real Estate" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "other", label: "Other" },
+];
+
 interface AllianceOrganization {
   id: string;
   tenant_id: string | null;
@@ -78,6 +98,7 @@ export function AllianceModule() {
   const [orgFormName, setOrgFormName] = useState("");
   const [orgFormLogo, setOrgFormLogo] = useState("");
   const [orgFormAddress, setOrgFormAddress] = useState("");
+  const [orgFormIndustry, setOrgFormIndustry] = useState("");
   const [isFetchingOrg, setIsFetchingOrg] = useState(false);
   
   const { currentTenant } = useTenant();
@@ -281,7 +302,7 @@ export function AllianceModule() {
 
   const getOrgUsers = (orgId: string) => allianceUsers.filter(u => u.organization_id === orgId);
 
-  // Fetch organization details from URL
+  // Fetch organization details from URL using Clearbit
   const fetchOrgFromUrl = async () => {
     if (!orgFormUrl) return;
     setIsFetchingOrg(true);
@@ -298,6 +319,20 @@ export function AllianceModule() {
       setOrgFormName(formattedName);
       setOrgFormLogo(`https://logo.clearbit.com/${domain}`);
       
+      // Try to fetch company data from Clearbit
+      try {
+        const response = await fetch(`https://company.clearbit.com/v2/companies/find?domain=${domain}`, {
+          headers: { 'Authorization': 'Bearer sk_clearbit_placeholder' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.category?.industry) setOrgFormIndustry(data.category.industry.toLowerCase().replace(/\s+/g, '_'));
+          if (data.geo?.streetAddress) setOrgFormAddress(`${data.geo.streetAddress}, ${data.geo.city}, ${data.geo.country}`);
+        }
+      } catch {
+        // Clearbit API might not be available, continue with basic info
+      }
+      
       toast.success("Organization details fetched from URL");
     } catch (error) {
       toast.error("Failed to parse URL");
@@ -311,6 +346,7 @@ export function AllianceModule() {
     setOrgFormName("");
     setOrgFormLogo("");
     setOrgFormAddress("");
+    setOrgFormIndustry("");
     setEditingOrg(null);
   };
 
@@ -318,6 +354,7 @@ export function AllianceModule() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const orgType = formData.get("organization_type") as string;
+    const industryValue = formData.get("industry") as string;
     
     // Parse solutions and services for OEM type
     const solutionsInput = formData.get("solutions") as string;
@@ -329,7 +366,7 @@ export function AllianceModule() {
       name: orgFormName || formData.get("name") as string,
       description: formData.get("description") as string,
       website: orgFormUrl || formData.get("website") as string,
-      industry: formData.get("industry") as string,
+      industry: industryValue === "none" ? null : industryValue,
       status: formData.get("status") as string,
       organization_type: orgType === "none" ? null : orgType,
       address: orgFormAddress || formData.get("address") as string,
@@ -699,7 +736,17 @@ export function AllianceModule() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="org-industry">Industry</Label>
-                      <Input id="org-industry" name="industry" defaultValue={editingOrg?.industry || ""} />
+                      <Select name="industry" value={orgFormIndustry || editingOrg?.industry || "none"} onValueChange={setOrgFormIndustry}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select industry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Select Industry</SelectItem>
+                          {INDUSTRY_TYPES.map(type => (
+                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="org-address">Address</Label>
