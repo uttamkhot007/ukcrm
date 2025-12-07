@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.employee-assistant]
 verify_jwt = true
+
+[functions.sales-assistant]
+verify_jwt = true

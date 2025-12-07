@@ -6,6 +6,7 @@ import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { SalesModule } from "@/components/sales/SalesModule";
+import { SalesAIAssistant } from "@/components/sales/SalesAIAssistant";
 import { LegalModule } from "@/components/legal/LegalModule";
 import { RenewalsModule } from "@/components/renewals/RenewalsModule";
 import { InsideSalesModule } from "@/components/sales/InsideSalesModule";
@@ -112,6 +113,8 @@ const Index = () => {
       case "sales":
       case "sales-funnel":
         return <SalesModule initialTab="deals" />;
+      case "sales-ai-assistant":
+        return <SalesAIAssistant />;
       case "sales-quotations":
         return <SalesModule initialTab="quotations" />;
       case "sales-leads":
