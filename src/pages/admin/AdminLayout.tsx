@@ -3,13 +3,18 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
   const { user, isLoading, role } = useAuth();
+  const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if this is a super-admin-only route
+  const isSuperAdminRoute = location.pathname.includes("/admin/tenants");
 
   // Map route to module id for sidebar highlighting
   const getActiveModule = () => {
@@ -20,7 +25,7 @@ export default function AdminLayout() {
     if (path.includes("/admin/documentation")) return "admin-center-documentation";
     if (path.includes("/admin/portal")) return "admin-center-portal";
     if (path.includes("/admin/health")) return "admin-center-health";
-    if (path.includes("/admin/tenants")) return "admin-center-tenants";
+    if (path.includes("/admin/tenants")) return "super-admin-tenants";
     return "admin-center";
   };
 
@@ -31,12 +36,20 @@ export default function AdminLayout() {
   }, [user, isLoading, navigate]);
 
   useEffect(() => {
-    if (!isLoading && user && role !== "admin") {
-      navigate("/");
+    if (!isLoading && !tenantLoading && user) {
+      // Super admin routes require super admin status
+      if (isSuperAdminRoute && !isSuperAdmin) {
+        navigate("/");
+        return;
+      }
+      // Regular admin routes require admin role (or super admin)
+      if (!isSuperAdminRoute && role !== "admin" && !isSuperAdmin) {
+        navigate("/");
+      }
     }
-  }, [user, isLoading, role, navigate]);
+  }, [user, isLoading, tenantLoading, role, isSuperAdmin, isSuperAdminRoute, navigate]);
 
-  if (isLoading) {
+  if (isLoading || tenantLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -44,7 +57,10 @@ export default function AdminLayout() {
     );
   }
 
-  if (!user || role !== "admin") {
+  // Allow access if: super admin OR (admin role AND not super admin route)
+  const hasAccess = isSuperAdmin || (role === "admin" && !isSuperAdminRoute);
+
+  if (!user || !hasAccess) {
     return null;
   }
 
