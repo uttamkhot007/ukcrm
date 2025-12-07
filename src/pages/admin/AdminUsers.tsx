@@ -1,5 +1,5 @@
-import { UserManagement } from "@/components/admin/UserManagement";
+import { UserAccessManagement } from "@/components/admin/UserAccessManagement";
 
 export default function AdminUsers() {
-  return <UserManagement />;
+  return <UserAccessManagement />;
 }
