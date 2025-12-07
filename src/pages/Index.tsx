@@ -51,12 +51,15 @@ const Index = () => {
   // Wait for profile to be loaded before checking super admin status
   const profileLoaded = !isLoading && profile !== null;
   
+  // Check if user is super admin directly from profile to avoid race conditions
+  const isUserSuperAdmin = profile?.is_super_admin === true || isSuperAdmin;
+  
   // Redirect to workspace selection if no tenant selected (non-super-admins only)
   useEffect(() => {
     // Don't redirect until we know the user's super admin status
     if (!isLoading && !tenantLoading && user && profileLoaded) {
       // Super admins bypass all tenant requirements - they manage all tenants from Admin Center
-      if (isSuperAdmin) {
+      if (isUserSuperAdmin) {
         // Super admin can use the app with or without a tenant selected
         return;
       }
@@ -70,7 +73,7 @@ const Index = () => {
         navigate("/workspace/select");
       }
     }
-  }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isSuperAdmin, navigate, profileLoaded]);
+  }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded]);
 
   // Set initial module based on portal mode
   useEffect(() => {
