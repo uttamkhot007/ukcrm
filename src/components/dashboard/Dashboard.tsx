@@ -12,6 +12,7 @@ import {
   FolderKanban,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,17 +39,38 @@ interface DashboardProps {
 
 export function Dashboard({ onModuleChange }: DashboardProps) {
   const { profile, role, isAdmin, isManager, teams } = useAuth();
+  const { currentTenant } = useTenant();
   const { formatCurrency } = useOrganizationSettings();
+  
+  // Get current tenant ID
+  const currentTenantId = currentTenant?.id;
 
-  // Fetch real metrics from database
+  // Fetch real metrics from database (filtered by tenant)
   const { data: realMetrics } = useQuery({
-    queryKey: ["dashboard-metrics"],
+    queryKey: ["dashboard-metrics", currentTenantId],
     queryFn: async () => {
+      // Build queries with tenant filter
+      const dealsQuery = currentTenantId 
+        ? supabase.from("deals").select("id, value, stage").eq("tenant_id", currentTenantId)
+        : supabase.from("deals").select("id, value, stage");
+      
+      const employeesQuery = currentTenantId 
+        ? supabase.from("profiles").select("id").eq("tenant_id", currentTenantId)
+        : supabase.from("profiles").select("id");
+      
+      const ticketsQuery = currentTenantId 
+        ? supabase.from("tickets").select("id, status").eq("tenant_id", currentTenantId)
+        : supabase.from("tickets").select("id, status");
+      
+      const invoicesQuery = currentTenantId 
+        ? supabase.from("invoices").select("id, total, status").eq("tenant_id", currentTenantId)
+        : supabase.from("invoices").select("id, total, status");
+
       const [dealsRes, employeesRes, ticketsRes, invoicesRes] = await Promise.all([
-        supabase.from("deals").select("id, value, stage"),
-        supabase.from("profiles").select("id"),
-        supabase.from("tickets").select("id, status"),
-        supabase.from("invoices").select("id, total, status"),
+        dealsQuery,
+        employeesQuery,
+        ticketsQuery,
+        invoicesQuery,
       ]);
 
       const deals = dealsRes.data || [];

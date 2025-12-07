@@ -280,17 +280,24 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-orange-500",
       });
 
-      // Finance
+      // Accounts & Finance (merged module)
       items.push({
-        id: "finance",
-        label: "Finance",
-        icon: DollarSign,
+        id: "accounts-finance",
+        label: "Accounts & Finance",
+        icon: Calculator,
         color: "text-finance",
         children: [
-          { id: "finance-payments", label: "Payment Tracking", icon: CreditCard },
-          { id: "finance-dso", label: "DSO Trends", icon: PieChart },
-          { id: "finance-pnl", label: "Profit & Loss", icon: BarChart3 },
-          { id: "finance-tax", label: "GST Reports", icon: Receipt },
+          { id: "accounts-finance-contracts", label: "Contracts", icon: FileText },
+          { id: "accounts-finance-workflows", label: "Workflows", icon: RefreshCw },
+          { id: "accounts-finance-procurement", label: "Procurement", icon: Package },
+          { id: "accounts-finance-stocking", label: "Stocking", icon: Package },
+          { id: "accounts-finance-ar-aging", label: "AR Aging", icon: Clock },
+          { id: "accounts-finance-sla-reminders", label: "SLA & Reminders", icon: Bell },
+          { id: "accounts-finance-payments", label: "Payment Tracking", icon: CreditCard },
+          { id: "accounts-finance-dso", label: "DSO Trends", icon: PieChart },
+          { id: "accounts-finance-pnl", label: "Profit & Loss", icon: BarChart3 },
+          { id: "accounts-finance-tax", label: "GST Reports", icon: Receipt },
+          { id: "accounts-finance-billing", label: "Billing", icon: CreditCard },
         ],
       });
 
@@ -331,14 +338,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "helpdesk-tickets", label: "Tickets", icon: Ticket },
         ],
-      });
-
-      // Billing
-      items.push({
-        id: "billing",
-        label: "Billing",
-        icon: CreditCard,
-        color: "text-finance",
       });
 
       // Compliance
@@ -383,20 +382,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
           { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
-        ],
-      });
-
-      // Accounts Module
-      items.push({
-        id: "accounts",
-        label: "Accounts",
-        icon: Calculator,
-        color: "text-emerald-500",
-        children: [
-          { id: "accounts-contracts", label: "Contracts", icon: FileText },
-          { id: "accounts-workflows", label: "Workflows", icon: RefreshCw },
-          { id: "accounts-ar-aging", label: "AR Aging", icon: Clock },
-          { id: "accounts-sla-reminders", label: "SLA & Reminders", icon: Bell },
         ],
       });
 

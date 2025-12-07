@@ -188,13 +188,50 @@ const Index = () => {
       case "hr-documents":
         return <HRModule initialTab="documents" />;
       
-      // Finance modules
+      // Accounts & Finance merged modules
+      case "accounts-finance":
+      case "accounts-finance-contracts":
+        return <AccountsModule initialTab="contracts" />;
+      case "accounts-finance-workflows":
+        return <AccountsModule initialTab="workflows" />;
+      case "accounts-finance-procurement":
+        return <AccountsModule initialTab="procurement" />;
+      case "accounts-finance-stocking":
+        return <AccountsModule initialTab="stocking" />;
+      case "accounts-finance-ar-aging":
+        return <AccountsModule initialTab="ar-aging" />;
+      case "accounts-finance-sla-reminders":
+        return <AccountsModule initialTab="sla-reminders" />;
+      case "accounts-finance-payments":
+      case "accounts-finance-dso":
+      case "accounts-finance-pnl":
+      case "accounts-finance-tax":
+        return <AccountsModule initialTab="contracts" />;
+      case "accounts-finance-billing":
+        return <BillingModule />;
+      
+      // Legacy accounts modules (backward compatibility)
+      case "accounts":
+      case "accounts-contracts":
+        return <AccountsModule initialTab="contracts" />;
+      case "accounts-workflows":
+        return <AccountsModule initialTab="workflows" />;
+      case "accounts-ar-aging":
+        return <AccountsModule initialTab="ar-aging" />;
+      case "accounts-sla-reminders":
+        return <AccountsModule initialTab="sla-reminders" />;
+      
+      // Legacy finance modules (backward compatibility)
       case "finance":
       case "finance-payments":
       case "finance-dso":
       case "finance-pnl":
       case "finance-tax":
-        return <PlaceholderModule title="Finance" section={activeModule} />;
+        return <AccountsModule initialTab="contracts" />;
+      
+      // Billing
+      case "billing":
+        return <BillingModule />;
       
       // Technical modules
       case "tech":
@@ -208,17 +245,6 @@ const Index = () => {
       case "marketing-campaigns":
       case "marketing-leads":
         return <PlaceholderModule title="Marketing" section={activeModule} />;
-      
-      // Accounts modules
-      case "accounts":
-      case "accounts-contracts":
-        return <AccountsModule initialTab="contracts" />;
-      case "accounts-workflows":
-        return <AccountsModule initialTab="workflows" />;
-      case "accounts-ar-aging":
-        return <AccountsModule initialTab="ar-aging" />;
-      case "accounts-sla-reminders":
-        return <AccountsModule initialTab="sla-reminders" />;
       
       // Solution Engineering / Presales modules
       case "presales":
