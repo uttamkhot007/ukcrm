@@ -7,6 +7,7 @@ import { QuotationsView } from "./QuotationsView";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
+import { SalesQuickActions } from "./SalesQuickActions";
 import { Handshake, Users, UserPlus, FileText, Clock, BarChart3 } from "lucide-react";
 
 interface SalesModuleProps {
@@ -24,13 +25,14 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Sales</h1>
           <p className="text-muted-foreground mt-1">
             Manage your deals, leads, contacts, and quotations
           </p>
         </div>
+        <SalesQuickActions />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
