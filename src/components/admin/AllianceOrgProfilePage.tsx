@@ -1330,38 +1330,12 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label>Collaborator *</Label>
-                            <Select 
-                              value={newCollaborator.name}
-                              onValueChange={(value) => {
-                                const emp = employees.find(e => e.user_id === value);
-                                setNewCollaborator({...newCollaborator, name: emp?.full_name || emp?.email || value});
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select employee" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {employees.map(emp => (
-                                  <SelectItem key={emp.user_id} value={emp.user_id}>
-                                    <div className="flex flex-col">
-                                      <span>{emp.full_name || emp.email}</span>
-                                      {emp.department && (
-                                        <span className="text-xs text-muted-foreground">{emp.department}</span>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
                             <Label>Team *</Label>
                             <Select 
                               value={newCollaborator.team}
-                              onValueChange={(value) => setNewCollaborator({...newCollaborator, team: value, expectation: ''})}
+                              onValueChange={(value) => setNewCollaborator({...newCollaborator, team: value, expectation: '', name: ''})}
                             >
-                              <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
+                              <SelectTrigger><SelectValue placeholder="Select team first" /></SelectTrigger>
                               <SelectContent>
                                 {COLLABORATIVE_TEAMS.map(team => (
                                   <SelectItem key={team.id} value={team.id}>
@@ -1374,6 +1348,76 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                               </SelectContent>
                             </Select>
                           </div>
+                          {newCollaborator.team && (
+                            <div className="space-y-2">
+                              <Label>Team Member *</Label>
+                              <Select 
+                                value={newCollaborator.name}
+                                onValueChange={(value) => {
+                                  const emp = employees.find(e => e.user_id === value);
+                                  setNewCollaborator({...newCollaborator, name: emp?.full_name || emp?.email || value});
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select team member" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {employees
+                                    .filter(emp => {
+                                      const teamInfo = COLLABORATIVE_TEAMS.find(t => t.id === newCollaborator.team);
+                                      if (!teamInfo) return true;
+                                      // Filter by department matching team name (case-insensitive)
+                                      const dept = emp.department?.toLowerCase() || '';
+                                      const teamName = teamInfo.name.toLowerCase();
+                                      const teamId = teamInfo.id.toLowerCase();
+                                      return dept.includes(teamId) || dept.includes(teamName) || 
+                                             teamName.includes(dept) || dept === '' || !emp.department;
+                                    })
+                                    .map(emp => (
+                                      <SelectItem key={emp.user_id} value={emp.user_id}>
+                                        <div className="flex flex-col">
+                                          <span>{emp.full_name || emp.email}</span>
+                                          {emp.department && (
+                                            <span className="text-xs text-muted-foreground">{emp.department}</span>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  {employees.filter(emp => {
+                                    const teamInfo = COLLABORATIVE_TEAMS.find(t => t.id === newCollaborator.team);
+                                    if (!teamInfo) return true;
+                                    const dept = emp.department?.toLowerCase() || '';
+                                    const teamName = teamInfo.name.toLowerCase();
+                                    const teamId = teamInfo.id.toLowerCase();
+                                    return dept.includes(teamId) || dept.includes(teamName) || 
+                                           teamName.includes(dept) || dept === '' || !emp.department;
+                                  }).length === 0 && (
+                                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                                      No team members found. Showing all employees.
+                                    </div>
+                                  )}
+                                  {employees.filter(emp => {
+                                    const teamInfo = COLLABORATIVE_TEAMS.find(t => t.id === newCollaborator.team);
+                                    if (!teamInfo) return true;
+                                    const dept = emp.department?.toLowerCase() || '';
+                                    const teamName = teamInfo.name.toLowerCase();
+                                    const teamId = teamInfo.id.toLowerCase();
+                                    return dept.includes(teamId) || dept.includes(teamName) || 
+                                           teamName.includes(dept) || dept === '' || !emp.department;
+                                  }).length === 0 && employees.map(emp => (
+                                    <SelectItem key={emp.user_id} value={emp.user_id}>
+                                      <div className="flex flex-col">
+                                        <span>{emp.full_name || emp.email}</span>
+                                        {emp.department && (
+                                          <span className="text-xs text-muted-foreground">{emp.department}</span>
+                                        )}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
                           {newCollaborator.team && (
                             <div className="space-y-2">
                               <Label>Expectation *</Label>
