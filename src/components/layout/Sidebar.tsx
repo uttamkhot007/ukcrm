@@ -203,14 +203,17 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // Helper function to check if user has access to specific team modules
   // Now also considers console access settings
   const hasTeamAccess = (requiredTeams: TeamType[], moduleId?: string): boolean => {
-    if (role === "admin") return true;
+    // Admins always have access (only when in admin portal mode)
+    if (role === "admin" && portalMode === "admin") return true;
     
-    // If console access is configured, use it for module access control
-    if (consoleAccess && moduleId) {
+    // If console access is configured, ONLY use console access for module control
+    // Do NOT fall back to team-based access
+    if (consoleAccess) {
+      if (!moduleId) return false;
       return consoleAccess.additional_modules.includes(moduleId);
     }
     
-    // Fallback to team-based access
+    // Only use team-based access if NO console access is configured
     return teams.some(t => requiredTeams.includes(t));
   };
 

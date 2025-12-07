@@ -118,13 +118,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (consoleAccessData) {
-        setConsoleAccess({
+        const accessSettings = {
           portal_modes: consoleAccessData.portal_modes || ['workspace'],
           additional_modules: consoleAccessData.additional_modules || [],
-        });
+        };
+        setConsoleAccess(accessSettings);
+        
+        // Set portal mode based on console access settings
+        // Only allow admin portal mode if user is admin role AND has admin in portal_modes
+        if (roleData?.role === 'admin' && accessSettings.portal_modes.includes('admin')) {
+          setPortalMode('admin');
+        } else if (accessSettings.portal_modes.includes('workspace')) {
+          setPortalMode('workspace');
+        } else if (accessSettings.portal_modes.includes('customer')) {
+          setPortalMode('customer');
+        } else if (accessSettings.portal_modes.length > 0) {
+          setPortalMode(accessSettings.portal_modes[0] as PortalMode);
+        }
       } else {
-        // Default: no specific restrictions (will use team-based access)
+        // Default: no specific restrictions (will use role-based access)
         setConsoleAccess(null);
+        // Keep existing portal mode logic for users without console access configured
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
