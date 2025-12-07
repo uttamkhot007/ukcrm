@@ -27,7 +27,7 @@ interface TenantSwitcherProps {
 
 export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
   const [open, setOpen] = useState(false);
-  const { currentTenant, tenantMemberships, switchTenant, isAdmin } = useTenant();
+  const { currentTenant, tenantMemberships, switchTenant, isAdmin, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
   const handleSelectTenant = async (tenant: Tenant) => {

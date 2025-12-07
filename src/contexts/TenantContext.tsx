@@ -39,19 +39,22 @@ interface TenantContextType {
   hasModule: (moduleKey: string) => boolean;
   isOwner: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   refetchTenants: () => Promise<void>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [tenantMemberships, setTenantMemberships] = useState<TenantMembership[]>([]);
   const [currentRole, setCurrentRole] = useState<TenantMemberRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<TenantModule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const isSuperAdmin = profile?.is_super_admin === true;
 
   const fetchTenantMemberships = async () => {
     if (!user) {
@@ -67,35 +70,54 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
 
-      // Fetch user's tenant memberships
-      const { data: memberships, error: membershipError } = await supabase
-        .from('tenant_members')
-        .select(`
-          tenant_id,
-          role,
-          tenant:tenants (
-            id,
-            name,
-            slug,
-            tier,
-            logo_url,
-            settings,
-            is_active,
-            created_at
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'active');
+      let formattedMemberships: TenantMembership[] = [];
 
-      if (membershipError) throw membershipError;
+      if (isSuperAdmin) {
+        // Super admins can access ALL tenants
+        const { data: allTenants, error: tenantsError } = await supabase
+          .from('tenants')
+          .select('id, name, slug, tier, logo_url, settings, is_active, created_at')
+          .eq('is_active', true)
+          .order('name');
 
-      const formattedMemberships: TenantMembership[] = (memberships || [])
-        .filter((m: any) => m.tenant && m.tenant.is_active)
-        .map((m: any) => ({
-          tenant_id: m.tenant_id,
-          role: m.role as TenantMemberRole,
-          tenant: m.tenant as Tenant,
+        if (tenantsError) throw tenantsError;
+
+        formattedMemberships = (allTenants || []).map((tenant) => ({
+          tenant_id: tenant.id,
+          role: 'owner' as TenantMemberRole, // Super admins have owner-level access
+          tenant: tenant as Tenant,
         }));
+      } else {
+        // Regular users only see tenants they're members of
+        const { data: memberships, error: membershipError } = await supabase
+          .from('tenant_members')
+          .select(`
+            tenant_id,
+            role,
+            tenant:tenants (
+              id,
+              name,
+              slug,
+              tier,
+              logo_url,
+              settings,
+              is_active,
+              created_at
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('status', 'active');
+
+        if (membershipError) throw membershipError;
+
+        formattedMemberships = (memberships || [])
+          .filter((m: any) => m.tenant && m.tenant.is_active)
+          .map((m: any) => ({
+            tenant_id: m.tenant_id,
+            role: m.role as TenantMemberRole,
+            tenant: m.tenant as Tenant,
+          }));
+      }
 
       setTenantMemberships(formattedMemberships);
 
@@ -111,7 +133,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
       if (selectedMembership) {
         setCurrentTenant(selectedMembership.tenant);
-        setCurrentRole(selectedMembership.role);
+        setCurrentRole(isSuperAdmin ? 'owner' : selectedMembership.role);
         localStorage.setItem(`tenant_${user.id}`, selectedMembership.tenant_id);
         await fetchTenantModules(selectedMembership.tenant_id);
       }
@@ -152,7 +174,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
 
     setCurrentTenant(membership.tenant);
-    setCurrentRole(membership.role);
+    setCurrentRole(isSuperAdmin ? 'owner' : membership.role);
     if (user) {
       localStorage.setItem(`tenant_${user.id}`, tenantId);
     }
@@ -169,7 +191,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchTenantMemberships();
-  }, [user]);
+  }, [user, isSuperAdmin]);
 
   const value: TenantContextType = {
     currentTenant,
@@ -181,7 +203,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     switchTenant,
     hasModule,
     isOwner: currentRole === 'owner',
-    isAdmin: currentRole === 'owner' || currentRole === 'admin',
+    isAdmin: currentRole === 'owner' || currentRole === 'admin' || isSuperAdmin,
+    isSuperAdmin,
     refetchTenants,
   };
 
