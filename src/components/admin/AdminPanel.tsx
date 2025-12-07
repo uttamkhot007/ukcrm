@@ -48,6 +48,7 @@ const ADDITIONAL_MODULES = [
   { value: 'billing', label: 'Billing' },
   { value: 'renewals', label: 'Renewals' },
   { value: 'hr', label: 'HR' },
+  { value: 'management', label: 'Management' },
   { value: 'finance', label: 'Finance' },
   { value: 'technical', label: 'Technical' },
   { value: 'marketing', label: 'Marketing' },
