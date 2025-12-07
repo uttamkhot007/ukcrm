@@ -273,12 +273,14 @@ export function SalesQuickActions() {
     }
   };
 
-  // Don't render if no tenant or user
-  if (!currentTenant || !user) {
+  // Show loading state if tenant or user not yet loaded
+  const isLoading = !currentTenant || !user;
+  
+  if (isLoading) {
     return (
       <Button className="gap-2" disabled>
-        <Plus className="h-4 w-4" />
-        Quick Add
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading...
       </Button>
     );
   }
