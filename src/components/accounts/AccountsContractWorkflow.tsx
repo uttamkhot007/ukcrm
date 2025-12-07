@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -84,18 +83,13 @@ const STAGE_ORDER: ClosedWonSubstage[] = [
 ];
 
 interface AccountsContractWorkflowProps {
-  initialTab?: string;
+  filterStage?: string;
 }
 
-export function AccountsContractWorkflow({ initialTab = "all" }: AccountsContractWorkflowProps) {
-  const [activeTab, setActiveTab] = useState(initialTab);
+export function AccountsContractWorkflow({ filterStage = "all" }: AccountsContractWorkflowProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { formatCurrency } = useOrganizationSettings();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ["closed-won-contracts"],
@@ -151,7 +145,7 @@ export function AccountsContractWorkflow({ initialTab = "all" }: AccountsContrac
     }
   };
 
-  const getContractsByStage = (stage: ClosedWonSubstage | "all" | "completed") => {
+  const getContractsByStage = (stage: string) => {
     if (stage === "all") return contracts;
     if (stage === "completed") {
       return contracts.filter(c => c.closed_won_substage === "payment_received");
@@ -159,7 +153,7 @@ export function AccountsContractWorkflow({ initialTab = "all" }: AccountsContrac
     return contracts.filter(c => c.closed_won_substage === stage);
   };
 
-  const filteredContracts = getContractsByStage(activeTab as ClosedWonSubstage | "all" | "completed")
+  const filteredContracts = getContractsByStage(filterStage)
     .filter(c => 
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.contact?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -200,6 +194,18 @@ export function AccountsContractWorkflow({ initialTab = "all" }: AccountsContrac
     return stage.replace(/_/g, " ");
   };
 
+  const getTitle = () => {
+    if (filterStage === "all") return "All Contracts";
+    if (filterStage === "completed") return "Completed Contracts";
+    return WORKFLOW_STAGES.find(s => s.id === filterStage)?.label || "Contracts";
+  };
+
+  const getDescription = () => {
+    if (filterStage === "all") return "All closed-won deals in the fulfillment workflow";
+    if (filterStage === "completed") return "Contracts with payment received";
+    return WORKFLOW_STAGES.find(s => s.id === filterStage)?.description || "";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -209,23 +215,13 @@ export function AccountsContractWorkflow({ initialTab = "all" }: AccountsContrac
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Contract Workflow</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage closed-won contracts through the fulfillment workflow
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* Workflow Pipeline Overview */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {WORKFLOW_STAGES.map((stage, index) => (
           <Card 
             key={stage.id} 
-            className={`cursor-pointer transition-all hover:shadow-md ${activeTab === stage.id ? 'ring-2 ring-primary' : ''}`}
-            onClick={() => setActiveTab(stage.id)}
+            className={`transition-all ${filterStage === stage.id ? 'ring-2 ring-primary' : ''}`}
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -241,150 +237,119 @@ export function AccountsContractWorkflow({ initialTab = "all" }: AccountsContrac
         ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <TabsList className="bg-muted/50 p-1 flex-wrap h-auto">
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              All Contracts
-              <Badge variant="secondary" className="ml-1">{stats.all}</Badge>
-            </TabsTrigger>
-            {WORKFLOW_STAGES.map(stage => (
-              <TabsTrigger key={stage.id} value={stage.id} className="flex items-center gap-2">
-                <stage.icon className="w-4 h-4" />
-                <span className="hidden md:inline">{stage.label}</span>
-                <Badge variant="secondary" className="ml-1">{stats[stage.id] || 0}</Badge>
-              </TabsTrigger>
-            ))}
-            <TabsTrigger value="completed" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Completed
-              <Badge variant="secondary" className="ml-1">{stats.completed}</Badge>
-            </TabsTrigger>
-          </TabsList>
+      {/* Search */}
+      <div className="relative w-full sm:w-64">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Search contracts..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search contracts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {activeTab === "all" ? "All Contracts" : 
-               activeTab === "completed" ? "Completed Contracts" :
-               WORKFLOW_STAGES.find(s => s.id === activeTab)?.label || "Contracts"}
-            </CardTitle>
-            <CardDescription>
-              {activeTab === "all" 
-                ? "All closed-won deals in the fulfillment workflow"
-                : activeTab === "completed"
-                ? "Contracts with payment received"
-                : WORKFLOW_STAGES.find(s => s.id === activeTab)?.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredContracts.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No contracts found in this stage</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Contract</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Close Date</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Current Stage</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredContracts.map((contract) => (
-                    <TableRow key={contract.id}>
-                      <TableCell className="font-medium">{contract.title}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-muted-foreground" />
-                          {contract.contact?.company || "-"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          {contract.contact?.name || "-"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          {contract.actual_close_date 
-                            ? format(new Date(contract.actual_close_date), "MMM d, yyyy")
-                            : "-"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-muted-foreground" />
-                          {formatCurrency(contract.value)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStageColor(contract.closed_won_substage)}>
-                          {getStageLabel(contract.closed_won_substage)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={contract.closed_won_substage || ""}
-                            onValueChange={(value) => 
-                              updateSubstageMutation.mutate({ 
-                                dealId: contract.id, 
-                                substage: value as ClosedWonSubstage 
-                              })
-                            }
+      {/* Contracts Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{getTitle()}</CardTitle>
+          <CardDescription>{getDescription()}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filteredContracts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No contracts found in this stage</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contract</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Close Date</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Current Stage</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredContracts.map((contract) => (
+                  <TableRow key={contract.id}>
+                    <TableCell className="font-medium">{contract.title}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-muted-foreground" />
+                        {contract.contact?.company || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        {contract.contact?.name || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        {contract.actual_close_date 
+                          ? format(new Date(contract.actual_close_date), "MMM d, yyyy")
+                          : "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                        {formatCurrency(contract.value)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStageColor(contract.closed_won_substage)}>
+                        {getStageLabel(contract.closed_won_substage)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={contract.closed_won_substage || ""}
+                          onValueChange={(value) => 
+                            updateSubstageMutation.mutate({ 
+                              dealId: contract.id, 
+                              substage: value as ClosedWonSubstage 
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Set stage" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {WORKFLOW_STAGES.map(stage => (
+                              <SelectItem key={stage.id} value={stage.id}>
+                                {stage.label}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="payment_received">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {contract.closed_won_substage !== "payment_received" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => moveToNextStage(contract)}
+                            disabled={updateSubstageMutation.isPending}
                           >
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder="Set stage" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {WORKFLOW_STAGES.map(stage => (
-                                <SelectItem key={stage.id} value={stage.id}>
-                                  {stage.label}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="payment_received">Completed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {contract.closed_won_substage !== "payment_received" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => moveToNextStage(contract)}
-                              disabled={updateSubstageMutation.isPending}
-                            >
-                              <ArrowRight className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </Tabs>
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

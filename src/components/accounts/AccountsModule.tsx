@@ -6,10 +6,31 @@ import { AccountsARaging } from "./AccountsARAging";
 import { AccountsSLAReminders } from "./AccountsSLAReminders";
 import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
-import { FileText, GitBranch, Clock, Bell, ShoppingCart, Package } from "lucide-react";
+import { 
+  FileText, 
+  GitBranch, 
+  Clock, 
+  Bell, 
+  ShoppingCart, 
+  Package,
+  CheckCircle,
+  Key,
+  Receipt,
+  CreditCard,
+  ClipboardList,
+} from "lucide-react";
 
 const navItems: ModuleNavItem[] = [
-  { value: "contracts", label: "Contracts", icon: FileText },
+  // Contract Workflow stages
+  { value: "contracts-all", label: "All Contracts", icon: FileText },
+  { value: "contracts-request_odf", label: "Request ODF", icon: ClipboardList },
+  { value: "contracts-odf_approved", label: "ODF Approved", icon: CheckCircle },
+  { value: "contracts-process_order", label: "Process Order", icon: Package },
+  { value: "contracts-get_license", label: "Get License", icon: Key },
+  { value: "contracts-raise_invoice", label: "Raise Invoice", icon: Receipt },
+  { value: "contracts-collect_payment", label: "Collect Payment", icon: CreditCard },
+  { value: "contracts-completed", label: "Completed", icon: CheckCircle },
+  // Other sections
   { value: "workflows", label: "Workflows", icon: GitBranch },
   { value: "procurement", label: "Procurement", icon: ShoppingCart },
   { value: "stocking", label: "Stocking", icon: Package },
@@ -21,13 +42,17 @@ interface AccountsModuleProps {
   initialTab?: string;
 }
 
-export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps) {
+export function AccountsModule({ initialTab = "contracts-all" }: AccountsModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const renderContent = () => {
+    // Handle contract workflow stages
+    if (activeTab.startsWith("contracts-")) {
+      const stage = activeTab.replace("contracts-", "");
+      return <AccountsContractWorkflow filterStage={stage} />;
+    }
+    
     switch (activeTab) {
-      case "contracts":
-        return <AccountsContractWorkflow initialTab="all" />;
       case "workflows":
         return <AccountsWorkflows />;
       case "procurement":
@@ -39,7 +64,7 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
       case "sla-reminders":
         return <AccountsSLAReminders />;
       default:
-        return <AccountsContractWorkflow initialTab="all" />;
+        return <AccountsContractWorkflow filterStage="all" />;
     }
   };
 
