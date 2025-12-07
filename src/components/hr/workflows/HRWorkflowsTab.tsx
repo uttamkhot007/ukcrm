@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
   UserPlus,
   UserMinus,
@@ -16,14 +16,15 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  XCircle,
   Settings,
+  GitBranch,
 } from "lucide-react";
 import { WorkflowKanbanView } from "./WorkflowKanbanView";
 import { WorkflowTimelineView } from "./WorkflowTimelineView";
 import { NewOnboardingWorkflowDialog } from "./NewOnboardingWorkflowDialog";
 import { WorkflowDetailsSheet } from "./WorkflowDetailsSheet";
 import { WorkflowSettingsDialog } from "./WorkflowSettingsDialog";
+import { WorkflowTemplateBoards } from "./WorkflowTemplateBoards";
 import { WORKFLOW_TEMPLATES } from "@/lib/workflow-templates";
 
 const WORKFLOW_TYPES = [
@@ -79,14 +80,24 @@ export function HRWorkflowsTab() {
     },
   });
 
+  const canManageWorkflows = isAdmin || role === "manager";
+
   return (
     <div className="space-y-6">
+      {/* Predefined Workflow Template Boards */}
+      {canManageWorkflows && (
+        <>
+          <WorkflowTemplateBoards onWorkflowCreated={refetch} />
+          <Separator />
+        </>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <LayoutGrid className="w-5 h-5 text-primary" />
+              <GitBranch className="w-5 h-5 text-primary" />
             </div>
             <div>
               <p className="text-2xl font-bold">{stats?.total || 0}</p>
@@ -168,14 +179,15 @@ export function HRWorkflowsTab() {
               <List className="w-4 h-4" />
             </Button>
           </div>
-          {(isAdmin || role === "manager") && (
+          {canManageWorkflows && (
             <>
               <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+                <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
               <Button size="sm" onClick={() => setShowNewWorkflow(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
-                New Workflow
+                Custom Workflow
               </Button>
             </>
           )}

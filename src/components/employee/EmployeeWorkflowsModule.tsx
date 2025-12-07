@@ -43,8 +43,7 @@ import {
   WORKFLOW_TEMPLATES, 
   getStageProgress, 
   formatStageName,
-  ONBOARDING_STAGES,
-  OFFBOARDING_STAGES 
+  getStagesForWorkflowType,
 } from "@/lib/workflow-templates";
 
 export function EmployeeWorkflowsModule() {
@@ -92,6 +91,25 @@ export function EmployeeWorkflowsModule() {
   const initiatedByMe = workflows.filter((w) => w.initiated_by === user?.id);
   const involvingMe = workflows.filter((w) => w.target_user_id === user?.id);
 
+  // Helper to initialize workflow stage completions
+  const initializeWorkflowStages = async (workflowId: string, workflowType: "onboarding" | "offboarding" | "retention") => {
+    const stages = getStagesForWorkflowType(workflowType);
+    const stageCompletions = stages.map((stage, index) => ({
+      workflow_id: workflowId,
+      stage_id: stage.id,
+      stage_order: stage.order,
+      is_current: index === 0,
+      completed_at: null,
+      completed_by: null,
+    }));
+
+    const { error } = await supabase
+      .from("workflow_stage_completions")
+      .insert(stageCompletions);
+
+    if (error) console.error("Failed to initialize stages:", error);
+  };
+
   // Create new hire request (for managers only)
   const createNewHireRequest = useMutation({
     mutationFn: async () => {
@@ -112,6 +130,7 @@ export function EmployeeWorkflowsModule() {
           current_stage: "requirement_submitted",
           priority: isUrgent ? "high" : "medium",
           started_at: new Date().toISOString(),
+          source_type: "manager_request",
           metadata: {
             template_id: selectedTemplate,
             template_name: template?.name,
@@ -121,6 +140,9 @@ export function EmployeeWorkflowsModule() {
         .single();
 
       if (workflowError) throw workflowError;
+
+      // Initialize stage completions for sequential tracking
+      await initializeWorkflowStages(workflow.id, "onboarding");
 
       const { error: requestError } = await supabase
         .from("onboarding_requests")
@@ -144,8 +166,9 @@ export function EmployeeWorkflowsModule() {
       return workflow;
     },
     onSuccess: () => {
-      toast({ title: "Request Submitted", description: "Your new hire request has been submitted to HR for review." });
+      toast({ title: "Request Submitted", description: "Your new hire request has been submitted to HR. The workflow has been initiated." });
       queryClient.invalidateQueries({ queryKey: ["my-workflows"] });
+      queryClient.invalidateQueries({ queryKey: ["hr-workflows"] });
       setShowNewHireDialog(false);
       resetForm();
     },
@@ -171,6 +194,7 @@ export function EmployeeWorkflowsModule() {
           current_stage: "resignation_submitted",
           priority: "medium",
           started_at: new Date().toISOString(),
+          source_type: "employee_resignation",
           metadata: {
             template_id: "standard_offboarding",
             template_name: "Standard Offboarding",
@@ -180,6 +204,9 @@ export function EmployeeWorkflowsModule() {
         .single();
 
       if (workflowError) throw workflowError;
+
+      // Initialize stage completions for sequential tracking
+      await initializeWorkflowStages(workflow.id, "offboarding");
 
       const { error: resignationError } = await supabase
         .from("resignation_requests")
@@ -196,8 +223,9 @@ export function EmployeeWorkflowsModule() {
       return workflow;
     },
     onSuccess: () => {
-      toast({ title: "Resignation Submitted", description: "Your resignation has been submitted for review by your manager." });
+      toast({ title: "Resignation Submitted", description: "Your resignation has been submitted. HR workflow has been initiated for processing." });
       queryClient.invalidateQueries({ queryKey: ["my-workflows"] });
+      queryClient.invalidateQueries({ queryKey: ["hr-workflows"] });
       setShowResignationDialog(false);
       resetForm();
     },
