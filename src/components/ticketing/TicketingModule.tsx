@@ -4,8 +4,10 @@ import { TicketsList } from "./TicketsList";
 import { TicketStats } from "./TicketStats";
 import { NewTicketDialog } from "./NewTicketDialog";
 import { TicketDetailsSheet } from "./TicketDetailsSheet";
+import { TicketAnalytics } from "./TicketAnalytics";
+import { TicketAutomation } from "./TicketAutomation";
 import { Button } from "@/components/ui/button";
-import { Plus, Ticket, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { Plus, Ticket, Clock, AlertTriangle, CheckCircle, BarChart3, Zap } from "lucide-react";
 
 export function TicketingModule() {
   const [activeTab, setActiveTab] = useState("all");
@@ -17,7 +19,7 @@ export function TicketingModule() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Help Desk</h1>
-          <p className="text-muted-foreground">Manage support tickets and SLA tracking</p>
+          <p className="text-muted-foreground">Manage support tickets, SLA tracking, analytics & automation</p>
         </div>
         <Button onClick={() => setIsNewTicketOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -45,6 +47,14 @@ export function TicketingModule() {
             <CheckCircle className="w-4 h-4" />
             Resolved
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="gap-2">
+            <Zap className="w-4 h-4" />
+            Automation
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
@@ -58,6 +68,12 @@ export function TicketingModule() {
         </TabsContent>
         <TabsContent value="resolved">
           <TicketsList statusFilter="resolved" onTicketSelect={setSelectedTicketId} />
+        </TabsContent>
+        <TabsContent value="analytics">
+          <TicketAnalytics />
+        </TabsContent>
+        <TabsContent value="automation">
+          <TicketAutomation />
         </TabsContent>
       </Tabs>
 
