@@ -31,6 +31,7 @@ import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { AllianceModule } from "@/components/admin/AllianceModule";
 import { OfferingsModule } from "@/components/admin/OfferingsModule";
 import { ExpenseModule } from "@/components/expenses/ExpenseModule";
+import { AssetsModule } from "@/components/assets/AssetsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { cn } from "@/lib/utils";
@@ -166,6 +167,8 @@ const Index = () => {
       case "employee-travel":
       case "employee-expenses":
         return <ExpenseModule />;
+      case "employee-assets":
+        return <AssetsModule />;
       
       // HR modules
       case "hr":
