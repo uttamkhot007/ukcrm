@@ -14,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SalesTeamsManagement } from "./SalesTeamsManagement";
 
 const TEAMS: { value: TeamType; label: string; color: string }[] = [
   { value: "sales", label: "Sales", color: "bg-sales/20 text-sales border-sales/30" },
@@ -204,6 +206,14 @@ export function TeamManagement() {
         </div>
       </div>
 
+      <Tabs defaultValue="functional" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="functional">Functional Teams</TabsTrigger>
+          <TabsTrigger value="sales">Sales Teams</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="functional" className="space-y-6 mt-6">
+
       <div className="glass rounded-xl border border-border overflow-hidden">
         <div className="p-4 border-b border-border">
           <div className="flex flex-wrap gap-2">
@@ -371,6 +381,12 @@ export function TeamManagement() {
           </div>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="sales" className="mt-6">
+          <SalesTeamsManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
