@@ -4,7 +4,9 @@ import { AccountsContractWorkflow } from "./AccountsContractWorkflow";
 import { AccountsWorkflows } from "./AccountsWorkflows";
 import { AccountsARaging } from "./AccountsARAging";
 import { AccountsSLAReminders } from "./AccountsSLAReminders";
-import { FileText, GitBranch, Clock, Bell } from "lucide-react";
+import { AccountsProcurement } from "./AccountsProcurement";
+import { AccountsStocking } from "./AccountsStocking";
+import { FileText, GitBranch, Clock, Bell, ShoppingCart, Package } from "lucide-react";
 
 interface AccountsModuleProps {
   initialTab?: string;
@@ -19,13 +21,13 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
         <div>
           <h1 className="text-3xl font-bold">Accounts Management</h1>
           <p className="text-muted-foreground mt-1">
-            Manage contracts, workflows, AR aging, and SLA reminders
+            Manage contracts, workflows, procurement, stocking, AR aging, and SLA reminders
           </p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1">
+        <TabsList className="bg-muted/50 p-1 flex-wrap h-auto">
           <TabsTrigger value="contracts" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Contracts
@@ -33,6 +35,14 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
           <TabsTrigger value="workflows" className="flex items-center gap-2">
             <GitBranch className="w-4 h-4" />
             Workflows
+          </TabsTrigger>
+          <TabsTrigger value="procurement" className="flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            Procurement
+          </TabsTrigger>
+          <TabsTrigger value="stocking" className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            Stocking
           </TabsTrigger>
           <TabsTrigger value="ar-aging" className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
@@ -50,6 +60,14 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
 
         <TabsContent value="workflows" className="m-0">
           <AccountsWorkflows />
+        </TabsContent>
+
+        <TabsContent value="procurement" className="m-0">
+          <AccountsProcurement />
+        </TabsContent>
+
+        <TabsContent value="stocking" className="m-0">
+          <AccountsStocking />
         </TabsContent>
 
         <TabsContent value="ar-aging" className="m-0">
