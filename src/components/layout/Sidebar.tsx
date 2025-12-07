@@ -54,6 +54,8 @@ import {
   Package,
   Network,
   Puzzle,
+  Handshake,
+  Server,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,13 +98,6 @@ const salesPortalItems: NavItem[] = [
       { id: "sales-quotations", label: "Quotations", icon: FileText },
       { id: "sales-leads", label: "Lead Tracking", icon: Activity },
     ],
-  },
-  {
-    id: "contacts",
-    label: "Contacts",
-    icon: Phone,
-    color: "text-primary",
-    portalMode: "workspace",
   },
 ];
 
@@ -173,6 +168,8 @@ const adminItems: NavItem[] = [
     children: [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
       { id: "admin-center-users", label: "Users", icon: Users },
+      { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
+      { id: "admin-center-offerings", label: "Offerings", icon: Package },
       { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
       { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
       { id: "admin-center-portal", label: "Admin Portal", icon: Shield },
@@ -261,13 +258,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "sales-quotations", label: "Quotations", icon: FileText },
           { id: "sales-leads", label: "Lead Tracking", icon: Activity },
         ],
-      });
-
-      items.push({
-        id: "contacts",
-        label: "Contacts",
-        icon: Phone,
-        color: "text-primary",
       });
 
       // Inside Sales
