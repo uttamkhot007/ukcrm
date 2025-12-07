@@ -610,6 +610,84 @@ export type Database = {
           },
         ]
       }
+      demo_schedules: {
+        Row: {
+          attendees: string[] | null
+          contact_id: string | null
+          created_at: string
+          deal_id: string | null
+          demo_type: string | null
+          description: string | null
+          duration_minutes: number | null
+          feedback: string | null
+          id: string
+          meeting_link: string | null
+          next_steps: string | null
+          notes: string | null
+          presenter_id: string | null
+          scheduled_by: string
+          scheduled_date: string
+          status: Database["public"]["Enums"]["demo_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attendees?: string[] | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          demo_type?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          feedback?: string | null
+          id?: string
+          meeting_link?: string | null
+          next_steps?: string | null
+          notes?: string | null
+          presenter_id?: string | null
+          scheduled_by: string
+          scheduled_date: string
+          status?: Database["public"]["Enums"]["demo_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attendees?: string[] | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          demo_type?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          feedback?: string | null
+          id?: string
+          meeting_link?: string | null
+          next_steps?: string | null
+          notes?: string | null
+          presenter_id?: string | null
+          scheduled_by?: string
+          scheduled_date?: string
+          status?: Database["public"]["Enums"]["demo_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_schedules_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_schedules_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       distributors: {
         Row: {
           address: string | null
@@ -1864,6 +1942,84 @@ export type Database = {
           },
         ]
       }
+      poc_requests: {
+        Row: {
+          assigned_to: string | null
+          contact_id: string | null
+          created_at: string
+          deal_id: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          infrastructure_notes: string | null
+          outcome: string | null
+          outcome_notes: string | null
+          priority: string | null
+          requested_by: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["poc_status"]
+          success_criteria: string | null
+          technical_requirements: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          infrastructure_notes?: string | null
+          outcome?: string | null
+          outcome_notes?: string | null
+          priority?: string | null
+          requested_by: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["poc_status"]
+          success_criteria?: string | null
+          technical_requirements?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          infrastructure_notes?: string | null
+          outcome?: string | null
+          outcome_notes?: string | null
+          priority?: string | null
+          requested_by?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["poc_status"]
+          success_criteria?: string | null
+          technical_requirements?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poc_requests_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poc_requests_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           anniversary_date: string | null
@@ -2301,6 +2457,75 @@ export type Database = {
           },
         ]
       }
+      rfp_responses: {
+        Row: {
+          assigned_to: string
+          contact_id: string | null
+          created_at: string
+          deal_id: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          response_document_url: string | null
+          rfp_number: string | null
+          sections_completed: number | null
+          status: string | null
+          submitted_date: string | null
+          title: string
+          total_sections: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          response_document_url?: string | null
+          rfp_number?: string | null
+          sections_completed?: number | null
+          status?: string | null
+          submitted_date?: string | null
+          title: string
+          total_sections?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          response_document_url?: string | null
+          rfp_number?: string | null
+          sections_completed?: number | null
+          status?: string | null
+          submitted_date?: string | null
+          title?: string
+          total_sections?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfp_responses_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfp_responses_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_team_members: {
         Row: {
           id: string
@@ -2474,6 +2699,84 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      technical_assessments: {
+        Row: {
+          assessed_by: string
+          budget_range: string | null
+          contact_id: string | null
+          created_at: string
+          current_environment: string | null
+          deal_id: string | null
+          id: string
+          integration_points: string | null
+          recommendations: string | null
+          requirements: string | null
+          risks: string | null
+          scalability_needs: string | null
+          score: number | null
+          security_requirements: string | null
+          status: string | null
+          timeline: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assessed_by: string
+          budget_range?: string | null
+          contact_id?: string | null
+          created_at?: string
+          current_environment?: string | null
+          deal_id?: string | null
+          id?: string
+          integration_points?: string | null
+          recommendations?: string | null
+          requirements?: string | null
+          risks?: string | null
+          scalability_needs?: string | null
+          score?: number | null
+          security_requirements?: string | null
+          status?: string | null
+          timeline?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assessed_by?: string
+          budget_range?: string | null
+          contact_id?: string | null
+          created_at?: string
+          current_environment?: string | null
+          deal_id?: string | null
+          id?: string
+          integration_points?: string | null
+          recommendations?: string | null
+          requirements?: string | null
+          risks?: string | null
+          scalability_needs?: string | null
+          score?: number | null
+          security_requirements?: string | null
+          status?: string | null
+          timeline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_assessments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_assessments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_comments: {
         Row: {
@@ -3215,6 +3518,12 @@ export type Database = {
         | "commit"
         | "closed_won"
         | "closed_lost"
+      demo_status:
+        | "scheduled"
+        | "completed"
+        | "cancelled"
+        | "rescheduled"
+        | "no_show"
       employment_status:
         | "active"
         | "probation"
@@ -3286,6 +3595,13 @@ export type Database = {
         | "offer_sent"
         | "offer_accepted"
         | "completed"
+      poc_status:
+        | "requested"
+        | "planning"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "converted"
       quotation_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
       renewal_status:
         | "active"
@@ -3510,6 +3826,13 @@ export const Constants = {
         "closed_won",
         "closed_lost",
       ],
+      demo_status: [
+        "scheduled",
+        "completed",
+        "cancelled",
+        "rescheduled",
+        "no_show",
+      ],
       employment_status: [
         "active",
         "probation",
@@ -3589,6 +3912,14 @@ export const Constants = {
         "offer_sent",
         "offer_accepted",
         "completed",
+      ],
+      poc_status: [
+        "requested",
+        "planning",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "converted",
       ],
       quotation_status: ["draft", "sent", "accepted", "rejected", "expired"],
       renewal_status: [
