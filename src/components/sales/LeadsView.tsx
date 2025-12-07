@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -84,6 +85,7 @@ export function LeadsView() {
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const { formatCurrency, getCurrencySymbol, settings } = useOrganizationSettings();
   const { convert, isLoading: isLoadingRates } = useExchangeRates();
   const queryClient = useQueryClient();
@@ -125,6 +127,7 @@ export function LeadsView() {
         notes: data.notes.trim() || null,
         contact_id: data.contact_id || null,
         user_id: user!.id,
+        tenant_id: currentTenant?.id,
       });
       if (error) throw error;
     },
