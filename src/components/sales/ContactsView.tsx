@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { ContactDetailsSheet } from "./ContactDetailsSheet";
 import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye } from "lucide-react";
@@ -62,6 +63,7 @@ export function ContactsView() {
   const [formData, setFormData] = useState(initialFormData);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
 
   const { data: contacts, isLoading } = useQuery({
@@ -86,6 +88,7 @@ export function ContactsView() {
         designation: data.designation.trim() || null,
         notes: data.notes.trim() || null,
         user_id: user!.id,
+        tenant_id: currentTenant?.id,
       });
       if (error) throw error;
     },

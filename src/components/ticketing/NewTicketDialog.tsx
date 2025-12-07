@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ interface NewTicketDialogProps {
 
 export function NewTicketDialog({ open, onOpenChange }: NewTicketDialogProps) {
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,6 +56,7 @@ export function NewTicketDialog({ open, onOpenChange }: NewTicketDialogProps) {
         priority: formData.priority as "low" | "medium" | "high" | "critical",
         contact_id: formData.contact_id || null,
         created_by: user.id,
+        tenant_id: currentTenant?.id,
       }]).select().single();
 
       if (error) throw error;
