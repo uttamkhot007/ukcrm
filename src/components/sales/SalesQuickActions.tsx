@@ -273,6 +273,16 @@ export function SalesQuickActions() {
     }
   };
 
+  // Don't render if no tenant or user
+  if (!currentTenant || !user) {
+    return (
+      <Button className="gap-2" disabled>
+        <Plus className="h-4 w-4" />
+        Quick Add
+      </Button>
+    );
+  }
+
   return (
     <>
       <DropdownMenu>
