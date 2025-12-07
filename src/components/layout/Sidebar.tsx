@@ -219,9 +219,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
   // Helper function to check if user has access to specific team modules
   // Now also considers console access settings
+  // IMPORTANT: "manager" role does NOT automatically get all module access
+  // Access is strictly based on user_teams assignments
   const hasTeamAccess = (requiredTeams: TeamType[], moduleId?: string): boolean => {
-    // Super admins and admins always have access (only when in admin portal mode)
-    if ((role === "admin" || isSuperAdmin) && portalMode === "admin") return true;
+    // Super admins always have access (only when in admin portal mode)
+    if (isSuperAdmin && portalMode === "admin") return true;
+    
+    // Admin role has access to admin portal
+    if (role === "admin" && portalMode === "admin") return true;
     
     // If console access exists but user doesn't have full_access, they only get employee modules
     if (consoleAccess && !consoleAccess.has_full_access) {
@@ -230,15 +235,15 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     
     // If console access is configured with full access, use module-based control
     if (consoleAccess && consoleAccess.has_full_access) {
-      if (!moduleId) return false;
-      // Empty additional_modules means all modules for configured portal modes
+      if (!moduleId) return teams.some(t => requiredTeams.includes(t));
+      // Empty additional_modules means access based on team assignments
       if (consoleAccess.additional_modules.length === 0) {
         return teams.some(t => requiredTeams.includes(t));
       }
       return consoleAccess.additional_modules.includes(moduleId);
     }
     
-    // Only use team-based access if NO console access is configured (shouldn't happen with new logic)
+    // Access is STRICTLY based on user_teams - manager role doesn't give blanket access
     return teams.some(t => requiredTeams.includes(t));
   };
 
@@ -337,6 +342,20 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-support",
         children: [
           { id: "helpdesk-tickets", label: "Tickets", icon: Ticket },
+        ],
+      });
+
+      // IT Services Module
+      items.push({
+        id: "it",
+        label: "IT Services",
+        icon: Server,
+        color: "text-cyan-500",
+        children: [
+          { id: "it-tickets", label: "IT Support Tickets", icon: Ticket },
+          { id: "it-assets", label: "Digital Assets", icon: Package },
+          { id: "it-inventory", label: "IT Inventory", icon: Briefcase },
+          { id: "it-workflows", label: "IT Workflows", icon: FolderKanban },
         ],
       });
 
@@ -690,10 +709,27 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
           { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
           { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
+          { id: "employee-tickets", label: "Support Tickets", icon: Ticket },
           { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
           { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
         ],
       });
+
+      // IT Module - for IT team
+      if (hasTeamAccess(["technical", "admin"], "it")) {
+        items.push({
+          id: "it",
+          label: "IT Services",
+          icon: Server,
+          color: "text-cyan-500",
+          children: [
+            { id: "it-tickets", label: "IT Support Tickets", icon: Ticket },
+            { id: "it-assets", label: "Digital Assets", icon: Package },
+            { id: "it-inventory", label: "IT Inventory", icon: Briefcase },
+            { id: "it-workflows", label: "IT Workflows", icon: FolderKanban },
+          ],
+        });
+      }
 
       // Admin team gets admin module
       if (hasTeamAccess(["admin"])) {
@@ -711,10 +747,9 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         });
       }
 
-      // Manager role gets management access
-      if (role === "manager" || isManagement) {
-        items.push(...adminItems.filter(item => item.id === "management").filter(hasAccess));
-      }
+      // Note: Manager role does NOT automatically get management access
+      // Access is now strictly based on user_teams assignments
+      // Managers only see modules their team is assigned to
     } else {
       // Default to basic employee portal
       items.push({

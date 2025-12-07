@@ -34,8 +34,11 @@ export const ONBOARDING_STAGES: WorkflowStage[] = [
   { id: "offer_negotiation", name: "Offer Negotiation", description: "Candidate negotiation (if any)", order: 12, estimatedDays: 5 },
   { id: "offer_accepted", name: "Offer Accepted", description: "Candidate accepts the offer", order: 13, estimatedDays: 2 },
   { id: "document_collection", name: "Document Collection", description: "Collect joining documents", order: 14, estimatedDays: 7 },
-  { id: "onboarding_prep", name: "Onboarding Preparation", description: "Prepare workstation, access, etc.", order: 15, estimatedDays: 3 },
-  { id: "completed", name: "Completed", description: "Employee successfully onboarded", order: 16 },
+  { id: "it_provisioning", name: "IT Provisioning", description: "IT provisions laptop, email, system access, VPN", order: 15, estimatedDays: 3, requiredApprovers: ["it"] },
+  { id: "asset_assignment", name: "Asset Assignment", description: "Assign laptop, ID card, access cards", order: 16, estimatedDays: 2, requiredApprovers: ["it", "admin"] },
+  { id: "onboarding_prep", name: "Onboarding Preparation", description: "Prepare workstation, desk, welcome kit", order: 17, estimatedDays: 2 },
+  { id: "day_one_orientation", name: "Day One Orientation", description: "HR conducts orientation and team introduction", order: 18, estimatedDays: 1 },
+  { id: "completed", name: "Completed", description: "Employee successfully onboarded", order: 19 },
 ];
 
 export const OFFBOARDING_STAGES: WorkflowStage[] = [
@@ -45,11 +48,15 @@ export const OFFBOARDING_STAGES: WorkflowStage[] = [
   { id: "exit_approved", name: "Exit Approved", description: "Resignation approved by management", order: 4, estimatedDays: 2, requiredApprovers: ["management"] },
   { id: "knowledge_transfer", name: "Knowledge Transfer", description: "Employee transfers knowledge to team", order: 5, estimatedDays: 14 },
   { id: "project_handover", name: "Project Handover", description: "Hand over ongoing projects", order: 6, estimatedDays: 7 },
-  { id: "asset_return", name: "Asset Return", description: "Return company assets (laptop, ID, etc.)", order: 7, estimatedDays: 3 },
-  { id: "exit_interview", name: "Exit Interview", description: "HR conducts exit interview", order: 8, estimatedDays: 1 },
-  { id: "access_revocation", name: "Access Revocation", description: "IT revokes all system access", order: 9, estimatedDays: 1 },
-  { id: "final_settlement", name: "Final Settlement", description: "Finance processes final settlement", order: 10, estimatedDays: 7 },
-  { id: "completed", name: "Completed", description: "Offboarding completed", order: 11 },
+  { id: "it_access_revocation", name: "IT Access Revocation", description: "IT revokes system access, emails, VPN, cloud accounts", order: 7, estimatedDays: 1, requiredApprovers: ["it"] },
+  { id: "asset_return", name: "Asset Return", description: "Return company assets (laptop, ID, phone, keys)", order: 8, estimatedDays: 3, requiredApprovers: ["it", "admin"] },
+  { id: "it_clearance", name: "IT Clearance", description: "IT team confirms all digital assets returned and access revoked", order: 9, estimatedDays: 1, requiredApprovers: ["it"] },
+  { id: "dept_clearance", name: "Department Clearance", description: "Department head confirms no pending work or dues", order: 10, estimatedDays: 2, requiredApprovers: ["manager"] },
+  { id: "finance_clearance", name: "Finance Clearance", description: "Finance confirms no pending advances or dues", order: 11, estimatedDays: 2, requiredApprovers: ["finance"] },
+  { id: "hr_clearance", name: "HR Clearance", description: "HR confirms all policies complied and documents collected", order: 12, estimatedDays: 1, requiredApprovers: ["hr"] },
+  { id: "exit_interview", name: "Exit Interview", description: "HR conducts exit interview", order: 13, estimatedDays: 1 },
+  { id: "final_settlement", name: "Final Settlement", description: "Finance processes final settlement after all clearances", order: 14, estimatedDays: 7, requiredApprovers: ["finance"] },
+  { id: "completed", name: "Completed", description: "Offboarding completed", order: 15 },
 ];
 
 export const RETENTION_STAGES: WorkflowStage[] = [
