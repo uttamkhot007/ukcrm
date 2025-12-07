@@ -264,6 +264,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [isLoadingThreat, setIsLoadingThreat] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichingContactId, setEnrichingContactId] = useState<string | null>(null);
   const [contactsExpanded, setContactsExpanded] = useState(true);
   const [dealsExpanded, setDealsExpanded] = useState(true);
   const [tasksExpanded, setTasksExpanded] = useState(true);
@@ -503,6 +504,80 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       toast.error("Failed to enrich company data");
     } finally {
       setIsEnriching(false);
+    }
+  };
+
+  // Enrich user/contact with AI
+  const enrichContact = async (contact: AllianceUser) => {
+    setEnrichingContactId(contact.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('enrich-user', {
+        body: { 
+          userName: contact.name, 
+          organizationName: organization?.name || '' 
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.data) {
+        const enrichedData = data.data;
+        
+        // Update the contact with enriched data
+        const updateData: any = {};
+        if (enrichedData.linkedin_url) {
+          updateData.notes = contact.notes 
+            ? `${contact.notes}\n\nLinkedIn: ${enrichedData.linkedin_url}` 
+            : `LinkedIn: ${enrichedData.linkedin_url}`;
+        }
+        if (enrichedData.current_title && !contact.role) {
+          updateData.role = enrichedData.current_title;
+        }
+        if (enrichedData.email && !contact.email) {
+          updateData.email = enrichedData.email;
+        }
+        if (enrichedData.phone && !contact.phone) {
+          updateData.phone = enrichedData.phone;
+        }
+        if (enrichedData.location) {
+          updateData.location = enrichedData.location;
+        }
+        
+        // Add additional enriched info to notes
+        let enrichmentNotes = [];
+        if (enrichedData.bio) enrichmentNotes.push(`Bio: ${enrichedData.bio}`);
+        if (enrichedData.education?.length) enrichmentNotes.push(`Education: ${enrichedData.education.join(', ')}`);
+        if (enrichedData.skills?.length) enrichmentNotes.push(`Skills: ${enrichedData.skills.slice(0, 5).join(', ')}`);
+        if (enrichedData.experience?.length) {
+          const recentExp = enrichedData.experience.slice(0, 3).map((e: any) => `${e.title} at ${e.company}`).join('; ');
+          enrichmentNotes.push(`Experience: ${recentExp}`);
+        }
+        
+        if (enrichmentNotes.length > 0) {
+          const existingNotes = updateData.notes || contact.notes || '';
+          updateData.notes = existingNotes 
+            ? `${existingNotes}\n\n--- AI Enriched Data ---\n${enrichmentNotes.join('\n')}`
+            : `--- AI Enriched Data ---\n${enrichmentNotes.join('\n')}`;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase
+            .from("alliance_users")
+            .update(updateData)
+            .eq("id", contact.id);
+          
+          if (updateError) throw updateError;
+          refetchContacts();
+          toast.success(`Enriched data for ${contact.name}`);
+        } else {
+          toast.info("No additional information found for this contact");
+        }
+      }
+    } catch (error: any) {
+      console.error("User enrichment error:", error);
+      toast.error("Failed to enrich contact data");
+    } finally {
+      setEnrichingContactId(null);
     }
   };
 
@@ -2230,7 +2305,31 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                         <div className="flex items-center gap-1"><p className="font-medium text-sm truncate">{c.name}</p>{c.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}</div>
                         <p className="text-xs text-muted-foreground">{c.role || 'No role'}</p>
                         {c.email && <a href={`mailto:${c.email}`} className="text-xs text-primary hover:underline">{c.email}</a>}
+                        {c.notes?.includes('LinkedIn:') && (
+                          <a 
+                            href={c.notes.match(/LinkedIn:\s*(https?:\/\/[^\s\n]+)/)?.[1] || '#'} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                          >
+                            <Linkedin className="h-3 w-3" /> LinkedIn Profile
+                          </a>
+                        )}
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => enrichContact(c)}
+                        disabled={enrichingContactId === c.id}
+                        title="Enrich with AI"
+                      >
+                        {enrichingContactId === c.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3 text-primary" />
+                        )}
+                      </Button>
                     </div>
                   </Card>
                 ))}
