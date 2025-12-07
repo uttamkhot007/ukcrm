@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.fetch-company-info]
 verify_jwt = false
+
+[functions.enrich-company]
+verify_jwt = false

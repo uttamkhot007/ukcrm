@@ -1,5 +1,5 @@
-import { OrganizationModule } from "@/components/admin/OrganizationModule";
+import { OrganizationProfilePage } from "@/components/admin/OrganizationProfilePage";
 
 export default function AdminOrganization() {
-  return <OrganizationModule />;
+  return <OrganizationProfilePage />;
 }

@@ -3365,24 +3365,69 @@ export type Database = {
       }
       organization_settings: {
         Row: {
+          account_manager_email: string | null
+          account_manager_id: string | null
+          account_manager_name: string | null
+          account_manager_phone: string | null
           address: string | null
           alert_managers_on_early_departure: boolean | null
           alert_managers_on_late: boolean | null
           alternate_currency: string | null
+          annual_revenue: string | null
           cities: string[] | null
+          cloud_providers: string[] | null
+          company_type: string | null
+          compliance_frameworks: string[] | null
           consecutive_late_threshold: number | null
+          contract_end_date: string | null
+          contract_start_date: string | null
           countries: string[] | null
           created_at: string
           currency: string | null
+          customer_since: string | null
+          datacenter_type: string | null
+          description: string | null
+          dkim_status: string | null
+          dmarc_status: string | null
           early_departure_alert_enabled: boolean | null
           early_departure_threshold_minutes: number | null
+          email: string | null
+          email_security_last_checked: string | null
+          enrichment_data: Json | null
+          existing_security_tools: Json | null
+          facebook_url: string | null
+          founded_year: number | null
+          hq_city: string | null
+          hq_country: string | null
+          hq_state: string | null
           id: string
+          industry: string | null
+          last_enriched_at: string | null
+          last_security_audit: string | null
           late_arrival_alert_enabled: boolean | null
           late_threshold_minutes: number | null
           linkedin_url: string | null
           logo_url: string | null
           name: string
+          next_security_audit: string | null
+          num_branches: number | null
+          num_endpoints: number | null
+          num_servers: number | null
+          num_systems: number | null
+          num_users: number | null
+          on_prem_locations: string[] | null
+          parent_company: string | null
+          phone: string | null
+          postal_code: string | null
+          revenue_currency: string | null
+          security_certifications: string[] | null
+          security_controls: string[] | null
           senior_management: Json | null
+          spf_status: string | null
+          stock_exchange: string | null
+          stock_symbol: string | null
+          subsidiaries: string[] | null
+          technologies_used: string[] | null
           tenant_id: string | null
           total_employees: number | null
           twitter_url: string | null
@@ -3392,24 +3437,69 @@ export type Database = {
           work_start_time: string | null
         }
         Insert: {
+          account_manager_email?: string | null
+          account_manager_id?: string | null
+          account_manager_name?: string | null
+          account_manager_phone?: string | null
           address?: string | null
           alert_managers_on_early_departure?: boolean | null
           alert_managers_on_late?: boolean | null
           alternate_currency?: string | null
+          annual_revenue?: string | null
           cities?: string[] | null
+          cloud_providers?: string[] | null
+          company_type?: string | null
+          compliance_frameworks?: string[] | null
           consecutive_late_threshold?: number | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           countries?: string[] | null
           created_at?: string
           currency?: string | null
+          customer_since?: string | null
+          datacenter_type?: string | null
+          description?: string | null
+          dkim_status?: string | null
+          dmarc_status?: string | null
           early_departure_alert_enabled?: boolean | null
           early_departure_threshold_minutes?: number | null
+          email?: string | null
+          email_security_last_checked?: string | null
+          enrichment_data?: Json | null
+          existing_security_tools?: Json | null
+          facebook_url?: string | null
+          founded_year?: number | null
+          hq_city?: string | null
+          hq_country?: string | null
+          hq_state?: string | null
           id?: string
+          industry?: string | null
+          last_enriched_at?: string | null
+          last_security_audit?: string | null
           late_arrival_alert_enabled?: boolean | null
           late_threshold_minutes?: number | null
           linkedin_url?: string | null
           logo_url?: string | null
           name?: string
+          next_security_audit?: string | null
+          num_branches?: number | null
+          num_endpoints?: number | null
+          num_servers?: number | null
+          num_systems?: number | null
+          num_users?: number | null
+          on_prem_locations?: string[] | null
+          parent_company?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          revenue_currency?: string | null
+          security_certifications?: string[] | null
+          security_controls?: string[] | null
           senior_management?: Json | null
+          spf_status?: string | null
+          stock_exchange?: string | null
+          stock_symbol?: string | null
+          subsidiaries?: string[] | null
+          technologies_used?: string[] | null
           tenant_id?: string | null
           total_employees?: number | null
           twitter_url?: string | null
@@ -3419,24 +3509,69 @@ export type Database = {
           work_start_time?: string | null
         }
         Update: {
+          account_manager_email?: string | null
+          account_manager_id?: string | null
+          account_manager_name?: string | null
+          account_manager_phone?: string | null
           address?: string | null
           alert_managers_on_early_departure?: boolean | null
           alert_managers_on_late?: boolean | null
           alternate_currency?: string | null
+          annual_revenue?: string | null
           cities?: string[] | null
+          cloud_providers?: string[] | null
+          company_type?: string | null
+          compliance_frameworks?: string[] | null
           consecutive_late_threshold?: number | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           countries?: string[] | null
           created_at?: string
           currency?: string | null
+          customer_since?: string | null
+          datacenter_type?: string | null
+          description?: string | null
+          dkim_status?: string | null
+          dmarc_status?: string | null
           early_departure_alert_enabled?: boolean | null
           early_departure_threshold_minutes?: number | null
+          email?: string | null
+          email_security_last_checked?: string | null
+          enrichment_data?: Json | null
+          existing_security_tools?: Json | null
+          facebook_url?: string | null
+          founded_year?: number | null
+          hq_city?: string | null
+          hq_country?: string | null
+          hq_state?: string | null
           id?: string
+          industry?: string | null
+          last_enriched_at?: string | null
+          last_security_audit?: string | null
           late_arrival_alert_enabled?: boolean | null
           late_threshold_minutes?: number | null
           linkedin_url?: string | null
           logo_url?: string | null
           name?: string
+          next_security_audit?: string | null
+          num_branches?: number | null
+          num_endpoints?: number | null
+          num_servers?: number | null
+          num_systems?: number | null
+          num_users?: number | null
+          on_prem_locations?: string[] | null
+          parent_company?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          revenue_currency?: string | null
+          security_certifications?: string[] | null
+          security_controls?: string[] | null
           senior_management?: Json | null
+          spf_status?: string | null
+          stock_exchange?: string | null
+          stock_symbol?: string | null
+          subsidiaries?: string[] | null
+          technologies_used?: string[] | null
           tenant_id?: string | null
           total_employees?: number | null
           twitter_url?: string | null
