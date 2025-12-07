@@ -168,12 +168,12 @@ const adminItems: NavItem[] = [
     requiredRoles: ["admin"],
     children: [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
-      { id: "admin-center-users", label: "Users", icon: Users },
+      { id: "admin-center-users", label: "User Management", icon: Users },
       { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
       { id: "admin-center-offerings", label: "Offerings", icon: Package },
       { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
       { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
-      { id: "admin-center-portal", label: "Admin Portal", icon: Shield },
+      
       { id: "admin-center-health", label: "Platform Health", icon: Activity },
     ],
   },
