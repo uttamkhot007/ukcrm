@@ -4366,6 +4366,7 @@ export type Database = {
           location: string | null
           manager_id: string | null
           sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
+          tenant_id: string | null
           updated_at: string | null
           user_category: Database["public"]["Enums"]["user_category"] | null
           user_id: string | null
@@ -4389,6 +4390,7 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          tenant_id?: string | null
           updated_at?: string | null
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id?: string | null
@@ -4412,11 +4414,20 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          tenant_id?: string | null
           updated_at?: string | null
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
