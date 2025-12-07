@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { Lightbulb, Presentation, ClipboardCheck, FileText, GitBranch } from "lucide-react";
 import { POCRequestsTab } from "./POCRequestsTab";
 import { DemoSchedulesTab } from "./DemoSchedulesTab";
@@ -7,8 +7,33 @@ import { TechnicalAssessmentsTab } from "./TechnicalAssessmentsTab";
 import { RFPResponsesTab } from "./RFPResponsesTab";
 import { PresalesWorkflowsTab } from "./PresalesWorkflowsTab";
 
+const navItems: ModuleNavItem[] = [
+  { value: "poc", label: "POC Requests", icon: Lightbulb },
+  { value: "demos", label: "Demos", icon: Presentation },
+  { value: "assessments", label: "Assessments", icon: ClipboardCheck },
+  { value: "rfp", label: "RFP/RFI", icon: FileText },
+  { value: "workflows", label: "Workflows", icon: GitBranch },
+];
+
 export function SolutionEngineeringModule() {
   const [activeTab, setActiveTab] = useState("poc");
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "poc":
+        return <POCRequestsTab />;
+      case "demos":
+        return <DemoSchedulesTab />;
+      case "assessments":
+        return <TechnicalAssessmentsTab />;
+      case "rfp":
+        return <RFPResponsesTab />;
+      case "workflows":
+        return <PresalesWorkflowsTab />;
+      default:
+        return <POCRequestsTab />;
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -22,50 +47,16 @@ export function SolutionEngineeringModule() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
-          <TabsTrigger value="poc" className="flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            POC Requests
-          </TabsTrigger>
-          <TabsTrigger value="demos" className="flex items-center gap-2">
-            <Presentation className="w-4 h-4" />
-            Demos
-          </TabsTrigger>
-          <TabsTrigger value="assessments" className="flex items-center gap-2">
-            <ClipboardCheck className="w-4 h-4" />
-            Assessments
-          </TabsTrigger>
-          <TabsTrigger value="rfp" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            RFP/RFI
-          </TabsTrigger>
-          <TabsTrigger value="workflows" className="flex items-center gap-2">
-            <GitBranch className="w-4 h-4" />
-            Workflows
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="poc">
-          <POCRequestsTab />
-        </TabsContent>
-
-        <TabsContent value="demos">
-          <DemoSchedulesTab />
-        </TabsContent>
-
-        <TabsContent value="assessments">
-          <TechnicalAssessmentsTab />
-        </TabsContent>
-
-        <TabsContent value="rfp">
-          <RFPResponsesTab />
-        </TabsContent>
-
-        <TabsContent value="workflows">
-          <PresalesWorkflowsTab />
-        </TabsContent>
-      </Tabs>
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }

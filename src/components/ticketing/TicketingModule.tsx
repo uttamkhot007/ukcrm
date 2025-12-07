@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { TicketsList } from "./TicketsList";
 import { TicketStats } from "./TicketStats";
 import { NewTicketDialog } from "./NewTicketDialog";
@@ -9,10 +9,38 @@ import { TicketAutomation } from "./TicketAutomation";
 import { Button } from "@/components/ui/button";
 import { Plus, Ticket, Clock, AlertTriangle, CheckCircle, BarChart3, Zap } from "lucide-react";
 
+const navItems: ModuleNavItem[] = [
+  { value: "all", label: "All Tickets", icon: Ticket },
+  { value: "open", label: "Open", icon: Clock },
+  { value: "escalated", label: "Escalated", icon: AlertTriangle },
+  { value: "resolved", label: "Resolved", icon: CheckCircle },
+  { value: "analytics", label: "Analytics", icon: BarChart3 },
+  { value: "automation", label: "Automation", icon: Zap },
+];
+
 export function TicketingModule() {
   const [activeTab, setActiveTab] = useState("all");
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "all":
+        return <TicketsList statusFilter={null} onTicketSelect={setSelectedTicketId} />;
+      case "open":
+        return <TicketsList statusFilter="open" onTicketSelect={setSelectedTicketId} />;
+      case "escalated":
+        return <TicketsList statusFilter="escalated" onTicketSelect={setSelectedTicketId} />;
+      case "resolved":
+        return <TicketsList statusFilter="resolved" onTicketSelect={setSelectedTicketId} />;
+      case "analytics":
+        return <TicketAnalytics />;
+      case "automation":
+        return <TicketAutomation />;
+      default:
+        return <TicketsList statusFilter={null} onTicketSelect={setSelectedTicketId} />;
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -29,53 +57,16 @@ export function TicketingModule() {
 
       <TicketStats />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all" className="gap-2">
-            <Ticket className="w-4 h-4" />
-            All Tickets
-          </TabsTrigger>
-          <TabsTrigger value="open" className="gap-2">
-            <Clock className="w-4 h-4" />
-            Open
-          </TabsTrigger>
-          <TabsTrigger value="escalated" className="gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Escalated
-          </TabsTrigger>
-          <TabsTrigger value="resolved" className="gap-2">
-            <CheckCircle className="w-4 h-4" />
-            Resolved
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="gap-2">
-            <Zap className="w-4 h-4" />
-            Automation
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all">
-          <TicketsList statusFilter={null} onTicketSelect={setSelectedTicketId} />
-        </TabsContent>
-        <TabsContent value="open">
-          <TicketsList statusFilter="open" onTicketSelect={setSelectedTicketId} />
-        </TabsContent>
-        <TabsContent value="escalated">
-          <TicketsList statusFilter="escalated" onTicketSelect={setSelectedTicketId} />
-        </TabsContent>
-        <TabsContent value="resolved">
-          <TicketsList statusFilter="resolved" onTicketSelect={setSelectedTicketId} />
-        </TabsContent>
-        <TabsContent value="analytics">
-          <TicketAnalytics />
-        </TabsContent>
-        <TabsContent value="automation">
-          <TicketAutomation />
-        </TabsContent>
-      </Tabs>
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
 
       <NewTicketDialog open={isNewTicketOpen} onOpenChange={setIsNewTicketOpen} />
       <TicketDetailsSheet 

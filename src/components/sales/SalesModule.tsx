@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
 import { ContactsView } from "./ContactsView";
@@ -9,6 +9,15 @@ import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
 import { Handshake, Users, UserPlus, FileText, Clock, BarChart3 } from "lucide-react";
+
+const navItems: ModuleNavItem[] = [
+  { value: "deals", label: "Deals", icon: Handshake },
+  { value: "leads", label: "Leads", icon: UserPlus },
+  { value: "contacts", label: "Contacts", icon: Users },
+  { value: "quotations", label: "Quotations", icon: FileText },
+  { value: "activity", label: "Activity", icon: Clock },
+  { value: "reports", label: "Reports", icon: BarChart3 },
+];
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -23,63 +32,18 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
     }
   }, [initialTab]);
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Sales</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your deals, leads, contacts, and quotations
-          </p>
-        </div>
-        <SalesQuickActions />
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1">
-          <TabsTrigger value="deals" className="flex items-center gap-2">
-            <Handshake className="w-4 h-4" />
-            Deals
-          </TabsTrigger>
-          <TabsTrigger value="leads" className="flex items-center gap-2">
-            <UserPlus className="w-4 h-4" />
-            Leads
-          </TabsTrigger>
-          <TabsTrigger value="contacts" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Contacts
-          </TabsTrigger>
-          <TabsTrigger value="quotations" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Quotations
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Activity
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Reports
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="deals" className="space-y-4">
-          <DealsView />
-        </TabsContent>
-
-        <TabsContent value="leads" className="space-y-4">
-          <LeadsView />
-        </TabsContent>
-
-        <TabsContent value="contacts" className="space-y-4">
-          <ContactsView />
-        </TabsContent>
-
-        <TabsContent value="quotations" className="space-y-4">
-          <QuotationsView />
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-4">
+  const renderContent = () => {
+    switch (activeTab) {
+      case "deals":
+        return <DealsView />;
+      case "leads":
+        return <LeadsView />;
+      case "contacts":
+        return <ContactsView />;
+      case "quotations":
+        return <QuotationsView />;
+      case "activity":
+        return (
           <div>
             <h2 className="text-2xl font-bold mb-2">Activity Timeline</h2>
             <p className="text-muted-foreground mb-6">Track all interactions and changes for deals</p>
@@ -92,12 +56,36 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
               </div>
             </div>
           </div>
-        </TabsContent>
+        );
+      case "reports":
+        return <SalesReports />;
+      default:
+        return <DealsView />;
+    }
+  };
 
-        <TabsContent value="reports" className="space-y-4">
-          <SalesReports />
-        </TabsContent>
-      </Tabs>
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Sales</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your deals, leads, contacts, and quotations
+          </p>
+        </div>
+        <SalesQuickActions />
+      </div>
+
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }

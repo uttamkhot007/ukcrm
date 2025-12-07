@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, FileText, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { ProcurementStats } from "./ProcurementStats";
@@ -10,6 +10,11 @@ import { ProcurementRequestsList } from "./ProcurementRequestsList";
 import { PurchaseOrdersList } from "./PurchaseOrdersList";
 import { NewProcurementRequestDialog } from "./NewProcurementRequestDialog";
 import { ProcurementRequestDetailsSheet } from "./ProcurementRequestDetailsSheet";
+
+const navItems: ModuleNavItem[] = [
+  { value: "requests", label: "Requests", icon: FileText },
+  { value: "purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
+];
 
 export function ProcurementModule() {
   const { currentTenant } = useTenant();
@@ -25,7 +30,6 @@ export function ProcurementModule() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch procurement requests
       const { data: requestsData } = await (supabase
         .from("procurement_requests" as any)
         .select("*")
@@ -33,7 +37,6 @@ export function ProcurementModule() {
 
       setRequests(requestsData || []);
 
-      // Fetch purchase orders
       const { data: posData } = await (supabase
         .from("purchase_orders" as any)
         .select("*")
@@ -71,36 +74,21 @@ export function ProcurementModule() {
     setDetailsOpen(true);
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Procurement</h1>
-          <p className="text-muted-foreground">Manage procurement requests and purchase orders</p>
-        </div>
-        <NewProcurementRequestDialog onSuccess={fetchData} />
-      </div>
-
-      <ProcurementStats stats={stats} />
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="requests">Requests</TabsTrigger>
-            <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
-          </TabsList>
-
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-[200px]"
-              />
-            </div>
-            {activeTab === "requests" && (
+  const renderContent = () => {
+    switch (activeTab) {
+      case "requests":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Filter by status" />
@@ -115,22 +103,43 @@ export function ProcurementModule() {
                   <SelectItem value="po_created">PO Created</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+            </div>
+            <ProcurementRequestsList
+              requests={filteredRequests}
+              onRefresh={fetchData}
+              onViewDetails={handleViewDetails}
+            />
           </div>
+        );
+      case "purchase-orders":
+        return <PurchaseOrdersList orders={purchaseOrders} onRefresh={fetchData} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Procurement</h1>
+          <p className="text-muted-foreground">Manage procurement requests and purchase orders</p>
         </div>
+        <NewProcurementRequestDialog onSuccess={fetchData} />
+      </div>
 
-        <TabsContent value="requests" className="mt-4">
-          <ProcurementRequestsList
-            requests={filteredRequests}
-            onRefresh={fetchData}
-            onViewDetails={handleViewDetails}
-          />
-        </TabsContent>
+      <ProcurementStats stats={stats} />
 
-        <TabsContent value="purchase-orders" className="mt-4">
-          <PurchaseOrdersList orders={purchaseOrders} onRefresh={fetchData} />
-        </TabsContent>
-      </Tabs>
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
 
       <ProcurementRequestDetailsSheet
         request={selectedRequest}

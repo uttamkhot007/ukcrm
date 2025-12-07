@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleVerticalNav, ModuleNavItem } from "@/components/ui/module-vertical-nav";
 import { Package, Wrench, Warehouse, History } from "lucide-react";
 import { AssetsStats } from "./AssetsStats";
 import { AssetsList } from "./AssetsList";
@@ -7,12 +7,34 @@ import { InventoryList } from "./InventoryList";
 import { MaintenanceList } from "./MaintenanceList";
 import { AssetAssignmentHistory } from "./AssetAssignmentHistory";
 
+const navItems: ModuleNavItem[] = [
+  { value: "assets", label: "Assets", icon: Package },
+  { value: "inventory", label: "Inventory", icon: Warehouse },
+  { value: "maintenance", label: "Maintenance", icon: Wrench },
+  { value: "history", label: "Assignment History", icon: History },
+];
+
 interface AssetsModuleProps {
   defaultTab?: string;
 }
 
 export function AssetsModule({ defaultTab = "assets" }: AssetsModuleProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "assets":
+        return <AssetsList />;
+      case "inventory":
+        return <InventoryList />;
+      case "maintenance":
+        return <MaintenanceList />;
+      case "history":
+        return <AssetAssignmentHistory />;
+      default:
+        return <AssetsList />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -25,42 +47,16 @@ export function AssetsModule({ defaultTab = "assets" }: AssetsModuleProps) {
 
       <AssetsStats />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="assets" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Assets
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="flex items-center gap-2">
-            <Warehouse className="h-4 w-4" />
-            Inventory
-          </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <Wrench className="h-4 w-4" />
-            Maintenance
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            Assignment History
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="assets" className="mt-6">
-          <AssetsList />
-        </TabsContent>
-
-        <TabsContent value="inventory" className="mt-6">
-          <InventoryList />
-        </TabsContent>
-
-        <TabsContent value="maintenance" className="mt-6">
-          <MaintenanceList />
-        </TabsContent>
-
-        <TabsContent value="history" className="mt-6">
-          <AssetAssignmentHistory />
-        </TabsContent>
-      </Tabs>
+      <div className="flex gap-6">
+        <ModuleVerticalNav
+          items={navItems}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }
