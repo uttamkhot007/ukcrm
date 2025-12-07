@@ -67,22 +67,25 @@ export function WorkflowSettingsDialog({
         .eq("setting_key", "salary_thresholds")
         .maybeSingle();
 
+      const settingValue = JSON.parse(JSON.stringify(thresholds));
+
       if (existing) {
         const { error } = await supabase
           .from("workflow_settings")
-          .update({ setting_value: thresholds as unknown as Record<string, unknown> })
+          .update({ setting_value: settingValue })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        // Use type assertion for insert since Supabase types expect array
+        const insertData = {
+          setting_key: "salary_thresholds",
+          setting_value: settingValue,
+        };
+        const { error } = await (supabase
           .from("workflow_settings")
-          .insert({
-            setting_key: "salary_thresholds",
-            setting_value: thresholds as unknown as Record<string, unknown>,
-          });
+          .insert(insertData as any) as any);
         if (error) throw error;
       }
-    },
     },
     onSuccess: () => {
       toast({ title: "Settings Saved", description: "Workflow settings have been updated." });
