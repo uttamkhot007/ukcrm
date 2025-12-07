@@ -1457,6 +1457,51 @@ export type Database = {
         }
         Relationships: []
       }
+      module_definitions: {
+        Row: {
+          category: string | null
+          created_at: string
+          default_enabled: boolean | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_core: boolean | null
+          key: string
+          name: string
+          settings_schema: Json | null
+          sort_order: number | null
+          tier_required: Database["public"]["Enums"]["tenant_tier"] | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          default_enabled?: boolean | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_core?: boolean | null
+          key: string
+          name: string
+          settings_schema?: Json | null
+          sort_order?: number | null
+          tier_required?: Database["public"]["Enums"]["tenant_tier"] | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          default_enabled?: boolean | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_core?: boolean | null
+          key?: string
+          name?: string
+          settings_schema?: Json | null
+          sort_order?: number | null
+          tier_required?: Database["public"]["Enums"]["tenant_tier"] | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -2039,6 +2084,7 @@ export type Database = {
           location: string | null
           manager_id: string | null
           sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
+          tenant_id: string | null
           updated_at: string
           user_category: Database["public"]["Enums"]["user_category"] | null
           user_id: string
@@ -2061,6 +2107,7 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          tenant_id?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id: string
@@ -2083,11 +2130,20 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
+          tenant_id?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
@@ -2778,6 +2834,357 @@ export type Database = {
           },
         ]
       }
+      tenant_ai_configs: {
+        Row: {
+          ai_model: string | null
+          created_at: string
+          credits_reset_at: string | null
+          custom_instructions: Json | null
+          id: string
+          knowledge_base_enabled: boolean | null
+          max_tokens: number | null
+          monthly_ai_credits: number | null
+          system_prompt: string | null
+          temperature: number | null
+          tenant_id: string
+          updated_at: string
+          used_ai_credits: number | null
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string
+          credits_reset_at?: string | null
+          custom_instructions?: Json | null
+          id?: string
+          knowledge_base_enabled?: boolean | null
+          max_tokens?: number | null
+          monthly_ai_credits?: number | null
+          system_prompt?: string | null
+          temperature?: number | null
+          tenant_id: string
+          updated_at?: string
+          used_ai_credits?: number | null
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string
+          credits_reset_at?: string | null
+          custom_instructions?: Json | null
+          id?: string
+          knowledge_base_enabled?: boolean | null
+          max_tokens?: number | null
+          monthly_ai_credits?: number | null
+          system_prompt?: string | null
+          temperature?: number | null
+          tenant_id?: string
+          updated_at?: string
+          used_ai_credits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_ai_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          tenant_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          tenant_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          tenant_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_audit_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          tenant_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: string
+          tenant_id: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          tenant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          is_primary_owner: boolean | null
+          joined_at: string | null
+          role: string
+          status: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_primary_owner?: boolean | null
+          joined_at?: string | null
+          role?: string
+          status?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_primary_owner?: boolean | null
+          joined_at?: string | null
+          role?: string
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_modules: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          enabled_at: string | null
+          id: string
+          is_enabled: boolean
+          module_key: string
+          settings: Json | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          enabled_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_key: string
+          settings?: Json | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          enabled_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_key?: string
+          settings?: Json | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_modules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_usage: {
+        Row: {
+          active_users: number | null
+          ai_tokens_used: number | null
+          api_calls: number | null
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          storage_used_bytes: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          active_users?: number | null
+          ai_tokens_used?: number | null
+          api_calls?: number | null
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          storage_used_bytes?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          active_users?: number | null
+          ai_tokens_used?: number | null
+          api_calls?: number | null
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          storage_used_bytes?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_usage_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          billing_email: string | null
+          branding: Json | null
+          created_at: string
+          data_region: Database["public"]["Enums"]["data_region"]
+          domain: string | null
+          id: string
+          logo_url: string | null
+          max_storage_gb: number | null
+          max_users: number | null
+          name: string
+          settings: Json | null
+          slug: string
+          status: Database["public"]["Enums"]["tenant_status"]
+          suspended_at: string | null
+          suspended_reason: string | null
+          tier: Database["public"]["Enums"]["tenant_tier"]
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          branding?: Json | null
+          created_at?: string
+          data_region?: Database["public"]["Enums"]["data_region"]
+          domain?: string | null
+          id?: string
+          logo_url?: string | null
+          max_storage_gb?: number | null
+          max_users?: number | null
+          name: string
+          settings?: Json | null
+          slug: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          tier?: Database["public"]["Enums"]["tenant_tier"]
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          branding?: Json | null
+          created_at?: string
+          data_region?: Database["public"]["Enums"]["data_region"]
+          domain?: string | null
+          id?: string
+          logo_url?: string | null
+          max_storage_gb?: number | null
+          max_users?: number | null
+          name?: string
+          settings?: Json | null
+          slug?: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          tier?: Database["public"]["Enums"]["tenant_tier"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ticket_comments: {
         Row: {
           comment: string
@@ -3465,6 +3872,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_tenant_id: { Args: { _user_id: string }; Returns: string }
       has_any_team: {
         Args: {
           _teams: Database["public"]["Enums"]["team_type"][]
@@ -3490,7 +3898,19 @@ export type Database = {
       is_customer: { Args: { _user_id: string }; Returns: boolean }
       is_employee_user: { Args: { _user_id: string }; Returns: boolean }
       is_management: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_admin: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_tenant_member: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
       promote_to_admin: { Args: { _user_email: string }; Returns: undefined }
+      tenant_has_module: {
+        Args: { _module_key: string; _tenant_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "manager" | "employee"
@@ -3511,6 +3931,12 @@ export type Database = {
         | "compliant"
         | "non_compliant"
         | "needs_review"
+      data_region:
+        | "us-east"
+        | "us-west"
+        | "eu-central"
+        | "ap-south"
+        | "ap-southeast"
       deal_stage:
         | "pipeline"
         | "upside"
@@ -3650,6 +4076,8 @@ export type Database = {
         | "renewals"
         | "accounts"
         | "admin"
+      tenant_status: "pending" | "active" | "suspended" | "cancelled"
+      tenant_tier: "starter" | "professional" | "enterprise"
       ticket_category:
         | "incident"
         | "service_request"
@@ -3818,6 +4246,13 @@ export const Constants = {
         "non_compliant",
         "needs_review",
       ],
+      data_region: [
+        "us-east",
+        "us-west",
+        "eu-central",
+        "ap-south",
+        "ap-southeast",
+      ],
       deal_stage: [
         "pipeline",
         "upside",
@@ -3975,6 +4410,8 @@ export const Constants = {
         "accounts",
         "admin",
       ],
+      tenant_status: ["pending", "active", "suspended", "cancelled"],
+      tenant_tier: ["starter", "professional", "enterprise"],
       ticket_category: [
         "incident",
         "service_request",
