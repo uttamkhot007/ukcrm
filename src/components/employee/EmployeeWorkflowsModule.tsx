@@ -18,6 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
@@ -30,7 +37,15 @@ import {
   Plus,
   ChevronRight,
   Calendar,
+  Info,
 } from "lucide-react";
+import { 
+  WORKFLOW_TEMPLATES, 
+  getStageProgress, 
+  formatStageName,
+  ONBOARDING_STAGES,
+  OFFBOARDING_STAGES 
+} from "@/lib/workflow-templates";
 
 export function EmployeeWorkflowsModule() {
   const { user, role, isAdmin } = useAuth();
@@ -38,16 +53,24 @@ export function EmployeeWorkflowsModule() {
   const queryClient = useQueryClient();
   const [showNewHireDialog, setShowNewHireDialog] = useState(false);
   const [showResignationDialog, setShowResignationDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState("standard_onboarding");
   const [formData, setFormData] = useState({
     // New hire request
     jobTitle: "",
     department: "",
     justification: "",
+    location: "",
+    employmentType: "full_time",
+    salaryRangeMin: "",
+    salaryRangeMax: "",
+    urgency: "normal",
+    expectedStartDate: "",
     // Resignation
     reason: "",
     lastWorkingDate: "",
   });
 
+  // Only managers and admins can request new hires
   const isManager = role === "manager" || isAdmin;
 
   // Fetch workflows initiated by or involving the current user
@@ -69,10 +92,14 @@ export function EmployeeWorkflowsModule() {
   const initiatedByMe = workflows.filter((w) => w.initiated_by === user?.id);
   const involvingMe = workflows.filter((w) => w.target_user_id === user?.id);
 
-  // Create new hire request (for managers)
+  // Create new hire request (for managers only)
   const createNewHireRequest = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Not authenticated");
+      if (!isManager) throw new Error("Only managers can request new hires");
+
+      const template = WORKFLOW_TEMPLATES.find(t => t.id === selectedTemplate);
+      const isUrgent = selectedTemplate === "urgent_onboarding";
 
       const { data: workflow, error: workflowError } = await supabase
         .from("hr_workflows")
@@ -83,8 +110,12 @@ export function EmployeeWorkflowsModule() {
           status: "active",
           initiated_by: user.id,
           current_stage: "requirement_submitted",
-          priority: "medium",
+          priority: isUrgent ? "high" : "medium",
           started_at: new Date().toISOString(),
+          metadata: {
+            template_id: selectedTemplate,
+            template_name: template?.name,
+          },
         })
         .select()
         .single();
@@ -98,29 +129,28 @@ export function EmployeeWorkflowsModule() {
           requesting_manager_id: user.id,
           job_title: formData.jobTitle,
           department: formData.department || null,
+          location: formData.location || null,
+          employment_type: formData.employmentType,
+          salary_range_min: formData.salaryRangeMin ? parseFloat(formData.salaryRangeMin) : null,
+          salary_range_max: formData.salaryRangeMax ? parseFloat(formData.salaryRangeMax) : null,
           justification: formData.justification || null,
+          urgency: formData.urgency,
+          expected_start_date: formData.expectedStartDate || null,
           reports_to: user.id,
         });
 
       if (requestError) throw requestError;
 
-      await supabase.from("workflow_stage_history").insert({
-        workflow_id: workflow.id,
-        to_stage: "requirement_submitted",
-        changed_by: user.id,
-        notes: "New hire request submitted by manager",
-      });
-
       return workflow;
     },
     onSuccess: () => {
-      toast({ title: "Request Submitted", description: "Your new hire request has been submitted to HR." });
+      toast({ title: "Request Submitted", description: "Your new hire request has been submitted to HR for review." });
       queryClient.invalidateQueries({ queryKey: ["my-workflows"] });
       setShowNewHireDialog(false);
-      setFormData({ jobTitle: "", department: "", justification: "", reason: "", lastWorkingDate: "" });
+      resetForm();
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to submit request.", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to submit request.", variant: "destructive" });
     },
   });
 
@@ -141,6 +171,10 @@ export function EmployeeWorkflowsModule() {
           current_stage: "resignation_submitted",
           priority: "medium",
           started_at: new Date().toISOString(),
+          metadata: {
+            template_id: "standard_offboarding",
+            template_name: "Standard Offboarding",
+          },
         })
         .select()
         .single();
@@ -159,38 +193,41 @@ export function EmployeeWorkflowsModule() {
 
       if (resignationError) throw resignationError;
 
-      await supabase.from("workflow_stage_history").insert({
-        workflow_id: workflow.id,
-        to_stage: "resignation_submitted",
-        changed_by: user.id,
-        notes: "Resignation submitted",
-      });
-
       return workflow;
     },
     onSuccess: () => {
-      toast({ title: "Resignation Submitted", description: "Your resignation has been submitted for review." });
+      toast({ title: "Resignation Submitted", description: "Your resignation has been submitted for review by your manager." });
       queryClient.invalidateQueries({ queryKey: ["my-workflows"] });
       setShowResignationDialog(false);
-      setFormData({ jobTitle: "", department: "", justification: "", reason: "", lastWorkingDate: "" });
+      resetForm();
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to submit resignation.", variant: "destructive" });
     },
   });
 
-  const getWorkflowProgress = (workflow: any) => {
-    const stages = workflow.workflow_type === "onboarding"
-      ? ["requirement_submitted", "hr_sourcing", "profile_review", "manager_interview", "senior_interview", "ceo_interview", "management_interview", "offer_preparation", "offer_sent", "offer_accepted", "completed"]
-      : ["resignation_submitted", "manager_review", "retention_review", "exit_approved", "knowledge_transfer", "asset_return", "exit_interview", "final_settlement", "completed"];
-    
-    const currentIndex = stages.indexOf(workflow.current_stage);
-    return Math.round(((currentIndex + 1) / stages.length) * 100);
+  const resetForm = () => {
+    setFormData({
+      jobTitle: "",
+      department: "",
+      justification: "",
+      location: "",
+      employmentType: "full_time",
+      salaryRangeMin: "",
+      salaryRangeMax: "",
+      urgency: "normal",
+      expectedStartDate: "",
+      reason: "",
+      lastWorkingDate: "",
+    });
+    setSelectedTemplate("standard_onboarding");
   };
 
-  const formatStage = (stage: string) => {
-    return stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const getWorkflowProgress = (workflow: any) => {
+    return getStageProgress(workflow.current_stage, workflow.workflow_type);
   };
+
+  const formatStage = (stage: string) => formatStageName(stage);
 
   return (
     <div className="p-6 space-y-6">
@@ -217,7 +254,7 @@ export function EmployeeWorkflowsModule() {
                 Request New Hire
               </CardTitle>
               <CardDescription>
-                Submit a new hire request to HR for approval
+                Submit a new hire request to HR (Managers only)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -358,50 +395,153 @@ export function EmployeeWorkflowsModule() {
         </TabsContent>
       </Tabs>
 
-      {/* New Hire Dialog */}
+      {/* New Hire Dialog - Manager Only */}
       <Dialog open={showNewHireDialog} onOpenChange={setShowNewHireDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-green-500" />
               Request New Hire
             </DialogTitle>
             <DialogDescription>
-              Submit a new hire requirement to HR. This will initiate the onboarding workflow.
+              Submit a new hire requirement to HR. Only managers can initiate this workflow.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); createNewHireRequest.mutate(); }} className="space-y-4">
+            {/* Template Selection */}
             <div className="space-y-2">
-              <Label>Job Title *</Label>
+              <Label>Workflow Template</Label>
+              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WORKFLOW_TEMPLATES.filter(t => t.type === "onboarding").map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name} ({template.estimatedDuration})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                {WORKFLOW_TEMPLATES.find(t => t.id === selectedTemplate)?.description}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Job Title *</Label>
+                <Input
+                  placeholder="e.g. Senior Software Engineer"
+                  value={formData.jobTitle}
+                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Input
+                  placeholder="e.g. Engineering"
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Input
+                  placeholder="e.g. Mumbai, Remote"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Employment Type</Label>
+                <Select
+                  value={formData.employmentType}
+                  onValueChange={(v) => setFormData({ ...formData, employmentType: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full_time">Full Time</SelectItem>
+                    <SelectItem value="part_time">Part Time</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                    <SelectItem value="intern">Intern</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Salary Min (₹)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 1000000"
+                  value={formData.salaryRangeMin}
+                  onChange={(e) => setFormData({ ...formData, salaryRangeMin: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Salary Max (₹)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 1500000"
+                  value={formData.salaryRangeMax}
+                  onChange={(e) => setFormData({ ...formData, salaryRangeMax: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Urgency</Label>
+                <Select
+                  value={formData.urgency}
+                  onValueChange={(v) => setFormData({ ...formData, urgency: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Expected Start Date</Label>
               <Input
-                placeholder="e.g. Senior Software Engineer"
-                value={formData.jobTitle}
-                onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                required
+                type="date"
+                value={formData.expectedStartDate}
+                onChange={(e) => setFormData({ ...formData, expectedStartDate: e.target.value })}
               />
             </div>
+
             <div className="space-y-2">
-              <Label>Department</Label>
-              <Input
-                placeholder="e.g. Engineering"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Justification</Label>
+              <Label>Justification *</Label>
               <Textarea
-                placeholder="Why is this hire needed?"
+                placeholder="Why is this hire needed? Business justification..."
                 value={formData.justification}
                 onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
                 rows={3}
+                required
               />
             </div>
+
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setShowNewHireDialog(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={!formData.jobTitle.trim() || createNewHireRequest.isPending}>
+              <Button 
+                type="submit" 
+                disabled={!formData.jobTitle.trim() || !formData.justification.trim() || createNewHireRequest.isPending}
+              >
                 {createNewHireRequest.isPending ? "Submitting..." : "Submit Request"}
               </Button>
             </div>

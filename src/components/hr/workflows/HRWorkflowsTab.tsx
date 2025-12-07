@@ -17,12 +17,14 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  Settings,
 } from "lucide-react";
 import { WorkflowKanbanView } from "./WorkflowKanbanView";
 import { WorkflowTimelineView } from "./WorkflowTimelineView";
 import { NewOnboardingWorkflowDialog } from "./NewOnboardingWorkflowDialog";
 import { WorkflowDetailsSheet } from "./WorkflowDetailsSheet";
 import { WorkflowSettingsDialog } from "./WorkflowSettingsDialog";
+import { WORKFLOW_TEMPLATES } from "@/lib/workflow-templates";
 
 const WORKFLOW_TYPES = [
   { id: "all", label: "All Workflows", icon: LayoutGrid },
