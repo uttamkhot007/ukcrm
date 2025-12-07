@@ -223,33 +223,38 @@ async function searchPublicInfo(companyName: string, domain: string): Promise<st
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) return "";
   
-  // Use AI to search and compile public information
-  const searchPrompt = `Search for publicly available information about the company "${companyName}" (website: ${domain}).
+  // Use AI to search and compile public information with focus on exact company details
+  const searchPrompt = `Research the company with website "${domain}" (initial name: "${companyName}").
 
-Find and compile the following information from public sources:
-1. Company headquarters address (full address with city, state/region, country)
-2. LinkedIn company page URL
-3. Twitter/X profile URL  
-4. Facebook page URL
-5. Annual revenue or revenue range
-6. Number of employees
-7. Industry/sector
-8. Company type (Public, Private, Non-Profit, etc.)
-9. Year founded
-10. Stock symbol and exchange (if publicly traded)
-11. Parent company (if any)
-12. Key technologies or products
+CRITICAL: Find the EXACT official legal company name - not a tagline, slogan, or abbreviated name.
 
-For each piece of information, only include what you can verify from reliable public sources like:
-- Official company website
-- LinkedIn
+Search for and verify the following from public sources:
+1. EXACT OFFICIAL COMPANY NAME - The legal registered name (e.g., "Tata Consultancy Services Limited" not "TCS")
+2. EXACT INDUSTRY/SECTOR - Primary business category (e.g., "Information Technology Services", "Cybersecurity", "Banking", "Financial Services", "Manufacturing", etc.)
+3. Company headquarters address (full address with city, state/region, country)
+4. LinkedIn company page URL (format: https://linkedin.com/company/xxx)
+5. Twitter/X profile URL  
+6. Facebook page URL
+7. Annual revenue or revenue range (in USD or local currency)
+8. Number of employees (exact or range)
+9. Company type (Public, Private, Non-Profit, Government)
+10. Year founded
+11. Stock symbol and exchange (if publicly traded)
+12. Parent company (if subsidiary)
+13. Key products, services, or technologies
+
+Sources to check:
+- Official company website, about page, footer
+- LinkedIn company page
 - Wikipedia
 - Crunchbase
 - Bloomberg
 - Company annual reports
-- SEC filings (for US public companies)
+- SEC filings (US), MCA filings (India)
+- Google search for "[company name] official"
 
-Return ONLY a JSON object with the fields you found. Use null for fields you cannot verify.`;
+Return ONLY a JSON object with the verified fields. Use null for unverified fields.
+Focus especially on getting the EXACT OFFICIAL company name and PRIMARY industry.`;
 
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -261,10 +266,10 @@ Return ONLY a JSON object with the fields you found. Use null for fields you can
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are a company research assistant with access to public information. Return only valid JSON." },
+          { role: "system", content: "You are an expert company research assistant. Your primary goal is to find the EXACT OFFICIAL company name and industry. Return only valid JSON." },
           { role: "user", content: searchPrompt }
         ],
-        temperature: 0.2,
+        temperature: 0.1, // Lower temperature for more accurate results
       }),
     });
 
@@ -296,10 +301,10 @@ async function enrichWithAI(websiteData: Partial<CompanyInfo>, domain: string): 
   const publicInfo = await searchPublicInfo(companyName, domain);
   
   // Then use AI to compile and structure all information
-  const prompt = `You are a company research assistant. Compile comprehensive company information from all available sources.
+  const prompt = `You are an expert company research assistant. Your PRIMARY goal is to determine the EXACT OFFICIAL company name and industry.
 
-Company: ${companyName}
-Domain: ${domain}
+Company Domain: ${domain}
+Initial Name Found: ${companyName}
 
 Information extracted from website:
 ${JSON.stringify(websiteData, null, 2)}
@@ -307,14 +312,21 @@ ${JSON.stringify(websiteData, null, 2)}
 Additional public information found:
 ${publicInfo}
 
-Based on ALL the above information, provide a comprehensive company profile in JSON format with these fields:
+Based on ALL the above information, provide a comprehensive company profile. 
+
+CRITICAL RULES:
+1. The "name" field MUST be the OFFICIAL LEGAL company name (e.g., "Infosys Limited", "Tata Consultancy Services Limited", "Microsoft Corporation")
+2. The "industry" field MUST be the PRIMARY industry category
+3. Only include information you can verify
+
+Return JSON format:
 {
-  "name": "Official company name",
+  "name": "EXACT OFFICIAL LEGAL COMPANY NAME",
   "description": "Brief company description (2-3 sentences)",
-  "industry": "Primary industry (e.g., Technology, Healthcare, Finance)",
+  "industry": "Primary industry (Technology, Cybersecurity, Banking, Financial Services, Healthcare, Manufacturing, etc.)",
   "company_type": "Public | Private | Non-Profit | Government",
   "founded_year": number or null,
-  "annual_revenue": "Revenue estimate (e.g., $50M-$100M, $1B+)",
+  "annual_revenue": "Revenue estimate (e.g., $50M-$100M, $1B+, ₹5000 Cr)",
   "total_employees": number or null,
   "logo_url": "URL to company logo",
   "website_url": "Official website URL",
@@ -332,15 +344,8 @@ Based on ALL the above information, provide a comprehensive company profile in J
   "stock_exchange": "Stock exchange (NYSE, NASDAQ, BSE, NSE, etc.) or null",
   "parent_company": "Parent company name or null",
   "subsidiaries": ["List of known subsidiaries"],
-  "technologies_used": ["Technologies, products, or services the company offers"]
+  "technologies_used": ["Technologies, products, or services"]
 }
-
-IMPORTANT:
-- Only include information you can verify from the provided data
-- Use null for fields you cannot determine
-- For Indian companies, include INR revenue in Crores if available
-- Include LinkedIn URLs in format: https://linkedin.com/company/[company-name]
-- For social URLs, ensure they are complete URLs starting with https://
 
 Respond ONLY with valid JSON, no markdown or explanation.`;
 

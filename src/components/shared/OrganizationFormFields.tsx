@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Globe, Sparkles, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Globe, Sparkles, CheckCircle, XCircle, AlertCircle, Plus, X, Star, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 
 export const ORGANIZATION_TYPES = [
   { value: "customer", label: "Customer" },
@@ -33,8 +36,31 @@ export const INDUSTRY_TYPES = [
   { value: "media", label: "Media & Entertainment" },
   { value: "real_estate", label: "Real Estate" },
   { value: "hospitality", label: "Hospitality" },
+  { value: "technology", label: "Technology" },
+  { value: "cybersecurity", label: "Cybersecurity" },
+  { value: "insurance", label: "Insurance" },
   { value: "other", label: "Other" },
 ];
+
+export const CONTACT_ROLES = [
+  { value: "ciso", label: "CISO", color: "bg-red-500" },
+  { value: "cio", label: "CIO", color: "bg-blue-500" },
+  { value: "cto", label: "CTO", color: "bg-purple-500" },
+  { value: "cro", label: "CRO", color: "bg-green-500" },
+  { value: "cfo", label: "CFO", color: "bg-yellow-500" },
+  { value: "security_admin", label: "Security Admin", color: "bg-orange-500" },
+  { value: "it_manager", label: "IT Manager", color: "bg-cyan-500" },
+  { value: "other", label: "Other", color: "bg-gray-500" },
+];
+
+export interface ContactInfo {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  isChampion: boolean;
+}
 
 export interface OrganizationFormData {
   name: string;
@@ -47,7 +73,6 @@ export interface OrganizationFormData {
   solutions: string;
   services: string;
   status: string;
-  // Extended fields from AI enrichment
   employeeCount?: string;
   annualRevenue?: string;
   foundedYear?: string;
@@ -58,12 +83,21 @@ export interface OrganizationFormData {
   spfStatus?: string;
   dmarcStatus?: string;
   dkimStatus?: string;
+  contacts?: ContactInfo[];
+}
+
+interface ExistingAccount {
+  id: string;
+  name: string;
+  website: string;
+  logo_url?: string;
 }
 
 interface OrganizationFormFieldsProps {
   formData: OrganizationFormData;
   onChange: (data: Partial<OrganizationFormData>) => void;
   showExtendedFields?: boolean;
+  showContacts?: boolean;
   isEditing?: boolean;
 }
 
@@ -71,12 +105,60 @@ export function OrganizationFormFields({
   formData, 
   onChange, 
   showExtendedFields = false,
+  showContacts = true,
   isEditing = false 
 }: OrganizationFormFieldsProps) {
   const [isFetching, setIsFetching] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
+  const [matchingAccounts, setMatchingAccounts] = useState<ExistingAccount[]>([]);
+  const [isCheckingDomain, setIsCheckingDomain] = useState(false);
+  const { currentTenant } = useTenant();
 
-  // Basic fetch from URL using Clearbit logo
+  const contacts = formData.contacts || [];
+
+  // Check for existing accounts when domain changes
+  useEffect(() => {
+    const checkExistingAccounts = async () => {
+      if (!formData.website || formData.website.length < 5) {
+        setMatchingAccounts([]);
+        return;
+      }
+
+      try {
+        setIsCheckingDomain(true);
+        let domain = formData.website;
+        try {
+          const url = new URL(domain.startsWith('http') ? domain : `https://${domain}`);
+          domain = url.hostname.replace('www.', '');
+        } catch {
+          domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        }
+
+        // Search for existing organizations with matching domain
+        const { data: orgs } = await supabase
+          .from('alliance_organizations')
+          .select('id, name, website, logo_url')
+          .or(`website.ilike.%${domain}%`)
+          .eq('tenant_id', currentTenant?.id)
+          .limit(5);
+
+        if (orgs && orgs.length > 0) {
+          setMatchingAccounts(orgs);
+        } else {
+          setMatchingAccounts([]);
+        }
+      } catch (error) {
+        console.error('Error checking existing accounts:', error);
+      } finally {
+        setIsCheckingDomain(false);
+      }
+    };
+
+    const debounce = setTimeout(checkExistingAccounts, 500);
+    return () => clearTimeout(debounce);
+  }, [formData.website, currentTenant?.id]);
+
+  // Basic fetch from URL
   const fetchBasicFromUrl = async () => {
     if (!formData.website) return;
     setIsFetching(true);
@@ -104,7 +186,7 @@ export function OrganizationFormFields({
     }
   };
 
-  // AI-powered enrichment using the enrich-company edge function
+  // AI-powered enrichment
   const enrichWithAI = async () => {
     if (!formData.website) {
       toast.error("Please enter a website URL first");
@@ -127,10 +209,23 @@ export function OrganizationFormFields({
       if (data?.data) {
         const enrichedData = data.data;
         const updates: Partial<OrganizationFormData> = {};
-        if (enrichedData.name && !formData.name) updates.name = enrichedData.name;
+        
+        // Always update name if AI found it (more accurate)
+        if (enrichedData.name) updates.name = enrichedData.name;
         if (enrichedData.logo_url) updates.logoUrl = enrichedData.logo_url;
         if (enrichedData.description) updates.description = enrichedData.description;
-        if (enrichedData.industry) updates.industry = enrichedData.industry.toLowerCase().replace(/\s+/g, '_');
+        
+        // Map industry to our values
+        if (enrichedData.industry) {
+          const industryLower = enrichedData.industry.toLowerCase();
+          const matchedIndustry = INDUSTRY_TYPES.find(t => 
+            industryLower.includes(t.value) || 
+            t.label.toLowerCase().includes(industryLower) ||
+            industryLower.includes(t.label.toLowerCase())
+          );
+          updates.industry = matchedIndustry?.value || industryLower.replace(/\s+/g, '_');
+        }
+        
         if (enrichedData.address) updates.address = enrichedData.address;
         if (enrichedData.total_employees) updates.employeeCount = String(enrichedData.total_employees);
         if (enrichedData.annual_revenue) updates.annualRevenue = enrichedData.annual_revenue;
@@ -144,7 +239,7 @@ export function OrganizationFormFields({
         if (enrichedData.dkim_status) updates.dkimStatus = enrichedData.dkim_status;
 
         onChange(updates);
-        toast.success("Organization enriched with AI");
+        toast.success("Organization enriched with AI - Company name & industry detected");
       }
     } catch (error: any) {
       console.error("Enrichment error:", error);
@@ -160,6 +255,45 @@ export function OrganizationFormFields({
     if (s === 'pass' || s === 'valid') return <CheckCircle className="h-4 w-4 text-green-500" />;
     if (s === 'fail' || s === 'invalid' || s === 'missing') return <XCircle className="h-4 w-4 text-destructive" />;
     return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+  };
+
+  // Contact management
+  const addContact = (role: string) => {
+    const newContact: ContactInfo = {
+      name: "",
+      email: "",
+      phone: "",
+      role,
+      isChampion: false,
+    };
+    onChange({ contacts: [...contacts, newContact] });
+  };
+
+  const updateContact = (index: number, updates: Partial<ContactInfo>) => {
+    const updatedContacts = contacts.map((c, i) => 
+      i === index ? { ...c, ...updates } : c
+    );
+    onChange({ contacts: updatedContacts });
+  };
+
+  const removeContact = (index: number) => {
+    onChange({ contacts: contacts.filter((_, i) => i !== index) });
+  };
+
+  const toggleChampion = (index: number) => {
+    const updatedContacts = contacts.map((c, i) => ({
+      ...c,
+      isChampion: i === index ? !c.isChampion : false, // Only one champion at a time
+    }));
+    onChange({ contacts: updatedContacts });
+  };
+
+  const getRoleColor = (role: string) => {
+    return CONTACT_ROLES.find(r => r.value === role)?.color || "bg-gray-500";
+  };
+
+  const getRoleLabel = (role: string) => {
+    return CONTACT_ROLES.find(r => r.value === role)?.label || role;
   };
 
   return (
@@ -187,13 +321,51 @@ export function OrganizationFormFields({
             variant="default"
             onClick={enrichWithAI}
             disabled={isEnriching || !formData.website}
-            title="Enrich with AI"
+            title="Enrich with AI (fetches exact company name & industry)"
             className="gap-1"
           >
             {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Use AI enrichment to fetch exact company name, industry type, and other details from public sources
+        </p>
       </div>
+
+      {/* Matching Accounts Suggestion */}
+      {matchingAccounts.length > 0 && !isEditing && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="h-4 w-4 text-amber-500" />
+              Existing accounts found with matching domain
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="flex flex-wrap gap-2">
+              {matchingAccounts.map((account) => (
+                <Badge
+                  key={account.id}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-amber-500/20 py-1.5 px-3 gap-2"
+                  onClick={() => {
+                    toast.info(`Selected existing account: ${account.name}`);
+                    // Could emit an event to select this account instead
+                  }}
+                >
+                  {account.logo_url && (
+                    <img src={account.logo_url} alt="" className="h-4 w-4 rounded" />
+                  )}
+                  {account.name}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Click to select an existing account instead of creating a new one
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Show fetched logo */}
       {formData.logoUrl && (
@@ -218,6 +390,7 @@ export function OrganizationFormFields({
             required 
             value={formData.name}
             onChange={(e) => onChange({ name: e.target.value })}
+            placeholder="AI will fetch exact company name"
           />
         </div>
         <div className="space-y-2">
@@ -252,7 +425,7 @@ export function OrganizationFormFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="org-industry">Industry</Label>
+        <Label htmlFor="org-industry">Industry (AI will detect automatically)</Label>
         <Select 
           name="industry" 
           value={formData.industry || "none"} 
@@ -283,7 +456,6 @@ export function OrganizationFormFields({
 
       {showExtendedFields && (
         <>
-          {/* Extended Fields */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Employees</Label>
@@ -346,7 +518,6 @@ export function OrganizationFormFields({
             </div>
           </div>
 
-          {/* Email Security Status */}
           {(formData.spfStatus || formData.dmarcStatus || formData.dkimStatus) && (
             <div className="p-3 bg-muted rounded-md space-y-2">
               <Label className="text-sm font-medium">Email Security Status</Label>
@@ -367,6 +538,100 @@ export function OrganizationFormFields({
             </div>
           )}
         </>
+      )}
+
+      {/* Contact Details Section */}
+      {showContacts && (
+        <Card className="border-dashed">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Key Contacts
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {CONTACT_ROLES.slice(0, 6).map(role => (
+                  <Button
+                    key={role.value}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => addContact(role.value)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    {role.label}
+                  </Button>
+                ))}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {contacts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Add key contacts like CISO, CIO, CTO, CRO, CFO, or Security Admin
+              </p>
+            ) : (
+              contacts.map((contact, index) => (
+                <div key={index} className="p-3 bg-muted/50 rounded-lg space-y-3 relative">
+                  <div className="flex items-center justify-between">
+                    <Badge className={`${getRoleColor(contact.role)} text-white`}>
+                      {getRoleLabel(contact.role)}
+                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {/* Champion Toggle */}
+                      <Button
+                        type="button"
+                        variant={contact.isChampion ? "default" : "outline"}
+                        size="sm"
+                        className={`h-7 gap-1 transition-all ${
+                          contact.isChampion 
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg shadow-amber-500/30" 
+                            : "hover:border-amber-500 hover:text-amber-500"
+                        }`}
+                        onClick={() => toggleChampion(index)}
+                        title={contact.isChampion ? "Remove as Champion" : "Set as Champion"}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${contact.isChampion ? "fill-current" : ""}`} />
+                        {contact.isChampion ? "Champion" : "Set Champion"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeContact(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      placeholder="Name"
+                      value={contact.name}
+                      onChange={(e) => updateContact(index, { name: e.target.value })}
+                      className="h-8"
+                    />
+                    <Input
+                      placeholder="Email"
+                      type="email"
+                      value={contact.email}
+                      onChange={(e) => updateContact(index, { email: e.target.value })}
+                      className="h-8"
+                    />
+                    <Input
+                      placeholder="Phone"
+                      value={contact.phone}
+                      onChange={(e) => updateContact(index, { phone: e.target.value })}
+                      className="h-8"
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* OEM specific fields */}
@@ -436,6 +701,7 @@ export function useOrganizationFormState(initial?: Partial<OrganizationFormData>
     spfStatus: initial?.spfStatus || "",
     dmarcStatus: initial?.dmarcStatus || "",
     dkimStatus: initial?.dkimStatus || "",
+    contacts: initial?.contacts || [],
   });
 
   const updateFormData = (updates: Partial<OrganizationFormData>) => {
@@ -464,6 +730,7 @@ export function useOrganizationFormState(initial?: Partial<OrganizationFormData>
       spfStatus: "",
       dmarcStatus: "",
       dkimStatus: "",
+      contacts: [],
     });
   };
 
