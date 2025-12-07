@@ -53,13 +53,13 @@ function normalizeUrl(url: string): string {
 
 async function fetchWebsiteMetadata(url: string): Promise<Partial<CompanyInfo>> {
   const normalizedUrl = normalizeUrl(url);
-  const domain = extractDomain(url);
   
   try {
     const response = await fetch(normalizedUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; CompanyInfoBot/1.0)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
       },
     });
     
@@ -219,6 +219,68 @@ async function checkEmailSecurity(domain: string): Promise<{ spf: string; dmarc:
   return result;
 }
 
+async function searchPublicInfo(companyName: string, domain: string): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) return "";
+  
+  // Use AI to search and compile public information
+  const searchPrompt = `Search for publicly available information about the company "${companyName}" (website: ${domain}).
+
+Find and compile the following information from public sources:
+1. Company headquarters address (full address with city, state/region, country)
+2. LinkedIn company page URL
+3. Twitter/X profile URL  
+4. Facebook page URL
+5. Annual revenue or revenue range
+6. Number of employees
+7. Industry/sector
+8. Company type (Public, Private, Non-Profit, etc.)
+9. Year founded
+10. Stock symbol and exchange (if publicly traded)
+11. Parent company (if any)
+12. Key technologies or products
+
+For each piece of information, only include what you can verify from reliable public sources like:
+- Official company website
+- LinkedIn
+- Wikipedia
+- Crunchbase
+- Bloomberg
+- Company annual reports
+- SEC filings (for US public companies)
+
+Return ONLY a JSON object with the fields you found. Use null for fields you cannot verify.`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "You are a company research assistant with access to public information. Return only valid JSON." },
+          { role: "user", content: searchPrompt }
+        ],
+        temperature: 0.2,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("AI search failed:", response.status);
+      return "";
+    }
+
+    const aiResult = await response.json();
+    return aiResult.choices?.[0]?.message?.content || "";
+  } catch (error) {
+    console.error("AI search error:", error);
+    return "";
+  }
+}
+
 async function enrichWithAI(websiteData: Partial<CompanyInfo>, domain: string): Promise<CompanyInfo> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   
@@ -227,24 +289,58 @@ async function enrichWithAI(websiteData: Partial<CompanyInfo>, domain: string): 
     return websiteData as CompanyInfo;
   }
   
-  const prompt = `You are a company research assistant. Based on the following information about a company with domain "${domain}", provide additional publicly available details in JSON format.
+  const companyName = websiteData.name || domain;
+  
+  // First, search for public information
+  console.log(`Searching public sources for ${companyName}...`);
+  const publicInfo = await searchPublicInfo(companyName, domain);
+  
+  // Then use AI to compile and structure all information
+  const prompt = `You are a company research assistant. Compile comprehensive company information from all available sources.
 
-Current known information:
+Company: ${companyName}
+Domain: ${domain}
+
+Information extracted from website:
 ${JSON.stringify(websiteData, null, 2)}
 
-Please provide the following fields if you can find them (leave null if unknown):
-- name: Company name
-- description: Brief company description (1-2 sentences)
-- industry: Primary industry (e.g., "Technology", "Healthcare", "Finance", "Manufacturing")
-- company_type: Type of company (Public, Private, Non-Profit, Government)
-- founded_year: Year the company was founded (number)
-- annual_revenue: Estimated annual revenue (e.g., "$1B", "$50M-$100M")
-- total_employees: Estimated number of employees (number)
-- stock_symbol: Stock ticker symbol if publicly traded
-- stock_exchange: Stock exchange if publicly traded (NYSE, NASDAQ, etc.)
-- parent_company: Name of parent company if applicable
-- subsidiaries: Array of known subsidiary company names
-- technologies_used: Array of technologies the company likely uses
+Additional public information found:
+${publicInfo}
+
+Based on ALL the above information, provide a comprehensive company profile in JSON format with these fields:
+{
+  "name": "Official company name",
+  "description": "Brief company description (2-3 sentences)",
+  "industry": "Primary industry (e.g., Technology, Healthcare, Finance)",
+  "company_type": "Public | Private | Non-Profit | Government",
+  "founded_year": number or null,
+  "annual_revenue": "Revenue estimate (e.g., $50M-$100M, $1B+)",
+  "total_employees": number or null,
+  "logo_url": "URL to company logo",
+  "website_url": "Official website URL",
+  "linkedin_url": "LinkedIn company page URL",
+  "twitter_url": "Twitter/X profile URL",
+  "facebook_url": "Facebook page URL",
+  "phone": "Main phone number",
+  "email": "Main contact email",
+  "address": "Full headquarters address",
+  "hq_city": "Headquarters city",
+  "hq_state": "Headquarters state/region",
+  "hq_country": "Headquarters country",
+  "postal_code": "Postal/ZIP code",
+  "stock_symbol": "Stock ticker symbol or null",
+  "stock_exchange": "Stock exchange (NYSE, NASDAQ, BSE, NSE, etc.) or null",
+  "parent_company": "Parent company name or null",
+  "subsidiaries": ["List of known subsidiaries"],
+  "technologies_used": ["Technologies, products, or services the company offers"]
+}
+
+IMPORTANT:
+- Only include information you can verify from the provided data
+- Use null for fields you cannot determine
+- For Indian companies, include INR revenue in Crores if available
+- Include LinkedIn URLs in format: https://linkedin.com/company/[company-name]
+- For social URLs, ensure they are complete URLs starting with https://
 
 Respond ONLY with valid JSON, no markdown or explanation.`;
 
@@ -258,7 +354,7 @@ Respond ONLY with valid JSON, no markdown or explanation.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are a company research assistant. Always respond with valid JSON only." },
+          { role: "system", content: "You are a company research assistant. Always respond with valid JSON only, no markdown code blocks." },
           { role: "user", content: prompt }
         ],
         temperature: 0.3,
@@ -279,24 +375,25 @@ Respond ONLY with valid JSON, no markdown or explanation.`;
         const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
         const aiData = JSON.parse(cleanedContent);
         
-        // Merge AI data with website data, preferring website data for existing fields
-        return {
-          ...aiData,
-          ...websiteData,
-          // Only use AI values for fields not present in website data
-          industry: websiteData.industry || aiData.industry,
-          company_type: websiteData.company_type || aiData.company_type,
-          founded_year: websiteData.founded_year || aiData.founded_year,
-          annual_revenue: websiteData.annual_revenue || aiData.annual_revenue,
-          total_employees: websiteData.total_employees || aiData.total_employees,
-          stock_symbol: websiteData.stock_symbol || aiData.stock_symbol,
-          stock_exchange: websiteData.stock_exchange || aiData.stock_exchange,
-          parent_company: websiteData.parent_company || aiData.parent_company,
-          subsidiaries: websiteData.subsidiaries || aiData.subsidiaries,
-          technologies_used: websiteData.technologies_used || aiData.technologies_used,
-        };
+        // Merge AI data with website data, keeping non-null values
+        const merged: CompanyInfo = {};
+        const allKeys = new Set([...Object.keys(websiteData), ...Object.keys(aiData)]);
+        
+        for (const key of allKeys) {
+          const wsValue = (websiteData as any)[key];
+          const aiValue = aiData[key];
+          
+          // Prefer website data for URLs and verified info, AI data for enriched info
+          if (wsValue !== undefined && wsValue !== null && wsValue !== '') {
+            (merged as any)[key] = wsValue;
+          } else if (aiValue !== undefined && aiValue !== null && aiValue !== '') {
+            (merged as any)[key] = aiValue;
+          }
+        }
+        
+        return merged;
       } catch (e) {
-        console.error("Failed to parse AI response:", e);
+        console.error("Failed to parse AI response:", e, content);
       }
     }
   } catch (error) {
@@ -321,19 +418,26 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Starting enrichment for URL: ${url}`);
     const domain = extractDomain(url);
     
     // Fetch website metadata
+    console.log(`Fetching website metadata from ${url}...`);
     const websiteData = await fetchWebsiteMetadata(url);
+    console.log(`Website metadata:`, websiteData);
     
     // Check email security
+    console.log(`Checking email security for ${domain}...`);
     const emailSecurity = await checkEmailSecurity(domain);
     websiteData.spf_status = emailSecurity.spf;
     websiteData.dmarc_status = emailSecurity.dmarc;
     websiteData.dkim_status = emailSecurity.dkim;
+    console.log(`Email security:`, emailSecurity);
     
-    // Enrich with AI
+    // Enrich with AI using public sources
+    console.log(`Enriching with AI...`);
     const enrichedData = await enrichWithAI(websiteData, domain);
+    console.log(`Enriched data:`, enrichedData);
 
     return new Response(
       JSON.stringify({ success: true, data: enrichedData }),
