@@ -40,7 +40,9 @@ import {
   MapPin,
   Package,
   Layers,
-  Award
+  Award,
+  Sparkles,
+  RefreshCcw
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, subMonths } from "date-fns";
 import { TeamCalendarWidget } from "./TeamCalendarWidget";
@@ -51,6 +53,10 @@ interface SalesTarget {
   user_id: string;
   top_line_target: number;
   bottom_line_target: number;
+  fresh_sales_top_line: number;
+  fresh_sales_bottom_line: number;
+  renewal_top_line: number;
+  renewal_bottom_line: number;
   incentive_eligibility_cap: number;
   period_start: string;
   period_end: string;
@@ -209,6 +215,48 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
       const { data, error } = await query;
       if (error) throw error;
       return (data || []) as SalesTarget[];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch Fresh vs Renewal achievements for current month
+  const { data: freshRenewalStats } = useQuery({
+    queryKey: ["fresh-renewal-stats", currentTenant?.id],
+    queryFn: async () => {
+      const monthStart = startOfMonth(new Date());
+      const monthEnd = endOfMonth(new Date());
+
+      let query = supabase
+        .from("deals")
+        .select("value, deal_type")
+        .eq("stage", "closed_won")
+        .gte("actual_close_date", monthStart.toISOString().split("T")[0])
+        .lte("actual_close_date", monthEnd.toISOString().split("T")[0]);
+
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      let freshSalesRevenue = 0;
+      let renewalRevenue = 0;
+      let freshCount = 0;
+      let renewalCount = 0;
+
+      (data || []).forEach(deal => {
+        const value = Number(deal.value) || 0;
+        if (deal.deal_type === "renewal") {
+          renewalRevenue += value;
+          renewalCount++;
+        } else {
+          freshSalesRevenue += value;
+          freshCount++;
+        }
+      });
+
+      return { freshSalesRevenue, renewalRevenue, freshCount, renewalCount };
     },
     enabled: !!user,
   });
@@ -496,6 +544,104 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Fresh Sales vs Renewal Achievement */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Fresh Sales vs Renewal Achievement - {format(new Date(), "MMMM yyyy")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const freshTarget = salesTargets.reduce((sum, t) => sum + (t.fresh_sales_top_line || 0), 0);
+            const renewalTarget = salesTargets.reduce((sum, t) => sum + (t.renewal_top_line || 0), 0);
+            const freshAchieved = freshRenewalStats?.freshSalesRevenue || 0;
+            const renewalAchieved = freshRenewalStats?.renewalRevenue || 0;
+            const freshPct = freshTarget > 0 ? Math.min((freshAchieved / freshTarget) * 100, 150) : 0;
+            const renewalPct = renewalTarget > 0 ? Math.min((renewalAchieved / renewalTarget) * 100, 150) : 0;
+
+            if (freshTarget === 0 && renewalTarget === 0) {
+              return (
+                <div className="text-center py-6">
+                  <div className="flex justify-center gap-4 mb-4">
+                    <Sparkles className="h-8 w-8 text-muted-foreground/50" />
+                    <RefreshCcw className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    No Fresh Sales or Renewal targets configured
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Fresh Sales */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Sparkles className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Fresh Sales</p>
+                      <p className="text-xs text-muted-foreground">{freshRenewalStats?.freshCount || 0} deals closed</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{formatCurrency(freshAchieved)}</span>
+                      <span className="text-muted-foreground">of {formatCurrency(freshTarget)}</span>
+                    </div>
+                    <Progress value={Math.min(freshPct, 100)} className="h-3" />
+                    <div className="flex items-center justify-between">
+                      <Badge variant={freshPct >= 100 ? "default" : freshPct >= 75 ? "secondary" : "outline"}>
+                        {freshPct.toFixed(1)}% achieved
+                      </Badge>
+                      {freshTarget > 0 && freshAchieved < freshTarget && (
+                        <span className="text-xs text-muted-foreground">
+                          {formatCurrency(freshTarget - freshAchieved)} to go
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Renewals */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <RefreshCcw className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Renewals</p>
+                      <p className="text-xs text-muted-foreground">{freshRenewalStats?.renewalCount || 0} deals closed</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{formatCurrency(renewalAchieved)}</span>
+                      <span className="text-muted-foreground">of {formatCurrency(renewalTarget)}</span>
+                    </div>
+                    <Progress value={Math.min(renewalPct, 100)} className="h-3" />
+                    <div className="flex items-center justify-between">
+                      <Badge variant={renewalPct >= 100 ? "default" : renewalPct >= 75 ? "secondary" : "outline"}>
+                        {renewalPct.toFixed(1)}% achieved
+                      </Badge>
+                      {renewalTarget > 0 && renewalAchieved < renewalTarget && (
+                        <span className="text-xs text-muted-foreground">
+                          {formatCurrency(renewalTarget - renewalAchieved)} to go
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
