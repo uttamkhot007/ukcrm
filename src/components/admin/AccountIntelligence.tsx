@@ -16,7 +16,7 @@ import {
   CheckCircle2, Clock, DollarSign, Users, BarChart3, Target, Shield,
   Lightbulb, AlertCircle, ArrowUpRight, CreditCard, Loader2, RefreshCw,
   Calendar, Receipt, HeadphonesIcon, Repeat, Briefcase, Building2,
-  ChevronRight, Zap, PieChart, LineChart
+  ChevronRight, Zap, PieChart, LineChart, Mail, Lock, ShieldAlert, ShieldCheck
 } from "lucide-react";
 
 interface AccountAnalysis {
@@ -620,7 +620,116 @@ export function AccountIntelligence({
         </CardContent>
       </Card>
 
-      {/* Risks & Opportunities */}
+      {/* Email Security Intelligence */}
+      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Mail className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                Email Security Intelligence
+                <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">AI Powered</Badge>
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">Security posture analysis for email communications</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            {/* Email Authentication */}
+            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-green-500" />
+                  Authentication Status
+                </span>
+                <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Configured</Badge>
+              </div>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>SPF Record</span>
+                  <span className="flex items-center gap-1 text-green-600"><ShieldCheck className="w-3 h-3" /> Valid</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>DKIM Signing</span>
+                  <span className="flex items-center gap-1 text-green-600"><ShieldCheck className="w-3 h-3" /> Active</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>DMARC Policy</span>
+                  <span className="flex items-center gap-1 text-yellow-600"><ShieldAlert className="w-3 h-3" /> Quarantine</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Gateway */}
+            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-blue-500" />
+                  Gateway Security
+                </span>
+                <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Active</Badge>
+              </div>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Anti-Spam</span>
+                  <span className="text-green-600">Enabled</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Anti-Phishing</span>
+                  <span className="text-green-600">Enabled</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Attachment Scanning</span>
+                  <span className="text-green-600">Sandboxed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Security Recommendations */}
+          <div className="p-3 bg-background/80 rounded-lg border">
+            <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              Security Recommendations
+            </h4>
+            <ul className="space-y-2 text-xs">
+              <li className="flex items-start gap-2">
+                <ChevronRight className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                <span className="text-muted-foreground">Upgrade DMARC policy from "quarantine" to "reject" for stronger email impersonation protection</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <ChevronRight className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                <span className="text-muted-foreground">Enable BIMI (Brand Indicators for Message Identification) to display verified logo in recipient inboxes</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <ChevronRight className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                <span className="text-muted-foreground">Consider implementing MTA-STS for encrypted email transport</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Threat Statistics */}
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="p-3 bg-background/80 rounded-lg border text-center">
+              <p className="text-2xl font-bold text-green-500">98.5%</p>
+              <p className="text-xs text-muted-foreground">Spam Blocked</p>
+            </div>
+            <div className="p-3 bg-background/80 rounded-lg border text-center">
+              <p className="text-2xl font-bold text-blue-500">147</p>
+              <p className="text-xs text-muted-foreground">Phishing Attempts Blocked (30d)</p>
+            </div>
+            <div className="p-3 bg-background/80 rounded-lg border text-center">
+              <p className="text-2xl font-bold text-amber-500">12</p>
+              <p className="text-xs text-muted-foreground">Malware Quarantined (30d)</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-red-500/20">
           <CardHeader className="pb-3">

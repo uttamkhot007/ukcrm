@@ -273,6 +273,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [enrichingContactId, setEnrichingContactId] = useState<string | null>(null);
   const [contactsExpanded, setContactsExpanded] = useState(true);
   const [dealsExpanded, setDealsExpanded] = useState(true);
+  const [expandedContactId, setExpandedContactId] = useState<string | null>(null);
   const [tasksExpanded, setTasksExpanded] = useState(true);
   const [meetingsExpanded, setMeetingsExpanded] = useState(true);
   const [remindersExpanded, setRemindersExpanded] = useState(true);
@@ -2399,33 +2400,58 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                 {contacts.length === 0 ? (
                   <div className="text-center py-6"><Users className="h-10 w-10 mx-auto text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">See the people associated with this record.</p></div>
                 ) : contacts.map(c => (
-                  <Card key={c.id} className="p-3">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10">
-                        {c.profile_image_url ? (
-                          <AvatarImage src={c.profile_image_url} alt={c.name} />
-                        ) : null}
-                        <AvatarFallback className="text-xs">{c.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <p className="font-medium text-sm truncate">{c.name}</p>
-                          {c.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                  <Collapsible 
+                    key={c.id} 
+                    open={expandedContactId === c.id}
+                    onOpenChange={(open) => setExpandedContactId(open ? c.id : null)}
+                  >
+                    <Card className="p-3 hover:shadow-md transition-shadow cursor-pointer">
+                      <CollapsibleTrigger asChild>
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10">
+                            {c.profile_image_url ? (
+                              <AvatarImage src={c.profile_image_url} alt={c.name} />
+                            ) : null}
+                            <AvatarFallback className="text-xs">{c.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <p className="font-medium text-sm truncate">{c.name}</p>
+                              {c.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{c.designation || c.role || 'No role'}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {expandedContactId === c.id ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">{c.designation || c.role || 'No role'}</p>
-                        {c.email && <a href={`mailto:${c.email}`} className="text-xs text-primary hover:underline block truncate">{c.email}</a>}
-                        {c.phone && <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</p>}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-3 pt-3 border-t space-y-2">
+                        {c.email && (
+                          <a href={`mailto:${c.email}`} className="text-xs text-primary hover:underline flex items-center gap-2">
+                            <Mail className="h-3 w-3" />{c.email}
+                          </a>
+                        )}
+                        {c.phone && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                            <Phone className="h-3 w-3" />{c.phone}
+                          </p>
+                        )}
                         {c.linkedin_url && (
                           <a 
                             href={c.linkedin_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                            className="text-xs text-blue-600 hover:underline flex items-center gap-2"
                           >
-                            <Linkedin className="h-3 w-3" /> LinkedIn
+                            <Linkedin className="h-3 w-3" /> LinkedIn Profile
                           </a>
                         )}
-                        <div className="flex flex-wrap gap-2 mt-1">
+                        <div className="flex flex-wrap gap-3 mt-2">
                           {c.dob && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1" title="Birthday">
                               <Cake className="h-3 w-3" />{new Date(c.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
@@ -2437,23 +2463,25 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                             </span>
                           )}
                         </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => enrichContact(c)}
-                        disabled={enrichingContactId === c.id}
-                        title="Enrich with AI"
-                      >
-                        {enrichingContactId === c.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-3 w-3 text-primary" />
-                        )}
-                      </Button>
-                    </div>
-                  </Card>
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs flex-1"
+                            onClick={(e) => { e.stopPropagation(); enrichContact(c); }}
+                            disabled={enrichingContactId === c.id}
+                          >
+                            {enrichingContactId === c.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            ) : (
+                              <Sparkles className="h-3 w-3 mr-1 text-primary" />
+                            )}
+                            Enrich
+                          </Button>
+                        </div>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
                 ))}
               </CollapsibleContent>
             </Collapsible>
