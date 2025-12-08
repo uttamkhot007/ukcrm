@@ -24,6 +24,8 @@ import AdminOfferings from "./pages/admin/AdminOfferings";
 import AdminProcurement from "./pages/admin/AdminProcurement";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
+import SupportPortal from "./pages/SupportPortal";
+import SupportDashboard from "./pages/SupportDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,10 @@ const App = () => (
                 {/* Workspace Routes */}
                 <Route path="/workspace/new" element={<CreateWorkspace />} />
                 <Route path="/workspace/select" element={<SelectWorkspace />} />
+                
+                {/* Support Center Routes */}
+                <Route path="/support" element={<SupportPortal />} />
+                <Route path="/support/dashboard" element={<SupportDashboard />} />
                 
                 {/* Admin Center Routes */}
                 <Route path="/admin" element={<AdminLayout />}>

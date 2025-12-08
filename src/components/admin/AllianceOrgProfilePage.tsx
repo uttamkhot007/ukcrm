@@ -29,6 +29,7 @@ import {
 import { CONTACT_ROLES } from "@/components/shared/OrganizationFormFields";
 import { AccountIntelligence } from "./AccountIntelligence";
 import { OrgAccountMetrics } from "./OrgAccountMetrics";
+import OrganizationSupportConfig from "./OrganizationSupportConfig";
 
 interface AllianceOrganization {
   id: string;
@@ -1354,6 +1355,10 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
               <TabsTrigger value="activities" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Activities</TabsTrigger>
               <TabsTrigger value="tasks" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Tasks</TabsTrigger>
               <TabsTrigger value="calendar" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3">Calendar</TabsTrigger>
+              <TabsTrigger value="support" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3 flex items-center gap-1">
+                <Headphones className="w-3 h-3" />
+                Support Config
+              </TabsTrigger>
               <TabsTrigger value="intelligence" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-1 pb-3 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 AI Insights
@@ -2321,6 +2326,10 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   )}
                 </div>
               </div>
+            )}
+
+            {activeTab === "support" && (
+              <OrganizationSupportConfig organizationId={organization.id} organizationName={organization.name} />
             )}
 
             {activeTab === "intelligence" && (
