@@ -45,20 +45,20 @@ interface OemTechnology extends JunctionRecord {
   technology_id: string;
 }
 
-interface SolutionOem extends JunctionRecord {
-  solution_id: string;
+interface ProductOem extends JunctionRecord {
+  product_id: string;
   oem_id: string;
 }
 
-interface SolutionTechnology extends JunctionRecord {
-  solution_id: string;
+interface ProductTechnology extends JunctionRecord {
+  product_id: string;
   technology_id: string;
 }
 
 type OfferingType = "products" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
 
 const offeringTabs: { value: OfferingType; label: string; icon: React.ElementType; table: string }[] = [
-  { value: "products", label: "Products", icon: Package, table: "offerings_solutions" },
+  { value: "products", label: "Products", icon: Package, table: "offerings_products" },
   { value: "offensive_security", label: "Offensive Security", icon: Shield, table: "offerings_offensive_security" },
   { value: "managed_security", label: "Managed Security", icon: Server, table: "offerings_managed_security" },
   { value: "professional_services", label: "Professional Services", icon: Briefcase, table: "offerings_professional_services" },
@@ -113,18 +113,18 @@ export function OfferingsModule() {
     enabled: !!currentTenant,
   });
 
-  // Fetch Products (formerly Solutions)
+  // Fetch Products
   const { data: products = [] } = useQuery({
     queryKey: ["offerings", "products", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant) return [];
       const { data, error } = await supabase
-        .from("offerings_solutions")
+        .from("offerings_products" as any)
         .select("*")
         .eq("tenant_id", currentTenant.id)
         .order("name");
       if (error) throw error;
-      return data as Offering[];
+      return (data || []) as unknown as Offering[];
     },
     enabled: !!currentTenant,
   });
@@ -141,24 +141,24 @@ export function OfferingsModule() {
     enabled: !!currentTenant,
   });
 
-  const { data: solutionOems = [] } = useQuery({
-    queryKey: ["solution_oems", currentTenant?.id],
+  const { data: productOems = [] } = useQuery({
+    queryKey: ["product_oems", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant) return [];
-      const { data, error } = await supabase.from("solution_oems").select("*").eq("tenant_id", currentTenant.id);
+      const { data, error } = await supabase.from("product_oems" as any).select("*").eq("tenant_id", currentTenant.id);
       if (error) throw error;
-      return data as SolutionOem[];
+      return (data || []) as unknown as ProductOem[];
     },
     enabled: !!currentTenant,
   });
 
-  const { data: solutionTechnologies = [] } = useQuery({
-    queryKey: ["solution_technologies", currentTenant?.id],
+  const { data: productTechnologies = [] } = useQuery({
+    queryKey: ["product_technologies", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant) return [];
-      const { data, error } = await supabase.from("solution_technologies").select("*").eq("tenant_id", currentTenant.id);
+      const { data, error } = await supabase.from("product_technologies" as any).select("*").eq("tenant_id", currentTenant.id);
       if (error) throw error;
-      return data as SolutionTechnology[];
+      return (data || []) as unknown as ProductTechnology[];
     },
     enabled: !!currentTenant,
   });
@@ -171,7 +171,7 @@ export function OfferingsModule() {
       let query;
       switch (activeTab) {
         case "products":
-          query = supabase.from("offerings_solutions").select("*").eq("tenant_id", currentTenant.id).order("name");
+          query = supabase.from("offerings_products" as any).select("*").eq("tenant_id", currentTenant.id).order("name");
           break;
         case "offensive_security":
           query = supabase.from("offerings_offensive_security").select("*").eq("tenant_id", currentTenant.id).order("name");
@@ -196,7 +196,7 @@ export function OfferingsModule() {
       }
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as Offering[];
+      return (data || []) as unknown as Offering[];
     },
     enabled: !!currentTenant,
   });
@@ -213,8 +213,8 @@ export function OfferingsModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["oem_technologies"] });
-      queryClient.invalidateQueries({ queryKey: ["solution_oems"] });
-      queryClient.invalidateQueries({ queryKey: ["solution_technologies"] });
+      queryClient.invalidateQueries({ queryKey: ["product_oems"] });
+      queryClient.invalidateQueries({ queryKey: ["product_technologies"] });
       toast.success("Link created");
     },
     onError: (error: any) => {
@@ -234,8 +234,8 @@ export function OfferingsModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["oem_technologies"] });
-      queryClient.invalidateQueries({ queryKey: ["solution_oems"] });
-      queryClient.invalidateQueries({ queryKey: ["solution_technologies"] });
+      queryClient.invalidateQueries({ queryKey: ["product_oems"] });
+      queryClient.invalidateQueries({ queryKey: ["product_technologies"] });
       toast.success("Link removed");
     },
     onError: (error) => {
@@ -270,7 +270,7 @@ export function OfferingsModule() {
         let updateQuery;
         switch (activeTab) {
           case "products":
-            updateQuery = supabase.from("offerings_solutions").update(baseData).eq("id", editingItem.id);
+            updateQuery = supabase.from("offerings_products" as any).update(baseData).eq("id", editingItem.id);
             break;
           case "offensive_security":
             updateQuery = supabase.from("offerings_offensive_security").update(baseData).eq("id", editingItem.id);
@@ -302,7 +302,7 @@ export function OfferingsModule() {
         let insertQuery;
         switch (activeTab) {
           case "products":
-            insertQuery = supabase.from("offerings_solutions").insert(insertData);
+            insertQuery = supabase.from("offerings_products" as any).insert(insertData);
             break;
           case "offensive_security":
             insertQuery = supabase.from("offerings_offensive_security").insert(insertData);
@@ -344,7 +344,7 @@ export function OfferingsModule() {
       let deleteQuery;
       switch (activeTab) {
         case "products":
-          deleteQuery = supabase.from("offerings_solutions").delete().eq("id", id);
+          deleteQuery = supabase.from("offerings_products" as any).delete().eq("id", id);
           break;
         case "offensive_security":
           deleteQuery = supabase.from("offerings_offensive_security").delete().eq("id", id);
@@ -414,7 +414,7 @@ export function OfferingsModule() {
   };
 
   const getOemProducts = (oemId: string) => {
-    const linkedIds = solutionOems.filter(so => so.oem_id === oemId).map(so => so.solution_id);
+    const linkedIds = productOems.filter(po => po.oem_id === oemId).map(po => po.product_id);
     return products.filter(s => linkedIds.includes(s.id));
   };
 
@@ -424,17 +424,17 @@ export function OfferingsModule() {
   };
 
   const getTechProducts = (techId: string) => {
-    const linkedIds = solutionTechnologies.filter(st => st.technology_id === techId).map(st => st.solution_id);
+    const linkedIds = productTechnologies.filter(pt => pt.technology_id === techId).map(pt => pt.product_id);
     return products.filter(s => linkedIds.includes(s.id));
   };
 
   const getProductOems = (productId: string) => {
-    const linkedIds = solutionOems.filter(so => so.solution_id === productId).map(so => so.oem_id);
+    const linkedIds = productOems.filter(po => po.product_id === productId).map(po => po.oem_id);
     return oems.filter(o => linkedIds.includes(o.id));
   };
 
   const getProductTechs = (productId: string) => {
-    const linkedIds = solutionTechnologies.filter(st => st.solution_id === productId).map(st => st.technology_id);
+    const linkedIds = productTechnologies.filter(pt => pt.product_id === productId).map(pt => pt.technology_id);
     return technologies.filter(t => linkedIds.includes(t.id));
   };
 
@@ -444,17 +444,17 @@ export function OfferingsModule() {
         const linkedTechIds = oemTechnologies.filter(ot => ot.oem_id === itemId).map(ot => ot.technology_id);
         return technologies.filter(t => !linkedTechIds.includes(t.id) && t.status === "active");
       case "product-oem":
-        const linkedOemIds = solutionOems.filter(so => so.solution_id === itemId).map(so => so.oem_id);
+        const linkedOemIds = productOems.filter(po => po.product_id === itemId).map(po => po.oem_id);
         return oems.filter(o => !linkedOemIds.includes(o.id) && o.status === "active");
       case "product-tech":
-        const linkedTechIds2 = solutionTechnologies.filter(st => st.solution_id === itemId).map(st => st.technology_id);
+        const linkedTechIds2 = productTechnologies.filter(pt => pt.product_id === itemId).map(pt => pt.technology_id);
         return technologies.filter(t => !linkedTechIds2.includes(t.id) && t.status === "active");
       case "tech-oem":
         const linkedOemIds2 = oemTechnologies.filter(ot => ot.technology_id === itemId).map(ot => ot.oem_id);
         return oems.filter(o => !linkedOemIds2.includes(o.id) && o.status === "active");
       case "tech-product":
-        const linkedSolIds = solutionTechnologies.filter(st => st.technology_id === itemId).map(st => st.solution_id);
-        return products.filter(s => !linkedSolIds.includes(s.id) && s.status === "active");
+        const linkedProdIds = productTechnologies.filter(pt => pt.technology_id === itemId).map(pt => pt.product_id);
+        return products.filter(s => !linkedProdIds.includes(s.id) && s.status === "active");
       default:
         return [];
     }
@@ -472,20 +472,20 @@ export function OfferingsModule() {
         data = { oem_id: selectedItemForLink.id, technology_id: targetId };
         break;
       case "product-oem":
-        table = "solution_oems";
-        data = { solution_id: selectedItemForLink.id, oem_id: targetId };
+        table = "product_oems";
+        data = { product_id: selectedItemForLink.id, oem_id: targetId };
         break;
       case "product-tech":
-        table = "solution_technologies";
-        data = { solution_id: selectedItemForLink.id, technology_id: targetId };
+        table = "product_technologies";
+        data = { product_id: selectedItemForLink.id, technology_id: targetId };
         break;
       case "tech-oem":
         table = "oem_technologies";
         data = { technology_id: selectedItemForLink.id, oem_id: targetId };
         break;
       case "tech-product":
-        table = "solution_technologies";
-        data = { technology_id: selectedItemForLink.id, solution_id: targetId };
+        table = "product_technologies";
+        data = { technology_id: selectedItemForLink.id, product_id: targetId };
         break;
     }
     
@@ -502,20 +502,20 @@ export function OfferingsModule() {
         record = oemTechnologies.find(ot => ot.oem_id === itemId && ot.technology_id === linkedId);
         break;
       case "product-oem":
-        table = "solution_oems";
-        record = solutionOems.find(so => so.solution_id === itemId && so.oem_id === linkedId);
+        table = "product_oems";
+        record = productOems.find(po => po.product_id === itemId && po.oem_id === linkedId);
         break;
       case "product-tech":
-        table = "solution_technologies";
-        record = solutionTechnologies.find(st => st.solution_id === itemId && st.technology_id === linkedId);
+        table = "product_technologies";
+        record = productTechnologies.find(pt => pt.product_id === itemId && pt.technology_id === linkedId);
         break;
       case "tech-oem":
         table = "oem_technologies";
         record = oemTechnologies.find(ot => ot.technology_id === itemId && ot.oem_id === linkedId);
         break;
       case "tech-product":
-        table = "solution_technologies";
-        record = solutionTechnologies.find(st => st.technology_id === itemId && st.solution_id === linkedId);
+        table = "product_technologies";
+        record = productTechnologies.find(pt => pt.technology_id === itemId && pt.product_id === linkedId);
         break;
     }
     

@@ -48,10 +48,10 @@ interface OrganizationSupportConfigProps {
   organizationName: string;
 }
 
-type SolutionCategory = "solutions" | "offensive_security" | "managed_security" | "professional_services";
+type SolutionCategory = "products" | "offensive_security" | "managed_security" | "professional_services";
 
 const solutionCategories: { value: SolutionCategory; label: string; icon: React.ElementType }[] = [
-  { value: "solutions", label: "Solutions", icon: Package },
+  { value: "products", label: "Products", icon: Package },
   { value: "offensive_security", label: "Offensive Security Services", icon: Shield },
   { value: "managed_security", label: "Managed Services", icon: Server },
   { value: "professional_services", label: "Professional Services", icon: Briefcase },
@@ -128,13 +128,13 @@ export default function OrganizationSupportConfig({
     enabled: !!currentTenant?.id,
   });
 
-  const { data: offeringsSolutions } = useQuery({
-    queryKey: ["offerings", "solutions", currentTenant?.id],
+  const { data: offeringsProducts } = useQuery({
+    queryKey: ["offerings", "products", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant) return [];
-      const { data, error } = await supabase.from("offerings_solutions").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
+      const { data, error } = await supabase.from("offerings_products" as any).select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as { id: string; name: string }[];
     },
     enabled: !!currentTenant,
   });
@@ -174,7 +174,7 @@ export default function OrganizationSupportConfig({
 
   const getOfferingsForCategory = (category: SolutionCategory) => {
     switch (category) {
-      case "solutions": return offeringsSolutions || [];
+      case "products": return offeringsProducts || [];
       case "offensive_security": return offeringsOffensive || [];
       case "managed_security": return offeringsManaged || [];
       case "professional_services": return offeringsProfessional || [];
