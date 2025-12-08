@@ -268,6 +268,8 @@ export function AllianceModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
       queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setIsOrgDialogOpen(false);
       resetOrgForm();
       toast.success(editingOrg ? "Organization updated" : "Organization created");
@@ -317,6 +319,8 @@ export function AllianceModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setIsUserDialogOpen(false);
       setIsAddUserToOrgOpen(false);
       setEditingUser(null);

@@ -34,7 +34,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { ContactDetailsSheet } from "./ContactDetailsSheet";
-import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye, Sparkles } from "lucide-react";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye, Sparkles, Link2, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -423,6 +423,7 @@ export function ContactsView() {
                 <TableHead>Email</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Designation</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Related</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="w-10"></TableHead>
@@ -431,17 +432,46 @@ export function ContactsView() {
             <TableBody>
               {filteredContacts?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No contacts found. Create your first contact to get started.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredContacts?.map((contact) => (
                   <TableRow key={contact.id}>
-                    <TableCell className="font-medium">{contact.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {contact.name}
+                        {(contact as any).alliance_user_id && (
+                          <span title="Linked to Alliance"><Link2 className="h-3 w-3 text-muted-foreground" /></span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{contact.email || "-"}</TableCell>
-                    <TableCell>{contact.company || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {contact.company || "-"}
+                        {(contact as any).alliance_organization_id && (
+                          <span title="Alliance Organization"><Building2 className="h-3 w-3 text-blue-500" /></span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{contact.designation || "-"}</TableCell>
+                    <TableCell>
+                      {(contact as any).source_type === 'alliance' ? (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                          <Building2 className="h-3 w-3 mr-1" />Alliance
+                        </Badge>
+                      ) : (contact as any).source_type === 'lead' ? (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                          <UserPlus className="h-3 w-3 mr-1" />Lead
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-muted text-muted-foreground">
+                          Manual
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {contact.deals.length > 0 && (

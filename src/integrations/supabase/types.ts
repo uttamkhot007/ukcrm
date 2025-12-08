@@ -1103,6 +1103,8 @@ export type Database = {
       }
       contacts: {
         Row: {
+          alliance_organization_id: string | null
+          alliance_user_id: string | null
           avatar_url: string | null
           company: string | null
           created_at: string
@@ -1120,11 +1122,14 @@ export type Database = {
           reporting_manager_id: string | null
           role_in_deal: string | null
           seniority_level: string | null
+          source_type: string | null
           tenant_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          alliance_organization_id?: string | null
+          alliance_user_id?: string | null
           avatar_url?: string | null
           company?: string | null
           created_at?: string
@@ -1142,11 +1147,14 @@ export type Database = {
           reporting_manager_id?: string | null
           role_in_deal?: string | null
           seniority_level?: string | null
+          source_type?: string | null
           tenant_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          alliance_organization_id?: string | null
+          alliance_user_id?: string | null
           avatar_url?: string | null
           company?: string | null
           created_at?: string
@@ -1164,11 +1172,26 @@ export type Database = {
           reporting_manager_id?: string | null
           role_in_deal?: string | null
           seniority_level?: string | null
+          source_type?: string | null
           tenant_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contacts_alliance_organization_id_fkey"
+            columns: ["alliance_organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_alliance_user_id_fkey"
+            columns: ["alliance_user_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contacts_reporting_manager_id_fkey"
             columns: ["reporting_manager_id"]
