@@ -6,6 +6,7 @@ import { ActivityTimeline } from "./ActivityTimeline";
 import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
+import { MyAccountsView } from "./MyAccountsView";
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -20,6 +21,8 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         return <LeadsView />;
       case "contacts":
         return <ContactsView />;
+      case "my-accounts":
+        return <MyAccountsView />;
       case "quotations":
         return <QuotationsView />;
       case "activity":
