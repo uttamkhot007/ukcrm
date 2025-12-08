@@ -289,12 +289,41 @@ export function AllianceModule() {
   // Create/Update user mutation
   const userMutation = useMutation({
     mutationFn: async (userData: Partial<AllianceUser>) => {
+      const emailToCheck = userData.email?.trim().toLowerCase();
+      
+      // Check for duplicate email
+      if (emailToCheck) {
+        const { data: existingAllianceUser } = await supabase
+          .from("alliance_users")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .neq("id", editingUser?.id || "")
+          .maybeSingle();
+        
+        if (existingAllianceUser) {
+          throw new Error("A contact with this email already exists");
+        }
+
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        // Only block if the contact is not linked to the same alliance_user being edited
+        if (existingContact && (!editingUser || existingContact.id !== editingUser.id)) {
+          throw new Error("A contact with this email already exists");
+        }
+      }
+
       if (editingUser) {
         const { error } = await supabase
           .from("alliance_users")
           .update({
             name: userData.name,
-            email: userData.email,
+            email: emailToCheck || null,
             phone: userData.phone,
             location: userData.location,
             role: userData.role,
@@ -311,7 +340,7 @@ export function AllianceModule() {
           .insert({
             tenant_id: currentTenant?.id,
             name: userData.name!,
-            email: userData.email,
+            email: emailToCheck || null,
             phone: userData.phone,
             location: userData.location,
             role: userData.role,
