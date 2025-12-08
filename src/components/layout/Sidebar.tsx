@@ -56,6 +56,7 @@ import {
   Puzzle,
   Handshake,
   Server,
+  Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,20 @@ const salesPortalItems: NavItem[] = [
       { id: "sales-funnel", label: "Funnel Management", icon: Target },
       { id: "sales-quotations", label: "Quotations", icon: FileText },
       { id: "sales-leads", label: "Lead Tracking", icon: Activity },
+    ],
+  },
+  {
+    id: "tenders",
+    label: "Tender Management",
+    icon: Gavel,
+    color: "text-amber-600",
+    portalMode: "workspace",
+    isLink: true,
+    linkPath: "/tenders",
+    children: [
+      { id: "tenders-opportunities", label: "Opportunities", icon: Target },
+      { id: "tenders-bid-preparation", label: "Bid Preparation", icon: FileText },
+      { id: "tenders-evaluation", label: "Evaluation & Awards", icon: Award },
     ],
   },
 ];
