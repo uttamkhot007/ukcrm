@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles, Loader2, Handshake, Users, Building2, CheckCircle, XCircle } from "lucide-react";
+import { Send, Bot, User, Sparkles, Loader2, Handshake, Users, Building2, CheckCircle, XCircle, Package, Factory } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,12 +22,16 @@ const QUICK_ACTIONS = [
   { label: "Create a Deal", query: "I want to create a new deal", icon: Handshake },
   { label: "Add Contact", query: "Help me add a new contact", icon: Users },
   { label: "Add Organization", query: "I need to create a new organization", icon: Building2 },
+  { label: "Add Product", query: "I want to add a new product", icon: Package },
+  { label: "Add OEM", query: "Help me create a new OEM/vendor", icon: Factory },
 ];
 
 const EXAMPLE_PROMPTS = [
   "Create a deal for ABC Corp worth $50,000",
   "Add a contact named John Smith from Tech Solutions, email john@techsolutions.com",
   "Create an organization called Global Industries in manufacturing sector",
+  "Add a product called CloudSecure Firewall from Palo Alto Networks",
+  "Create OEM Cisco with gold partnership, headquarters in San Jose",
 ];
 
 export function SalesAIAssistant() {
@@ -36,7 +39,7 @@ export function SalesAIAssistant() {
     {
       id: "1",
       role: "assistant",
-      content: "Hello! I'm your Sales AI Assistant. I can help you quickly create deals, contacts, and organizations. Just tell me what you need!\n\nFor example:\n• \"Create a deal for ABC Corp worth $50,000\"\n• \"Add a contact John Smith from Tech Solutions\"\n• \"Create an organization called Global Industries\"",
+      content: "Hello! I'm your Sales AI Assistant. I can help you quickly create deals, contacts, organizations, products, and OEMs. Just tell me what you need!\n\nFor example:\n• \"Create a deal for ABC Corp worth $50,000\"\n• \"Add a contact John Smith from Tech Solutions\"\n• \"Create an organization called Global Industries\"\n• \"Add product CloudSecure from Palo Alto Networks\"\n• \"Create OEM Cisco with gold partnership\"",
       timestamp: new Date(),
     },
   ]);
@@ -106,6 +109,8 @@ export function SalesAIAssistant() {
           queryClient.invalidateQueries({ queryKey: ["deals"] });
           queryClient.invalidateQueries({ queryKey: ["contacts"] });
           queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
+          queryClient.invalidateQueries({ queryKey: ["offerings-products"] });
+          queryClient.invalidateQueries({ queryKey: ["offerings-oems"] });
           
           successfulTools.forEach((result: any) => {
             toast.success(result.message);
@@ -149,7 +154,7 @@ export function SalesAIAssistant() {
             Sales AI Assistant
           </h1>
           <p className="text-muted-foreground mt-1">
-            Create deals, contacts, and organizations using natural language
+            Create deals, contacts, organizations, products, and OEMs using natural language
           </p>
         </div>
       </div>
@@ -318,6 +323,14 @@ export function SalesAIAssistant() {
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-sales" />
                 <span>Create organizations</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-sales" />
+                <span>Add products</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Factory className="w-4 h-4 text-sales" />
+                <span>Create OEMs/vendors</span>
               </div>
             </CardContent>
           </Card>
