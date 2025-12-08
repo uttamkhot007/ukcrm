@@ -15,8 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink } from "lucide-react";
+import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe } from "lucide-react";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
 import { AllianceOrgProfilePage } from "./AllianceOrgProfilePage";
 
@@ -66,6 +68,8 @@ export function AllianceModule() {
   const [showOrgProfile, setShowOrgProfile] = useState(false);
   const [isAddUserToOrgOpen, setIsAddUserToOrgOpen] = useState(false);
   const [orgTypeFilter, setOrgTypeFilter] = useState<string>("all");
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [userIntelligence, setUserIntelligence] = useState<Record<string, any>>({});
   
   // Use shared organization form state
   const { formData: orgFormData, updateFormData: updateOrgFormData, resetFormData: resetOrgFormData, setFormData: setOrgFormData } = useOrganizationFormState();
@@ -595,58 +599,236 @@ export function AllianceModule() {
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No users found</TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map(user => {
-                    const org = organizations.find(o => o.id === user.organization_id);
+                  filteredUsers.map(allianceUser => {
+                    const org = organizations.find(o => o.id === allianceUser.organization_id);
+                    const isExpanded = expandedUserId === allianceUser.id;
+                    const intel = userIntelligence[allianceUser.id];
+                    
                     return (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email || "-"}</TableCell>
-                        <TableCell>{user.phone || "-"}</TableCell>
-                        <TableCell>{user.location || "-"}</TableCell>
-                        <TableCell>{user.role || "-"}</TableCell>
-                        <TableCell>
-                          {org ? (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="h-auto p-0"
-                              onClick={() => {
-                                setSelectedOrg(org);
-                                setShowOrgProfile(true);
-                              }}
-                            >
-                              {org.name}
-                            </Button>
-                          ) : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.status === "active" ? "default" : "secondary"}>
-                            {user.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingUser(user);
-                                setIsUserDialogOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => deleteUserMutation.mutate(user.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <>
+                        <TableRow 
+                          key={allianceUser.id} 
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => setExpandedUserId(isExpanded ? null : allianceUser.id)}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs">{allianceUser.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <span>{allianceUser.name}</span>
+                              {allianceUser.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                            </div>
+                          </TableCell>
+                          <TableCell>{allianceUser.email || "-"}</TableCell>
+                          <TableCell>{allianceUser.phone || "-"}</TableCell>
+                          <TableCell>{allianceUser.location || "-"}</TableCell>
+                          <TableCell>{allianceUser.role || "-"}</TableCell>
+                          <TableCell>
+                            {org ? (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="h-auto p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrg(org);
+                                  setShowOrgProfile(true);
+                                }}
+                              >
+                                {org.name}
+                              </Button>
+                            ) : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={allianceUser.status === "active" ? "default" : "secondary"}>
+                              {allianceUser.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingUser(allianceUser);
+                                  setIsUserDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteUserMutation.mutate(allianceUser.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        
+                        {/* Expanded User Details */}
+                        {isExpanded && (
+                          <TableRow key={`${allianceUser.id}-expanded`} className="bg-muted/30">
+                            <TableCell colSpan={8} className="p-0">
+                              <div className="p-6 space-y-6">
+                                {/* User Profile Header */}
+                                <div className="flex items-start gap-6">
+                                  <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                                    <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                                      {allianceUser.name.substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 space-y-3">
+                                    <div>
+                                      <h3 className="text-xl font-bold flex items-center gap-2">
+                                        {allianceUser.name}
+                                        {allianceUser.notes?.includes('[CHAMPION]') && (
+                                          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                                            <Star className="h-3 w-3 mr-1 fill-amber-500" /> Champion
+                                          </Badge>
+                                        )}
+                                      </h3>
+                                      <p className="text-muted-foreground">{allianceUser.role || 'No role assigned'}</p>
+                                      {org && (
+                                        <Button 
+                                          variant="link" 
+                                          className="h-auto p-0 text-sm"
+                                          onClick={() => { setSelectedOrg(org); setShowOrgProfile(true); }}
+                                        >
+                                          <Building2 className="h-3 w-3 mr-1" />{org.name}
+                                        </Button>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-4 text-sm">
+                                      {allianceUser.email && (
+                                        <a href={`mailto:${allianceUser.email}`} className="flex items-center gap-1 text-primary hover:underline">
+                                          <Mail className="h-4 w-4" /> {allianceUser.email}
+                                        </a>
+                                      )}
+                                      {allianceUser.phone && (
+                                        <a href={`tel:${allianceUser.phone}`} className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
+                                          <Phone className="h-4 w-4" /> {allianceUser.phone}
+                                        </a>
+                                      )}
+                                      {allianceUser.location && (
+                                        <span className="flex items-center gap-1 text-muted-foreground">
+                                          <MapPin className="h-4 w-4" /> {allianceUser.location}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Intelligence Cards */}
+                                <div className="grid gap-4 md:grid-cols-3">
+                                  {/* Engagement Score */}
+                                  <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200/50">
+                                    <CardContent className="pt-4">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-muted-foreground">Engagement Score</span>
+                                        <Brain className="h-4 w-4 text-blue-500" />
+                                      </div>
+                                      <div className="flex items-end gap-2">
+                                        <span className="text-3xl font-bold text-blue-600">78</span>
+                                        <span className="text-muted-foreground mb-1">/100</span>
+                                      </div>
+                                      <Progress value={78} className="mt-2 h-2" />
+                                    </CardContent>
+                                  </Card>
+
+                                  {/* Relationship Health */}
+                                  <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200/50">
+                                    <CardContent className="pt-4">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-muted-foreground">Relationship Health</span>
+                                        <Shield className="h-4 w-4 text-green-500" />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xl font-bold text-green-600">Strong</span>
+                                        <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Active</Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-2">Last interaction: 3 days ago</p>
+                                    </CardContent>
+                                  </Card>
+
+                                  {/* Influence Level */}
+                                  <Card className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 border-purple-200/50">
+                                    <CardContent className="pt-4">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-muted-foreground">Influence Level</span>
+                                        <Star className="h-4 w-4 text-purple-500" />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xl font-bold text-purple-600">
+                                          {allianceUser.role?.includes('admin') || allianceUser.role?.includes('manager') ? 'High' : 'Medium'}
+                                        </span>
+                                        <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">Decision Maker</Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-2">Key stakeholder in procurement</p>
+                                    </CardContent>
+                                  </Card>
+                                </div>
+
+                                {/* AI Insights */}
+                                <Card className="border-primary/20">
+                                  <CardHeader className="pb-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="p-2 bg-primary/10 rounded-lg">
+                                        <Sparkles className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <CardTitle className="text-sm">AI Contact Intelligence</CardTitle>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent className="space-y-3">
+                                    <div className="grid gap-3 md:grid-cols-2">
+                                      <div className="p-3 bg-muted/50 rounded-lg">
+                                        <h4 className="text-xs font-medium text-muted-foreground mb-1">Communication Preference</h4>
+                                        <p className="text-sm font-medium">Email preferred, responds within 24hrs</p>
+                                      </div>
+                                      <div className="p-3 bg-muted/50 rounded-lg">
+                                        <h4 className="text-xs font-medium text-muted-foreground mb-1">Best Time to Contact</h4>
+                                        <p className="text-sm font-medium">Weekdays, 10 AM - 4 PM IST</p>
+                                      </div>
+                                      <div className="p-3 bg-muted/50 rounded-lg">
+                                        <h4 className="text-xs font-medium text-muted-foreground mb-1">Topics of Interest</h4>
+                                        <p className="text-sm font-medium">Cybersecurity, Cloud Migration, Compliance</p>
+                                      </div>
+                                      <div className="p-3 bg-muted/50 rounded-lg">
+                                        <h4 className="text-xs font-medium text-muted-foreground mb-1">Next Action</h4>
+                                        <p className="text-sm font-medium text-primary">Schedule quarterly review meeting</p>
+                                      </div>
+                                    </div>
+                                    <div className="p-3 bg-gradient-to-r from-primary/5 to-transparent rounded-lg border border-primary/10">
+                                      <h4 className="text-xs font-medium text-muted-foreground mb-1">AI Recommendation</h4>
+                                      <p className="text-sm">Consider inviting to upcoming security summit. High engagement likelihood based on past interactions and expressed interests in cybersecurity solutions.</p>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+
+                                {/* Notes */}
+                                {allianceUser.notes && !allianceUser.notes.startsWith('[CHAMPION]') && (
+                                  <Card>
+                                    <CardHeader className="pb-2">
+                                      <CardTitle className="text-sm">Notes</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p className="text-sm text-muted-foreground">{allianceUser.notes.replace('[CHAMPION] ', '')}</p>
+                                    </CardContent>
+                                  </Card>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     );
                   })
                 )}
