@@ -152,34 +152,40 @@ export type Database = {
       }
       activity_definitions: {
         Row: {
+          activity_category: string | null
           created_at: string
           department: string | null
           description: string | null
           id: string
           is_active: boolean | null
           name: string
+          subcategory: string | null
           team_type: string | null
           tenant_id: string
           updated_at: string
         }
         Insert: {
+          activity_category?: string | null
           created_at?: string
           department?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
           name: string
+          subcategory?: string | null
           team_type?: string | null
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          activity_category?: string | null
           created_at?: string
           department?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
+          subcategory?: string | null
           team_type?: string | null
           tenant_id?: string
           updated_at?: string
@@ -1329,6 +1335,97 @@ export type Database = {
           },
         ]
       }
+      customer_support_contracts: {
+        Row: {
+          assigned_technical_team: string[] | null
+          contract_name: string
+          contract_type: string
+          created_at: string | null
+          created_by: string
+          deal_id: string | null
+          end_date: string
+          escalation_matrix: Json | null
+          id: string
+          license_details: Json | null
+          notes: string | null
+          organization_id: string
+          sla_resolution_hours: number | null
+          sla_response_hours: number | null
+          solution_details: Json | null
+          start_date: string
+          status: string | null
+          support_contacts: Json | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_technical_team?: string[] | null
+          contract_name: string
+          contract_type?: string
+          created_at?: string | null
+          created_by: string
+          deal_id?: string | null
+          end_date: string
+          escalation_matrix?: Json | null
+          id?: string
+          license_details?: Json | null
+          notes?: string | null
+          organization_id: string
+          sla_resolution_hours?: number | null
+          sla_response_hours?: number | null
+          solution_details?: Json | null
+          start_date: string
+          status?: string | null
+          support_contacts?: Json | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_technical_team?: string[] | null
+          contract_name?: string
+          contract_type?: string
+          created_at?: string | null
+          created_by?: string
+          deal_id?: string | null
+          end_date?: string
+          escalation_matrix?: Json | null
+          id?: string
+          license_details?: Json | null
+          notes?: string | null
+          organization_id?: string
+          sla_resolution_hours?: number | null
+          sla_response_hours?: number | null
+          solution_details?: Json | null
+          start_date?: string
+          status?: string | null
+          support_contacts?: Json | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_support_contracts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_support_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_support_contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_support_ticket_comments: {
         Row: {
           content: string
@@ -1491,6 +1588,92 @@ export type Database = {
           },
           {
             foreignKeyName: "customer_support_tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_activities: {
+        Row: {
+          activity_category: string
+          activity_date: string
+          activity_definition_id: string | null
+          activity_subtype: string | null
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          location_type: string | null
+          outcome: string | null
+          related_deal_id: string | null
+          related_organization_id: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_category: string
+          activity_date?: string
+          activity_definition_id?: string | null
+          activity_subtype?: string | null
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          location_type?: string | null
+          outcome?: string | null
+          related_deal_id?: string | null
+          related_organization_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_category?: string
+          activity_date?: string
+          activity_definition_id?: string | null
+          activity_subtype?: string | null
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          location_type?: string | null
+          outcome?: string | null
+          related_deal_id?: string | null
+          related_organization_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_activities_activity_definition_id_fkey"
+            columns: ["activity_definition_id"]
+            isOneToOne: false
+            referencedRelation: "activity_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_activities_related_deal_id_fkey"
+            columns: ["related_deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_activities_related_organization_id_fkey"
+            columns: ["related_organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_activities_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
