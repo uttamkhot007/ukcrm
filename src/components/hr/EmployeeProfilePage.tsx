@@ -15,9 +15,10 @@ import {
   Loader2, Star, MapPin, Linkedin, Clock, BarChart3,
   Pencil, Brain, ArrowLeft, Award, GraduationCap, Trophy,
   Target, Users, Github, Twitter, Heart, Shield, FileText,
-  TrendingUp, CheckCircle, AlertCircle
+  TrendingUp, CheckCircle, AlertCircle, ShieldCheck
 } from "lucide-react";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
+import { EmployeeVerificationsTab } from "./EmployeeVerificationsTab";
 
 interface EmployeeProfile {
   id: string;
@@ -260,11 +261,15 @@ export function EmployeeProfilePage({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start rounded-none border-b px-4 md:px-6">
+        <TabsList className="w-full justify-start rounded-none border-b px-4 md:px-6 overflow-x-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="career">Career</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="verifications" className="gap-1">
+            <ShieldCheck className="h-3 w-3" />
+            Verifications
+          </TabsTrigger>
           <TabsTrigger value="analytics" className="gap-1">
             <Brain className="h-3 w-3" />
             AI Analytics
@@ -762,6 +767,11 @@ export function EmployeeProfilePage({
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Verifications Tab */}
+          <TabsContent value="verifications" className="p-4 md:p-6 mt-0">
+            <EmployeeVerificationsTab employee={employee} />
           </TabsContent>
         </ScrollArea>
       </Tabs>
