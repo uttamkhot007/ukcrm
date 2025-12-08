@@ -929,7 +929,16 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
           });
         }
         if (data.infrastructure_config) {
-          setInfrastructure(data.infrastructure_config as unknown as InfrastructureConfig);
+          const config = data.infrastructure_config as unknown as InfrastructureConfig;
+          setInfrastructure({
+            locations: config.locations || '',
+            endpoints: config.endpoints || '',
+            servers: config.servers || '',
+            endpointOS: config.endpointOS || [],
+            serverOS: config.serverOS || [],
+            networkDevices: config.networkDevices || '',
+            systemEnvironment: config.systemEnvironment || '',
+          });
         }
         if (data.security_controls) {
           setSelectedControls(data.security_controls);
