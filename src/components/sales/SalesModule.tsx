@@ -7,6 +7,7 @@ import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
 import { MyAccountsView } from "./MyAccountsView";
+import { TeamContactsView } from "./TeamContactsView";
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -23,6 +24,8 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         return <ContactsView />;
       case "my-accounts":
         return <MyAccountsView />;
+      case "team-contacts":
+        return <TeamContactsView />;
       case "quotations":
         return <QuotationsView />;
       case "activity":

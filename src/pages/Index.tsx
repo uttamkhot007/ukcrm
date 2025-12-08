@@ -116,6 +116,8 @@ const Index = () => {
         return <SalesModule initialTab="my-accounts" />;
       case "sales-contacts":
         return <SalesModule initialTab="contacts" />;
+      case "sales-team-contacts":
+        return <SalesModule initialTab="team-contacts" />;
       case "inside-sales":
         return <InsideSalesModule />;
       

@@ -510,18 +510,25 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
       // Sales Portal - for sales, presales, inside_sales teams
       if (hasTeamAccess(["sales", "presales", "inside_sales", "management"], "sales")) {
+        const salesChildren = [
+          { id: "sales-funnel", label: "Funnel Management", icon: Target },
+          { id: "sales-quotations", label: "Quotations", icon: FileText },
+          { id: "sales-leads", label: "Lead Tracking", icon: Activity },
+          { id: "sales-my-accounts", label: "My Accounts", icon: Building2 },
+          { id: "sales-contacts", label: "My Contacts", icon: Phone },
+        ];
+        
+        // Add Team Contacts for managers
+        if (role === "manager" || role === "admin" || isManagement) {
+          salesChildren.push({ id: "sales-team-contacts", label: "Team Contacts", icon: Users });
+        }
+        
         items.push({
           id: "sales",
           label: "Sales",
           icon: TrendingUp,
           color: "text-sales",
-          children: [
-            { id: "sales-funnel", label: "Funnel Management", icon: Target },
-            { id: "sales-quotations", label: "Quotations", icon: FileText },
-            { id: "sales-leads", label: "Lead Tracking", icon: Activity },
-            { id: "sales-my-accounts", label: "My Accounts", icon: Building2 },
-            { id: "sales-contacts", label: "My Contacts", icon: Phone },
-          ],
+          children: salesChildren,
         });
       }
 
