@@ -6132,6 +6132,146 @@ export type Database = {
         }
         Relationships: []
       }
+      solution_expiry_notifications: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          notification_type: string
+          organization_id: string | null
+          sent_at: string
+          sent_to: string[] | null
+          subscription_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          notification_type: string
+          organization_id?: string | null
+          sent_at?: string
+          sent_to?: string[] | null
+          subscription_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          notification_type?: string
+          organization_id?: string | null
+          sent_at?: string
+          sent_to?: string[] | null
+          subscription_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solution_expiry_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_expiry_notifications_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "solution_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_expiry_notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solution_subscriptions: {
+        Row: {
+          annual_value: number | null
+          created_at: string
+          created_by: string
+          expiry_date: string
+          id: string
+          license_count: number | null
+          notes: string | null
+          organization_id: string | null
+          reseller_id: string | null
+          solution_name: string
+          start_date: string
+          status: string | null
+          tenant_id: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          annual_value?: number | null
+          created_at?: string
+          created_by: string
+          expiry_date: string
+          id?: string
+          license_count?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          reseller_id?: string | null
+          solution_name: string
+          start_date: string
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          annual_value?: number | null
+          created_at?: string
+          created_by?: string
+          expiry_date?: string
+          id?: string
+          license_count?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          reseller_id?: string | null
+          solution_name?: string
+          start_date?: string
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solution_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_subscriptions_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_images: {
         Row: {
           created_at: string
