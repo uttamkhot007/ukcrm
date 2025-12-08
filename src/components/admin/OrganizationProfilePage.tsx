@@ -13,17 +13,16 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { 
-  Building2, Globe, Linkedin, Twitter, Facebook, MapPin, Users, DollarSign, 
+  Building2, Globe, Linkedin, Twitter, Facebook, Users, DollarSign, 
   Plus, X, Save, Loader2, Search, Shield, ShieldCheck, ShieldX, ShieldAlert,
-  Server, Cloud, Database, Lock, UserCircle, Phone, Mail, Calendar, 
-  Briefcase, Building, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
-  AlertTriangle, Key, Bug, Ticket, Package, FileWarning, Contact, Sparkles, Brain
+  Server, Cloud, Database, Building,
+  ExternalLink, RefreshCw, CheckCircle2,
+  Ticket, Package, FileWarning, Sparkles
 } from "lucide-react";
-import { OrganizationContacts } from "./OrganizationContacts";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AccountIntelligence } from "./AccountIntelligence";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const COMPANY_TYPES = ["Public", "Private", "Non-Profit", "Government", "Partnership", "Other"];
 const DC_TYPES = ["On-Premises", "Cloud", "Hybrid"];

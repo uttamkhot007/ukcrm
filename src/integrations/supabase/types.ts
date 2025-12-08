@@ -196,52 +196,70 @@ export type Database = {
       }
       alliance_organizations: {
         Row: {
+          account_manager_id: string | null
           address: string | null
           created_at: string
           created_by: string
           description: string | null
           id: string
           industry: string | null
+          infrastructure_config: Json | null
           logo_url: string | null
           name: string
           organization_type: string | null
+          security_controls: string[] | null
           services: string[] | null
+          solution_configs: Json | null
           solutions: string[] | null
           status: string | null
+          team_config: Json | null
+          technical_account_manager_id: string | null
           tenant_id: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          account_manager_id?: string | null
           address?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
           industry?: string | null
+          infrastructure_config?: Json | null
           logo_url?: string | null
           name: string
           organization_type?: string | null
+          security_controls?: string[] | null
           services?: string[] | null
+          solution_configs?: Json | null
           solutions?: string[] | null
           status?: string | null
+          team_config?: Json | null
+          technical_account_manager_id?: string | null
           tenant_id?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          account_manager_id?: string | null
           address?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
           industry?: string | null
+          infrastructure_config?: Json | null
           logo_url?: string | null
           name?: string
           organization_type?: string | null
+          security_controls?: string[] | null
           services?: string[] | null
+          solution_configs?: Json | null
           solutions?: string[] | null
           status?: string | null
+          team_config?: Json | null
+          technical_account_manager_id?: string | null
           tenant_id?: string | null
           updated_at?: string
           website?: string | null
