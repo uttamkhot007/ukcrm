@@ -311,7 +311,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       let query = supabase
         .from("alliance_organizations")
         .select("id, name")
-        .eq("organization_type", "Reseller")
+        .ilike("organization_type", "reseller")
         .order("name");
 
       if (currentTenant?.id) {
