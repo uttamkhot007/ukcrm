@@ -6253,6 +6253,68 @@ export type Database = {
           },
         ]
       }
+      sales_targets: {
+        Row: {
+          bottom_line_target: number
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          id: string
+          incentive_eligibility_cap: number
+          notes: string | null
+          period_end: string
+          period_start: string
+          target_period: string
+          tenant_id: string | null
+          top_line_target: number
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          bottom_line_target?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          incentive_eligibility_cap?: number
+          notes?: string | null
+          period_end: string
+          period_start: string
+          target_period?: string
+          tenant_id?: string | null
+          top_line_target?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          bottom_line_target?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          incentive_eligibility_cap?: number
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          target_period?: string
+          tenant_id?: string | null
+          top_line_target?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_targets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_team_members: {
         Row: {
           id: string
