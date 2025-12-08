@@ -1790,6 +1790,144 @@ export type Database = {
           },
         ]
       }
+      employee_achievements: {
+        Row: {
+          achieved_date: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          metric_unit: string | null
+          metric_value: number | null
+          tenant_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          achieved_date?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metric_unit?: string | null
+          metric_value?: number | null
+          tenant_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          achieved_date?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metric_unit?: string | null
+          metric_value?: number | null
+          tenant_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_achievements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_awards: {
+        Row: {
+          awarded_by: string | null
+          awarded_date: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          tenant_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          awarded_by?: string | null
+          awarded_date?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tenant_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          awarded_by?: string | null
+          awarded_date?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tenant_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_awards_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_certifications: {
+        Row: {
+          created_at: string
+          credential_id: string | null
+          credential_url: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          issuing_organization: string | null
+          name: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id?: string | null
+          credential_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_organization?: string | null
+          name: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string | null
+          credential_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_organization?: string | null
+          name?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_certifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_documents: {
         Row: {
           created_at: string
@@ -4748,17 +4886,22 @@ export type Database = {
             | Database["public"]["Enums"]["employment_status"]
             | null
           full_name: string | null
+          github_url: string | null
           hire_date: string | null
           hobbies: string[] | null
           id: string
           is_super_admin: boolean | null
           job_title: string | null
+          linkedin_url: string | null
           location: string | null
           manager_id: string | null
+          phone: string | null
           postal_code: string | null
+          responsibilities: string[] | null
           sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
           state: string | null
           tenant_id: string | null
+          twitter_url: string | null
           updated_at: string
           user_category: Database["public"]["Enums"]["user_category"] | null
           user_id: string
@@ -4786,17 +4929,22 @@ export type Database = {
             | Database["public"]["Enums"]["employment_status"]
             | null
           full_name?: string | null
+          github_url?: string | null
           hire_date?: string | null
           hobbies?: string[] | null
           id?: string
           is_super_admin?: boolean | null
           job_title?: string | null
+          linkedin_url?: string | null
           location?: string | null
           manager_id?: string | null
+          phone?: string | null
           postal_code?: string | null
+          responsibilities?: string[] | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
           state?: string | null
           tenant_id?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id: string
@@ -4824,17 +4972,22 @@ export type Database = {
             | Database["public"]["Enums"]["employment_status"]
             | null
           full_name?: string | null
+          github_url?: string | null
           hire_date?: string | null
           hobbies?: string[] | null
           id?: string
           is_super_admin?: boolean | null
           job_title?: string | null
+          linkedin_url?: string | null
           location?: string | null
           manager_id?: string | null
+          phone?: string | null
           postal_code?: string | null
+          responsibilities?: string[] | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
           state?: string | null
           tenant_id?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id?: string

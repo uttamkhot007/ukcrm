@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MapPin, Building2, Mail, Users, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmployeeProfilePage } from "@/components/hr/EmployeeProfilePage";
 
 const DEPARTMENTS = [
   "All Departments",
@@ -41,6 +42,7 @@ export default function EmployeeDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [locationFilter, setLocationFilter] = useState("All Locations");
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employee-directory"],
@@ -109,6 +111,23 @@ export default function EmployeeDirectory() {
     if (!status) return "Active";
     return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
+
+  // Show profile page if employee is selected
+  if (selectedEmployee) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+        <div className="ml-64 transition-all duration-300">
+          <main className="h-screen">
+            <EmployeeProfilePage 
+              employee={selectedEmployee}
+              onBack={() => setSelectedEmployee(null)}
+            />
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,7 +233,8 @@ export default function EmployeeDirectory() {
                 {filteredEmployees.map((employee) => (
                   <Card
                     key={employee.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    className="hover:shadow-md transition-shadow cursor-pointer hover:border-primary/50"
+                    onClick={() => setSelectedEmployee(employee)}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
