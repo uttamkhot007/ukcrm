@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,17 +16,16 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  GitBranch,
-  Heart,
-  FolderOpen,
   TrendingUp,
   AlertCircle,
   DollarSign,
-  UserMinus,
+  MapPin,
+  Mail,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
 import { EmployeeDocumentsView } from "./EmployeeDocumentsView";
+import { EmployeeProfilePage } from "./EmployeeProfilePage";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
 
@@ -45,6 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const { currentTenant } = useTenant();
   
   const { data: employees = [], isLoading } = useQuery({
@@ -127,34 +127,73 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
                     </CardContent>
                   </Card>
                 ))
+              ) : filteredEmployees.length === 0 ? (
+                <Card className="col-span-full">
+                  <CardContent className="p-12 text-center">
+                    <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No employees found</h3>
+                    <p className="text-muted-foreground">Try adjusting your search criteria</p>
+                  </CardContent>
+                </Card>
               ) : (
                 filteredEmployees.map((employee) => (
-                  <Card key={employee.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="w-12 h-12">
+                  <Card 
+                    key={employee.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer hover:border-primary/50"
+                    onClick={() => setSelectedEmployee(employee)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="w-14 h-14">
                           <AvatarImage src={employee.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                             {getInitials(employee.full_name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <h3 className="font-semibold truncate">{employee.full_name || "Unknown"}</h3>
-                            <Badge className={cn("text-xs", STATUS_COLORS[employee.employment_status || "active"])}>
-                              {formatStatus(employee.employment_status)}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate">{employee.job_title || "No title"}</p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                            {employee.department && (
-                              <span className="flex items-center gap-1">
-                                <Building2 className="w-3 h-3" />
-                                {employee.department}
-                              </span>
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-semibold truncate">{employee.full_name || "Unknown"}</h3>
+                              <p className="text-sm text-muted-foreground truncate">{employee.job_title || "No title"}</p>
+                            </div>
+                            {employee.employment_status && (
+                              <Badge 
+                                variant="secondary"
+                                className={cn("text-xs shrink-0", STATUS_COLORS[employee.employment_status] || STATUS_COLORS.active)}
+                              >
+                                {formatStatus(employee.employment_status)}
+                              </Badge>
                             )}
                           </div>
                         </div>
+                      </div>
+
+                      <div className="mt-4 space-y-2 text-sm">
+                        {employee.department && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Building2 className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{employee.department}</span>
+                          </div>
+                        )}
+                        {employee.location && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{employee.location}</span>
+                          </div>
+                        )}
+                        {employee.email && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Mail className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{employee.email}</span>
+                          </div>
+                        )}
+                        {employee.employee_code && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
+                              {employee.employee_code}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -288,6 +327,16 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
         return null;
     }
   };
+
+  // Show profile page if employee is selected
+  if (selectedEmployee) {
+    return (
+      <EmployeeProfilePage 
+        employee={selectedEmployee}
+        onBack={() => setSelectedEmployee(null)}
+      />
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
