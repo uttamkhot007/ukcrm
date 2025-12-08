@@ -95,6 +95,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     return (
       <div className="space-y-6 p-6">
         <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
         <SalesRepDashboard onNavigate={onModuleChange} />
       </div>
     );
@@ -104,6 +105,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     return (
       <div className="space-y-6 p-6">
         <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
         <SalesManagerDashboard onNavigate={onModuleChange} />
       </div>
     );
@@ -113,6 +115,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     return (
       <div className="space-y-6 p-6">
         <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
         <PresalesDashboard onNavigate={onModuleChange} isManager={false} />
       </div>
     );
@@ -122,6 +125,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     return (
       <div className="space-y-6 p-6">
         <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
         <PresalesDashboard onNavigate={onModuleChange} isManager={true} />
       </div>
     );
