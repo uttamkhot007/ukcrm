@@ -216,6 +216,11 @@ export function ConsoleAccessManagement() {
                             {PORTAL_MODES.find(p => p.value === mode)?.label || mode}
                           </Badge>
                         ))}
+                        {access?.additional_modules?.map((module) => (
+                          <Badge key={module} variant="secondary" className="text-xs">
+                            {ADDITIONAL_MODULES.find(m => m.value === module)?.label || module}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                   </div>

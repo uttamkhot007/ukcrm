@@ -104,16 +104,29 @@ export default function OrganizationSupportConfig({
   const { data: customerAccess } = useQuery({
     queryKey: ["org-customer-access", organizationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: accessData, error } = await supabase
         .from("customer_organization_access")
-        .select(`
-          *,
-          profile:profiles!customer_organization_access_user_id_fkey(full_name, email)
-        `)
+        .select("*")
         .eq("organization_id", organizationId);
       
       if (error) throw error;
-      return data;
+      
+      // Fetch profiles separately
+      if (accessData && accessData.length > 0) {
+        const userIds = accessData.map((a: any) => a.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", userIds);
+        
+        // Merge profiles with access data
+        return accessData.map((access: any) => ({
+          ...access,
+          profile: profiles?.find((p: any) => p.user_id === access.user_id) || null,
+        }));
+      }
+      
+      return accessData;
     },
   });
 
