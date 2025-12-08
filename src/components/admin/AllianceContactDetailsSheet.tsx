@@ -20,9 +20,10 @@ import {
   User, Mail, Phone, Building, Briefcase, Calendar, DollarSign, TrendingUp, 
   Loader2, Star, MapPin, Linkedin, PhoneCall, Video, Users, Target, 
   Trophy, XCircle, BarChart3, Clock, ArrowUpRight, ArrowDownRight,
-  Pencil
+  Pencil, Brain
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { ContactIntelligence } from "./ContactIntelligence";
 
 interface AllianceContact {
   id: string;
@@ -217,6 +218,10 @@ export function AllianceContactDetailsSheet({
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
             <TabsTrigger value="deals">Deals</TabsTrigger>
             <TabsTrigger value="activities">Activities</TabsTrigger>
+            <TabsTrigger value="intelligence" className="gap-1">
+              <Brain className="h-3 w-3" />
+              Intelligence
+            </TabsTrigger>
           </TabsList>
 
           <ScrollArea className="h-[calc(100vh-200px)]">
@@ -578,6 +583,14 @@ export function AllianceContactDetailsSheet({
                     ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="intelligence" className="p-6 mt-0">
+              <ContactIntelligence
+                contactId={contact.id}
+                contactName={contact.name}
+                organizationName={organization?.name}
+              />
             </TabsContent>
           </ScrollArea>
         </Tabs>
