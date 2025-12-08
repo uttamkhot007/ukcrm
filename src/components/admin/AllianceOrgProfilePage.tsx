@@ -63,6 +63,25 @@ interface AllianceUser {
   designation: string | null;
 }
 
+interface EmailSecurityStatus {
+  spf: {
+    status: 'valid' | 'invalid' | 'missing' | 'softfail';
+    record: string | null;
+    recommendation: string | null;
+  };
+  dkim: {
+    status: 'active' | 'inactive' | 'unknown';
+    selectors: string[];
+    recommendation: string | null;
+  };
+  dmarc: {
+    status: 'reject' | 'quarantine' | 'none' | 'missing';
+    policy: string | null;
+    recommendation: string | null;
+  };
+  overallScore: number;
+}
+
 interface ThreatIntelligence {
   breaches: Array<{
     name: string;
@@ -87,6 +106,7 @@ interface ThreatIntelligence {
     service: string;
     risk: string;
   }>;
+  emailSecurity?: EmailSecurityStatus;
   riskScore: number;
   lastUpdated: string;
 }
@@ -1519,6 +1539,64 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   )}
                 </Card>
 
+                {/* Key Contacts - Executive Roles */}
+                {(() => {
+                  const keyRoles = ['ciso', 'cio', 'cro', 'cto', 'ceo', 'it_manager', 'infosec_manager', 'security_manager', 'cyber_security_manager', 'it_head', 'security_head'];
+                  const keyContacts = contacts.filter(c => 
+                    c.role && keyRoles.includes(c.role.toLowerCase().replace(/[- ]/g, '_'))
+                  );
+                  
+                  if (keyContacts.length === 0) return null;
+                  
+                  return (
+                    <Card>
+                      <CardHeader className="flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Key Contacts
+                        </CardTitle>
+                        <Badge variant="secondary">{keyContacts.length} executive{keyContacts.length > 1 ? 's' : ''}</Badge>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {keyContacts.map(contact => (
+                            <div key={contact.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                              <Avatar className="h-10 w-10">
+                                {contact.profile_image_url && <AvatarImage src={contact.profile_image_url} alt={contact.name} />}
+                                <AvatarFallback className="text-xs">{contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <p className="font-medium text-sm truncate">{contact.name}</p>
+                                  {contact.notes?.includes('[CHAMPION]') && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                                </div>
+                                <p className="text-xs text-muted-foreground">{contact.designation || contact.role || 'No role'}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {contact.email && (
+                                    <a href={`mailto:${contact.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                                      <Mail className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                  {contact.phone && (
+                                    <a href={`tel:${contact.phone}`} className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Phone className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                  {contact.linkedin_url && (
+                                    <a href={contact.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 flex items-center gap-1">
+                                      <Linkedin className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
+
                 {/* Account Performance Metrics */}
                 <OrgAccountMetrics 
                   organizationId={organization.id} 
@@ -2418,6 +2496,114 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                     <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4 text-blue-500" />Exposed Services ({threatIntel.exposedServices.length})</CardTitle></CardHeader>
                       <CardContent><div className="space-y-1">{threatIntel.exposedServices.map((svc, i) => <div key={i} className="flex items-center justify-between text-sm"><span>Port {svc.port}: {svc.service}</span><Badge variant={svc.risk === 'Low' ? 'secondary' : 'destructive'}>{svc.risk}</Badge></div>)}</div></CardContent>
                     </Card>
+                    
+                    {/* Email Security Intelligence - SPF, DMARC, DKIM */}
+                    {threatIntel.emailSecurity && (
+                      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-blue-500" />
+                            Email Security Intelligence
+                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">Cyber Intel</Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {/* Overall Score */}
+                          <div className="flex items-center gap-4 p-3 bg-background/80 rounded-lg border">
+                            <div className="text-center">
+                              <span className={`text-3xl font-bold ${
+                                threatIntel.emailSecurity.overallScore >= 80 ? 'text-green-500' :
+                                threatIntel.emailSecurity.overallScore >= 60 ? 'text-yellow-500' :
+                                threatIntel.emailSecurity.overallScore >= 40 ? 'text-orange-500' : 'text-red-500'
+                              }`}>{threatIntel.emailSecurity.overallScore}</span>
+                              <p className="text-xs text-muted-foreground">Security Score</p>
+                            </div>
+                            <Progress value={threatIntel.emailSecurity.overallScore} className="flex-1" />
+                          </div>
+
+                          {/* SPF, DKIM, DMARC Status */}
+                          <div className="grid gap-3 md:grid-cols-3">
+                            {/* SPF */}
+                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-blue-500" />
+                                  SPF
+                                </span>
+                                <Badge className={
+                                  threatIntel.emailSecurity.spf.status === 'valid' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.spf.status === 'softfail' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
+                                  'bg-red-500/10 text-red-600 border-red-500/20'
+                                }>
+                                  {threatIntel.emailSecurity.spf.status}
+                                </Badge>
+                              </div>
+                              {threatIntel.emailSecurity.spf.record && (
+                                <p className="text-xs text-muted-foreground font-mono truncate" title={threatIntel.emailSecurity.spf.record}>
+                                  {threatIntel.emailSecurity.spf.record}
+                                </p>
+                              )}
+                              {threatIntel.emailSecurity.spf.recommendation && (
+                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.spf.recommendation}</p>
+                              )}
+                            </div>
+
+                            {/* DKIM */}
+                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium flex items-center gap-2">
+                                  <Key className="h-4 w-4 text-purple-500" />
+                                  DKIM
+                                </span>
+                                <Badge className={
+                                  threatIntel.emailSecurity.dkim.status === 'active' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.dkim.status === 'unknown' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
+                                  'bg-red-500/10 text-red-600 border-red-500/20'
+                                }>
+                                  {threatIntel.emailSecurity.dkim.status}
+                                </Badge>
+                              </div>
+                              {threatIntel.emailSecurity.dkim.selectors.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {threatIntel.emailSecurity.dkim.selectors.map((sel, i) => (
+                                    <Badge key={i} variant="secondary" className="text-xs">{sel}</Badge>
+                                  ))}
+                                </div>
+                              )}
+                              {threatIntel.emailSecurity.dkim.recommendation && (
+                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.dkim.recommendation}</p>
+                              )}
+                            </div>
+
+                            {/* DMARC */}
+                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium flex items-center gap-2">
+                                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                  DMARC
+                                </span>
+                                <Badge className={
+                                  threatIntel.emailSecurity.dmarc.status === 'reject' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.dmarc.status === 'quarantine' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
+                                  threatIntel.emailSecurity.dmarc.status === 'none' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                                  'bg-red-500/10 text-red-600 border-red-500/20'
+                                }>
+                                  {threatIntel.emailSecurity.dmarc.status}
+                                </Badge>
+                              </div>
+                              {threatIntel.emailSecurity.dmarc.policy && (
+                                <p className="text-xs text-muted-foreground font-mono truncate" title={threatIntel.emailSecurity.dmarc.policy}>
+                                  {threatIntel.emailSecurity.dmarc.policy}
+                                </p>
+                              )}
+                              {threatIntel.emailSecurity.dmarc.recommendation && (
+                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.dmarc.recommendation}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 ) : (
                   <Card className="p-8 text-center">
