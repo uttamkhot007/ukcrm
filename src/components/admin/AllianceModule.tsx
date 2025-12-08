@@ -568,7 +568,7 @@ export function AllianceModule() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
-                          {organizations.map(org => (
+                          {nonResellerOrgs.map(org => (
                             <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                           ))}
                         </SelectContent>

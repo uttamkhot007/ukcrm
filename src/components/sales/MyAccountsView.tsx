@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
@@ -15,8 +15,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { AllianceOrgProfilePage } from "@/components/admin/AllianceOrgProfilePage";
 import { OrgAccountMetrics } from "@/components/admin/OrgAccountMetrics";
+import { OrganizationFormFields, useOrganizationFormState } from "@/components/shared/OrganizationFormFields";
+import { toast } from "sonner";
 import {
   Building2,
   Search,
@@ -29,6 +38,7 @@ import {
   Globe,
   Phone,
   Mail,
+  Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -59,8 +69,13 @@ interface AllianceOrganization {
 export function MyAccountsView() {
   const [search, setSearch] = useState("");
   const [selectedOrg, setSelectedOrg] = useState<AllianceOrganization | null>(null);
+  const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const { user } = useAuth();
   const { currentTenant } = useTenant();
+  const queryClient = useQueryClient();
+  
+  // Organization form state
+  const { formData: orgFormData, updateFormData: updateOrgFormData, resetFormData: resetOrgForm } = useOrganizationFormState();
 
   // Recursively fetch all subordinates at all levels within tenant
   const { data: allUserIds, isLoading: loadingTeam } = useQuery({
@@ -221,6 +236,75 @@ export function MyAccountsView() {
     return { label: "Bronze", color: "bg-gradient-to-r from-orange-300 to-orange-500 text-orange-900" };
   };
 
+  // Organization mutation
+  const orgMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      organization_type?: string;
+      website?: string;
+      industry?: string;
+      address?: string;
+      logo_url?: string;
+      description?: string;
+      solutions?: string[] | null;
+      services?: string[] | null;
+    }) => {
+      // Try to fetch logo from website
+      let logoUrl = data.logo_url;
+      if (data.website && !logoUrl) {
+        try {
+          const domain = new URL(data.website).hostname;
+          logoUrl = `https://logo.clearbit.com/${domain}`;
+        } catch {}
+      }
+
+      const { error } = await supabase.from("alliance_organizations").insert({
+        tenant_id: currentTenant?.id,
+        created_by: user?.id!,
+        name: data.name,
+        organization_type: data.organization_type || null,
+        website: data.website || null,
+        industry: data.industry || null,
+        address: data.address || null,
+        logo_url: logoUrl || null,
+        description: data.description || null,
+        solutions: data.solutions,
+        services: data.services,
+        status: "active",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["my-accounts"] });
+      toast.success("Organization created successfully");
+      setIsOrgDialogOpen(false);
+      resetOrgForm();
+    },
+    onError: (error) => {
+      toast.error("Failed to create organization: " + error.message);
+    },
+  });
+
+  const handleOrgSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    const solutions = orgFormData.solutions ? orgFormData.solutions.split(",").map(s => s.trim()).filter(Boolean) : null;
+    const services = orgFormData.services ? orgFormData.services.split(",").map(s => s.trim()).filter(Boolean) : null;
+    
+    orgMutation.mutate({
+      name: orgFormData.name,
+      organization_type: orgFormData.organizationType === "none" ? undefined : orgFormData.organizationType,
+      website: orgFormData.website,
+      industry: orgFormData.industry === "none" ? undefined : orgFormData.industry,
+      address: orgFormData.address,
+      logo_url: orgFormData.logoUrl,
+      description: orgFormData.description,
+      solutions,
+      services,
+    });
+  };
+
   if (selectedOrg) {
     return (
       <AllianceOrgProfilePage
@@ -295,8 +379,8 @@ export function MyAccountsView() {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
+      {/* Search and Add Button */}
+      <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -306,6 +390,37 @@ export function MyAccountsView() {
             className="pl-10"
           />
         </div>
+        <Dialog open={isOrgDialogOpen} onOpenChange={(open) => {
+          setIsOrgDialogOpen(open);
+          if (!open) resetOrgForm();
+        }}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Organization
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Organization</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleOrgSubmit} className="space-y-4">
+              <OrganizationFormFields 
+                formData={orgFormData}
+                onChange={updateOrgFormData}
+                showExtendedFields={true}
+              />
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => { setIsOrgDialogOpen(false); resetOrgForm(); }}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={orgMutation.isPending}>
+                  {orgMutation.isPending ? "Creating..." : "Create Organization"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Accounts List */}

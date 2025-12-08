@@ -50,6 +50,9 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
     }
   };
 
+  // Show Quick Add only on funnel management (deals) tab
+  const showQuickActions = initialTab === "deals";
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -59,7 +62,7 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
             Manage your deals, leads, contacts, and quotations
           </p>
         </div>
-        <SalesQuickActions />
+        {showQuickActions && <SalesQuickActions />}
       </div>
 
       <div className="min-w-0">
