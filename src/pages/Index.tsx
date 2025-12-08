@@ -143,7 +143,7 @@ const Index = () => {
       case "renewals-subscriptions":
         return <RenewalsModule />;
       
-      // Employee Portal modules
+      // Employee Portal modules - Simplified structure
       case "employee-ai-assistant":
         return <EmployeeAIAssistant />;
       case "employee-attendance":
@@ -151,7 +151,11 @@ const Index = () => {
       case "employee-attendance-reports":
         return <AttendanceReports />;
       case "employee-requests":
-        return <RequestsModule />;
+        return <ExpenseModule />; // Combined: Leave, Travel, Expenses
+      case "employee-resources":
+        return <EmployeeResourcesModule />; // Includes docs, trainings, policies
+      case "employee-tasks":
+        return <EmployeeWorkflowsModule />; // Workflows & HR tasks
       case "employee-approvals":
         return <RequestApprovalModule />;
       case "employee-events":
@@ -164,8 +168,6 @@ const Index = () => {
         return <EmployeeWorkflowsModule />;
       case "employee-benefits":
         return <EmployeeBenefitsModule />;
-      case "employee-resources":
-        return <EmployeeResourcesModule />;
       case "employee-profile":
         return <EmployeeProfileModule />;
       case "employee-leave":

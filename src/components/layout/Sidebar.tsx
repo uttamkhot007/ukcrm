@@ -456,6 +456,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       });
 
       // Employee Portal
+      // Employee Portal - Simplified 7-item structure
       items.push({
         id: "employee",
         label: "Employee Portal",
@@ -463,17 +464,12 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-employee",
         children: [
           { id: "employee-organization", label: "My Organization", icon: Network },
+          { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
-          { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
-          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
-          { id: "employee-requests", label: "Leave Requests", icon: Calendar },
-          { id: "employee-expenses", label: "Expense & Travel", icon: Receipt },
-          { id: "employee-assets", label: "Assets & Inventory", icon: Package },
-          { id: "employee-projects", label: "Projects", icon: FolderKanban },
-          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
-          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
+          { id: "employee-requests", label: "Requests & Expenses", icon: Calendar },
+          { id: "employee-resources", label: "Resources & Events", icon: BookOpen },
+          { id: "employee-tasks", label: "Tasks & Approvals", icon: FileCheck },
         ],
       });
 
@@ -511,6 +507,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
       // If employee-only access, show ONLY employee portal and skip all other modules
       if (isEmployeeOnlyAccess) {
+        // Employee Portal - Simplified 7-item structure (employee-only access)
         items.push({
           id: "employee",
           label: "Employee Portal",
@@ -520,13 +517,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "employee-organization", label: "My Organization", icon: Network },
             { id: "employee-profile", label: "My Profile", icon: UserCircle },
             { id: "employee-attendance", label: "Attendance", icon: Clock },
-            { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
             { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-            { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
-            { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
-            { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
-            { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
-            { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
+            { id: "employee-requests", label: "Requests & Expenses", icon: Calendar },
+            { id: "employee-resources", label: "Resources & Events", icon: BookOpen },
+            { id: "employee-tasks", label: "Tasks & Approvals", icon: FileCheck },
           ],
         });
         return items; // Return early - no other modules for employee-only access
