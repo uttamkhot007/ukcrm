@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface KeyTeamMember {
+  name: string;
+  designation: string;
+  linkedin_url?: string;
+}
+
 interface CompanyInfo {
   name?: string;
   description?: string;
@@ -33,6 +39,10 @@ interface CompanyInfo {
   spf_status?: string;
   dmarc_status?: string;
   dkim_status?: string;
+  // New fields for reseller enrichment
+  key_team_members?: KeyTeamMember[];
+  offerings?: string[];
+  turnover?: string;
 }
 
 function extractDomain(url: string): string {
@@ -235,26 +245,38 @@ Search for and verify the following from public sources:
 4. LinkedIn company page URL (format: https://linkedin.com/company/xxx)
 5. Twitter/X profile URL  
 6. Facebook page URL
-7. Annual revenue or revenue range (in USD or local currency)
+7. Annual revenue or revenue range (in USD or local currency) - also called Turnover
 8. Number of employees (exact or range)
 9. Company type (Public, Private, Non-Profit, Government)
-10. Year founded
+10. Year founded / Year of Establishment
 11. Stock symbol and exchange (if publicly traded)
 12. Parent company (if subsidiary)
-13. Key products, services, or technologies
+13. Key products, services, or technologies - IMPORTANT for Resellers/MSSPs
+14. KEY TEAM MEMBERS - Find the leadership team including:
+    - CEO/MD/Founder with their LinkedIn profile
+    - CTO/Technical Head with their LinkedIn profile
+    - Sales Head/VP Sales with their LinkedIn profile
+    - Any other key executives
+15. OFFERINGS - List of services/products offered (especially for cybersecurity companies):
+    - Security solutions they provide
+    - Managed services (MSSP, SOC, etc.)
+    - Consulting services
+    - Products they resell/distribute
 
 Sources to check:
-- Official company website, about page, footer
-- LinkedIn company page
+- Official company website, about page, team page, leadership page, footer
+- LinkedIn company page and employee profiles
 - Wikipedia
 - Crunchbase
 - Bloomberg
 - Company annual reports
 - SEC filings (US), MCA filings (India)
 - Google search for "[company name] official"
+- Google search for "[company name] leadership team"
+- Google search for "[company name] services offerings"
 
 Return ONLY a JSON object with the verified fields. Use null for unverified fields.
-Focus especially on getting the EXACT OFFICIAL company name and PRIMARY industry.`;
+Focus especially on getting the EXACT OFFICIAL company name, PRIMARY industry, KEY TEAM MEMBERS, and OFFERINGS.`;
 
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -301,7 +323,7 @@ async function enrichWithAI(websiteData: Partial<CompanyInfo>, domain: string): 
   const publicInfo = await searchPublicInfo(companyName, domain);
   
   // Then use AI to compile and structure all information
-  const prompt = `You are an expert company research assistant. Your PRIMARY goal is to determine the EXACT OFFICIAL company name and industry.
+  const prompt = `You are an expert company research assistant. Your PRIMARY goal is to determine the EXACT OFFICIAL company name, industry, KEY TEAM MEMBERS, and OFFERINGS.
 
 Company Domain: ${domain}
 Initial Name Found: ${companyName}
@@ -318,6 +340,8 @@ CRITICAL RULES:
 1. The "name" field MUST be the OFFICIAL LEGAL company name (e.g., "Infosys Limited", "Tata Consultancy Services Limited", "Microsoft Corporation")
 2. The "industry" field MUST be the PRIMARY industry category
 3. Only include information you can verify
+4. For KEY TEAM MEMBERS - include at least the top 3-5 leadership members with their designations and LinkedIn URLs
+5. For OFFERINGS - list all services/products the company provides, especially security-related ones
 
 Return JSON format:
 {
@@ -327,6 +351,7 @@ Return JSON format:
   "company_type": "Public | Private | Non-Profit | Government",
   "founded_year": number or null,
   "annual_revenue": "Revenue estimate (e.g., $50M-$100M, $1B+, ₹5000 Cr)",
+  "turnover": "Same as annual_revenue, in local currency if available",
   "total_employees": number or null,
   "logo_url": "URL to company logo",
   "website_url": "Official website URL",
@@ -344,7 +369,13 @@ Return JSON format:
   "stock_exchange": "Stock exchange (NYSE, NASDAQ, BSE, NSE, etc.) or null",
   "parent_company": "Parent company name or null",
   "subsidiaries": ["List of known subsidiaries"],
-  "technologies_used": ["Technologies, products, or services"]
+  "technologies_used": ["Technologies, products, or services"],
+  "key_team_members": [
+    {"name": "Full Name", "designation": "CEO/MD/Founder", "linkedin_url": "https://linkedin.com/in/xxx"},
+    {"name": "Full Name", "designation": "CTO", "linkedin_url": "https://linkedin.com/in/xxx"},
+    {"name": "Full Name", "designation": "VP Sales", "linkedin_url": "https://linkedin.com/in/xxx"}
+  ],
+  "offerings": ["Service/Product 1", "Service/Product 2", "Managed SOC", "SIEM", "EDR", "Penetration Testing", etc.]
 }
 
 Respond ONLY with valid JSON, no markdown or explanation.`;
