@@ -209,15 +209,23 @@ export function OrganizationFormFields({
         url = "https://" + url;
       }
 
-      const { data, error } = await supabase.functions.invoke('enrich-company', {
-        body: { websiteUrl: url }
-      });
+      // Run both enrichments in parallel
+      const [companyResponse, executivesResponse] = await Promise.allSettled([
+        supabase.functions.invoke('enrich-company', { body: { websiteUrl: url } }),
+        supabase.functions.invoke('enrich-executives', { 
+          body: { 
+            company_name: formData.name || '', 
+            domain: url,
+            linkedin_url: formData.linkedinUrl 
+          } 
+        })
+      ]);
 
-      if (error) throw error;
+      const updates: Partial<OrganizationFormData> = {};
 
-      if (data?.data) {
-        const enrichedData = data.data;
-        const updates: Partial<OrganizationFormData> = {};
+      // Process company enrichment
+      if (companyResponse.status === 'fulfilled' && companyResponse.value.data?.data) {
+        const enrichedData = companyResponse.value.data.data;
         
         // Always update name if AI found it (more accurate)
         if (enrichedData.name) updates.name = enrichedData.name;
@@ -248,7 +256,7 @@ export function OrganizationFormFields({
         if (enrichedData.dmarc_status) updates.dmarcStatus = enrichedData.dmarc_status;
         if (enrichedData.dkim_status) updates.dkimStatus = enrichedData.dkim_status;
         
-        // New fields for reseller enrichment
+        // Key team members from company enrichment
         if (enrichedData.key_team_members && Array.isArray(enrichedData.key_team_members)) {
           updates.keyTeamMembers = enrichedData.key_team_members.map((m: any) => ({
             name: m.name || '',
@@ -258,13 +266,36 @@ export function OrganizationFormFields({
         }
         if (enrichedData.offerings && Array.isArray(enrichedData.offerings)) {
           updates.offerings = enrichedData.offerings;
-          // Also populate solutions field with offerings
           updates.solutions = enrichedData.offerings.join(', ');
         }
-
-        onChange(updates);
-        toast.success("Organization enriched with AI - Company details, team members & offerings detected");
       }
+
+      // Process executives enrichment (more focused on leadership roles)
+      if (executivesResponse.status === 'fulfilled' && executivesResponse.value.data?.executives) {
+        const executives = executivesResponse.value.data.executives;
+        if (Array.isArray(executives) && executives.length > 0) {
+          // Merge with existing key team members, avoiding duplicates
+          const existingMembers = updates.keyTeamMembers || [];
+          const existingNames = new Set(existingMembers.map(m => m.name.toLowerCase()));
+          
+          for (const exec of executives) {
+            if (!existingNames.has(exec.name.toLowerCase())) {
+              existingMembers.push({
+                name: exec.name,
+                designation: exec.designation,
+                linkedinUrl: exec.linkedin_url || '',
+              });
+              existingNames.add(exec.name.toLowerCase());
+            }
+          }
+          updates.keyTeamMembers = existingMembers;
+        }
+      }
+
+      onChange(updates);
+      
+      const execCount = updates.keyTeamMembers?.length || 0;
+      toast.success(`Organization enriched - Found ${execCount} key executives including CISO, CIO, IT Manager roles`);
     } catch (error: any) {
       console.error("Enrichment error:", error);
       toast.error("Failed to enrich organization: " + (error.message || "Unknown error"));

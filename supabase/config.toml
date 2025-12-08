@@ -50,3 +50,15 @@ verify_jwt = false
 
 [functions.enrich-offering]
 verify_jwt = true
+
+[functions.enrich-executives]
+verify_jwt = false
+
+[functions.support-assistant]
+verify_jwt = true
+
+[functions.contact-intelligence]
+verify_jwt = false
+
+[functions.verify-document]
+verify_jwt = true
