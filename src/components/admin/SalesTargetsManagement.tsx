@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Target, Plus, Edit, Trash2, Loader2, TrendingUp, TrendingDown, DollarSign, Award } from "lucide-react";
+import { Target, Plus, Edit, Trash2, Loader2, Award, RefreshCcw, Sparkles } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 
 interface SalesTarget {
@@ -47,6 +47,10 @@ interface SalesTarget {
   period_end: string;
   top_line_target: number;
   bottom_line_target: number;
+  fresh_sales_top_line: number;
+  fresh_sales_bottom_line: number;
+  renewal_top_line: number;
+  renewal_bottom_line: number;
   incentive_eligibility_cap: number;
   currency: string;
   notes: string | null;
@@ -75,8 +79,10 @@ export function SalesTargetsManagement() {
     target_period: "monthly",
     period_start: format(startOfMonth(new Date()), "yyyy-MM-dd"),
     period_end: format(endOfMonth(new Date()), "yyyy-MM-dd"),
-    top_line_target: "",
-    bottom_line_target: "",
+    fresh_sales_top_line: "",
+    fresh_sales_bottom_line: "",
+    renewal_top_line: "",
+    renewal_bottom_line: "",
     incentive_eligibility_cap: "",
     notes: "",
   });
@@ -85,7 +91,6 @@ export function SalesTargetsManagement() {
   const { data: salesMembers = [], isLoading: membersLoading } = useQuery({
     queryKey: ["sales-team-profiles", currentTenant?.id],
     queryFn: async () => {
-      // First get user_ids from user_teams with sales team
       const { data: teamData, error: teamError } = await supabase
         .from("user_teams")
         .select("user_id")
@@ -96,7 +101,6 @@ export function SalesTargetsManagement() {
       const userIds = teamData?.map(t => t.user_id) || [];
       if (userIds.length === 0) return [];
 
-      // Then fetch profiles for those users
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, full_name, email, avatar_url, job_title")
@@ -129,16 +133,16 @@ export function SalesTargetsManagement() {
     enabled: !!user,
   });
 
-  // Fetch current period achievements
-  const { data: achievements = {} } = useQuery({
-    queryKey: ["sales-achievements", currentTenant?.id],
+  // Fetch current period achievements by deal type
+  const { data: achievements = { fresh: {}, renewal: {} } } = useQuery({
+    queryKey: ["sales-achievements-by-type", currentTenant?.id],
     queryFn: async () => {
       const monthStart = startOfMonth(new Date());
       const monthEnd = endOfMonth(new Date());
 
       let query = supabase
         .from("deals")
-        .select("value, user_id, assigned_to")
+        .select("value, user_id, assigned_to, deal_type")
         .eq("stage", "closed_won")
         .gte("actual_close_date", monthStart.toISOString().split("T")[0])
         .lte("actual_close_date", monthEnd.toISOString().split("T")[0]);
@@ -150,14 +154,21 @@ export function SalesTargetsManagement() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Group by user
-      const achievementMap: Record<string, number> = {};
+      const freshMap: Record<string, number> = {};
+      const renewalMap: Record<string, number> = {};
+      
       (data || []).forEach(deal => {
         const userId = deal.assigned_to || deal.user_id;
-        achievementMap[userId] = (achievementMap[userId] || 0) + (Number(deal.value) || 0);
+        const value = Number(deal.value) || 0;
+        
+        if (deal.deal_type === "renewal") {
+          renewalMap[userId] = (renewalMap[userId] || 0) + value;
+        } else {
+          freshMap[userId] = (freshMap[userId] || 0) + value;
+        }
       });
 
-      return achievementMap;
+      return { fresh: freshMap, renewal: renewalMap };
     },
     enabled: !!user,
   });
@@ -165,14 +176,23 @@ export function SalesTargetsManagement() {
   // Create/Update target mutation
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const freshTopLine = parseFloat(data.fresh_sales_top_line) || 0;
+      const freshBottomLine = parseFloat(data.fresh_sales_bottom_line) || 0;
+      const renewalTopLine = parseFloat(data.renewal_top_line) || 0;
+      const renewalBottomLine = parseFloat(data.renewal_bottom_line) || 0;
+
       const payload = {
         user_id: data.user_id,
         tenant_id: currentTenant?.id,
         target_period: data.target_period,
         period_start: data.period_start,
         period_end: data.period_end,
-        top_line_target: parseFloat(data.top_line_target) || 0,
-        bottom_line_target: parseFloat(data.bottom_line_target) || 0,
+        fresh_sales_top_line: freshTopLine,
+        fresh_sales_bottom_line: freshBottomLine,
+        renewal_top_line: renewalTopLine,
+        renewal_bottom_line: renewalBottomLine,
+        top_line_target: freshTopLine + renewalTopLine,
+        bottom_line_target: freshBottomLine + renewalBottomLine,
         incentive_eligibility_cap: parseFloat(data.incentive_eligibility_cap) || 0,
         notes: data.notes || null,
         created_by: user?.id,
@@ -232,8 +252,10 @@ export function SalesTargetsManagement() {
         target_period: target.target_period,
         period_start: target.period_start,
         period_end: target.period_end,
-        top_line_target: target.top_line_target.toString(),
-        bottom_line_target: target.bottom_line_target.toString(),
+        fresh_sales_top_line: target.fresh_sales_top_line.toString(),
+        fresh_sales_bottom_line: target.fresh_sales_bottom_line.toString(),
+        renewal_top_line: target.renewal_top_line.toString(),
+        renewal_bottom_line: target.renewal_bottom_line.toString(),
         incentive_eligibility_cap: target.incentive_eligibility_cap.toString(),
         notes: target.notes || "",
       });
@@ -252,8 +274,10 @@ export function SalesTargetsManagement() {
       target_period: "monthly",
       period_start: format(startOfMonth(new Date()), "yyyy-MM-dd"),
       period_end: format(endOfMonth(new Date()), "yyyy-MM-dd"),
-      top_line_target: "",
-      bottom_line_target: "",
+      fresh_sales_top_line: "",
+      fresh_sales_bottom_line: "",
+      renewal_top_line: "",
+      renewal_bottom_line: "",
       incentive_eligibility_cap: "",
       notes: "",
     });
@@ -298,10 +322,10 @@ export function SalesTargetsManagement() {
     };
   };
 
-  const getAchievementPercentage = (target: SalesTarget) => {
-    const achieved = achievements[target.user_id] || 0;
-    return Math.min((achieved / target.top_line_target) * 100, 150);
-  };
+  // Calculate totals
+  const totalFreshTarget = targets.reduce((sum, t) => sum + (t.fresh_sales_top_line || 0), 0);
+  const totalRenewalTarget = targets.reduce((sum, t) => sum + (t.renewal_top_line || 0), 0);
+  const totalIncentiveCap = targets.reduce((sum, t) => sum + (t.incentive_eligibility_cap || 0), 0);
 
   if (membersLoading || targetsLoading) {
     return (
@@ -322,7 +346,7 @@ export function SalesTargetsManagement() {
             Sales Targets
           </h3>
           <p className="text-sm text-muted-foreground">
-            Set top line, bottom line & incentive targets for sales team members
+            Set Fresh Sales & Renewal targets (Top Line, Bottom Line) for sales team members
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -344,18 +368,16 @@ export function SalesTargetsManagement() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total Top Line Target</p>
-                <p className="text-lg font-bold">
-                  {formatCurrency(targets.reduce((sum, t) => sum + t.top_line_target, 0))}
-                </p>
+                <p className="text-xs text-muted-foreground">Fresh Sales Target</p>
+                <p className="text-lg font-bold">{formatCurrency(totalFreshTarget)}</p>
               </div>
             </div>
           </CardContent>
@@ -364,13 +386,24 @@ export function SalesTargetsManagement() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <TrendingDown className="h-5 w-5 text-blue-600" />
+                <RefreshCcw className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total Bottom Line Target</p>
-                <p className="text-lg font-bold">
-                  {formatCurrency(targets.reduce((sum, t) => sum + t.bottom_line_target, 0))}
-                </p>
+                <p className="text-xs text-muted-foreground">Renewal Target</p>
+                <p className="text-lg font-bold">{formatCurrency(totalRenewalTarget)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                <Target className="h-5 w-5 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Total Top Line</p>
+                <p className="text-lg font-bold">{formatCurrency(totalFreshTarget + totalRenewalTarget)}</p>
               </div>
             </div>
           </CardContent>
@@ -383,9 +416,7 @@ export function SalesTargetsManagement() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Incentive Cap</p>
-                <p className="text-lg font-bold">
-                  {formatCurrency(targets.reduce((sum, t) => sum + t.incentive_eligibility_cap, 0))}
-                </p>
+                <p className="text-lg font-bold">{formatCurrency(totalIncentiveCap)}</p>
               </div>
             </div>
           </CardContent>
@@ -405,92 +436,132 @@ export function SalesTargetsManagement() {
               No targets set for this period. Click "Add Target" to create one.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Sales Person</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead className="text-right">Top Line</TableHead>
-                  <TableHead className="text-right">Bottom Line</TableHead>
-                  <TableHead className="text-right">Incentive Cap</TableHead>
-                  <TableHead>Achievement</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {targets.map(target => {
-                  const avatar = getMemberAvatar(target.user_id);
-                  const achievementPct = getAchievementPercentage(target);
-                  const achieved = achievements[target.user_id] || 0;
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Sales Person</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Sparkles className="h-3 w-3 text-emerald-600" />
+                        Fresh (Top/Bottom)
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <RefreshCcw className="h-3 w-3 text-blue-600" />
+                        Renewal (Top/Bottom)
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right">Incentive Cap</TableHead>
+                    <TableHead>Fresh Achievement</TableHead>
+                    <TableHead>Renewal Achievement</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {targets.map(target => {
+                    const avatar = getMemberAvatar(target.user_id);
+                    const freshAchieved = achievements.fresh[target.user_id] || 0;
+                    const renewalAchieved = achievements.renewal[target.user_id] || 0;
+                    const freshPct = target.fresh_sales_top_line > 0 
+                      ? Math.min((freshAchieved / target.fresh_sales_top_line) * 100, 150) 
+                      : 0;
+                    const renewalPct = target.renewal_top_line > 0 
+                      ? Math.min((renewalAchieved / target.renewal_top_line) * 100, 150) 
+                      : 0;
 
-                  return (
-                    <TableRow key={target.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={avatar.url || undefined} />
-                            <AvatarFallback className="text-xs">{avatar.initials}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{getMemberName(target.user_id)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(target.period_start), "MMM d")} - {format(new Date(target.period_end), "MMM d, yyyy")}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(target.top_line_target)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(target.bottom_line_target)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(target.incentive_eligibility_cap)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1 min-w-[120px]">
-                          <div className="flex justify-between text-xs">
-                            <span>{formatCurrency(achieved)}</span>
-                            <Badge 
-                              variant={achievementPct >= 100 ? "default" : achievementPct >= 75 ? "secondary" : "outline"}
-                            >
-                              {achievementPct.toFixed(0)}%
-                            </Badge>
+                    return (
+                      <TableRow key={target.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={avatar.url || undefined} />
+                              <AvatarFallback className="text-xs">{avatar.initials}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{getMemberName(target.user_id)}</span>
                           </div>
-                          <Progress value={Math.min(achievementPct, 100)} className="h-2" />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(target)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteMutation.mutate(target.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(target.period_start), "MMM d")} - {format(new Date(target.period_end), "MMM d")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="text-sm">
+                            <span className="font-medium">{formatCurrency(target.fresh_sales_top_line)}</span>
+                            <span className="text-muted-foreground"> / {formatCurrency(target.fresh_sales_bottom_line)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="text-sm">
+                            <span className="font-medium">{formatCurrency(target.renewal_top_line)}</span>
+                            <span className="text-muted-foreground"> / {formatCurrency(target.renewal_bottom_line)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(target.incentive_eligibility_cap)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1 min-w-[100px]">
+                            <div className="flex justify-between text-xs">
+                              <span>{formatCurrency(freshAchieved)}</span>
+                              <Badge 
+                                variant={freshPct >= 100 ? "default" : freshPct >= 75 ? "secondary" : "outline"}
+                                className="text-[10px] px-1"
+                              >
+                                {freshPct.toFixed(0)}%
+                              </Badge>
+                            </div>
+                            <Progress value={Math.min(freshPct, 100)} className="h-1.5" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1 min-w-[100px]">
+                            <div className="flex justify-between text-xs">
+                              <span>{formatCurrency(renewalAchieved)}</span>
+                              <Badge 
+                                variant={renewalPct >= 100 ? "default" : renewalPct >= 75 ? "secondary" : "outline"}
+                                className="text-[10px] px-1"
+                              >
+                                {renewalPct.toFixed(0)}%
+                              </Badge>
+                            </div>
+                            <Progress value={Math.min(renewalPct, 100)} className="h-1.5" />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDialog(target)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteMutation.mutate(target.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editingTarget ? "Edit Sales Target" : "Add Sales Target"}
@@ -553,24 +624,60 @@ export function SalesTargetsManagement() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Top Line Target (Revenue)</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 500000"
-                value={formData.top_line_target}
-                onChange={(e) => setFormData(prev => ({ ...prev, top_line_target: e.target.value }))}
-              />
+            {/* Fresh Sales Targets */}
+            <div className="border rounded-lg p-3 space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
+                <Label className="font-medium">Fresh Sales Targets</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Top Line (Revenue)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 300000"
+                    value={formData.fresh_sales_top_line}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fresh_sales_top_line: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Bottom Line (Profit)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 60000"
+                    value={formData.fresh_sales_bottom_line}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fresh_sales_bottom_line: e.target.value }))}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Bottom Line Target (Profit)</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 100000"
-                value={formData.bottom_line_target}
-                onChange={(e) => setFormData(prev => ({ ...prev, bottom_line_target: e.target.value }))}
-              />
+            {/* Renewal Targets */}
+            <div className="border rounded-lg p-3 space-y-3 bg-blue-50/50 dark:bg-blue-950/20">
+              <div className="flex items-center gap-2">
+                <RefreshCcw className="h-4 w-4 text-blue-600" />
+                <Label className="font-medium">Renewal Targets</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Top Line (Revenue)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 200000"
+                    value={formData.renewal_top_line}
+                    onChange={(e) => setFormData(prev => ({ ...prev, renewal_top_line: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Bottom Line (Profit)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 40000"
+                    value={formData.renewal_bottom_line}
+                    onChange={(e) => setFormData(prev => ({ ...prev, renewal_bottom_line: e.target.value }))}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -598,7 +705,7 @@ export function SalesTargetsManagement() {
             </Button>
             <Button
               onClick={() => saveMutation.mutate(formData)}
-              disabled={!formData.user_id || !formData.top_line_target || saveMutation.isPending}
+              disabled={!formData.user_id || (!formData.fresh_sales_top_line && !formData.renewal_top_line) || saveMutation.isPending}
             >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingTarget ? "Update Target" : "Create Target"}

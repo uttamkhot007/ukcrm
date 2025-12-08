@@ -6259,11 +6259,15 @@ export type Database = {
           created_at: string
           created_by: string | null
           currency: string | null
+          fresh_sales_bottom_line: number
+          fresh_sales_top_line: number
           id: string
           incentive_eligibility_cap: number
           notes: string | null
           period_end: string
           period_start: string
+          renewal_bottom_line: number
+          renewal_top_line: number
           target_period: string
           tenant_id: string | null
           top_line_target: number
@@ -6276,11 +6280,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          fresh_sales_bottom_line?: number
+          fresh_sales_top_line?: number
           id?: string
           incentive_eligibility_cap?: number
           notes?: string | null
           period_end: string
           period_start: string
+          renewal_bottom_line?: number
+          renewal_top_line?: number
           target_period?: string
           tenant_id?: string | null
           top_line_target?: number
@@ -6293,11 +6301,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          fresh_sales_bottom_line?: number
+          fresh_sales_top_line?: number
           id?: string
           incentive_eligibility_cap?: number
           notes?: string | null
           period_end?: string
           period_start?: string
+          renewal_bottom_line?: number
+          renewal_top_line?: number
           target_period?: string
           tenant_id?: string | null
           top_line_target?: number
