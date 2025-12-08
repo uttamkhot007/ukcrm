@@ -73,30 +73,91 @@ export function ContactsView() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Fetch alliance organizations where user is account manager
-  const { data: myAllianceOrgs } = useQuery({
-    queryKey: ["my-alliance-orgs", user?.id],
+  // Recursively fetch all subordinates at all levels within tenant
+  const { data: allUserIds } = useQuery({
+    queryKey: ["contacts-user-ids", user?.id, currentTenant?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("alliance_organizations")
-        .select("id")
-        .or(`account_manager_id.eq.${user.id},technical_account_manager_id.eq.${user.id}`);
+      if (!user?.id) return [user?.id];
+      
+      // Fetch all profiles within tenant to build hierarchy
+      let query = supabase
+        .from("profiles")
+        .select("user_id, manager_id, tenant_id");
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+      
+      const { data: allProfiles, error } = await query;
+      
       if (error) throw error;
-      return data?.map(o => o.id) || [];
+      if (!allProfiles) return [user.id];
+      
+      // Recursively find all subordinates
+      const findAllSubordinates = (managerId: string, visited = new Set<string>()): string[] => {
+        if (visited.has(managerId)) return [];
+        visited.add(managerId);
+        
+        const directReports = allProfiles.filter(p => p.manager_id === managerId);
+        let allSubordinates: string[] = [];
+        
+        for (const report of directReports) {
+          allSubordinates.push(report.user_id);
+          const nestedSubordinates = findAllSubordinates(report.user_id, visited);
+          allSubordinates = [...allSubordinates, ...nestedSubordinates];
+        }
+        
+        return allSubordinates;
+      };
+      
+      // Include current user + all subordinates
+      return [user.id, ...findAllSubordinates(user.id)];
     },
     enabled: !!user?.id,
   });
 
-  const { data: contacts, isLoading } = useQuery({
-    queryKey: ["contacts-with-relations", myAllianceOrgs],
+  // Fetch alliance organizations where user or any subordinate is account manager
+  const { data: myAllianceOrgs } = useQuery({
+    queryKey: ["my-alliance-orgs", allUserIds, currentTenant?.id],
     queryFn: async () => {
-      // First, get all regular contacts created by the user
-      const { data: regularContacts, error: regularError } = await supabase
-        .from("contacts")
-        .select("*, deals:deals(id), leads:leads(id)")
-        .order("created_at", { ascending: false });
-      if (regularError) throw regularError;
+      if (!allUserIds?.length) return [];
+      
+      // Build OR condition for user and all subordinates
+      const conditions = allUserIds.map(id => 
+        `account_manager_id.eq.${id},technical_account_manager_id.eq.${id}`
+      ).join(',');
+      
+      let query = supabase
+        .from("alliance_organizations")
+        .select("id")
+        .or(conditions);
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data?.map(o => o.id) || [];
+    },
+    enabled: !!allUserIds?.length,
+  });
+
+  const { data: contacts, isLoading } = useQuery({
+    queryKey: ["contacts-with-relations", myAllianceOrgs, allUserIds],
+    queryFn: async () => {
+      // First, get all regular contacts created by user or subordinates
+      let regularContacts: ContactWithRelations[] = [];
+      if (allUserIds?.length) {
+        const { data, error } = await supabase
+          .from("contacts")
+          .select("*, deals:deals(id), leads:leads(id)")
+          .in("user_id", allUserIds)
+          .order("created_at", { ascending: false });
+        if (!error && data) {
+          regularContacts = data as ContactWithRelations[];
+        }
+      }
 
       // If user has alliance orgs, also fetch alliance contacts linked to those orgs
       let allianceContacts: ContactWithRelations[] = [];
@@ -112,8 +173,49 @@ export function ContactsView() {
         }
       }
 
+      // Also fetch alliance_users (contacts from Alliance module) for the alliance orgs
+      let allianceUserContacts: ContactWithRelations[] = [];
+      if (myAllianceOrgs && myAllianceOrgs.length > 0) {
+        const { data: allianceUsers, error: auError } = await supabase
+          .from("alliance_users")
+          .select("*")
+          .in("organization_id", myAllianceOrgs)
+          .order("created_at", { ascending: false });
+        
+        if (!auError && allianceUsers) {
+          // Transform alliance_users to match ContactWithRelations structure
+          allianceUserContacts = allianceUsers.map(au => ({
+            id: au.id,
+            name: au.name,
+            email: au.email,
+            phone: au.phone,
+            company: null, // Will be populated from org
+            designation: au.designation,
+            notes: au.notes,
+            user_id: au.created_by,
+            tenant_id: au.tenant_id,
+            created_at: au.created_at,
+            updated_at: au.updated_at,
+            alliance_organization_id: au.organization_id,
+            alliance_user_id: au.id,
+            avatar_url: au.profile_image_url,
+            department: null,
+            engagement_score: null,
+            is_champion: null,
+            last_contacted_at: null,
+            linkedin_url: au.linkedin_url,
+            reporting_manager_id: null,
+            role_in_deal: au.role,
+            seniority_level: null,
+            source_type: 'alliance',
+            deals: [],
+            leads: [],
+          } as ContactWithRelations));
+        }
+      }
+
       // Merge and deduplicate by id
-      const allContacts = [...(regularContacts || []), ...allianceContacts];
+      const allContacts = [...regularContacts, ...allianceContacts, ...allianceUserContacts];
       const uniqueContacts = Array.from(new Map(allContacts.map(c => [c.id, c])).values());
       
       return uniqueContacts as ContactWithRelations[];
