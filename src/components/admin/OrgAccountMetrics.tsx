@@ -28,9 +28,9 @@ const TIER_THRESHOLDS = {
 
 const DEAL_STAGES = {
   pipeline: { label: "Pipeline", color: "bg-blue-500" },
-  qualified: { label: "Qualified", color: "bg-cyan-500" },
-  proposal: { label: "Proposal", color: "bg-purple-500" },
-  negotiation: { label: "Negotiation", color: "bg-orange-500" },
+  upside: { label: "Upside", color: "bg-cyan-500" },
+  strong_upside: { label: "Strong Upside", color: "bg-purple-500" },
+  commit: { label: "Commit", color: "bg-orange-500" },
   closed_won: { label: "Won", color: "bg-green-500" },
   closed_lost: { label: "Lost", color: "bg-red-500" },
 };
