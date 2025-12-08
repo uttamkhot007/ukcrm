@@ -1282,6 +1282,207 @@ export type Database = {
           },
         ]
       }
+      customer_organization_access: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary_contact: boolean | null
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary_contact?: boolean | null
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary_contact?: boolean | null
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_organization_access_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_support_ticket_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_support_ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "customer_support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_support_ticket_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_support_ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "customer_support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_support_tickets: {
+        Row: {
+          assigned_team: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          expected_response_hours: number | null
+          id: string
+          impact: string | null
+          issue_type: string | null
+          organization_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          sales_category:
+            | Database["public"]["Enums"]["sales_query_category"]
+            | null
+          severity: Database["public"]["Enums"]["support_ticket_severity"]
+          sla_deadline: string | null
+          solution_service: string | null
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          submitted_by: string
+          tenant_id: string | null
+          ticket_number: string
+          ticket_type: Database["public"]["Enums"]["support_ticket_type"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_team?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          expected_response_hours?: number | null
+          id?: string
+          impact?: string | null
+          issue_type?: string | null
+          organization_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          sales_category?:
+            | Database["public"]["Enums"]["sales_query_category"]
+            | null
+          severity?: Database["public"]["Enums"]["support_ticket_severity"]
+          sla_deadline?: string | null
+          solution_service?: string | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          submitted_by: string
+          tenant_id?: string | null
+          ticket_number: string
+          ticket_type: Database["public"]["Enums"]["support_ticket_type"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_team?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          expected_response_hours?: number | null
+          id?: string
+          impact?: string | null
+          issue_type?: string | null
+          organization_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          sales_category?:
+            | Database["public"]["Enums"]["sales_query_category"]
+            | null
+          severity?: Database["public"]["Enums"]["support_ticket_severity"]
+          sla_deadline?: string | null
+          solution_service?: string | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          submitted_by?: string
+          tenant_id?: string | null
+          ticket_number?: string
+          ticket_type?: Database["public"]["Enums"]["support_ticket_type"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_support_tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_activities: {
         Row: {
           activity_type: string
@@ -4026,6 +4227,108 @@ export type Database = {
           },
         ]
       }
+      organization_support_config: {
+        Row: {
+          created_at: string
+          id: string
+          msa_document_url: string | null
+          organization_id: string
+          sla_document_url: string | null
+          support_end_date: string | null
+          support_level: string | null
+          support_start_date: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          msa_document_url?: string | null
+          organization_id: string
+          sla_document_url?: string | null
+          support_end_date?: string | null
+          support_level?: string | null
+          support_start_date?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          msa_document_url?: string | null
+          organization_id?: string
+          sla_document_url?: string | null
+          support_end_date?: string | null
+          support_level?: string | null
+          support_start_date?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_support_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_support_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_support_solutions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          issue_types: string[] | null
+          organization_id: string
+          service_name: string | null
+          solution_name: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          issue_types?: string[] | null
+          organization_id: string
+          service_name?: string | null
+          solution_name: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          issue_types?: string[] | null
+          organization_id?: string
+          service_name?: string | null
+          solution_name?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_support_solutions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_support_solutions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_tasks: {
         Row: {
           assigned_to: string | null
@@ -5453,6 +5756,75 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sops_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_escalation_matrix: {
+        Row: {
+          created_at: string
+          id: string
+          level_1_email: string | null
+          level_1_response_hours: number | null
+          level_1_user_id: string | null
+          level_2_email: string | null
+          level_2_response_hours: number | null
+          level_2_user_id: string | null
+          level_3_email: string | null
+          level_3_response_hours: number | null
+          level_3_user_id: string | null
+          organization_id: string
+          solution_name: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level_1_email?: string | null
+          level_1_response_hours?: number | null
+          level_1_user_id?: string | null
+          level_2_email?: string | null
+          level_2_response_hours?: number | null
+          level_2_user_id?: string | null
+          level_3_email?: string | null
+          level_3_response_hours?: number | null
+          level_3_user_id?: string | null
+          organization_id: string
+          solution_name: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level_1_email?: string | null
+          level_1_response_hours?: number | null
+          level_1_user_id?: string | null
+          level_2_email?: string | null
+          level_2_response_hours?: number | null
+          level_2_user_id?: string | null
+          level_3_email?: string | null
+          level_3_response_hours?: number | null
+          level_3_user_id?: string | null
+          organization_id?: string
+          solution_name?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_escalation_matrix_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_escalation_matrix_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -7241,12 +7613,24 @@ export type Database = {
         | "new_hardware"
         | "hardware_problem"
         | "other"
+      sales_query_category:
+        | "license_issue"
+        | "new_solution_required"
+        | "additional_licenses_required"
       sales_sub_team:
         | "commercial"
         | "enterprise_govt"
         | "bfsi"
         | "international"
         | "alliance_india"
+      support_ticket_severity: "low" | "medium" | "high" | "critical"
+      support_ticket_status:
+        | "open"
+        | "in_progress"
+        | "waiting_on_customer"
+        | "resolved"
+        | "closed"
+      support_ticket_type: "sales_query" | "technical_issue"
       team_type:
         | "sales"
         | "presales"
@@ -7573,6 +7957,11 @@ export const Constants = {
         "hardware_problem",
         "other",
       ],
+      sales_query_category: [
+        "license_issue",
+        "new_solution_required",
+        "additional_licenses_required",
+      ],
       sales_sub_team: [
         "commercial",
         "enterprise_govt",
@@ -7580,6 +7969,15 @@ export const Constants = {
         "international",
         "alliance_india",
       ],
+      support_ticket_severity: ["low", "medium", "high", "critical"],
+      support_ticket_status: [
+        "open",
+        "in_progress",
+        "waiting_on_customer",
+        "resolved",
+        "closed",
+      ],
+      support_ticket_type: ["sales_query", "technical_issue"],
       team_type: [
         "sales",
         "presales",
