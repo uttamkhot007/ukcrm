@@ -19,6 +19,7 @@ import {
   Zap, Tag, History, Star, Phone, Mail, X, Plus 
 } from "lucide-react";
 import { toast } from "sonner";
+import { AuditInfo } from "@/components/shared/AuditInfo";
 
 interface TicketDetailsSheetProps {
   ticketId: string | null;
@@ -518,6 +519,17 @@ export function TicketDetailsSheet({ ticketId, open, onOpenChange }: TicketDetai
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Audit Information */}
+                <div className="mt-6">
+                  <AuditInfo
+                    createdAt={ticket?.created_at}
+                    updatedAt={ticket?.updated_at}
+                    createdBy={ticket?.created_by}
+                    updatedBy={(ticket as any)?.updated_by}
+                    compact
+                  />
                 </div>
               </TabsContent>
             </ScrollArea>

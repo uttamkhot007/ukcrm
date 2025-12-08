@@ -216,6 +216,7 @@ export type Database = {
           technical_account_manager_id: string | null
           tenant_id: string | null
           updated_at: string
+          updated_by: string | null
           website: string | null
         }
         Insert: {
@@ -239,6 +240,7 @@ export type Database = {
           technical_account_manager_id?: string | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
           website?: string | null
         }
         Update: {
@@ -262,6 +264,7 @@ export type Database = {
           technical_account_manager_id?: string | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
           website?: string | null
         }
         Relationships: [
@@ -295,6 +298,7 @@ export type Database = {
           status: string | null
           tenant_id: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           anniversary_date?: string | null
@@ -316,6 +320,7 @@ export type Database = {
           status?: string | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           anniversary_date?: string | null
@@ -337,6 +342,7 @@ export type Database = {
           status?: string | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -590,6 +596,7 @@ export type Database = {
           status: string
           tenant_id: string | null
           updated_at: string
+          updated_by: string | null
           warranty_expiry: string | null
         }
         Insert: {
@@ -613,6 +620,7 @@ export type Database = {
           status?: string
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
           warranty_expiry?: string | null
         }
         Update: {
@@ -636,6 +644,7 @@ export type Database = {
           status?: string
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
           warranty_expiry?: string | null
         }
         Relationships: [
@@ -1108,6 +1117,7 @@ export type Database = {
           avatar_url: string | null
           company: string | null
           created_at: string
+          created_by: string | null
           department: string | null
           designation: string | null
           email: string | null
@@ -1125,6 +1135,7 @@ export type Database = {
           source_type: string | null
           tenant_id: string | null
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
@@ -1133,6 +1144,7 @@ export type Database = {
           avatar_url?: string | null
           company?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string | null
           designation?: string | null
           email?: string | null
@@ -1150,6 +1162,7 @@ export type Database = {
           source_type?: string | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
@@ -1158,6 +1171,7 @@ export type Database = {
           avatar_url?: string | null
           company?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string | null
           designation?: string | null
           email?: string | null
@@ -1175,6 +1189,7 @@ export type Database = {
           source_type?: string | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1537,6 +1552,7 @@ export type Database = {
             | null
           contact_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           expected_close_date: string | null
           id: string
@@ -1547,6 +1563,7 @@ export type Database = {
           tenant_id: string | null
           title: string
           updated_at: string
+          updated_by: string | null
           user_id: string
           value: number
         }
@@ -1558,6 +1575,7 @@ export type Database = {
             | null
           contact_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
@@ -1568,6 +1586,7 @@ export type Database = {
           tenant_id?: string | null
           title: string
           updated_at?: string
+          updated_by?: string | null
           user_id: string
           value?: number
         }
@@ -1579,6 +1598,7 @@ export type Database = {
             | null
           contact_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
@@ -1589,6 +1609,7 @@ export type Database = {
           tenant_id?: string | null
           title?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
           value?: number
         }
@@ -2988,6 +3009,7 @@ export type Database = {
           terms: string | null
           total: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           amount_paid?: number | null
@@ -3011,6 +3033,7 @@ export type Database = {
           terms?: string | null
           total?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           amount_paid?: number | null
@@ -3034,6 +3057,7 @@ export type Database = {
           terms?: string | null
           total?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -3064,6 +3088,7 @@ export type Database = {
           assigned_to: string | null
           contact_id: string | null
           created_at: string
+          created_by: string | null
           estimated_value: number | null
           id: string
           notes: string | null
@@ -3072,12 +3097,14 @@ export type Database = {
           tenant_id: string | null
           title: string
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
           assigned_to?: string | null
           contact_id?: string | null
           created_at?: string
+          created_by?: string | null
           estimated_value?: number | null
           id?: string
           notes?: string | null
@@ -3086,12 +3113,14 @@ export type Database = {
           tenant_id?: string | null
           title: string
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
           assigned_to?: string | null
           contact_id?: string | null
           created_at?: string
+          created_by?: string | null
           estimated_value?: number | null
           id?: string
           notes?: string | null
@@ -3100,6 +3129,7 @@ export type Database = {
           tenant_id?: string | null
           title?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -5293,6 +5323,7 @@ export type Database = {
           tags: string[] | null
           tenant_id: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           actual_end_date?: string | null
@@ -5317,6 +5348,7 @@ export type Database = {
           tags?: string[] | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           actual_end_date?: string | null
@@ -5341,6 +5373,7 @@ export type Database = {
           tags?: string[] | null
           tenant_id?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -7158,6 +7191,7 @@ export type Database = {
           ticket_number: string
           title: string
           updated_at: string
+          updated_by: string | null
           watchers: string[] | null
         }
         Insert: {
@@ -7185,6 +7219,7 @@ export type Database = {
           ticket_number: string
           title: string
           updated_at?: string
+          updated_by?: string | null
           watchers?: string[] | null
         }
         Update: {
@@ -7212,6 +7247,7 @@ export type Database = {
           ticket_number?: string
           title?: string
           updated_at?: string
+          updated_by?: string | null
           watchers?: string[] | null
         }
         Relationships: [
