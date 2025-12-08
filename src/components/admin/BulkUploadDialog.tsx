@@ -118,14 +118,25 @@ export function BulkUploadDialog({ open, onOpenChange, uploadType, onComplete }:
 
       // Fetch existing data for duplicate detection
       let existingNames = new Set<string>();
+      let existingEmails = new Set<string>();
       
       if (uploadType === "alliance-contacts") {
-        const { data } = await supabase
+        // Fetch from both alliance_users and contacts for email duplicate detection
+        const { data: auData } = await supabase
           .from("alliance_users")
           .select("name, email")
           .eq("tenant_id", currentTenant?.id);
-        data?.forEach(item => {
+        auData?.forEach(item => {
           if (item.name) existingNames.add(item.name.toLowerCase());
+          if (item.email) existingEmails.add(item.email.toLowerCase().trim());
+        });
+        
+        const { data: contactsData } = await supabase
+          .from("contacts")
+          .select("email")
+          .eq("tenant_id", currentTenant?.id);
+        contactsData?.forEach(item => {
+          if (item.email) existingEmails.add(item.email.toLowerCase().trim());
         });
       } else if (uploadType === "resellers") {
         const { data } = await supabase
@@ -162,6 +173,9 @@ export function BulkUploadDialog({ open, onOpenChange, uploadType, onComplete }:
         });
       }
 
+      // Track emails seen within the current file to detect in-file duplicates
+      const emailsInFile = new Set<string>();
+
       const rows: ParsedRow[] = results.data.map((row: any) => {
         const errors: string[] = [];
         let isDuplicate = false;
@@ -174,10 +188,26 @@ export function BulkUploadDialog({ open, onOpenChange, uploadType, onComplete }:
           }
         }
 
-        // Check duplicates
-        if (row.name && existingNames.has(row.name.toLowerCase())) {
-          isDuplicate = true;
-          duplicateInfo = `"${row.name}" already exists`;
+        // Check duplicates by email for alliance-contacts
+        if (uploadType === "alliance-contacts") {
+          const emailToCheck = row.email?.toLowerCase().trim();
+          if (emailToCheck) {
+            if (existingEmails.has(emailToCheck)) {
+              isDuplicate = true;
+              duplicateInfo = `Email "${row.email}" already exists`;
+            } else if (emailsInFile.has(emailToCheck)) {
+              isDuplicate = true;
+              duplicateInfo = `Duplicate email "${row.email}" in file`;
+            } else {
+              emailsInFile.add(emailToCheck);
+            }
+          }
+        } else {
+          // For other types, check by name
+          if (row.name && existingNames.has(row.name.toLowerCase())) {
+            isDuplicate = true;
+            duplicateInfo = `"${row.name}" already exists`;
+          }
         }
 
         const data: Record<string, string> = {};

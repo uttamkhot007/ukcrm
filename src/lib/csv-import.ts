@@ -60,18 +60,27 @@ export async function parseContactsPreview(file: File): Promise<ParsePreviewResu
   const requiredColumns = ["name"];
   const columns = ["name", "email", "phone", "company", "designation", "notes"];
 
-  // Fetch existing contacts for duplicate detection
+  // Fetch existing contacts and alliance_users for duplicate email detection
   const { data: existingContacts } = await supabase
     .from("contacts")
     .select("id, email, name, phone");
 
+  const { data: existingAllianceUsers } = await supabase
+    .from("alliance_users")
+    .select("id, email, name");
+
   const existingEmailSet = new Set<string>();
-  const existingNameSet = new Set<string>();
   
   existingContacts?.forEach((contact) => {
-    if (contact.email) existingEmailSet.add(contact.email.toLowerCase());
-    if (contact.name) existingNameSet.add(contact.name.toLowerCase());
+    if (contact.email) existingEmailSet.add(contact.email.toLowerCase().trim());
   });
+  
+  existingAllianceUsers?.forEach((au) => {
+    if (au.email) existingEmailSet.add(au.email.toLowerCase().trim());
+  });
+
+  // Track emails within the current file
+  const emailsInFile = new Set<string>();
 
   const rows: ParsedPreviewRow[] = rawRows.map((row) => {
     const errors: string[] = [];
@@ -82,13 +91,18 @@ export async function parseContactsPreview(file: File): Promise<ParsePreviewResu
       errors.push("Missing required field 'name'");
     }
 
-    // Check for duplicates
-    if (row.email && existingEmailSet.has(row.email.toLowerCase())) {
-      isDuplicate = true;
-      duplicateInfo = `Email "${row.email}" already exists`;
-    } else if (row.name && existingNameSet.has(row.name.toLowerCase())) {
-      isDuplicate = true;
-      duplicateInfo = `Contact "${row.name}" already exists`;
+    // Check for duplicates by email (primary duplicate detection)
+    const emailToCheck = row.email?.toLowerCase().trim();
+    if (emailToCheck) {
+      if (existingEmailSet.has(emailToCheck)) {
+        isDuplicate = true;
+        duplicateInfo = `Email "${row.email}" already exists`;
+      } else if (emailsInFile.has(emailToCheck)) {
+        isDuplicate = true;
+        duplicateInfo = `Duplicate email "${row.email}" in file`;
+      } else {
+        emailsInFile.add(emailToCheck);
+      }
     }
 
     return {

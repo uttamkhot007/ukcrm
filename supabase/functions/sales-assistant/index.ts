@@ -184,11 +184,38 @@ serve(async (req) => {
             result = { success: true, message: `Deal "${args.title}" created successfully with value ${args.value}`, data };
             
           } else if (functionName === "create_contact") {
+            const emailToCheck = args.email?.trim().toLowerCase();
+            
+            // Check for duplicate email
+            if (emailToCheck) {
+              const { data: existingContact } = await supabase
+                .from("contacts")
+                .select("id")
+                .ilike("email", emailToCheck)
+                .eq("tenant_id", tenantId)
+                .maybeSingle();
+              
+              if (existingContact) {
+                throw new Error("A contact with this email already exists");
+              }
+              
+              const { data: existingAllianceUser } = await supabase
+                .from("alliance_users")
+                .select("id")
+                .ilike("email", emailToCheck)
+                .eq("tenant_id", tenantId)
+                .maybeSingle();
+              
+              if (existingAllianceUser) {
+                throw new Error("A contact with this email already exists");
+              }
+            }
+            
             const { data, error } = await supabase.from("contacts").insert({
               tenant_id: tenantId,
               user_id: userId,
               name: args.name,
-              email: args.email || null,
+              email: emailToCheck || null,
               phone: args.phone || null,
               company: args.company || null,
               designation: args.designation || null,

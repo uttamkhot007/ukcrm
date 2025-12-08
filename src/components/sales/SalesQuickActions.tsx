@@ -47,11 +47,38 @@ export function SalesQuickActions() {
   // Contact mutation
   const contactMutation = useMutation({
     mutationFn: async (data: { name: string; email?: string; phone?: string; company?: string; designation?: string }) => {
+      const emailToCheck = data.email?.trim().toLowerCase();
+      
+      // Check for duplicate email
+      if (emailToCheck) {
+        const { data: existingAllianceUser } = await supabase
+          .from("alliance_users")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        if (existingAllianceUser) {
+          throw new Error("A contact with this email already exists");
+        }
+
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        if (existingContact) {
+          throw new Error("A contact with this email already exists");
+        }
+      }
+
       const { error } = await supabase.from("contacts").insert({
         tenant_id: currentTenant?.id,
         user_id: user?.id!,
         name: data.name,
-        email: data.email || null,
+        email: emailToCheck || null,
         phone: data.phone || null,
         company: data.company || null,
         designation: data.designation || null,
