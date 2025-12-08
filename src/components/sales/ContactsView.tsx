@@ -28,6 +28,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -52,9 +59,10 @@ const initialFormData = {
   name: "",
   email: "",
   phone: "",
-  company: "",
+  organization_id: "",
   designation: "",
   notes: "",
+  role: "",
 };
 
 export function ContactsView() {
@@ -143,6 +151,23 @@ export function ContactsView() {
     enabled: !!allUserIds?.length,
   });
 
+  // Fetch all non-reseller organizations for the dropdown
+  const { data: allOrganizations = [] } = useQuery({
+    queryKey: ["alliance-organizations-non-reseller", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant?.id) return [];
+      const { data, error } = await supabase
+        .from("alliance_organizations")
+        .select("id, name")
+        .eq("tenant_id", currentTenant.id)
+        .not("organization_type", "ilike", "reseller")
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenant?.id,
+  });
+
   const { data: contacts, isLoading } = useQuery({
     queryKey: ["contacts-with-relations", myAllianceOrgs, allUserIds],
     queryFn: async () => {
@@ -224,14 +249,17 @@ export function ContactsView() {
 
   const createContact = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("contacts").insert({
+      // Create in alliance_users which will sync to contacts via trigger
+      const { error } = await supabase.from("alliance_users").insert({
         name: data.name.trim(),
         email: data.email.trim() || null,
         phone: data.phone.trim() || null,
-        company: data.company.trim() || null,
+        organization_id: data.organization_id || null,
         designation: data.designation.trim() || null,
+        role: data.role.trim() || null,
         notes: data.notes.trim() || null,
-        user_id: user!.id,
+        status: "active",
+        created_by: user!.id,
         tenant_id: currentTenant?.id,
       });
       if (error) throw error;
@@ -239,6 +267,7 @@ export function ContactsView() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
       closeDialog();
       toast({ title: "Contact created successfully" });
     },
@@ -248,23 +277,42 @@ export function ContactsView() {
   });
 
   const updateContact = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase
-        .from("contacts")
-        .update({
-          name: data.name.trim(),
-          email: data.email.trim() || null,
-          phone: data.phone.trim() || null,
-          company: data.company.trim() || null,
-          designation: data.designation.trim() || null,
-          notes: data.notes.trim() || null,
-        })
-        .eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({ id, data, isAllianceUser }: { id: string; data: typeof formData; isAllianceUser?: boolean }) => {
+      if (isAllianceUser) {
+        // Update alliance_user which will sync to contacts via trigger
+        const { error } = await supabase
+          .from("alliance_users")
+          .update({
+            name: data.name.trim(),
+            email: data.email.trim() || null,
+            phone: data.phone.trim() || null,
+            organization_id: data.organization_id || null,
+            designation: data.designation.trim() || null,
+            role: data.role.trim() || null,
+            notes: data.notes.trim() || null,
+          })
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        // Update regular contact
+        const { error } = await supabase
+          .from("contacts")
+          .update({
+            name: data.name.trim(),
+            email: data.email.trim() || null,
+            phone: data.phone.trim() || null,
+            alliance_organization_id: data.organization_id || null,
+            designation: data.designation.trim() || null,
+            notes: data.notes.trim() || null,
+          })
+          .eq("id", id);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
       closeDialog();
       toast({ title: "Contact updated successfully" });
     },
@@ -373,9 +421,10 @@ export function ContactsView() {
       name: contact.name,
       email: contact.email || "",
       phone: contact.phone || "",
-      company: contact.company || "",
+      organization_id: contact.alliance_organization_id || "",
       designation: contact.designation || "",
       notes: contact.notes || "",
+      role: contact.role_in_deal || "",
     });
     setIsDialogOpen(true);
   };
@@ -383,7 +432,8 @@ export function ContactsView() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingContact) {
-      updateContact.mutate({ id: editingContact.id, data: formData });
+      const isAllianceUser = editingContact.source_type === 'alliance' || !!editingContact.alliance_user_id;
+      updateContact.mutate({ id: editingContact.alliance_user_id || editingContact.id, data: formData, isAllianceUser });
     } else {
       createContact.mutate(formData);
     }
@@ -514,13 +564,23 @@ export function ContactsView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    maxLength={100}
-                  />
+                  <Label htmlFor="organization_id">Organization</Label>
+                  <Select 
+                    value={formData.organization_id} 
+                    onValueChange={(value) => setFormData({ ...formData, organization_id: value === "none" ? "" : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {allOrganizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="designation">Designation</Label>
@@ -531,6 +591,16 @@ export function ContactsView() {
                     maxLength={100}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Input
+                  id="role"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  placeholder="e.g., Decision Maker, Technical Contact"
+                  maxLength={100}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
