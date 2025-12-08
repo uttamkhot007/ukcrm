@@ -92,7 +92,15 @@ const Index = () => {
   if (isLoading || tenantLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-medium text-foreground">Loading...</p>
+            <p className="text-sm text-muted-foreground">Preparing your workspace</p>
+          </div>
+        </div>
       </div>
     );
   }
