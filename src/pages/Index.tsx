@@ -78,16 +78,14 @@ const Index = () => {
     }
   }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded]);
 
-  // Set initial module based on portal mode
+  // Set initial module based on portal mode - only on initial mount
   useEffect(() => {
     if (isCustomer || portalMode === 'customer') {
       setActiveModule('customer-support');
-    } else if (portalMode === 'workspace') {
-      setActiveModule('dashboard');
-    } else if (portalMode === 'admin' || isAdminMode) {
-      setActiveModule('dashboard');
     }
-  }, [isCustomer, portalMode, isAdminMode]);
+    // Only run on initial mount, not on every portalMode change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading || tenantLoading) {
     return (
