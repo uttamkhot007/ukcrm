@@ -19,7 +19,7 @@ export function ManagementAnalyticsModule() {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Management Analytics</h1>
@@ -57,27 +57,27 @@ export function ManagementAnalyticsModule() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6 mt-6">
           <FinancialOverview />
         </TabsContent>
 
-        <TabsContent value="trends" className="space-y-6">
+        <TabsContent value="trends" className="space-y-6 mt-6">
           <TrendAnalysis />
         </TabsContent>
 
-        <TabsContent value="performance" className="space-y-6">
+        <TabsContent value="performance" className="space-y-6 mt-6">
           <PerformanceMetrics />
         </TabsContent>
 
-        <TabsContent value="performers" className="space-y-6">
+        <TabsContent value="performers" className="space-y-6 mt-6">
           <TopPerformersAnalytics />
         </TabsContent>
 
-        <TabsContent value="insights" className="space-y-6">
+        <TabsContent value="insights" className="space-y-6 mt-6">
           <BusinessInsights />
         </TabsContent>
 
-        <TabsContent value="predictions" className="space-y-6">
+        <TabsContent value="predictions" className="space-y-6 mt-6">
           <PredictionsAndRecommendations />
         </TabsContent>
       </Tabs>
