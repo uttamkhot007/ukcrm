@@ -112,6 +112,10 @@ const Index = () => {
         return <SalesModule initialTab="quotations" />;
       case "sales-leads":
         return <SalesModule initialTab="leads" />;
+      case "sales-my-accounts":
+        return <SalesModule initialTab="my-accounts" />;
+      case "sales-contacts":
+        return <SalesModule initialTab="contacts" />;
       case "inside-sales":
         return <InsideSalesModule />;
       
