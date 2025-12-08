@@ -3546,11 +3546,19 @@ export type Database = {
       }
       offerings_oems: {
         Row: {
+          ai_enriched_data: Json | null
+          certifications: string[] | null
           created_at: string
           created_by: string
           description: string | null
+          employee_count: string | null
+          founded_year: number | null
+          headquarters: string | null
           id: string
+          key_products: string[] | null
+          last_enriched_at: string | null
           logo_url: string | null
+          market_cap: string | null
           name: string
           partnership_level: string | null
           status: string | null
@@ -3558,11 +3566,19 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          ai_enriched_data?: Json | null
+          certifications?: string[] | null
           created_at?: string
           created_by: string
           description?: string | null
+          employee_count?: string | null
+          founded_year?: number | null
+          headquarters?: string | null
           id?: string
+          key_products?: string[] | null
+          last_enriched_at?: string | null
           logo_url?: string | null
+          market_cap?: string | null
           name: string
           partnership_level?: string | null
           status?: string | null
@@ -3570,11 +3586,19 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          ai_enriched_data?: Json | null
+          certifications?: string[] | null
           created_at?: string
           created_by?: string
           description?: string | null
+          employee_count?: string | null
+          founded_year?: number | null
+          headquarters?: string | null
           id?: string
+          key_products?: string[] | null
+          last_enriched_at?: string | null
           logo_url?: string | null
+          market_cap?: string | null
           name?: string
           partnership_level?: string | null
           status?: string | null
@@ -3678,42 +3702,60 @@ export type Database = {
       }
       offerings_products: {
         Row: {
+          ai_enriched_data: Json | null
+          awards: string[] | null
           category: string | null
+          competitive_advantages: string | null
           created_at: string
           created_by: string
           description: string | null
           id: string
+          last_enriched_at: string | null
+          market_position: string | null
           name: string
           oem_id: string | null
           status: string | null
           technology_id: string | null
           tenant_id: string | null
+          unique_selling_points: string[] | null
           updated_at: string
         }
         Insert: {
+          ai_enriched_data?: Json | null
+          awards?: string[] | null
           category?: string | null
+          competitive_advantages?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
+          last_enriched_at?: string | null
+          market_position?: string | null
           name: string
           oem_id?: string | null
           status?: string | null
           technology_id?: string | null
           tenant_id?: string | null
+          unique_selling_points?: string[] | null
           updated_at?: string
         }
         Update: {
+          ai_enriched_data?: Json | null
+          awards?: string[] | null
           category?: string | null
+          competitive_advantages?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
+          last_enriched_at?: string | null
+          market_position?: string | null
           name?: string
           oem_id?: string | null
           status?: string | null
           technology_id?: string | null
           tenant_id?: string | null
+          unique_selling_points?: string[] | null
           updated_at?: string
         }
         Relationships: [
@@ -3786,36 +3828,57 @@ export type Database = {
       }
       offerings_technologies: {
         Row: {
+          adoption_rate: string | null
+          ai_enriched_data: Json | null
+          benefits: string[] | null
           category: string | null
           created_at: string
           created_by: string
           description: string | null
           id: string
+          last_enriched_at: string | null
+          limitations: string[] | null
+          market_trends: string | null
           name: string
           status: string | null
           tenant_id: string | null
+          use_cases: string[] | null
           vendor: string | null
         }
         Insert: {
+          adoption_rate?: string | null
+          ai_enriched_data?: Json | null
+          benefits?: string[] | null
           category?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
+          last_enriched_at?: string | null
+          limitations?: string[] | null
+          market_trends?: string | null
           name: string
           status?: string | null
           tenant_id?: string | null
+          use_cases?: string[] | null
           vendor?: string | null
         }
         Update: {
+          adoption_rate?: string | null
+          ai_enriched_data?: Json | null
+          benefits?: string[] | null
           category?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
+          last_enriched_at?: string | null
+          limitations?: string[] | null
+          market_trends?: string | null
           name?: string
           status?: string | null
           tenant_id?: string | null
+          use_cases?: string[] | null
           vendor?: string | null
         }
         Relationships: [
