@@ -3788,6 +3788,7 @@ export type Database = {
           consecutive_late_threshold: number | null
           contract_end_date: string | null
           contract_start_date: string | null
+          core_team: Json | null
           countries: string[] | null
           created_at: string
           currency: string | null
@@ -3815,6 +3816,7 @@ export type Database = {
           late_threshold_minutes: number | null
           linkedin_url: string | null
           logo_url: string | null
+          management_team: Json | null
           name: string
           next_security_audit: string | null
           num_branches: number | null
@@ -3860,6 +3862,7 @@ export type Database = {
           consecutive_late_threshold?: number | null
           contract_end_date?: string | null
           contract_start_date?: string | null
+          core_team?: Json | null
           countries?: string[] | null
           created_at?: string
           currency?: string | null
@@ -3887,6 +3890,7 @@ export type Database = {
           late_threshold_minutes?: number | null
           linkedin_url?: string | null
           logo_url?: string | null
+          management_team?: Json | null
           name?: string
           next_security_audit?: string | null
           num_branches?: number | null
@@ -3932,6 +3936,7 @@ export type Database = {
           consecutive_late_threshold?: number | null
           contract_end_date?: string | null
           contract_start_date?: string | null
+          core_team?: Json | null
           countries?: string[] | null
           created_at?: string
           currency?: string | null
@@ -3959,6 +3964,7 @@ export type Database = {
           late_threshold_minutes?: number | null
           linkedin_url?: string | null
           logo_url?: string | null
+          management_team?: Json | null
           name?: string
           next_security_audit?: string | null
           num_branches?: number | null
