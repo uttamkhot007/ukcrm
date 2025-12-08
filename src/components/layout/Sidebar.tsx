@@ -543,11 +543,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "sales-offerings", label: "Offerings", icon: Package },
         ];
         
-        // Add Team Contacts for managers
-        if (role === "manager" || role === "admin" || isManagement) {
-          salesChildren.push({ id: "sales-team-contacts", label: "Team Contacts", icon: Users });
-        }
-        
         items.push({
           id: "sales",
           label: "Sales",
