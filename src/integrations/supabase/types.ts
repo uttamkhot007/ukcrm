@@ -1546,6 +1546,7 @@ export type Database = {
       deals: {
         Row: {
           actual_close_date: string | null
+          alliance_organization_id: string | null
           assigned_to: string | null
           buying_timeline: string | null
           closed_won_substage:
@@ -1567,6 +1568,7 @@ export type Database = {
           probability: number | null
           problem_requirement: string | null
           quantity: number | null
+          requirement_category: string | null
           solution_id: string | null
           stage: Database["public"]["Enums"]["deal_stage"]
           tenant_id: string | null
@@ -1579,6 +1581,7 @@ export type Database = {
         }
         Insert: {
           actual_close_date?: string | null
+          alliance_organization_id?: string | null
           assigned_to?: string | null
           buying_timeline?: string | null
           closed_won_substage?:
@@ -1600,6 +1603,7 @@ export type Database = {
           probability?: number | null
           problem_requirement?: string | null
           quantity?: number | null
+          requirement_category?: string | null
           solution_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           tenant_id?: string | null
@@ -1612,6 +1616,7 @@ export type Database = {
         }
         Update: {
           actual_close_date?: string | null
+          alliance_organization_id?: string | null
           assigned_to?: string | null
           buying_timeline?: string | null
           closed_won_substage?:
@@ -1633,6 +1638,7 @@ export type Database = {
           probability?: number | null
           problem_requirement?: string | null
           quantity?: number | null
+          requirement_category?: string | null
           solution_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           tenant_id?: string | null
@@ -1644,6 +1650,13 @@ export type Database = {
           value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "deals_alliance_organization_id_fkey"
+            columns: ["alliance_organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deals_contact_id_fkey"
             columns: ["contact_id"]

@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
@@ -46,13 +47,14 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
 import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
 import { AddActivityDialog } from "./AddActivityDialog";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw, Building2 } from "lucide-react";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw, Building2, AlertCircle, UserPlus } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -78,6 +80,14 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
+const requirementCategories = [
+  { value: "products", label: "Products" },
+  { value: "offensive_services", label: "Offensive Services" },
+  { value: "managed_security_services", label: "Managed Security Services" },
+  { value: "professional_services", label: "Professional Services" },
+  { value: "consulting", label: "Consulting" },
+];
+
 const initialFormData = {
   title: "",
   value: "",
@@ -96,6 +106,8 @@ const initialFormData = {
   tentative_budget: "",
   next_steps: "",
   solution_id: "",
+  alliance_organization_id: "",
+  requirement_category: "products",
 };
 
 const buyingTimelineOptions = [
@@ -144,6 +156,40 @@ export function DealsView() {
     },
   });
 
+  // Fetch Alliance Organizations
+  const { data: allianceOrganizations } = useQuery({
+    queryKey: ["alliance-organizations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alliance_organizations")
+        .select("id, name, organization_type, status")
+        .eq("status", "active")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch Alliance Users (contacts from Alliance)
+  const { data: allianceUsers } = useQuery({
+    queryKey: ["alliance-users", formData.alliance_organization_id],
+    queryFn: async () => {
+      let query = supabase
+        .from("alliance_users")
+        .select("id, name, email, designation, organization_id")
+        .order("name", { ascending: true });
+      
+      if (formData.alliance_organization_id) {
+        query = query.eq("organization_id", formData.alliance_organization_id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: true,
+  });
+
   const { data: products } = useQuery<{ id: string; name: string; category: string | null }[]>({
     queryKey: ["offerings-products"],
     queryFn: async () => {
@@ -151,7 +197,6 @@ export function DealsView() {
       const result = await (supabase as any)
         .from("offerings_products")
         .select("id, name, category")
-        .eq("is_active", true)
         .order("name", { ascending: true });
       if (result.error) throw result.error;
       return result.data || [];
@@ -180,6 +225,8 @@ export function DealsView() {
         tentative_budget: parseFloat(data.tentative_budget) || 0,
         next_steps: data.next_steps.trim(),
         solution_id: data.solution_id || null,
+        alliance_organization_id: data.alliance_organization_id || null,
+        requirement_category: data.requirement_category || null,
       };
       const { error } = await supabase.from("deals").insert(insertData as any);
       if (error) throw error;
@@ -216,7 +263,9 @@ export function DealsView() {
           tentative_budget: parseFloat(data.tentative_budget) || 0,
           next_steps: data.next_steps.trim(),
           solution_id: data.solution_id || null,
-        })
+          alliance_organization_id: data.alliance_organization_id || null,
+          requirement_category: data.requirement_category || null,
+        } as any)
         .eq("id", id);
       if (error) throw error;
     },
@@ -271,6 +320,8 @@ export function DealsView() {
       tentative_budget: String((deal as any).tentative_budget || ""),
       next_steps: (deal as any).next_steps || "",
       solution_id: (deal as any).solution_id || "",
+      alliance_organization_id: (deal as any).alliance_organization_id || "",
+      requirement_category: (deal as any).requirement_category || "products",
     });
     setIsDialogOpen(true);
   };
@@ -426,17 +477,72 @@ export function DealsView() {
             </DialogHeader>
             <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Requirement Category Tabs */}
+                <div className="space-y-2">
+                  <Label>Requirement Type *</Label>
+                  <Tabs
+                    value={formData.requirement_category}
+                    onValueChange={(value) => setFormData({ ...formData, requirement_category: value })}
+                    className="w-full"
+                  >
+                    <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
+                      {requirementCategories.map((cat) => (
+                        <TabsTrigger key={cat.value} value={cat.value} className="text-xs">
+                          {cat.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
+
                 {/* Organization & Title */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="organization_name">Organization Name *</Label>
-                    <Input
-                      id="organization_name"
-                      value={formData.organization_name}
-                      onChange={(e) => setFormData({ ...formData, organization_name: e.target.value })}
-                      placeholder="Customer organization"
-                      required
-                    />
+                    <Label htmlFor="alliance_organization_id">Organization *</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={formData.alliance_organization_id || "none"}
+                        onValueChange={(value) => {
+                          const org = allianceOrganizations?.find(o => o.id === value);
+                          setFormData({ 
+                            ...formData, 
+                            alliance_organization_id: value === "none" ? "" : value,
+                            organization_name: org?.name || formData.organization_name,
+                            contact_id: "" // Reset contact when org changes
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select organization" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Select organization...</SelectItem>
+                          {allianceOrganizations?.map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              <div className="flex items-center gap-2">
+                                <Building2 className="w-3 h-3" />
+                                {org.name}
+                                <Badge variant="outline" className="text-[10px] ml-1">
+                                  {org.organization_type}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.open('/admin/alliance', '_blank')}
+                        title="Add New Organization"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {!allianceOrganizations?.length && (
+                      <p className="text-xs text-muted-foreground">No organizations found. Add one from Alliance tab.</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="title">Deal Title *</Label>
@@ -500,41 +606,69 @@ export function DealsView() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="solution_id">Solution/Product</Label>
-                    <Select
-                      value={formData.solution_id || "none"}
-                      onValueChange={(value) => setFormData({ ...formData, solution_id: value === "none" ? "" : value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a solution" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No solution selected</SelectItem>
-                        {products?.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} {product.category && `(${product.category})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {products?.length ? (
+                      <Select
+                        value={formData.solution_id || "none"}
+                        onValueChange={(value) => setFormData({ ...formData, solution_id: value === "none" ? "" : value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a solution" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No solution selected</SelectItem>
+                          {products?.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} {product.category && `(${product.category})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-xs">
+                          No products available. Contact Administrator to add offerings.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="contact">Contact</Label>
-                    <Select
-                      value={formData.contact_id || "none"}
-                      onValueChange={(value) => setFormData({ ...formData, contact_id: value === "none" ? "" : value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a contact" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No contact</SelectItem>
-                        {contacts?.map((contact) => (
-                          <SelectItem key={contact.id} value={contact.id}>
-                            {contact.name} {contact.company && `(${contact.company})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="contact">Contact (from Alliance)</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={formData.contact_id || "none"}
+                        onValueChange={(value) => setFormData({ ...formData, contact_id: value === "none" ? "" : value })}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select a contact" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No contact</SelectItem>
+                          {allianceUsers?.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id}>
+                              {contact.name} {contact.designation && `(${contact.designation})`}
+                            </SelectItem>
+                          ))}
+                          {contacts?.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id}>
+                              {contact.name} {contact.company && `(${contact.company})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.open('/admin/alliance', '_blank')}
+                        title="Add New Contact"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {!allianceUsers?.length && !contacts?.length && (
+                      <p className="text-xs text-muted-foreground">No contacts found. Add one from Alliance tab.</p>
+                    )}
                   </div>
                 </div>
 
