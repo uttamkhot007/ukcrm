@@ -2219,6 +2219,59 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_verifications: {
+        Row: {
+          ai_analysis: Json | null
+          created_at: string
+          extracted_data: Json | null
+          id: string
+          notes: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+          verification_date: string | null
+          verification_type: string
+          verified_by: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          created_at?: string
+          extracted_data?: Json | null
+          id?: string
+          notes?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+          verification_date?: string | null
+          verification_type: string
+          verified_by?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          created_at?: string
+          extracted_data?: Json | null
+          id?: string
+          notes?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_date?: string | null
+          verification_type?: string
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_verifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escalation_matrix_templates: {
         Row: {
           created_at: string
@@ -7322,6 +7375,72 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verification_documents: {
+        Row: {
+          ai_extracted_data: Json | null
+          created_at: string
+          document_type: string
+          file_name: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          is_verified: boolean | null
+          mime_type: string | null
+          tenant_id: string | null
+          user_id: string
+          verification_id: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          ai_extracted_data?: Json | null
+          created_at?: string
+          document_type: string
+          file_name: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_verified?: boolean | null
+          mime_type?: string | null
+          tenant_id?: string | null
+          user_id: string
+          verification_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          ai_extracted_data?: Json | null
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_verified?: boolean | null
+          mime_type?: string | null
+          tenant_id?: string | null
+          user_id?: string
+          verification_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_documents_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "employee_verifications"
             referencedColumns: ["id"]
           },
         ]
