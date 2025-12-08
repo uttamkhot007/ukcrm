@@ -27,6 +27,7 @@ export default function AdminLayout() {
     if (path.includes("/admin/alliance")) return "admin-center-alliance";
     if (path.includes("/admin/offerings")) return "admin-center-offerings";
     if (path.includes("/admin/procurement")) return "admin-center-procurement";
+    if (path.includes("/admin/support-management")) return "admin-center-support-management";
     return "admin-center";
   };
 

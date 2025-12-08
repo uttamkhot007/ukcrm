@@ -2081,6 +2081,65 @@ export type Database = {
         }
         Relationships: []
       }
+      escalation_matrix_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level_1_email: string | null
+          level_1_response_hours: number | null
+          level_2_email: string | null
+          level_2_response_hours: number | null
+          level_3_email: string | null
+          level_3_response_hours: number | null
+          name: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_1_email?: string | null
+          level_1_response_hours?: number | null
+          level_2_email?: string | null
+          level_2_response_hours?: number | null
+          level_3_email?: string | null
+          level_3_response_hours?: number | null
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_1_email?: string | null
+          level_1_response_hours?: number | null
+          level_2_email?: string | null
+          level_2_response_hours?: number | null
+          level_3_email?: string | null
+          level_3_response_hours?: number | null
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_matrix_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_wishes: {
         Row: {
           created_at: string
@@ -4285,37 +4344,59 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          escalation_matrix_id: string | null
           id: string
           is_active: boolean | null
           issue_types: string[] | null
           organization_id: string
           service_name: string | null
           solution_name: string
+          support_period_end: string | null
+          support_period_start: string | null
+          support_tier: string | null
+          support_type: string | null
           tenant_id: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string
+          escalation_matrix_id?: string | null
           id?: string
           is_active?: boolean | null
           issue_types?: string[] | null
           organization_id: string
           service_name?: string | null
           solution_name: string
+          support_period_end?: string | null
+          support_period_start?: string | null
+          support_tier?: string | null
+          support_type?: string | null
           tenant_id?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string
+          escalation_matrix_id?: string | null
           id?: string
           is_active?: boolean | null
           issue_types?: string[] | null
           organization_id?: string
           service_name?: string | null
           solution_name?: string
+          support_period_end?: string | null
+          support_period_start?: string | null
+          support_tier?: string | null
+          support_type?: string | null
           tenant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "organization_support_solutions_escalation_matrix_id_fkey"
+            columns: ["escalation_matrix_id"]
+            isOneToOne: false
+            referencedRelation: "escalation_matrix_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organization_support_solutions_organization_id_fkey"
             columns: ["organization_id"]
@@ -5884,6 +5965,115 @@ export type Database = {
           },
           {
             foreignKeyName: "support_escalation_matrix_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_slas: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: string
+          resolution_hours: number
+          response_hours: number
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: string
+          resolution_hours: number
+          response_hours: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: string
+          resolution_hours?: number
+          response_hours?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_slas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_type_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number | null
+          resolution_hours: number | null
+          response_hours: number | null
+          tenant_id: string | null
+          tier: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price?: number | null
+          resolution_hours?: number | null
+          response_hours?: number | null
+          tenant_id?: string | null
+          tier?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number | null
+          resolution_hours?: number | null
+          response_hours?: number | null
+          tenant_id?: string | null
+          tier?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_type_templates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
