@@ -169,7 +169,32 @@ serve(async (req) => {
           .from("employee_requests")
           .update({ escalated: true, escalation_level: 1 })
           .eq("id", request.id);
-        results.checks.push({ type: "request_escalated", request: request.request_number });
+      results.checks.push({ type: "request_escalated", request: request.request_number });
+      }
+    }
+
+    // 6. Weekly executive enrichment check (runs on Sundays or if forced)
+    const dayOfWeek = now.getDay();
+    if (dayOfWeek === 0) { // Sunday
+      try {
+        const enrichResponse = await fetch(`${supabaseUrl}/functions/v1/enrich-executives`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({ refresh_all: true }),
+        });
+        
+        if (enrichResponse.ok) {
+          const enrichResult = await enrichResponse.json();
+          results.checks.push({ 
+            type: "executive_enrichment", 
+            organizations_processed: enrichResult.organizations_processed 
+          });
+        }
+      } catch (enrichError) {
+        console.error("Executive enrichment failed:", enrichError);
       }
     }
 
