@@ -73,15 +73,50 @@ export function ContactsView() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { data: contacts, isLoading } = useQuery({
-    queryKey: ["contacts-with-relations"],
+  // Fetch alliance organizations where user is account manager
+  const { data: myAllianceOrgs } = useQuery({
+    queryKey: ["my-alliance-orgs", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
       const { data, error } = await supabase
+        .from("alliance_organizations")
+        .select("id")
+        .or(`account_manager_id.eq.${user.id},technical_account_manager_id.eq.${user.id}`);
+      if (error) throw error;
+      return data?.map(o => o.id) || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: contacts, isLoading } = useQuery({
+    queryKey: ["contacts-with-relations", myAllianceOrgs],
+    queryFn: async () => {
+      // First, get all regular contacts created by the user
+      const { data: regularContacts, error: regularError } = await supabase
         .from("contacts")
         .select("*, deals:deals(id), leads:leads(id)")
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as ContactWithRelations[];
+      if (regularError) throw regularError;
+
+      // If user has alliance orgs, also fetch alliance contacts linked to those orgs
+      let allianceContacts: ContactWithRelations[] = [];
+      if (myAllianceOrgs && myAllianceOrgs.length > 0) {
+        const { data: allianceData, error: allianceError } = await supabase
+          .from("contacts")
+          .select("*, deals:deals(id), leads:leads(id)")
+          .in("alliance_organization_id", myAllianceOrgs)
+          .order("created_at", { ascending: false });
+        
+        if (!allianceError && allianceData) {
+          allianceContacts = allianceData as ContactWithRelations[];
+        }
+      }
+
+      // Merge and deduplicate by id
+      const allContacts = [...(regularContacts || []), ...allianceContacts];
+      const uniqueContacts = Array.from(new Map(allContacts.map(c => [c.id, c])).values());
+      
+      return uniqueContacts as ContactWithRelations[];
     },
   });
 
@@ -463,19 +498,26 @@ export function ContactsView() {
                     </TableCell>
                     <TableCell>{contact.designation || "-"}</TableCell>
                     <TableCell>
-                      {(contact as any).source_type === 'alliance' ? (
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
-                          <Building2 className="h-3 w-3 mr-1" />Alliance
-                        </Badge>
-                      ) : (contact as any).source_type === 'lead' ? (
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                          <UserPlus className="h-3 w-3 mr-1" />Lead
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-muted text-muted-foreground">
-                          Manual
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {(contact as any).source_type === 'alliance' ? (
+                          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                            <Building2 className="h-3 w-3 mr-1" />Alliance
+                          </Badge>
+                        ) : (contact as any).source_type === 'lead' ? (
+                          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                            <UserPlus className="h-3 w-3 mr-1" />Lead
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-muted text-muted-foreground">
+                            Manual
+                          </Badge>
+                        )}
+                        {myAllianceOrgs?.includes((contact as any).alliance_organization_id) && (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs">
+                            My Account
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
