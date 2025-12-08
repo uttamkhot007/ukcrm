@@ -12,6 +12,7 @@ export type ModuleKey =
   | 'compliance'
   | 'legal'
   | 'renewals'
+  | 'tenders'
   | 'ai_assistant';
 
 interface ModuleConfig {
@@ -102,6 +103,14 @@ export const MODULE_DEFINITIONS: ModuleConfig[] = [
     description: 'License, contract, and subscription renewals',
     category: 'operations',
     icon: 'RefreshCw',
+    tierRequired: 'professional',
+  },
+  {
+    key: 'tenders',
+    name: 'Tender Management',
+    description: 'Track tender opportunities, bid preparation, and evaluations',
+    category: 'sales',
+    icon: 'Gavel',
     tierRequired: 'professional',
   },
   {

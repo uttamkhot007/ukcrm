@@ -6788,6 +6788,277 @@ export type Database = {
         }
         Relationships: []
       }
+      tender_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string
+          id: string
+          tenant_id: string | null
+          tender_id: string
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description: string
+          id?: string
+          tenant_id?: string | null
+          tender_id: string
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          tenant_id?: string | null
+          tender_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_activities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tender_activities_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tender_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_name: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          notes: string | null
+          tenant_id: string | null
+          tender_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_name: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id?: string | null
+          tender_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id?: string | null
+          tender_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tender_documents_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tender_team: {
+        Row: {
+          assigned_by: string
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string | null
+          tender_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by: string
+          created_at?: string
+          id?: string
+          role: string
+          tenant_id?: string | null
+          tender_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string | null
+          tender_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_team_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tender_team_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenders: {
+        Row: {
+          assigned_to: string | null
+          awarded_date: string | null
+          bid_security_required: boolean | null
+          category: string | null
+          contact_email: string | null
+          contact_id: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string
+          deal_id: string | null
+          description: string | null
+          documents_required: string[] | null
+          eligibility_criteria: string | null
+          emd_amount: number | null
+          emd_submitted: boolean | null
+          estimated_value: number | null
+          id: string
+          loss_reason: string | null
+          notes: string | null
+          opening_date: string | null
+          organization_name: string | null
+          publish_date: string | null
+          source: Database["public"]["Enums"]["tender_source"] | null
+          status: Database["public"]["Enums"]["tender_status"] | null
+          submission_deadline: string | null
+          technical_requirements: string | null
+          tenant_id: string | null
+          tender_number: string
+          tender_portal_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          awarded_date?: string | null
+          bid_security_required?: boolean | null
+          category?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by: string
+          deal_id?: string | null
+          description?: string | null
+          documents_required?: string[] | null
+          eligibility_criteria?: string | null
+          emd_amount?: number | null
+          emd_submitted?: boolean | null
+          estimated_value?: number | null
+          id?: string
+          loss_reason?: string | null
+          notes?: string | null
+          opening_date?: string | null
+          organization_name?: string | null
+          publish_date?: string | null
+          source?: Database["public"]["Enums"]["tender_source"] | null
+          status?: Database["public"]["Enums"]["tender_status"] | null
+          submission_deadline?: string | null
+          technical_requirements?: string | null
+          tenant_id?: string | null
+          tender_number: string
+          tender_portal_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          awarded_date?: string | null
+          bid_security_required?: boolean | null
+          category?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string
+          deal_id?: string | null
+          description?: string | null
+          documents_required?: string[] | null
+          eligibility_criteria?: string | null
+          emd_amount?: number | null
+          emd_submitted?: boolean | null
+          estimated_value?: number | null
+          id?: string
+          loss_reason?: string | null
+          notes?: string | null
+          opening_date?: string | null
+          organization_name?: string | null
+          publish_date?: string | null
+          source?: Database["public"]["Enums"]["tender_source"] | null
+          status?: Database["public"]["Enums"]["tender_status"] | null
+          submission_deadline?: string | null
+          technical_requirements?: string | null
+          tenant_id?: string | null
+          tender_number?: string
+          tender_portal_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenders_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenders_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           comment: string
@@ -8167,6 +8438,22 @@ export type Database = {
         | "admin"
       tenant_status: "pending" | "active" | "suspended" | "cancelled"
       tenant_tier: "starter" | "professional" | "enterprise"
+      tender_source:
+        | "government"
+        | "private"
+        | "psu"
+        | "referral"
+        | "portal"
+        | "direct"
+      tender_status:
+        | "identified"
+        | "evaluating"
+        | "bid_preparation"
+        | "submitted"
+        | "under_evaluation"
+        | "won"
+        | "lost"
+        | "cancelled"
       ticket_category:
         | "incident"
         | "service_request"
@@ -8515,6 +8802,24 @@ export const Constants = {
       ],
       tenant_status: ["pending", "active", "suspended", "cancelled"],
       tenant_tier: ["starter", "professional", "enterprise"],
+      tender_source: [
+        "government",
+        "private",
+        "psu",
+        "referral",
+        "portal",
+        "direct",
+      ],
+      tender_status: [
+        "identified",
+        "evaluating",
+        "bid_preparation",
+        "submitted",
+        "under_evaluation",
+        "won",
+        "lost",
+        "cancelled",
+      ],
       ticket_category: [
         "incident",
         "service_request",
