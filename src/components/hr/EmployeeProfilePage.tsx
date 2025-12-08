@@ -285,52 +285,58 @@ export function EmployeeProfilePage({
                   <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {employee.email && (
-                    <div className="flex items-center gap-3 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    {employee.email ? (
                       <a href={`mailto:${employee.email}`} className="text-primary hover:underline">
                         {employee.email}
                       </a>
-                    </div>
-                  )}
-                  {(employee as any).phone && (
-                    <div className="flex items-center gap-3 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{(employee as any).phone}</span>
-                    </div>
-                  )}
-                  {employee.location && (
-                    <div className="flex items-center gap-3 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{employee.location}</span>
-                    </div>
-                  )}
-                  
-                  {/* Social Links */}
-                  <Separator className="my-2" />
-                  <div className="flex items-center gap-2">
-                    {(employee as any).linkedin_url && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={(employee as any).linkedin_url} target="_blank" rel="noopener noreferrer">
-                          <Linkedin className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {(employee as any).twitter_url && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={(employee as any).twitter_url} target="_blank" rel="noopener noreferrer">
-                          <Twitter className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {(employee as any).github_url && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={(employee as any).github_url} target="_blank" rel="noopener noreferrer">
-                          <Github className="h-4 w-4" />
-                        </a>
-                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">Not set</span>
                     )}
                   </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className={!(employee as any).phone ? "text-muted-foreground" : ""}>
+                      {(employee as any).phone || "Not set"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className={!employee.location ? "text-muted-foreground" : ""}>
+                      {employee.location || "Not set"}
+                    </span>
+                  </div>
+                  
+                  {/* Social Links */}
+                  {((employee as any).linkedin_url || (employee as any).twitter_url || (employee as any).github_url) && (
+                    <>
+                      <Separator className="my-2" />
+                      <div className="flex items-center gap-2">
+                        {(employee as any).linkedin_url && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                            <a href={(employee as any).linkedin_url} target="_blank" rel="noopener noreferrer">
+                              <Linkedin className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {(employee as any).twitter_url && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                            <a href={(employee as any).twitter_url} target="_blank" rel="noopener noreferrer">
+                              <Twitter className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {(employee as any).github_url && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                            <a href={(employee as any).github_url} target="_blank" rel="noopener noreferrer">
+                              <Github className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
