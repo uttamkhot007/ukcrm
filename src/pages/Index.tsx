@@ -34,6 +34,8 @@ import { AssetsModule } from "@/components/assets/AssetsModule";
 import { ProjectsModule } from "@/components/projects/ProjectsModule";
 import { ITModule } from "@/components/it/ITModule";
 import { ManagementAnalyticsModule } from "@/components/analytics/ManagementAnalyticsModule";
+import { TechnicalModule } from "@/components/technical/TechnicalModule";
+import { DailyActivityTracker } from "@/components/employee/DailyActivityTracker";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -254,18 +256,16 @@ const Index = () => {
       case "billing":
         return <BillingModule />;
       
-      // Technical modules
+      // Technical Team modules
       case "tech":
-      case "tech-projects":
-      case "tech-knowledge":
-      case "tech-updates":
-        return <PlaceholderModule title="Technical" section={activeModule} />;
+      case "tech-contracts":
+        return <TechnicalModule initialTab="contracts" />;
+      case "tech-contacts":
+        return <TechnicalModule initialTab="contacts" />;
       
-      // Marketing modules
-      case "marketing":
-      case "marketing-campaigns":
-      case "marketing-leads":
-        return <PlaceholderModule title="Marketing" section={activeModule} />;
+      // Activity Tracker
+      case "employee-activity-tracker":
+        return <DailyActivityTracker />;
       
       // Solution Engineering / Presales modules
       case "presales":

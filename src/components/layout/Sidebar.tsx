@@ -339,16 +339,15 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Technical
+      // Technical Team
       items.push({
         id: "tech",
-        label: "Technical",
+        label: "Technical Team",
         icon: Code,
         color: "text-tech",
         children: [
-          { id: "tech-projects", label: "Project Management", icon: FolderKanban },
-          { id: "tech-knowledge", label: "Knowledge Base", icon: BookOpen },
-          { id: "tech-updates", label: "Updates & Alerts", icon: Bell },
+          { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
+          { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
         ],
       });
 
@@ -415,17 +414,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Marketing
-      items.push({
-        id: "marketing",
-        label: "Marketing",
-        icon: Megaphone,
-        color: "text-marketing",
-        children: [
-          { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
-          { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
-        ],
-      });
+      // Marketing - Coming Soon (hidden for now)
 
       // Solution Engineering / Presales Module
       items.push({
@@ -466,6 +455,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
+          { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
           { id: "employee-requests", label: "Requests & Expenses", icon: Calendar },
           { id: "employee-resources", label: "Resources & Events", icon: BookOpen },
@@ -517,6 +507,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "employee-organization", label: "My Organization", icon: Network },
             { id: "employee-profile", label: "My Profile", icon: UserCircle },
             { id: "employee-attendance", label: "Attendance", icon: Clock },
+            { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
             { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
             { id: "employee-requests", label: "Requests & Expenses", icon: Calendar },
             { id: "employee-resources", label: "Resources & Events", icon: BookOpen },
@@ -605,17 +596,16 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         });
       }
 
-      // Technical Module - for technical team
+      // Technical Team Module - for technical team
       if (hasTeamAccess(["technical", "managed_services"], "technical")) {
         items.push({
           id: "tech",
-          label: "Technical",
+          label: "Technical Team",
           icon: Code,
           color: "text-tech",
           children: [
-            { id: "tech-projects", label: "Project Management", icon: FolderKanban },
-            { id: "tech-knowledge", label: "Knowledge Base", icon: BookOpen },
-            { id: "tech-updates", label: "Updates & Alerts", icon: Bell },
+            { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
+            { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
           ],
         });
       }
@@ -636,19 +626,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         });
       }
 
-      // Marketing Module - for marketing team
-      if (hasTeamAccess(["marketing", "management"], "marketing")) {
-        items.push({
-          id: "marketing",
-          label: "Marketing",
-          icon: Megaphone,
-          color: "text-marketing",
-          children: [
-            { id: "marketing-campaigns", label: "Campaigns", icon: Mail },
-            { id: "marketing-leads", label: "SQL/MQL Tracking", icon: Target },
-          ],
-        });
-      }
+      // Marketing Module - Coming Soon (hidden for now)
 
       // Renewals Module - for renewals team
       if (hasTeamAccess(["renewals", "sales", "management"], "renewals")) {
