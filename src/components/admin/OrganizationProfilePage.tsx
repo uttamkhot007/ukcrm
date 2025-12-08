@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { 
   Building2, Globe, Linkedin, Twitter, Facebook, 
   Plus, X, Save, Loader2, Search, Shield, ShieldCheck, ShieldX, ShieldAlert,
-  ExternalLink, RefreshCw, Upload, UserCircle, Crown, Users
+  ExternalLink, RefreshCw, Upload, UserCircle, Crown, Users, ChevronDown, Star, Phone, Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
@@ -28,6 +30,7 @@ interface TeamMember {
   email: string;
   phone: string;
   avatar_url?: string;
+  is_champion?: boolean;
 }
 
 export function OrganizationProfilePage() {
@@ -41,6 +44,27 @@ export function OrganizationProfilePage() {
   const [newCoreMember, setNewCoreMember] = useState<Partial<TeamMember>>({});
   const [showAddManagement, setShowAddManagement] = useState(false);
   const [showAddCore, setShowAddCore] = useState(false);
+  const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+
+  const toggleMemberExpand = (id: string) => {
+    setExpandedMembers(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleChampion = (teamType: 'management_team' | 'core_team', memberId: string) => {
+    const members = formData[teamType] || [];
+    const updated = members.map((m: TeamMember) => 
+      m.id === memberId ? { ...m, is_champion: !m.is_champion } : m
+    );
+    updateField(teamType, updated);
+  };
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["organization-profile", currentTenant?.id],
@@ -239,8 +263,8 @@ export function OrganizationProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="perspective-container">
+      <div className="page-3d space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative group">
@@ -306,7 +330,7 @@ export function OrganizationProfilePage() {
 
       {/* Company Details & Online Presence */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="card-3d">
           <CardHeader>
             <CardTitle className="text-lg">Company Details</CardTitle>
           </CardHeader>
@@ -381,7 +405,7 @@ export function OrganizationProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="card-3d">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Globe className="w-4 h-4" /> Online Presence
@@ -420,7 +444,7 @@ export function OrganizationProfilePage() {
       </div>
 
       {/* Email Security Status */}
-      <Card>
+      <Card className="card-3d">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Shield className="w-4 h-4" /> Email Security Status
@@ -464,7 +488,7 @@ export function OrganizationProfilePage() {
       </Card>
 
       {/* Management Team */}
-      <Card>
+      <Card className="card-3d">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -491,6 +515,17 @@ export function OrganizationProfilePage() {
                 <Input placeholder="Phone" value={newManagementMember.phone || ''} 
                        onChange={(e) => setNewManagementMember(prev => ({ ...prev, phone: e.target.value }))} />
               </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch 
+                    checked={newManagementMember.is_champion || false}
+                    onCheckedChange={(checked) => setNewManagementMember(prev => ({ ...prev, is_champion: checked }))}
+                  />
+                  <Label className="flex items-center gap-1 text-sm">
+                    <Star className="w-3 h-3 text-yellow-500" /> Champion
+                  </Label>
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={addManagementMember}>Add</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setShowAddManagement(false); setNewManagementMember({}); }}>Cancel</Button>
@@ -500,23 +535,71 @@ export function OrganizationProfilePage() {
           
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {(formData.management_team || []).map((member: TeamMember) => (
-              <div key={member.id} className="flex items-start gap-3 p-3 border rounded-lg group">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={member.avatar_url} />
-                  <AvatarFallback><UserCircle className="w-6 h-6" /></AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{member.name}</div>
-                  {member.designation && <div className="text-sm text-muted-foreground truncate">{member.designation}</div>}
-                  {member.email && <div className="text-xs text-muted-foreground truncate">{member.email}</div>}
+              <Collapsible 
+                key={member.id} 
+                open={expandedMembers.has(member.id)}
+                onOpenChange={() => toggleMemberExpand(member.id)}
+              >
+                <div className="border rounded-lg group card-3d-deep overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={member.avatar_url} />
+                        <AvatarFallback><UserCircle className="w-6 h-6" /></AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate flex items-center gap-2">
+                          {member.name}
+                          {member.is_champion && (
+                            <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-500 gap-1">
+                              <Star className="w-3 h-3 fill-yellow-500" /> Champion
+                            </Badge>
+                          )}
+                        </div>
+                        {member.designation && <div className="text-sm text-muted-foreground truncate">{member.designation}</div>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expandedMembers.has(member.id) ? 'rotate-180' : ''}`} />
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" className="opacity-0 group-hover:opacity-100 h-6 w-6" 
+                                  onClick={(e) => { e.stopPropagation(); removeManagementMember(member.id); }}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 pt-0 space-y-2 border-t bg-muted/20">
+                      <div className="pt-2">
+                        {member.email && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="w-4 h-4" />
+                            <a href={`mailto:${member.email}`} className="hover:text-primary">{member.email}</a>
+                          </div>
+                        )}
+                        {member.phone && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                            <Phone className="w-4 h-4" />
+                            <a href={`tel:${member.phone}`} className="hover:text-primary">{member.phone}</a>
+                          </div>
+                        )}
+                        {isAdmin && (
+                          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                            <Switch 
+                              checked={member.is_champion || false}
+                              onCheckedChange={() => toggleChampion('management_team', member.id)}
+                            />
+                            <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Star className="w-3 h-3 text-yellow-500" /> Mark as Champion
+                            </Label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
                 </div>
-                {isAdmin && (
-                  <Button size="icon" variant="ghost" className="opacity-0 group-hover:opacity-100 h-6 w-6" 
-                          onClick={() => removeManagementMember(member.id)}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
+              </Collapsible>
             ))}
             {(!formData.management_team || formData.management_team.length === 0) && !showAddManagement && (
               <p className="text-sm text-muted-foreground col-span-full text-center py-4">No management team members added</p>
@@ -526,7 +609,7 @@ export function OrganizationProfilePage() {
       </Card>
 
       {/* Core Team */}
-      <Card>
+      <Card className="card-3d">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -553,6 +636,17 @@ export function OrganizationProfilePage() {
                 <Input placeholder="Phone" value={newCoreMember.phone || ''} 
                        onChange={(e) => setNewCoreMember(prev => ({ ...prev, phone: e.target.value }))} />
               </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch 
+                    checked={newCoreMember.is_champion || false}
+                    onCheckedChange={(checked) => setNewCoreMember(prev => ({ ...prev, is_champion: checked }))}
+                  />
+                  <Label className="flex items-center gap-1 text-sm">
+                    <Star className="w-3 h-3 text-yellow-500" /> Champion
+                  </Label>
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={addCoreMember}>Add</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setShowAddCore(false); setNewCoreMember({}); }}>Cancel</Button>
@@ -562,23 +656,71 @@ export function OrganizationProfilePage() {
           
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {(formData.core_team || []).map((member: TeamMember) => (
-              <div key={member.id} className="flex items-start gap-3 p-3 border rounded-lg group">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={member.avatar_url} />
-                  <AvatarFallback><UserCircle className="w-6 h-6" /></AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{member.name}</div>
-                  {member.designation && <div className="text-sm text-muted-foreground truncate">{member.designation}</div>}
-                  {member.email && <div className="text-xs text-muted-foreground truncate">{member.email}</div>}
+              <Collapsible 
+                key={member.id} 
+                open={expandedMembers.has(member.id)}
+                onOpenChange={() => toggleMemberExpand(member.id)}
+              >
+                <div className="border rounded-lg group card-3d-deep overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={member.avatar_url} />
+                        <AvatarFallback><UserCircle className="w-6 h-6" /></AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate flex items-center gap-2">
+                          {member.name}
+                          {member.is_champion && (
+                            <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-500 gap-1">
+                              <Star className="w-3 h-3 fill-yellow-500" /> Champion
+                            </Badge>
+                          )}
+                        </div>
+                        {member.designation && <div className="text-sm text-muted-foreground truncate">{member.designation}</div>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expandedMembers.has(member.id) ? 'rotate-180' : ''}`} />
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" className="opacity-0 group-hover:opacity-100 h-6 w-6" 
+                                  onClick={(e) => { e.stopPropagation(); removeCoreMember(member.id); }}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 pt-0 space-y-2 border-t bg-muted/20">
+                      <div className="pt-2">
+                        {member.email && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="w-4 h-4" />
+                            <a href={`mailto:${member.email}`} className="hover:text-primary">{member.email}</a>
+                          </div>
+                        )}
+                        {member.phone && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                            <Phone className="w-4 h-4" />
+                            <a href={`tel:${member.phone}`} className="hover:text-primary">{member.phone}</a>
+                          </div>
+                        )}
+                        {isAdmin && (
+                          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                            <Switch 
+                              checked={member.is_champion || false}
+                              onCheckedChange={() => toggleChampion('core_team', member.id)}
+                            />
+                            <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Star className="w-3 h-3 text-yellow-500" /> Mark as Champion
+                            </Label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
                 </div>
-                {isAdmin && (
-                  <Button size="icon" variant="ghost" className="opacity-0 group-hover:opacity-100 h-6 w-6" 
-                          onClick={() => removeCoreMember(member.id)}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
+              </Collapsible>
             ))}
             {(!formData.core_team || formData.core_team.length === 0) && !showAddCore && (
               <p className="text-sm text-muted-foreground col-span-full text-center py-4">No core team members added</p>
@@ -586,6 +728,7 @@ export function OrganizationProfilePage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
