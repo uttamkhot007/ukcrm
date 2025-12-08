@@ -17,9 +17,10 @@ import {
   Plus, X, Save, Loader2, Search, Shield, ShieldCheck, ShieldX, ShieldAlert,
   Server, Cloud, Database, Lock, UserCircle, Phone, Mail, Calendar, 
   Briefcase, Building, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
-  AlertTriangle, Key, Bug, Ticket, Package, FileWarning, Contact
+  AlertTriangle, Key, Bug, Ticket, Package, FileWarning, Contact, Sparkles, Brain
 } from "lucide-react";
 import { OrganizationContacts } from "./OrganizationContacts";
+import { AccountIntelligence } from "./AccountIntelligence";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -333,7 +334,7 @@ export function OrganizationProfilePage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="vinca">Vinca Services</TabsTrigger>
           <TabsTrigger value="contact">Location</TabsTrigger>
@@ -345,6 +346,10 @@ export function OrganizationProfilePage() {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="threats">Threat Intel</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="intelligence" className="flex items-center gap-1 bg-gradient-to-r from-primary/10 to-transparent">
+            <Sparkles className="w-3 h-3 text-primary" />
+            AI Insights
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1134,6 +1139,11 @@ export function OrganizationProfilePage() {
               </Button>
             </Card>
           )}
+        </TabsContent>
+
+        {/* AI Intelligence Tab */}
+        <TabsContent value="intelligence" className="space-y-4">
+          <AccountIntelligence organizationName={formData.name} organizationType="own" />
         </TabsContent>
       </Tabs>
     </div>
