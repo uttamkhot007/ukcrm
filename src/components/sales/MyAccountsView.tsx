@@ -62,21 +62,77 @@ export function MyAccountsView() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
 
-  // Fetch organizations where user is account manager or technical account manager
-  const { data: myOrganizations, isLoading } = useQuery({
-    queryKey: ["my-accounts", user?.id, currentTenant?.id],
+  // Recursively fetch all subordinates at all levels within tenant
+  const { data: allUserIds, isLoading: loadingTeam } = useQuery({
+    queryKey: ["my-accounts-user-ids", user?.id, currentTenant?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("alliance_organizations")
-        .select("*")
-        .or(`account_manager_id.eq.${user.id},technical_account_manager_id.eq.${user.id}`)
-        .order("name");
+      if (!user?.id) return [user?.id];
+      
+      // Fetch all profiles within tenant to build hierarchy
+      let query = supabase
+        .from("profiles")
+        .select("user_id, manager_id, tenant_id");
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+      
+      const { data: allProfiles, error } = await query;
+      
       if (error) throw error;
-      return data as AllianceOrganization[];
+      if (!allProfiles) return [user.id];
+      
+      // Recursively find all subordinates
+      const findAllSubordinates = (managerId: string, visited = new Set<string>()): string[] => {
+        if (visited.has(managerId)) return [];
+        visited.add(managerId);
+        
+        const directReports = allProfiles.filter(p => p.manager_id === managerId);
+        let allSubordinates: string[] = [];
+        
+        for (const report of directReports) {
+          allSubordinates.push(report.user_id);
+          const nestedSubordinates = findAllSubordinates(report.user_id, visited);
+          allSubordinates = [...allSubordinates, ...nestedSubordinates];
+        }
+        
+        return allSubordinates;
+      };
+      
+      // Include current user + all subordinates
+      return [user.id, ...findAllSubordinates(user.id)];
     },
     enabled: !!user?.id,
   });
+
+  // Fetch organizations where user or any subordinate is account manager or technical account manager
+  const { data: myOrganizations, isLoading: loadingOrgs } = useQuery({
+    queryKey: ["my-accounts", allUserIds, currentTenant?.id],
+    queryFn: async () => {
+      if (!allUserIds?.length) return [];
+      
+      // Build OR condition for user and all subordinates
+      const conditions = allUserIds.map(id => 
+        `account_manager_id.eq.${id},technical_account_manager_id.eq.${id}`
+      ).join(',');
+      
+      let query = supabase
+        .from("alliance_organizations")
+        .select("*")
+        .or(conditions);
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+      
+      const { data, error } = await query.order("name");
+      if (error) throw error;
+      return data as AllianceOrganization[];
+    },
+    enabled: !!allUserIds?.length,
+  });
+
+  const isLoading = loadingTeam || loadingOrgs;
 
   // Fetch contacts count for each organization
   const { data: contactCounts } = useQuery({
