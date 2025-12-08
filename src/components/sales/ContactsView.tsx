@@ -63,6 +63,7 @@ const initialFormData = {
   designation: "",
   notes: "",
   role: "",
+  contact_owner_id: "",
 };
 
 export function ContactsView() {
@@ -151,6 +152,38 @@ export function ContactsView() {
     enabled: !!allUserIds?.length,
   });
 
+  // Fetch sales team members (Sales, Inside Sales, Presales, Pre-Sales departments)
+  const { data: salesTeamMembers = [] } = useQuery({
+    queryKey: ["sales-team-members", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant?.id) return [];
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, department")
+        .eq("tenant_id", currentTenant.id)
+        .in("department", ["Sales", "Inside Sales", "Presales", "Pre-Sales"])
+        .order("full_name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenant?.id,
+  });
+
+  // Fetch all profiles for owner display in table
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ["all-profiles-for-owner", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant?.id) return [];
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .eq("tenant_id", currentTenant.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentTenant?.id,
+  });
+
   // Fetch all non-reseller organizations for the dropdown
   const { data: allOrganizations = [] } = useQuery({
     queryKey: ["alliance-organizations-non-reseller", currentTenant?.id],
@@ -198,8 +231,12 @@ export function ContactsView() {
         }
       }
 
-      // Also fetch alliance_users (contacts from Alliance module) for the alliance orgs
+      // Also fetch alliance_users (contacts from Alliance module) 
+      // - for alliance orgs managed by user/subordinates OR created by user/subordinates
       let allianceUserContacts: ContactWithRelations[] = [];
+      const allianceUserIds = new Set<string>();
+      
+      // Fetch alliance_users for managed orgs
       if (myAllianceOrgs && myAllianceOrgs.length > 0) {
         const { data: allianceUsers, error: auError } = await supabase
           .from("alliance_users")
@@ -208,13 +245,13 @@ export function ContactsView() {
           .order("created_at", { ascending: false });
         
         if (!auError && allianceUsers) {
-          // Transform alliance_users to match ContactWithRelations structure
+          allianceUsers.forEach(au => allianceUserIds.add(au.id));
           allianceUserContacts = allianceUsers.map(au => ({
             id: au.id,
             name: au.name,
             email: au.email,
             phone: au.phone,
-            company: null, // Will be populated from org
+            company: null,
             designation: au.designation,
             notes: au.notes,
             user_id: au.created_by,
@@ -235,7 +272,55 @@ export function ContactsView() {
             source_type: 'alliance',
             deals: [],
             leads: [],
+            created_by: au.created_by,
+            updated_by: au.updated_by,
           } as ContactWithRelations));
+        }
+      }
+
+      // Also fetch alliance_users created by user/subordinates (regardless of org)
+      if (allUserIds?.length) {
+        const { data: myCreatedAllianceUsers, error: mcError } = await supabase
+          .from("alliance_users")
+          .select("*")
+          .in("created_by", allUserIds)
+          .order("created_at", { ascending: false });
+        
+        if (!mcError && myCreatedAllianceUsers) {
+          myCreatedAllianceUsers.forEach(au => {
+            if (!allianceUserIds.has(au.id)) {
+              allianceUserIds.add(au.id);
+              allianceUserContacts.push({
+                id: au.id,
+                name: au.name,
+                email: au.email,
+                phone: au.phone,
+                company: null,
+                designation: au.designation,
+                notes: au.notes,
+                user_id: au.created_by,
+                tenant_id: au.tenant_id,
+                created_at: au.created_at,
+                updated_at: au.updated_at,
+                alliance_organization_id: au.organization_id,
+                alliance_user_id: au.id,
+                avatar_url: au.profile_image_url,
+                department: null,
+                engagement_score: null,
+                is_champion: null,
+                last_contacted_at: null,
+                linkedin_url: au.linkedin_url,
+                reporting_manager_id: null,
+                role_in_deal: au.role,
+                seniority_level: null,
+                source_type: 'alliance',
+                deals: [],
+                leads: [],
+                created_by: au.created_by,
+                updated_by: au.updated_by,
+              } as ContactWithRelations);
+            }
+          });
         }
       }
 
@@ -249,6 +334,9 @@ export function ContactsView() {
 
   const createContact = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!data.contact_owner_id) {
+        throw new Error("Contact Owner is required");
+      }
       // Create in alliance_users which will sync to contacts via trigger
       const { error } = await supabase.from("alliance_users").insert({
         name: data.name.trim(),
@@ -259,7 +347,7 @@ export function ContactsView() {
         role: data.role.trim() || null,
         notes: data.notes.trim() || null,
         status: "active",
-        created_by: user!.id,
+        created_by: data.contact_owner_id,
         tenant_id: currentTenant?.id,
       });
       if (error) throw error;
@@ -290,6 +378,7 @@ export function ContactsView() {
             designation: data.designation.trim() || null,
             role: data.role.trim() || null,
             notes: data.notes.trim() || null,
+            created_by: data.contact_owner_id || undefined,
           })
           .eq("id", id);
         if (error) throw error;
@@ -304,6 +393,7 @@ export function ContactsView() {
             alliance_organization_id: data.organization_id || null,
             designation: data.designation.trim() || null,
             notes: data.notes.trim() || null,
+            user_id: data.contact_owner_id || undefined,
           })
           .eq("id", id);
         if (error) throw error;
@@ -425,12 +515,17 @@ export function ContactsView() {
       designation: contact.designation || "",
       notes: contact.notes || "",
       role: contact.role_in_deal || "",
+      contact_owner_id: contact.user_id || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingContact && !formData.contact_owner_id) {
+      toast({ title: "Contact Owner is required", variant: "destructive" });
+      return;
+    }
     if (editingContact) {
       const isAllianceUser = editingContact.source_type === 'alliance' || !!editingContact.alliance_user_id;
       updateContact.mutate({ id: editingContact.alliance_user_id || editingContact.id, data: formData, isAllianceUser });
@@ -593,6 +688,25 @@ export function ContactsView() {
                 </div>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="contact_owner_id">Contact Owner *</Label>
+                <Select 
+                  value={formData.contact_owner_id} 
+                  onValueChange={(value) => setFormData({ ...formData, contact_owner_id: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select contact owner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesTeamMembers.map((member) => (
+                      <SelectItem key={member.user_id} value={member.user_id}>
+                        {member.full_name} ({member.department})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Input
                   id="role"
@@ -635,6 +749,7 @@ export function ContactsView() {
                 <TableHead>Email</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Designation</TableHead>
+                <TableHead>Owner</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Related</TableHead>
                 <TableHead>Created</TableHead>
@@ -644,7 +759,7 @@ export function ContactsView() {
             <TableBody>
               {filteredContacts?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     No contacts found. Create your first contact to get started.
                   </TableCell>
                 </TableRow>
@@ -669,6 +784,9 @@ export function ContactsView() {
                       </div>
                     </TableCell>
                     <TableCell>{contact.designation || "-"}</TableCell>
+                    <TableCell>
+                      {allProfiles.find(m => m.user_id === contact.user_id)?.full_name || "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {(contact as any).source_type === 'alliance' ? (
