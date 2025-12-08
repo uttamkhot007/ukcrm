@@ -21,6 +21,7 @@ import {
   Briefcase,
   Building2,
   UserCheck,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TeamType } from "@/hooks/useAuth";
@@ -38,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EmployeeProfilePage } from "@/components/hr/EmployeeProfilePage";
 
 const TEAMS: { value: TeamType; label: string; color: string; departments?: string[] }[] = [
   { value: "sales", label: "Sales", color: "bg-sales/20 text-sales border-sales/30", departments: ["Sales"] },
@@ -124,6 +126,7 @@ export function EmployeesManagement() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [editForm, setEditForm] = useState<Partial<Employee>>({});
   const [savingEmployee, setSavingEmployee] = useState(false);
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
 
   const fetchEmployees = async () => {
     if (!currentTenant) {
@@ -385,6 +388,20 @@ export function EmployeesManagement() {
     setEditForm(prev => ({ ...prev, ...updates }));
   };
 
+  // Show profile page if viewing employee
+  if (viewingEmployee) {
+    return (
+      <EmployeeProfilePage 
+        employee={viewingEmployee as any}
+        onBack={() => setViewingEmployee(null)}
+        onEdit={(emp) => {
+          setViewingEmployee(null);
+          openEditDialog(viewingEmployee);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -461,13 +478,22 @@ export function EmployeesManagement() {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(employee)}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setViewingEmployee(employee)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditDialog(employee)}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Teams - filtered by department */}
