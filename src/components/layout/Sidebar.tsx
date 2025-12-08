@@ -335,10 +335,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Support / Help Desk
+      // Support Center
       items.push({
         id: "helpdesk",
-        label: "Help Desk",
+        label: "Support Center",
         icon: HeadphonesIcon,
         color: "text-support",
         children: [
