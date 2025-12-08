@@ -30,7 +30,14 @@ import SupportDashboard from "./pages/SupportDashboard";
 import Tenders from "./pages/Tenders";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 // Main application component with providers
 const App = () => (
