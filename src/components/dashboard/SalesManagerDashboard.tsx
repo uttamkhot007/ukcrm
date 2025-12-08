@@ -39,11 +39,22 @@ import {
   Calendar,
   MapPin,
   Package,
-  Layers
+  Layers,
+  Award
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, subMonths } from "date-fns";
 import { TeamCalendarWidget } from "./TeamCalendarWidget";
 import { TeamRemindersWidget } from "./TeamRemindersWidget";
+
+interface SalesTarget {
+  id: string;
+  user_id: string;
+  top_line_target: number;
+  bottom_line_target: number;
+  incentive_eligibility_cap: number;
+  period_start: string;
+  period_end: string;
+}
 
 interface SalesManagerDashboardProps {
   onNavigate: (module: string) => void;
@@ -178,6 +189,30 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     enabled: !!user,
   });
 
+  // Fetch sales targets for current period
+  const { data: salesTargets = [] } = useQuery({
+    queryKey: ["sales-targets-dashboard", currentTenant?.id],
+    queryFn: async () => {
+      const monthStart = startOfMonth(new Date());
+      const monthEnd = endOfMonth(new Date());
+
+      let query = supabase
+        .from("sales_targets")
+        .select("*")
+        .lte("period_start", monthEnd.toISOString().split("T")[0])
+        .gte("period_end", monthStart.toISOString().split("T")[0]);
+
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as SalesTarget[];
+    },
+    enabled: !!user,
+  });
+
   // Calculate customers added this week and this month
   const weekStart = startOfWeek(new Date());
   const monthStart = startOfMonth(new Date());
@@ -227,12 +262,20 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     return acc;
   }, {} as Record<string, number>);
 
+  // Get target for a member from salesTargets
+  const getMemberTarget = (userId: string): SalesTarget | undefined => {
+    return salesTargets.find(t => t.user_id === userId);
+  };
+
   const revenueByMemberData = teamMembers
-    .map(member => ({
-      name: member.full_name?.split(" ")[0] || "Unknown",
-      revenue: revenueByMember[member.user_id] || 0,
-      target: 300000, // Individual target - could come from settings
-    }))
+    .map(member => {
+      const target = getMemberTarget(member.user_id);
+      return {
+        name: member.full_name?.split(" ")[0] || "Unknown",
+        revenue: revenueByMember[member.user_id] || 0,
+        target: target?.top_line_target || 0,
+      };
+    })
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 6);
 
@@ -266,21 +309,28 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  // Calculate team performance by member
+  // Calculate team performance by member with actual targets
   const teamPerformance = teamMembers.map(member => {
     const memberDeals = teamDeals.filter(
       d => d.user_id === member.user_id || d.assigned_to === member.user_id
     );
     const memberRevenue = revenueByMember[member.user_id] || 0;
     const pipelineValue = memberDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-    const target = 300000;
+    const memberTarget = getMemberTarget(member.user_id);
+    const topLineTarget = memberTarget?.top_line_target || 0;
+    const bottomLineTarget = memberTarget?.bottom_line_target || 0;
+    const incentiveCap = memberTarget?.incentive_eligibility_cap || 0;
+    
     return {
       ...member,
       dealCount: memberDeals.length,
       pipelineValue,
       revenue: memberRevenue,
-      target,
-      achievement: (memberRevenue / target) * 100,
+      topLineTarget,
+      bottomLineTarget,
+      incentiveCap,
+      topLineAchievement: topLineTarget > 0 ? (memberRevenue / topLineTarget) * 100 : 0,
+      hasTarget: !!memberTarget,
     };
   }).sort((a, b) => b.pipelineValue - a.pipelineValue);
 
@@ -295,9 +345,10 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     .slice(0, 5);
 
   const totalPipeline = teamDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-  const teamTarget = 2000000;
+  // Calculate team target from individual targets
+  const teamTarget = salesTargets.reduce((sum, t) => sum + (t.top_line_target || 0), 0);
   const totalRevenue = revenueTrend.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-  const targetProgress = Math.min((monthlyStats?.revenue || 0) / teamTarget * 100, 100);
+  const targetProgress = teamTarget > 0 ? Math.min((monthlyStats?.revenue || 0) / teamTarget * 100, 100) : 0;
 
   // Chart config
   const chartConfig = {
@@ -404,31 +455,47 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {formatCurrency(monthlyStats?.revenue || 0)} of {formatCurrency(teamTarget)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {targetProgress.toFixed(1)}% achieved
-              </span>
+          {salesTargets.length === 0 ? (
+            <div className="text-center py-6">
+              <Target className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground mb-2">
+                No sales targets configured for this period
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Go to Admin → Users → Sales Targets to set up individual targets
+              </p>
             </div>
-            <Progress value={targetProgress} className="h-4" />
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 rounded-lg bg-green-500/10">
-                <p className="text-2xl font-bold text-green-600">{monthlyStats?.won || 0}</p>
-                <p className="text-xs text-muted-foreground">Deals Won</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  {formatCurrency(monthlyStats?.revenue || 0)} of {formatCurrency(teamTarget)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {targetProgress.toFixed(1)}% achieved
+                </span>
               </div>
-              <div className="p-3 rounded-lg bg-red-500/10">
-                <p className="text-2xl font-bold text-red-600">{monthlyStats?.lost || 0}</p>
-                <p className="text-xs text-muted-foreground">Deals Lost</p>
-              </div>
-              <div className="p-3 rounded-lg bg-blue-500/10">
-                <p className="text-2xl font-bold text-blue-600">{teamDeals.length}</p>
-                <p className="text-xs text-muted-foreground">In Pipeline</p>
+              <Progress value={targetProgress} className="h-4" />
+              <div className="grid grid-cols-4 gap-4 text-center">
+                <div className="p-3 rounded-lg bg-green-500/10">
+                  <p className="text-2xl font-bold text-green-600">{monthlyStats?.won || 0}</p>
+                  <p className="text-xs text-muted-foreground">Deals Won</p>
+                </div>
+                <div className="p-3 rounded-lg bg-red-500/10">
+                  <p className="text-2xl font-bold text-red-600">{monthlyStats?.lost || 0}</p>
+                  <p className="text-xs text-muted-foreground">Deals Lost</p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-500/10">
+                  <p className="text-2xl font-bold text-blue-600">{teamDeals.length}</p>
+                  <p className="text-xs text-muted-foreground">In Pipeline</p>
+                </div>
+                <div className="p-3 rounded-lg bg-yellow-500/10">
+                  <p className="text-2xl font-bold text-yellow-600">{salesTargets.length}</p>
+                  <p className="text-xs text-muted-foreground">Members with Target</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -650,20 +717,32 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
                       <p className="font-medium text-sm truncate">{member.full_name}</p>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">
-                          {formatCurrency(member.revenue)} / {formatCurrency(member.target)}
+                          {formatCurrency(member.revenue)} / {formatCurrency(member.topLineTarget)}
                         </span>
-                        <Badge 
-                          variant={member.achievement >= 100 ? "default" : member.achievement >= 75 ? "secondary" : "outline"}
-                          className="text-xs"
-                        >
-                          {member.achievement.toFixed(0)}%
-                        </Badge>
+                        {member.hasTarget ? (
+                          <Badge 
+                            variant={member.topLineAchievement >= 100 ? "default" : member.topLineAchievement >= 75 ? "secondary" : "outline"}
+                            className="text-xs"
+                          >
+                            {member.topLineAchievement.toFixed(0)}%
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">No Target</Badge>
+                        )}
                       </div>
                     </div>
-                    <Progress value={Math.min(member.achievement, 100)} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {member.dealCount} active deals • {formatCurrency(member.pipelineValue)} pipeline
-                    </p>
+                    <Progress value={Math.min(member.topLineAchievement, 100)} className="h-2" />
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-xs text-muted-foreground">
+                        {member.dealCount} active deals • {formatCurrency(member.pipelineValue)} pipeline
+                      </p>
+                      {member.hasTarget && member.incentiveCap > 0 && (
+                        <span className="text-xs text-yellow-600 flex items-center gap-1">
+                          <Award className="h-3 w-3" />
+                          Incentive Cap: {formatCurrency(member.incentiveCap)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

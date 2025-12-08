@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, UserCog, Key, Monitor, Shield, Upload } from "lucide-react";
+import { Users, UserCog, Key, Monitor, Shield, Upload, Target } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmployeesManagement } from "./users/EmployeesManagement";
 import { ContractorsManagement } from "./users/ContractorsManagement";
@@ -7,6 +7,7 @@ import { RolesManagement } from "./users/RolesManagement";
 import { CredentialsManagement } from "./users/CredentialsManagement";
 import { ConsoleAccessManagement } from "./users/ConsoleAccessManagement";
 import { UsersImport } from "./users/UsersImport";
+import { SalesTargetsManagement } from "./SalesTargetsManagement";
 
 interface UserAccessManagementProps {
   defaultTab?: string;
@@ -30,7 +31,7 @@ export function UserAccessManagement({ defaultTab = "employees" }: UserAccessMan
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-4xl grid-cols-6">
+        <TabsList className="grid w-full max-w-5xl grid-cols-7">
           <TabsTrigger value="employees" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Employees
@@ -42,6 +43,10 @@ export function UserAccessManagement({ defaultTab = "employees" }: UserAccessMan
           <TabsTrigger value="roles" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Roles
+          </TabsTrigger>
+          <TabsTrigger value="targets" className="flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            Sales Targets
           </TabsTrigger>
           <TabsTrigger value="credentials" className="flex items-center gap-2">
             <Key className="w-4 h-4" />
@@ -67,6 +72,10 @@ export function UserAccessManagement({ defaultTab = "employees" }: UserAccessMan
 
         <TabsContent value="roles">
           <RolesManagement />
+        </TabsContent>
+
+        <TabsContent value="targets">
+          <SalesTargetsManagement />
         </TabsContent>
 
         <TabsContent value="credentials">
