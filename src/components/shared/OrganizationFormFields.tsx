@@ -62,6 +62,12 @@ export interface ContactInfo {
   isChampion: boolean;
 }
 
+export interface KeyTeamMember {
+  name: string;
+  designation: string;
+  linkedinUrl?: string;
+}
+
 export interface OrganizationFormData {
   name: string;
   website: string;
@@ -75,6 +81,7 @@ export interface OrganizationFormData {
   status: string;
   employeeCount?: string;
   annualRevenue?: string;
+  turnover?: string;
   foundedYear?: string;
   linkedinUrl?: string;
   twitterUrl?: string;
@@ -84,6 +91,8 @@ export interface OrganizationFormData {
   dmarcStatus?: string;
   dkimStatus?: string;
   contacts?: ContactInfo[];
+  keyTeamMembers?: KeyTeamMember[];
+  offerings?: string[];
 }
 
 interface ExistingAccount {
@@ -229,6 +238,7 @@ export function OrganizationFormFields({
         if (enrichedData.address) updates.address = enrichedData.address;
         if (enrichedData.total_employees) updates.employeeCount = String(enrichedData.total_employees);
         if (enrichedData.annual_revenue) updates.annualRevenue = enrichedData.annual_revenue;
+        if (enrichedData.turnover) updates.turnover = enrichedData.turnover;
         if (enrichedData.founded_year) updates.foundedYear = String(enrichedData.founded_year);
         if (enrichedData.linkedin_url) updates.linkedinUrl = enrichedData.linkedin_url;
         if (enrichedData.twitter_url) updates.twitterUrl = enrichedData.twitter_url;
@@ -237,9 +247,23 @@ export function OrganizationFormFields({
         if (enrichedData.spf_status) updates.spfStatus = enrichedData.spf_status;
         if (enrichedData.dmarc_status) updates.dmarcStatus = enrichedData.dmarc_status;
         if (enrichedData.dkim_status) updates.dkimStatus = enrichedData.dkim_status;
+        
+        // New fields for reseller enrichment
+        if (enrichedData.key_team_members && Array.isArray(enrichedData.key_team_members)) {
+          updates.keyTeamMembers = enrichedData.key_team_members.map((m: any) => ({
+            name: m.name || '',
+            designation: m.designation || '',
+            linkedinUrl: m.linkedin_url || '',
+          }));
+        }
+        if (enrichedData.offerings && Array.isArray(enrichedData.offerings)) {
+          updates.offerings = enrichedData.offerings;
+          // Also populate solutions field with offerings
+          updates.solutions = enrichedData.offerings.join(', ');
+        }
 
         onChange(updates);
-        toast.success("Organization enriched with AI - Company name & industry detected");
+        toast.success("Organization enriched with AI - Company details, team members & offerings detected");
       }
     } catch (error: any) {
       console.error("Enrichment error:", error);
@@ -537,6 +561,91 @@ export function OrganizationFormFields({
               </div>
             </div>
           )}
+
+          {/* Key Team Members Section */}
+          {formData.keyTeamMembers && formData.keyTeamMembers.length > 0 && (
+            <Card className="border-dashed border-primary/30">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Key Team Members (AI Detected)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {formData.keyTeamMembers.map((member, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                        {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="text-xs text-muted-foreground">{member.designation}</p>
+                      </div>
+                    </div>
+                    {member.linkedinUrl && (
+                      <a
+                        href={member.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-xs flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const updated = formData.keyTeamMembers?.filter((_, i) => i !== index) || [];
+                        onChange({ keyTeamMembers: updated });
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Offerings Section */}
+          {formData.offerings && formData.offerings.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Offerings (AI Detected)</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {formData.offerings.map((offering, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs py-1 px-2 gap-1">
+                    {offering}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = formData.offerings?.filter((_, i) => i !== index) || [];
+                        onChange({ offerings: updated });
+                      }}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Turnover field */}
+          {formData.turnover && (
+            <div className="space-y-2">
+              <Label>Turnover</Label>
+              <Input 
+                value={formData.turnover || ""}
+                onChange={(e) => onChange({ turnover: e.target.value })}
+                placeholder="e.g. ₹50 Cr"
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -693,6 +802,7 @@ export function useOrganizationFormState(initial?: Partial<OrganizationFormData>
     status: initial?.status || "active",
     employeeCount: initial?.employeeCount || "",
     annualRevenue: initial?.annualRevenue || "",
+    turnover: initial?.turnover || "",
     foundedYear: initial?.foundedYear || "",
     linkedinUrl: initial?.linkedinUrl || "",
     twitterUrl: initial?.twitterUrl || "",
@@ -702,6 +812,8 @@ export function useOrganizationFormState(initial?: Partial<OrganizationFormData>
     dmarcStatus: initial?.dmarcStatus || "",
     dkimStatus: initial?.dkimStatus || "",
     contacts: initial?.contacts || [],
+    keyTeamMembers: initial?.keyTeamMembers || [],
+    offerings: initial?.offerings || [],
   });
 
   const updateFormData = (updates: Partial<OrganizationFormData>) => {
@@ -722,6 +834,7 @@ export function useOrganizationFormState(initial?: Partial<OrganizationFormData>
       status: "active",
       employeeCount: "",
       annualRevenue: "",
+      turnover: "",
       foundedYear: "",
       linkedinUrl: "",
       twitterUrl: "",
@@ -731,6 +844,8 @@ export function useOrganizationFormState(initial?: Partial<OrganizationFormData>
       dmarcStatus: "",
       dkimStatus: "",
       contacts: [],
+      keyTeamMembers: [],
+      offerings: [],
     });
   };
 

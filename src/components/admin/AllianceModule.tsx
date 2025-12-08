@@ -1006,7 +1006,7 @@ export function AllianceModule() {
         <TabsContent value="resellers" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Cyber Security Resellers & MSSPs ({filteredResellers.length})</h3>
-            <Dialog open={isOrgDialogOpen && !editingOrg} onOpenChange={(open) => {
+            <Dialog open={isOrgDialogOpen && activeTab === 'resellers' && !editingOrg} onOpenChange={(open) => {
               if (open) {
                 resetOrgForm();
                 updateOrgFormData({ organizationType: "reseller" });
@@ -1019,6 +1019,25 @@ export function AllianceModule() {
                   Add Reseller
                 </Button>
               </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Reseller / MSSP</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleOrgSubmit} className="space-y-4">
+                  <OrganizationFormFields 
+                    formData={orgFormData}
+                    onChange={updateOrgFormData}
+                    showExtendedFields={true}
+                    isEditing={false}
+                  />
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    <Button type="button" variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit" disabled={orgMutation.isPending}>
+                      {orgMutation.isPending ? "Saving..." : "Save Reseller"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
             </Dialog>
           </div>
 
