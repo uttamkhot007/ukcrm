@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { ContactDetailsSheet } from "./ContactDetailsSheet";
-import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye, Sparkles, Link2, Building2 } from "lucide-react";
+import { AllianceContactDetailsSheet } from "@/components/admin/AllianceContactDetailsSheet";
+import { Plus, Search, Users, Building, Mail, Loader2, MoreHorizontal, Pencil, Trash2, Handshake, UserPlus, Download, Eye, Sparkles, Link2, Building2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -61,12 +63,15 @@ export function ContactsView() {
   const [editingContact, setEditingContact] = useState<ContactWithRelations | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContactWithRelations | null>(null);
   const [selectedContact, setSelectedContact] = useState<ContactWithRelations | null>(null);
+  const [selectedAllianceContact, setSelectedAllianceContact] = useState<any>(null);
+  const [showAllianceDetails, setShowAllianceDetails] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
   const [enrichingContactId, setEnrichingContactId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: contacts, isLoading } = useQuery({
     queryKey: ["contacts-with-relations"],
@@ -502,10 +507,46 @@ export function ContactsView() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelectedContact(contact)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
+                          {(contact as any).alliance_user_id ? (
+                            <DropdownMenuItem 
+                              onClick={async () => {
+                                // Fetch the alliance user data
+                                const { data: allianceUser } = await supabase
+                                  .from("alliance_users")
+                                  .select("*")
+                                  .eq("id", (contact as any).alliance_user_id)
+                                  .single();
+                                
+                                if (allianceUser) {
+                                  let allianceOrg = null;
+                                  if (allianceUser.organization_id) {
+                                    const { data: org } = await supabase
+                                      .from("alliance_organizations")
+                                      .select("*")
+                                      .eq("id", allianceUser.organization_id)
+                                      .single();
+                                    allianceOrg = org;
+                                  }
+                                  setSelectedAllianceContact({ contact: allianceUser, organization: allianceOrg });
+                                  setShowAllianceDetails(true);
+                                }
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => setSelectedContact(contact)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                          )}
+                          {(contact as any).alliance_user_id && (
+                            <DropdownMenuItem onClick={() => navigate("/admin/alliance")}>
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Open in Alliance Management
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem 
                             onClick={() => enrichContact(contact)}
                             disabled={enrichingContactId === contact.id}
@@ -553,6 +594,13 @@ export function ContactsView() {
         contact={selectedContact}
         open={!!selectedContact}
         onOpenChange={(open) => !open && setSelectedContact(null)}
+      />
+
+      <AllianceContactDetailsSheet
+        contact={selectedAllianceContact?.contact}
+        organization={selectedAllianceContact?.organization}
+        open={showAllianceDetails}
+        onOpenChange={setShowAllianceDetails}
       />
     </div>
   );

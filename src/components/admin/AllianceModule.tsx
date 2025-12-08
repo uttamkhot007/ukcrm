@@ -18,7 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe } from "lucide-react";
+import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe, UserCircle } from "lucide-react";
+import { AllianceContactDetailsSheet } from "./AllianceContactDetailsSheet";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
 import { AllianceOrgProfilePage } from "./AllianceOrgProfilePage";
 
@@ -70,6 +71,8 @@ export function AllianceModule() {
   const [orgTypeFilter, setOrgTypeFilter] = useState<string>("all");
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [userIntelligence, setUserIntelligence] = useState<Record<string, any>>({});
+  const [selectedContact, setSelectedContact] = useState<AllianceUser | null>(null);
+  const [showContactDetails, setShowContactDetails] = useState(false);
   
   // Use shared organization form state
   const { formData: orgFormData, updateFormData: updateOrgFormData, resetFormData: resetOrgFormData, setFormData: setOrgFormData } = useOrganizationFormState();
@@ -324,7 +327,8 @@ export function AllianceModule() {
       setIsUserDialogOpen(false);
       setIsAddUserToOrgOpen(false);
       setEditingUser(null);
-      toast.success(editingUser ? "User updated" : "User created");
+      setShowContactDetails(false);
+      toast.success(editingUser ? "Contact updated" : "Contact created");
     },
     onError: (error) => {
       toast.error("Failed to save user: " + error.message);
@@ -353,10 +357,12 @@ export function AllianceModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
-      toast.success("User deleted");
+      queryClient.invalidateQueries({ queryKey: ["contacts-with-relations"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Contact deleted");
     },
     onError: (error) => {
-      toast.error("Failed to delete user: " + error.message);
+      toast.error("Failed to delete contact: " + error.message);
     },
   });
 
@@ -469,8 +475,8 @@ export function AllianceModule() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="users" className="gap-2">
-            <Users className="h-4 w-4" />
-            Users
+            <UserCircle className="h-4 w-4" />
+            Contacts
           </TabsTrigger>
           <TabsTrigger value="organizations" className="gap-2">
             <Building2 className="h-4 w-4" />
@@ -480,7 +486,7 @@ export function AllianceModule() {
 
         <TabsContent value="users" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Alliance Users ({filteredUsers.length})</h3>
+            <h3 className="text-lg font-semibold">Alliance Contacts ({filteredUsers.length})</h3>
             <Dialog open={isUserDialogOpen} onOpenChange={(open) => {
               setIsUserDialogOpen(open);
               if (!open) setEditingUser(null);
@@ -488,12 +494,12 @@ export function AllianceModule() {
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Add User
+                  Add Contact
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader>
-                  <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
+                  <DialogTitle>{editingUser ? "Edit Contact" : "Add New Contact"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleUserSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -600,7 +606,7 @@ export function AllianceModule() {
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No users found</TableCell>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No contacts found</TableCell>
                   </TableRow>
                 ) : (
                   filteredUsers.map(allianceUser => {
@@ -613,11 +619,13 @@ export function AllianceModule() {
                         <TableRow 
                           key={allianceUser.id} 
                           className="cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => setExpandedUserId(isExpanded ? null : allianceUser.id)}
+                          onClick={() => {
+                            setSelectedContact(allianceUser);
+                            setShowContactDetails(true);
+                          }}
                         >
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                               <Avatar className="h-8 w-8">
                                 <AvatarFallback className="text-xs">{allianceUser.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                               </Avatar>
@@ -993,6 +1001,19 @@ export function AllianceModule() {
           />
         </div>
       )}
+
+      {/* Contact Details Sheet */}
+      <AllianceContactDetailsSheet
+        contact={selectedContact}
+        organization={selectedContact ? organizations.find(o => o.id === selectedContact.organization_id) : null}
+        open={showContactDetails}
+        onOpenChange={setShowContactDetails}
+        onEdit={(contact) => {
+          setEditingUser(contact as AllianceUser);
+          setShowContactDetails(false);
+          setIsUserDialogOpen(true);
+        }}
+      />
     </div>
   );
 }
