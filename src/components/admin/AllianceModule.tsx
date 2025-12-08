@@ -22,6 +22,7 @@ import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink,
 import { AllianceContactDetailsSheet } from "./AllianceContactDetailsSheet";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
 import { AllianceOrgProfilePage } from "./AllianceOrgProfilePage";
+import { AllianceContactProfilePage } from "./AllianceContactProfilePage";
 
 interface AllianceOrganization {
   id: string;
@@ -1002,18 +1003,21 @@ export function AllianceModule() {
         </div>
       )}
 
-      {/* Contact Details Sheet */}
-      <AllianceContactDetailsSheet
-        contact={selectedContact}
-        organization={selectedContact ? organizations.find(o => o.id === selectedContact.organization_id) : null}
-        open={showContactDetails}
-        onOpenChange={setShowContactDetails}
-        onEdit={(contact) => {
-          setEditingUser(contact as AllianceUser);
-          setShowContactDetails(false);
-          setIsUserDialogOpen(true);
-        }}
-      />
+      {/* Contact Profile Page - Full Window */}
+      {showContactDetails && selectedContact && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <AllianceContactProfilePage
+            contact={selectedContact}
+            organization={organizations.find(o => o.id === selectedContact.organization_id) || null}
+            onBack={() => setShowContactDetails(false)}
+            onEdit={(contact) => {
+              setEditingUser(contact as AllianceUser);
+              setShowContactDetails(false);
+              setIsUserDialogOpen(true);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
