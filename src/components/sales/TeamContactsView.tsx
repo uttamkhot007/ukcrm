@@ -102,27 +102,54 @@ export function TeamContactsView() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
 
-  // Fetch team members (users who report to current user)
+  // Recursively fetch all subordinates at all levels
   const { data: teamMembers, isLoading: loadingTeam } = useQuery({
-    queryKey: ["team-members", user?.id],
+    queryKey: ["team-members-recursive", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
+      
+      // Fetch all profiles to build hierarchy
+      const { data: allProfiles, error } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email, avatar_url")
-        .eq("manager_id", user.id);
+        .select("user_id, full_name, email, avatar_url, manager_id");
+      
       if (error) throw error;
-      return data as TeamMember[];
+      if (!allProfiles) return [];
+      
+      // Recursively find all subordinates
+      const findAllSubordinates = (managerId: string, visited = new Set<string>()): TeamMember[] => {
+        if (visited.has(managerId)) return []; // Prevent infinite loops
+        visited.add(managerId);
+        
+        const directReports = allProfiles.filter(p => p.manager_id === managerId);
+        let allSubordinates: TeamMember[] = [];
+        
+        for (const report of directReports) {
+          allSubordinates.push({
+            user_id: report.user_id,
+            full_name: report.full_name,
+            email: report.email,
+            avatar_url: report.avatar_url,
+          });
+          // Recursively get subordinates of this report
+          const nestedSubordinates = findAllSubordinates(report.user_id, visited);
+          allSubordinates = [...allSubordinates, ...nestedSubordinates];
+        }
+        
+        return allSubordinates;
+      };
+      
+      return findAllSubordinates(user.id);
     },
     enabled: !!user?.id,
   });
 
-  // Get all team member IDs including self
+  // Get all team member IDs
   const teamMemberIds = teamMembers?.map(m => m.user_id) || [];
 
   // Fetch organizations assigned to team members
   const { data: teamOrganizations, isLoading: loadingOrgs } = useQuery({
-    queryKey: ["team-organizations", teamMemberIds],
+    queryKey: ["team-organizations-recursive", teamMemberIds],
     queryFn: async () => {
       if (teamMemberIds.length === 0) return [];
       
