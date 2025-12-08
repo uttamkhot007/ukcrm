@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
-import { MobileHeader } from "@/components/layout/MobileHeader";
-import { AIAssistant } from "@/components/ai/AIAssistant";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { SalesModule } from "@/components/sales/SalesModule";
 import { SalesAIAssistant } from "@/components/sales/SalesAIAssistant";
@@ -38,14 +35,10 @@ import { ProjectsModule } from "@/components/projects/ProjectsModule";
 import { ITModule } from "@/components/it/ITModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
-import { cn } from "@/lib/utils";
-import { Loader2, Menu, X } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const [isAIOpen, setIsAIOpen] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { user, isLoading, portalMode, isCustomer, isAdminMode, profile } = useAuth();
   const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
@@ -361,41 +354,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
-      </div>
-
-      {/* Mobile Sidebar Sheet */}
-      <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
-          <Sidebar 
-            activeModule={activeModule} 
-            onModuleChange={(module) => {
-              setActiveModule(module);
-              setIsMobileSidebarOpen(false);
-            }} 
-          />
-        </SheetContent>
-      </Sheet>
-
-      {/* Mobile Header */}
-      <MobileHeader onMenuClick={() => setIsMobileSidebarOpen(true)} />
-      
-      <div className={cn("transition-all duration-300 relative z-10", "md:ml-64")}>
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
-        </div>
-        
-        <main className="min-h-[calc(100vh-4rem)] pb-safe relative">
-          {renderContent()}
-        </main>
-      </div>
-
-      <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
-    </div>
+    <MainLayout activeModule={activeModule} onModuleChange={setActiveModule}>
+      {renderContent()}
+    </MainLayout>
   );
 };
 

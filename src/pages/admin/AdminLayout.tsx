@@ -1,10 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
-import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -26,8 +24,17 @@ export default function AdminLayout() {
     if (path.includes("/admin/portal")) return "admin-center-portal";
     if (path.includes("/admin/health")) return "admin-center-health";
     if (path.includes("/admin/tenants")) return "super-admin-tenants";
+    if (path.includes("/admin/alliance")) return "admin-center-alliance";
+    if (path.includes("/admin/offerings")) return "admin-center-offerings";
+    if (path.includes("/admin/procurement")) return "admin-center-procurement";
     return "admin-center";
   };
+
+  const [activeModule, setActiveModule] = useState(getActiveModule());
+
+  useEffect(() => {
+    setActiveModule(getActiveModule());
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -64,17 +71,24 @@ export default function AdminLayout() {
     return null;
   }
 
+  const handleModuleChange = (module: string) => {
+    setActiveModule(module);
+    // Navigate to the appropriate route based on module
+    if (module === "dashboard") {
+      navigate("/");
+    } else if (module.startsWith("admin-center-")) {
+      const subPath = module.replace("admin-center-", "");
+      navigate(`/admin/${subPath}`);
+    } else if (module === "super-admin-tenants") {
+      navigate("/admin/tenants");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar activeModule={getActiveModule()} onModuleChange={() => {}} />
-      
-      <div className={cn("transition-all duration-300 ml-64 relative z-10")}>
-        <Header onAIToggle={() => {}} />
-        
-        <main className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative">
-          <Outlet />
-        </main>
+    <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
+      <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative">
+        <Outlet />
       </div>
-    </div>
+    </MainLayout>
   );
 }
