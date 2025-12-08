@@ -57,26 +57,26 @@ const Index = () => {
   // Check if user is super admin directly from profile to avoid race conditions
   const isUserSuperAdmin = profile?.is_super_admin === true || isSuperAdmin;
   
-  // Redirect to workspace selection if no tenant selected (non-super-admins only)
+  // Only redirect to workspace creation if user has no tenant memberships at all
+  // The TenantContext automatically selects a tenant if available
   useEffect(() => {
-    // Don't redirect until we know the user's super admin status
+    // Don't redirect until we know the user's super admin status and tenant loading is complete
     if (!isLoading && !tenantLoading && user && profileLoaded) {
       // Super admins bypass all tenant requirements - they manage all tenants from Admin Center
       if (isUserSuperAdmin) {
-        // Super admin can use the app with or without a tenant selected
         return;
       }
       
-      // Non-super-admin users need a tenant
-      if (!currentTenant && tenantMemberships.length === 0) {
-        // No workspaces at all - redirect to create one
+      // Only redirect to create workspace if user has NO tenant memberships at all
+      // If they have memberships but no current tenant selected, wait for auto-selection
+      if (tenantMemberships.length === 0) {
         navigate("/workspace/new");
-      } else if (!currentTenant && tenantMemberships.length > 1) {
-        // Multiple options - let them choose
-        navigate("/workspace/select");
       }
+      // If user has exactly one tenant, TenantContext will auto-select it
+      // If user has multiple tenants, TenantContext will select from localStorage or first one
+      // So we don't need to redirect to /workspace/select anymore
     }
-  }, [user, isLoading, tenantLoading, currentTenant, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded]);
+  }, [user, isLoading, tenantLoading, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded]);
 
   // Set initial module based on portal mode - only on initial mount
   useEffect(() => {
