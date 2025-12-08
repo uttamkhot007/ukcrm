@@ -102,16 +102,22 @@ export function TeamContactsView() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
 
-  // Recursively fetch all subordinates at all levels
+  // Recursively fetch all subordinates at all levels within tenant
   const { data: teamMembers, isLoading: loadingTeam } = useQuery({
-    queryKey: ["team-members-recursive", user?.id],
+    queryKey: ["team-members-recursive", user?.id, currentTenant?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // Fetch all profiles to build hierarchy
-      const { data: allProfiles, error } = await supabase
+      // Fetch all profiles within tenant to build hierarchy
+      let query = supabase
         .from("profiles")
-        .select("user_id, full_name, email, avatar_url, manager_id");
+        .select("user_id, full_name, email, avatar_url, manager_id, tenant_id");
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+      
+      const { data: allProfiles, error } = await query;
       
       if (error) throw error;
       if (!allProfiles) return [];
@@ -147,9 +153,9 @@ export function TeamContactsView() {
   // Get all team member IDs
   const teamMemberIds = teamMembers?.map(m => m.user_id) || [];
 
-  // Fetch organizations assigned to team members
+  // Fetch organizations assigned to team members within tenant
   const { data: teamOrganizations, isLoading: loadingOrgs } = useQuery({
-    queryKey: ["team-organizations-recursive", teamMemberIds],
+    queryKey: ["team-organizations-recursive", teamMemberIds, currentTenant?.id],
     queryFn: async () => {
       if (teamMemberIds.length === 0) return [];
       
@@ -158,11 +164,16 @@ export function TeamContactsView() {
         `account_manager_id.eq.${id},technical_account_manager_id.eq.${id}`
       ).join(',');
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("alliance_organizations")
         .select("*")
-        .or(conditions)
-        .order("name");
+        .or(conditions);
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+      
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data as AllianceOrganization[];
     },
