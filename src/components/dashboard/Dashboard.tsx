@@ -38,6 +38,8 @@ import { SalesManagerDashboard } from "./SalesManagerDashboard";
 import { PresalesDashboard } from "./PresalesDashboard";
 import { MotivationalQuoteWidget } from "./MotivationalQuoteWidget";
 import { CyberSecurityNewsBar } from "./CyberSecurityNewsBar";
+import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
+import { DraggableWidgetContainer } from "./DraggableWidgetContainer";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -86,6 +88,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
   const { currentTenant } = useTenant();
   const { formatCurrency } = useOrganizationSettings();
   const { dashboardType } = useTeamRole();
+  const { widgets, reorderWidgets, getWidgetsByIds } = useDashboardWidgets();
   
   // Get current tenant ID
   const currentTenantId = currentTenant?.id;
@@ -316,19 +319,47 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {/* Main Content Grid - Only for Admin/Manager */}
       {(isAdmin || isManager) && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <RevenueChart onNavigate={onModuleChange} />
-            <SalesFunnel onNavigate={onModuleChange} />
+          {/* Left Column - Charts */}
+          <div className="lg:col-span-2 relative pt-8">
+            <DraggableWidgetContainer
+              widgets={[
+                { id: "revenue-chart", component: <RevenueChart onNavigate={onModuleChange} /> },
+                { id: "sales-funnel", component: <SalesFunnel onNavigate={onModuleChange} /> },
+              ]}
+              widgetConfigs={getWidgetsByIds(["revenue-chart", "sales-funnel"])}
+              onReorder={reorderWidgets}
+              className="space-y-6"
+              strategy="vertical"
+            />
           </div>
-          <div className="space-y-6">
-            <CyberSecurityNewsBar showKnowledgeBase={true} />
-            <NotificationCenterWidget />
-            <CurrencyConverterWidget />
-            <UpcomingEventsWidget onNavigate={onModuleChange} />
-            <QuickActions />
-            <PendingApprovalsWidget onNavigate={onModuleChange} />
-            <UpcomingFollowUps onNavigate={onModuleChange} />
-            <UpcomingTasks onNavigate={onModuleChange} />
+          
+          {/* Right Column - Widgets */}
+          <div className="relative pt-8">
+            <DraggableWidgetContainer
+              widgets={[
+                { id: "cyber-news", component: <CyberSecurityNewsBar showKnowledgeBase={true} /> },
+                { id: "notifications", component: <NotificationCenterWidget /> },
+                { id: "currency-converter", component: <CurrencyConverterWidget /> },
+                { id: "upcoming-events", component: <UpcomingEventsWidget onNavigate={onModuleChange} /> },
+                { id: "quick-actions", component: <QuickActions /> },
+                { id: "pending-approvals", component: <PendingApprovalsWidget onNavigate={onModuleChange} /> },
+                { id: "upcoming-followups", component: <UpcomingFollowUps onNavigate={onModuleChange} /> },
+                { id: "upcoming-tasks", component: <UpcomingTasks onNavigate={onModuleChange} /> },
+              ]}
+              widgetConfigs={getWidgetsByIds([
+                "cyber-news",
+                "notifications",
+                "currency-converter",
+                "upcoming-events",
+                "quick-actions",
+                "pending-approvals",
+                "upcoming-followups",
+                "upcoming-tasks",
+              ])}
+              onReorder={reorderWidgets}
+              className="space-y-6"
+              strategy="vertical"
+            />
           </div>
         </div>
       )}
@@ -383,9 +414,18 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
 
       {/* Bottom Section - Only for Admin/Manager */}
       {(isAdmin || isManager) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ActivityFeed onNavigate={onModuleChange} />
-          <TeamPerformance onNavigate={onModuleChange} />
+        <div className="relative pt-8">
+          <DraggableWidgetContainer
+            widgets={[
+              { id: "activity-feed", component: <ActivityFeed onNavigate={onModuleChange} /> },
+              { id: "team-performance", component: <TeamPerformance onNavigate={onModuleChange} /> },
+            ]}
+            widgetConfigs={getWidgetsByIds(["activity-feed", "team-performance"])}
+            onReorder={reorderWidgets}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            strategy="grid"
+            columns={2}
+          />
         </div>
       )}
     </div>
