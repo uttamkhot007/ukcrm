@@ -261,6 +261,7 @@ export function MyAccountsView() {
       const { error } = await supabase.from("alliance_organizations").insert({
         tenant_id: currentTenant?.id,
         created_by: user?.id!,
+        account_manager_id: user?.id!, // Auto-assign current user as account manager
         name: data.name,
         organization_type: data.organization_type || null,
         website: data.website || null,
