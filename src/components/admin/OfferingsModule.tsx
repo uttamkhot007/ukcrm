@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
@@ -89,7 +90,11 @@ const offeringTabs: { value: OfferingType; label: string; icon: React.ElementTyp
   { value: "oems", label: "OEMs", icon: Building2, table: "offerings_oems" },
 ];
 
-export function OfferingsModule() {
+interface OfferingsModuleProps {
+  readOnly?: boolean;
+}
+
+export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   const [activeTab, setActiveTab] = useState<OfferingType>("products");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -693,18 +698,20 @@ export function OfferingsModule() {
     return (
       <div className="flex flex-wrap gap-1">
         {items.map(item => (
-          <Badge key={item.id} variant="secondary" className="gap-1 pr-1">
+          <Badge key={item.id} variant="secondary" className={cn("gap-1", !readOnly && "pr-1")}>
             <Icon className="h-3 w-3" />
             {item.name}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleUnlink(type, parentId, item.id);
-              }}
-              className="ml-1 hover:bg-destructive/20 rounded p-0.5"
-            >
-              <X className="h-3 w-3" />
-            </button>
+            {!readOnly && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUnlink(type, parentId, item.id);
+                }}
+                className="ml-1 hover:bg-destructive/20 rounded p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </Badge>
         ))}
       </div>
@@ -754,58 +761,62 @@ export function OfferingsModule() {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                {/* AI Enrich Button */}
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="gap-1 text-primary border-primary/30 hover:bg-primary/10"
-                  onClick={() => handleEnrich(item)}
-                  disabled={enrichingId === item.id}
-                >
-                  {enrichingId === item.id ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-3 w-3" />
-                  )}
-                  <span className="hidden sm:inline">{enrichingId === item.id ? "Enriching..." : "AI Enrich"}</span>
-                </Button>
-                
-                {activeTab === "oems" && (
-                  <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "oem-tech")}>
-                    <Link className="h-3 w-3" />
-                    <span className="hidden sm:inline">Technology</span>
-                  </Button>
-                )}
-                {activeTab === "technologies" && (
+                {!readOnly && (
                   <>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-oem")}>
-                      <Link className="h-3 w-3" />
-                      <span className="hidden sm:inline">OEM</span>
+                    {/* AI Enrich Button */}
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                      onClick={() => handleEnrich(item)}
+                      disabled={enrichingId === item.id}
+                    >
+                      {enrichingId === item.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3 w-3" />
+                      )}
+                      <span className="hidden sm:inline">{enrichingId === item.id ? "Enriching..." : "AI Enrich"}</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-product")}>
-                      <Link className="h-3 w-3" />
-                      <span className="hidden sm:inline">Product</span>
+                    
+                    {activeTab === "oems" && (
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "oem-tech")}>
+                        <Link className="h-3 w-3" />
+                        <span className="hidden sm:inline">Technology</span>
+                      </Button>
+                    )}
+                    {activeTab === "technologies" && (
+                      <>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-oem")}>
+                          <Link className="h-3 w-3" />
+                          <span className="hidden sm:inline">OEM</span>
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-product")}>
+                          <Link className="h-3 w-3" />
+                          <span className="hidden sm:inline">Product</span>
+                        </Button>
+                      </>
+                    )}
+                    {activeTab === "products" && (
+                      <>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-oem")}>
+                          <Link className="h-3 w-3" />
+                          <span className="hidden sm:inline">OEM</span>
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-tech")}>
+                          <Link className="h-3 w-3" />
+                          <span className="hidden sm:inline">Technology</span>
+                        </Button>
+                      </>
+                    )}
+                    <Button size="icon" variant="ghost" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(item.id)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </>
                 )}
-                {activeTab === "products" && (
-                  <>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-oem")}>
-                      <Link className="h-3 w-3" />
-                      <span className="hidden sm:inline">OEM</span>
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-tech")}>
-                      <Link className="h-3 w-3" />
-                      <span className="hidden sm:inline">Technology</span>
-                    </Button>
-                  </>
-                )}
-                <Button size="icon" variant="ghost" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(item.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
             </div>
           </CollapsibleTrigger>
@@ -1125,51 +1136,53 @@ export function OfferingsModule() {
           <TabsContent key={tab.value} value={tab.value} className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">{tab.label} ({filteredOfferings.length})</h3>
-              <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (!open) setEditingItem(null);
-              }}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add {tab.label.includes("&") ? tab.label.split("&")[0].trim() : tab.label.replace(" Services", "").replace("s", "")}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editingItem ? "Edit" : "Add"} {tab.label.includes("&") ? "Item" : tab.label.replace(" Services", "")}</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
-                      <Input id="name" name="name" required defaultValue={editingItem?.name} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" name="description" defaultValue={editingItem?.description || ""} />
-                    </div>
-                    {renderFormFields()}
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select name="status" defaultValue={editingItem?.status || "active"}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                      <Button type="submit" disabled={mutation.isPending}>
-                        {mutation.isPending ? "Saving..." : "Save"}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              {!readOnly && (
+                <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (!open) setEditingItem(null);
+                }}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Add {tab.label.includes("&") ? tab.label.split("&")[0].trim() : tab.label.replace(" Services", "").replace("s", "")}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{editingItem ? "Edit" : "Add"} {tab.label.includes("&") ? "Item" : tab.label.replace(" Services", "")}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name *</Label>
+                        <Input id="name" name="name" required defaultValue={editingItem?.name} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea id="description" name="description" defaultValue={editingItem?.description || ""} />
+                      </div>
+                      {renderFormFields()}
+                      <div className="space-y-2">
+                        <Label htmlFor="status">Status</Label>
+                        <Select name="status" defaultValue={editingItem?.status || "active"}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                        <Button type="submit" disabled={mutation.isPending}>
+                          {mutation.isPending ? "Saving..." : "Save"}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
 
             {shouldShowExpandableView && tab.value === activeTab ? (
@@ -1193,7 +1206,7 @@ export function OfferingsModule() {
                         {tab.value === "problem_areas" ? "Area Type" : "Service Type"}
                       </TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
+                      {!readOnly && <TableHead className="w-[100px]">Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1216,28 +1229,30 @@ export function OfferingsModule() {
                               {item.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => {
-                                  setEditingItem(item);
-                                  setIsDialogOpen(true);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => deleteMutation.mutate(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                          {!readOnly && (
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingItem(item);
+                                    setIsDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => deleteMutation.mutate(item.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))
                     )}

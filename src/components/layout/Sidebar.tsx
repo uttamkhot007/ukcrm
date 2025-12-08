@@ -291,6 +291,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "sales-funnel", label: "Funnel Management", icon: Target },
           { id: "sales-quotations", label: "Quotations", icon: FileText },
           { id: "sales-leads", label: "Lead Tracking", icon: Activity },
+          { id: "sales-offerings", label: "Offerings", icon: Package },
         ],
       });
 
@@ -539,6 +540,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "sales-leads", label: "Lead Tracking", icon: Activity },
           { id: "sales-my-accounts", label: "My Accounts", icon: Building2 },
           { id: "sales-contacts", label: "My Contacts", icon: Phone },
+          { id: "sales-offerings", label: "Offerings", icon: Package },
         ];
         
         // Add Team Contacts for managers
