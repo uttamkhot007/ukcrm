@@ -5,6 +5,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface EmailSecurityStatus {
+  spf: {
+    status: 'valid' | 'invalid' | 'missing' | 'softfail';
+    record: string | null;
+    recommendation: string | null;
+  };
+  dkim: {
+    status: 'active' | 'inactive' | 'unknown';
+    selectors: string[];
+    recommendation: string | null;
+  };
+  dmarc: {
+    status: 'reject' | 'quarantine' | 'none' | 'missing';
+    policy: string | null;
+    recommendation: string | null;
+  };
+  overallScore: number;
+}
+
 interface ThreatIntelligence {
   breaches: Array<{
     name: string;
@@ -29,6 +48,7 @@ interface ThreatIntelligence {
     service: string;
     risk: string;
   }>;
+  emailSecurity: EmailSecurityStatus;
   riskScore: number;
   lastUpdated: string;
 }
@@ -92,6 +112,24 @@ Provide a threat intelligence report in this EXACT JSON format:
       "risk": "Low|Medium|High"
     }
   ],
+  "emailSecurity": {
+    "spf": {
+      "status": "valid|invalid|missing|softfail",
+      "record": "SPF record string or null",
+      "recommendation": "Recommendation if any issues"
+    },
+    "dkim": {
+      "status": "active|inactive|unknown",
+      "selectors": ["selector names found"],
+      "recommendation": "Recommendation if any issues"
+    },
+    "dmarc": {
+      "status": "reject|quarantine|none|missing",
+      "policy": "DMARC policy string or null",
+      "recommendation": "Recommendation if any issues"
+    },
+    "overallScore": 0-100
+  },
   "riskScore": 0-100
 }
 
@@ -101,6 +139,11 @@ IMPORTANT:
 - If no incidents found, return empty arrays and low riskScore
 - For smaller/unknown companies, it's normal to have no public breach data
 - Be accurate - don't invent fake breaches
+- For emailSecurity, analyze the domain's DNS records:
+  * Check SPF record validity
+  * Look for common DKIM selectors (google, selector1, selector2, etc.)
+  * Check DMARC policy strength
+  * Score 0-30: Poor security, 31-60: Basic, 61-80: Good, 81-100: Excellent
 
 Return ONLY valid JSON, no markdown.`;
 
@@ -164,6 +207,12 @@ function getMockThreatIntel(): ThreatIntelligence {
       { port: 443, service: "HTTPS", risk: "Low" },
       { port: 80, service: "HTTP", risk: "Medium" }
     ],
+    emailSecurity: {
+      spf: { status: 'valid', record: 'v=spf1 include:_spf.google.com ~all', recommendation: null },
+      dkim: { status: 'active', selectors: ['google', 'selector1'], recommendation: null },
+      dmarc: { status: 'quarantine', policy: 'v=DMARC1; p=quarantine;', recommendation: 'Consider upgrading to p=reject for stronger protection' },
+      overallScore: 75
+    },
     riskScore: 25,
     lastUpdated: new Date().toISOString()
   };
