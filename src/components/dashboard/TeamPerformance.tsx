@@ -14,7 +14,11 @@ interface TopPerformer {
   totalValue: number;
 }
 
-export function TeamPerformance() {
+interface TeamPerformanceProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function TeamPerformance({ onNavigate }: TeamPerformanceProps) {
   const { formatCurrency } = useOrganizationSettings();
 
   const { data: performers, isLoading } = useQuery({
@@ -92,7 +96,10 @@ export function TeamPerformance() {
 
   return (
     <div className="glass rounded-xl p-6 border border-border animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+      <div 
+        className="flex items-center justify-between mb-6 cursor-pointer hover:opacity-80"
+        onClick={() => onNavigate?.("hr")}
+      >
         <h3 className="text-lg font-semibold">Top Performers</h3>
       </div>
 

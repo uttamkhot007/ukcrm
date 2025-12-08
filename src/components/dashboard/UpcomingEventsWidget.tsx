@@ -22,7 +22,11 @@ interface EmployeeEvent {
   description: string | null;
 }
 
-export function UpcomingEventsWidget() {
+interface UpcomingEventsWidgetProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function UpcomingEventsWidget({ onNavigate }: UpcomingEventsWidgetProps) {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["upcoming-events-widget"],
     queryFn: async () => {
@@ -89,7 +93,10 @@ export function UpcomingEventsWidget() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle 
+          className="text-lg flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+          onClick={() => onNavigate?.("employee-events")}
+        >
           <PartyPopper className="w-5 h-5 text-pink-500" />
           Upcoming Events
         </CardTitle>

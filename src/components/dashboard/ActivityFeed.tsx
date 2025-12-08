@@ -31,7 +31,11 @@ const typeConfig = {
   message: { icon: MessageSquare, color: "text-marketing bg-marketing/10" },
 };
 
-export function ActivityFeed() {
+interface ActivityFeedProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function ActivityFeed({ onNavigate }: ActivityFeedProps) {
   const { data: activities, isLoading } = useQuery({
     queryKey: ["activity-feed"],
     queryFn: async () => {
@@ -117,6 +121,13 @@ export function ActivityFeed() {
                 key={activity.id}
                 className="flex gap-4 p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
+                onClick={() => {
+                  // Navigate based on activity type
+                  if (activity.type === "deal") onNavigate?.("sales");
+                  else if (activity.type === "alert") onNavigate?.("support");
+                  else if (activity.type === "hire") onNavigate?.("hr");
+                  else if (activity.type === "payment") onNavigate?.("billing");
+                }}
               >
                 <div
                   className={cn(

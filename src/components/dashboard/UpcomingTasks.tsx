@@ -53,7 +53,11 @@ const priorityColors = {
   low: "text-muted-foreground bg-muted",
 };
 
-export function UpcomingTasks() {
+interface UpcomingTasksProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function UpcomingTasks({ onNavigate }: UpcomingTasksProps) {
   return (
     <div className="glass rounded-xl p-6 border border-border animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -68,6 +72,7 @@ export function UpcomingTasks() {
           <div
             key={task.id}
             className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+            onClick={() => onNavigate?.("projects")}
           >
             <button className="mt-0.5 text-muted-foreground hover:text-primary transition-colors">
               <CheckCircle2 className="w-5 h-5" />
@@ -102,7 +107,10 @@ export function UpcomingTasks() {
         ))}
       </div>
 
-      <button className="w-full mt-4 py-2 text-sm text-primary hover:underline">
+      <button 
+        className="w-full mt-4 py-2 text-sm text-primary hover:underline"
+        onClick={() => onNavigate?.("projects")}
+      >
         View all tasks →
       </button>
     </div>

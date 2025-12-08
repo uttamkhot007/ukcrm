@@ -183,7 +183,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     return requiredRoles.includes(role);
   };
 
-  // Build metrics from real data
+  // Build metrics from real data with navigation targets
   const metrics = [
     {
       title: "Total Revenue",
@@ -193,6 +193,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       icon: DollarSign,
       color: "finance" as const,
       requiredRoles: ["admin", "manager"],
+      navigateTo: "billing",
     },
     {
       title: "Active Deals",
@@ -202,6 +203,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       icon: Target,
       color: "sales" as const,
       requiredRoles: ["admin", "manager"],
+      navigateTo: "sales",
     },
     {
       title: "Team Members",
@@ -211,6 +213,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       icon: Users,
       color: "hr" as const,
       requiredRoles: ["admin", "manager"],
+      navigateTo: "hr",
     },
     {
       title: "Open Tickets",
@@ -220,6 +223,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       icon: Ticket,
       color: "support" as const,
       requiredRoles: ["admin", "manager"],
+      navigateTo: "support",
     },
   ].filter((m) => hasAccess(m.requiredRoles));
 
@@ -295,7 +299,12 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {metrics.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {metrics.map((metric, index) => (
-            <MetricCard key={metric.title} {...metric} delay={index * 100} />
+            <MetricCard 
+              key={metric.title} 
+              {...metric} 
+              delay={index * 100} 
+              onClick={() => onModuleChange(metric.navigateTo)}
+            />
           ))}
         </div>
       )}
@@ -304,18 +313,18 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {(isAdmin || isManager) && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <RevenueChart />
-            <SalesFunnel />
+            <RevenueChart onNavigate={onModuleChange} />
+            <SalesFunnel onNavigate={onModuleChange} />
           </div>
           <div className="space-y-6">
             <CyberSecurityNewsBar showKnowledgeBase={true} />
             <NotificationCenterWidget />
             <CurrencyConverterWidget />
-            <UpcomingEventsWidget />
+            <UpcomingEventsWidget onNavigate={onModuleChange} />
             <QuickActions />
             <PendingApprovalsWidget onNavigate={onModuleChange} />
             <UpcomingFollowUps onNavigate={onModuleChange} />
-            <UpcomingTasks />
+            <UpcomingTasks onNavigate={onModuleChange} />
           </div>
         </div>
       )}
@@ -328,7 +337,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
           </div>
           <div className="space-y-6">
             <CyberSecurityNewsBar />
-            <UpcomingEventsWidget />
+            <UpcomingEventsWidget onNavigate={onModuleChange} />
           </div>
         </div>
       )}
@@ -336,8 +345,13 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {/* Sales Dashboard Widgets - Only for Admin/Manager */}
       {(isAdmin || isManager) && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Sales Overview</h2>
-          <SalesWidgets />
+          <h2 
+            className="text-xl font-semibold mb-4 cursor-pointer hover:text-primary transition-colors inline-block"
+            onClick={() => onModuleChange("sales")}
+          >
+            Sales Overview →
+          </h2>
+          <SalesWidgets onNavigate={onModuleChange} />
         </div>
       )}
 
@@ -366,8 +380,8 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {/* Bottom Section - Only for Admin/Manager */}
       {(isAdmin || isManager) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ActivityFeed />
-          <TeamPerformance />
+          <ActivityFeed onNavigate={onModuleChange} />
+          <TeamPerformance onNavigate={onModuleChange} />
         </div>
       )}
     </div>
