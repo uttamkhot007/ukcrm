@@ -1547,20 +1547,30 @@ export type Database = {
         Row: {
           actual_close_date: string | null
           assigned_to: string | null
+          buying_timeline: string | null
           closed_won_substage:
             | Database["public"]["Enums"]["closed_won_substage"]
             | null
           contact_id: string | null
           created_at: string
           created_by: string | null
+          deal_type: string | null
           description: string | null
+          existing_solution: string | null
           expected_close_date: string | null
           id: string
+          is_budgeted: boolean | null
           lead_id: string | null
           loss_reason: string | null
+          next_steps: string | null
+          organization_name: string | null
           probability: number | null
+          problem_requirement: string | null
+          quantity: number | null
+          solution_id: string | null
           stage: Database["public"]["Enums"]["deal_stage"]
           tenant_id: string | null
+          tentative_budget: number | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -1570,20 +1580,30 @@ export type Database = {
         Insert: {
           actual_close_date?: string | null
           assigned_to?: string | null
+          buying_timeline?: string | null
           closed_won_substage?:
             | Database["public"]["Enums"]["closed_won_substage"]
             | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deal_type?: string | null
           description?: string | null
+          existing_solution?: string | null
           expected_close_date?: string | null
           id?: string
+          is_budgeted?: boolean | null
           lead_id?: string | null
           loss_reason?: string | null
+          next_steps?: string | null
+          organization_name?: string | null
           probability?: number | null
+          problem_requirement?: string | null
+          quantity?: number | null
+          solution_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           tenant_id?: string | null
+          tentative_budget?: number | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -1593,20 +1613,30 @@ export type Database = {
         Update: {
           actual_close_date?: string | null
           assigned_to?: string | null
+          buying_timeline?: string | null
           closed_won_substage?:
             | Database["public"]["Enums"]["closed_won_substage"]
             | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deal_type?: string | null
           description?: string | null
+          existing_solution?: string | null
           expected_close_date?: string | null
           id?: string
+          is_budgeted?: boolean | null
           lead_id?: string | null
           loss_reason?: string | null
+          next_steps?: string | null
+          organization_name?: string | null
           probability?: number | null
+          problem_requirement?: string | null
+          quantity?: number | null
+          solution_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           tenant_id?: string | null
+          tentative_budget?: number | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -1626,6 +1656,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_products"
             referencedColumns: ["id"]
           },
           {
