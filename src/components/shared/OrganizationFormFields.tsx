@@ -15,7 +15,7 @@ export const ORGANIZATION_TYPES = [
   { value: "customer", label: "Customer" },
   { value: "distributor", label: "Distributor" },
   { value: "oem", label: "OEM" },
-  { value: "partner", label: "Partner" },
+  { value: "reseller", label: "Reseller" },
   { value: "location", label: "Location" },
 ];
 
