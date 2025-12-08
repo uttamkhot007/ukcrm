@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Quote, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Quote } from "lucide-react";
 
 const motivationalQuotes = [
   { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
@@ -28,24 +27,20 @@ const motivationalQuotes = [
 
 export function MotivationalQuoteWidget() {
   const [currentQuote, setCurrentQuote] = useState(motivationalQuotes[0]);
-  const [isAnimating, setIsAnimating] = useState(false);
 
-  const getRandomQuote = () => {
-    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    return motivationalQuotes[randomIndex];
-  };
-
-  const refreshQuote = () => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      setCurrentQuote(getRandomQuote());
-      setIsAnimating(false);
-    }, 300);
+  // Get quote based on current date (changes daily)
+  const getDailyQuote = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor(
+      (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const index = dayOfYear % motivationalQuotes.length;
+    return motivationalQuotes[index];
   };
 
   useEffect(() => {
-    // Set a random quote on initial load
-    setCurrentQuote(getRandomQuote());
+    // Set the daily quote on initial load
+    setCurrentQuote(getDailyQuote());
   }, []);
 
   return (
@@ -53,29 +48,18 @@ export function MotivationalQuoteWidget() {
       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/5 rounded-full translate-y-1/2 -translate-x-1/2" />
       <CardContent className="p-4 relative">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-3 flex-1">
-            <div className="p-2 rounded-full bg-primary/10 shrink-0">
-              <Quote className="h-4 w-4 text-primary" />
-            </div>
-            <div className={`transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-              <p className="text-sm font-medium text-foreground italic leading-relaxed">
-                "{currentQuote.quote}"
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                — {currentQuote.author}
-              </p>
-            </div>
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-full bg-primary/10 shrink-0">
+            <Quote className="h-4 w-4 text-primary" />
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 hover:bg-primary/10"
-            onClick={refreshQuote}
-            title="Get new quote"
-          >
-            <RefreshCw className={`h-4 w-4 text-muted-foreground ${isAnimating ? 'animate-spin' : ''}`} />
-          </Button>
+          <div>
+            <p className="text-sm font-medium text-foreground italic leading-relaxed">
+              "{currentQuote.quote}"
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              — {currentQuote.author}
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
