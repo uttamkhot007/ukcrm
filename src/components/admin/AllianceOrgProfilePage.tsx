@@ -221,14 +221,7 @@ const OEM_OPTIONS = [
   'Other',
 ];
 
-const PARTNER_OPTIONS = [
-  'Not a Partner',
-  'Registered Partner',
-  'Silver Partner',
-  'Gold Partner',
-  'Platinum Partner',
-  'Strategic Partner',
-];
+// PARTNER_OPTIONS removed - now fetched from alliance_organizations with organization_type = 'Reseller'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -308,6 +301,26 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       const { data, error } = await query;
       if (error) throw error;
       return (data || []) as Array<{ user_id: string; full_name: string | null; email: string | null; department: string | null }>;
+    },
+  });
+
+  // Fetch reseller organizations for partner/reseller selection
+  const { data: resellers = [] } = useQuery({
+    queryKey: ["reseller-organizations", currentTenant?.id],
+    queryFn: async () => {
+      let query = supabase
+        .from("alliance_organizations")
+        .select("id, name")
+        .eq("organization_type", "Reseller")
+        .order("name");
+
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as Array<{ id: string; name: string }>;
     },
   });
 
@@ -2026,7 +2039,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                                   </Select>
                                 </div>
                                 <div className="space-y-1">
-                                  <Label className="text-xs">Partner</Label>
+                                  <Label className="text-xs">Reseller</Label>
                                   <Select 
                                     value={config.partner} 
                                     onValueChange={(val) => setSolutionConfigs({
@@ -2035,11 +2048,12 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                                     })}
                                   >
                                     <SelectTrigger className="h-8 text-xs">
-                                      <SelectValue placeholder="Select Partner" />
+                                      <SelectValue placeholder="Select Reseller" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {PARTNER_OPTIONS.map(partner => (
-                                        <SelectItem key={partner} value={partner}>{partner}</SelectItem>
+                                      <SelectItem value="none">Not via Reseller</SelectItem>
+                                      {resellers.map(reseller => (
+                                        <SelectItem key={reseller.id} value={reseller.name}>{reseller.name}</SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
