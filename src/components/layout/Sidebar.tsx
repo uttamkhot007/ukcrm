@@ -171,6 +171,7 @@ const adminItems: NavItem[] = [
     color: "text-management",
     requiredRoles: ["admin"],
     children: [
+      { id: "management-analytics", label: "Analytics Dashboard", icon: BarChart3 },
       { id: "management-performance", label: "People Performance", icon: Activity },
       { id: "management-cashflow", label: "Inflow vs Outflow", icon: DollarSign },
     ],
