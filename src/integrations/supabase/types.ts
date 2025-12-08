@@ -6260,13 +6260,19 @@ export type Database = {
           created_by: string | null
           currency: string | null
           fresh_sales_bottom_line: number
+          fresh_sales_bottom_line_calculated: number | null
+          fresh_sales_bottom_line_type: string | null
           fresh_sales_top_line: number
           id: string
+          incentive_cap_calculated: number | null
+          incentive_cap_type: string | null
           incentive_eligibility_cap: number
           notes: string | null
           period_end: string
           period_start: string
           renewal_bottom_line: number
+          renewal_bottom_line_calculated: number | null
+          renewal_bottom_line_type: string | null
           renewal_top_line: number
           target_period: string
           tenant_id: string | null
@@ -6281,13 +6287,19 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           fresh_sales_bottom_line?: number
+          fresh_sales_bottom_line_calculated?: number | null
+          fresh_sales_bottom_line_type?: string | null
           fresh_sales_top_line?: number
           id?: string
+          incentive_cap_calculated?: number | null
+          incentive_cap_type?: string | null
           incentive_eligibility_cap?: number
           notes?: string | null
           period_end: string
           period_start: string
           renewal_bottom_line?: number
+          renewal_bottom_line_calculated?: number | null
+          renewal_bottom_line_type?: string | null
           renewal_top_line?: number
           target_period?: string
           tenant_id?: string | null
@@ -6302,13 +6314,19 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           fresh_sales_bottom_line?: number
+          fresh_sales_bottom_line_calculated?: number | null
+          fresh_sales_bottom_line_type?: string | null
           fresh_sales_top_line?: number
           id?: string
+          incentive_cap_calculated?: number | null
+          incentive_cap_type?: string | null
           incentive_eligibility_cap?: number
           notes?: string | null
           period_end?: string
           period_start?: string
           renewal_bottom_line?: number
+          renewal_bottom_line_calculated?: number | null
+          renewal_bottom_line_type?: string | null
           renewal_top_line?: number
           target_period?: string
           tenant_id?: string | null

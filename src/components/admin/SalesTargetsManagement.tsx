@@ -52,6 +52,12 @@ interface SalesTarget {
   renewal_top_line: number;
   renewal_bottom_line: number;
   incentive_eligibility_cap: number;
+  incentive_cap_type?: string;
+  fresh_sales_bottom_line_type?: string;
+  renewal_bottom_line_type?: string;
+  incentive_cap_calculated?: number;
+  fresh_sales_bottom_line_calculated?: number;
+  renewal_bottom_line_calculated?: number;
   currency: string;
   notes: string | null;
   created_at: string;
@@ -64,6 +70,8 @@ interface Profile {
   avatar_url: string | null;
   job_title: string | null;
 }
+
+type ValueType = "value" | "percentage";
 
 export function SalesTargetsManagement() {
   const queryClient = useQueryClient();
@@ -81,11 +89,32 @@ export function SalesTargetsManagement() {
     period_end: format(endOfMonth(new Date()), "yyyy-MM-dd"),
     fresh_sales_top_line: "",
     fresh_sales_bottom_line: "",
+    fresh_sales_bottom_line_type: "value" as ValueType,
     renewal_top_line: "",
     renewal_bottom_line: "",
+    renewal_bottom_line_type: "value" as ValueType,
     incentive_eligibility_cap: "",
+    incentive_cap_type: "value" as ValueType,
     notes: "",
   });
+
+  // Calculate actual values based on type (value or percentage)
+  const calculateValue = (input: string, type: ValueType, baseValue: number): number => {
+    const numValue = parseFloat(input) || 0;
+    if (type === "percentage") {
+      return (numValue / 100) * baseValue;
+    }
+    return numValue;
+  };
+
+  // Get display text for calculated values
+  const getCalculatedDisplay = (input: string, type: ValueType, baseValue: number): string => {
+    if (type === "percentage" && input) {
+      const calculated = calculateValue(input, type, baseValue);
+      return `= ${formatCurrency(calculated)}`;
+    }
+    return "";
+  };
 
   // Fetch sales team members
   const { data: salesMembers = [], isLoading: membersLoading } = useQuery({
@@ -177,9 +206,27 @@ export function SalesTargetsManagement() {
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const freshTopLine = parseFloat(data.fresh_sales_top_line) || 0;
-      const freshBottomLine = parseFloat(data.fresh_sales_bottom_line) || 0;
       const renewalTopLine = parseFloat(data.renewal_top_line) || 0;
-      const renewalBottomLine = parseFloat(data.renewal_bottom_line) || 0;
+      const totalTopLine = freshTopLine + renewalTopLine;
+
+      // Calculate bottom lines based on type
+      const freshBottomLineCalculated = calculateValue(
+        data.fresh_sales_bottom_line,
+        data.fresh_sales_bottom_line_type,
+        freshTopLine
+      );
+      const renewalBottomLineCalculated = calculateValue(
+        data.renewal_bottom_line,
+        data.renewal_bottom_line_type,
+        renewalTopLine
+      );
+      
+      // Calculate incentive cap based on type
+      const incentiveCapCalculated = calculateValue(
+        data.incentive_eligibility_cap,
+        data.incentive_cap_type,
+        totalTopLine
+      );
 
       const payload = {
         user_id: data.user_id,
@@ -188,12 +235,18 @@ export function SalesTargetsManagement() {
         period_start: data.period_start,
         period_end: data.period_end,
         fresh_sales_top_line: freshTopLine,
-        fresh_sales_bottom_line: freshBottomLine,
+        fresh_sales_bottom_line: parseFloat(data.fresh_sales_bottom_line) || 0,
+        fresh_sales_bottom_line_type: data.fresh_sales_bottom_line_type,
+        fresh_sales_bottom_line_calculated: freshBottomLineCalculated,
         renewal_top_line: renewalTopLine,
-        renewal_bottom_line: renewalBottomLine,
-        top_line_target: freshTopLine + renewalTopLine,
-        bottom_line_target: freshBottomLine + renewalBottomLine,
+        renewal_bottom_line: parseFloat(data.renewal_bottom_line) || 0,
+        renewal_bottom_line_type: data.renewal_bottom_line_type,
+        renewal_bottom_line_calculated: renewalBottomLineCalculated,
+        top_line_target: totalTopLine,
+        bottom_line_target: freshBottomLineCalculated + renewalBottomLineCalculated,
         incentive_eligibility_cap: parseFloat(data.incentive_eligibility_cap) || 0,
+        incentive_cap_type: data.incentive_cap_type,
+        incentive_cap_calculated: incentiveCapCalculated,
         notes: data.notes || null,
         created_by: user?.id,
         updated_by: user?.id,
@@ -254,9 +307,12 @@ export function SalesTargetsManagement() {
         period_end: target.period_end,
         fresh_sales_top_line: target.fresh_sales_top_line.toString(),
         fresh_sales_bottom_line: target.fresh_sales_bottom_line.toString(),
+        fresh_sales_bottom_line_type: (target.fresh_sales_bottom_line_type || "value") as ValueType,
         renewal_top_line: target.renewal_top_line.toString(),
         renewal_bottom_line: target.renewal_bottom_line.toString(),
+        renewal_bottom_line_type: (target.renewal_bottom_line_type || "value") as ValueType,
         incentive_eligibility_cap: target.incentive_eligibility_cap.toString(),
+        incentive_cap_type: (target.incentive_cap_type || "value") as ValueType,
         notes: target.notes || "",
       });
     } else {
@@ -276,9 +332,12 @@ export function SalesTargetsManagement() {
       period_end: format(endOfMonth(new Date()), "yyyy-MM-dd"),
       fresh_sales_top_line: "",
       fresh_sales_bottom_line: "",
+      fresh_sales_bottom_line_type: "value",
       renewal_top_line: "",
       renewal_bottom_line: "",
+      renewal_bottom_line_type: "value",
       incentive_eligibility_cap: "",
+      incentive_cap_type: "value",
       notes: "",
     });
   };
@@ -491,17 +550,37 @@ export function SalesTargetsManagement() {
                         <TableCell className="text-right">
                           <div className="text-sm">
                             <span className="font-medium">{formatCurrency(target.fresh_sales_top_line)}</span>
-                            <span className="text-muted-foreground"> / {formatCurrency(target.fresh_sales_bottom_line)}</span>
+                            <span className="text-muted-foreground"> / </span>
+                            {target.fresh_sales_bottom_line_type === "percentage" ? (
+                              <span className="text-muted-foreground">
+                                {target.fresh_sales_bottom_line}% ({formatCurrency(target.fresh_sales_bottom_line_calculated || 0)})
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{formatCurrency(target.fresh_sales_bottom_line)}</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="text-sm">
                             <span className="font-medium">{formatCurrency(target.renewal_top_line)}</span>
-                            <span className="text-muted-foreground"> / {formatCurrency(target.renewal_bottom_line)}</span>
+                            <span className="text-muted-foreground"> / </span>
+                            {target.renewal_bottom_line_type === "percentage" ? (
+                              <span className="text-muted-foreground">
+                                {target.renewal_bottom_line}% ({formatCurrency(target.renewal_bottom_line_calculated || 0)})
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{formatCurrency(target.renewal_bottom_line)}</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(target.incentive_eligibility_cap)}
+                          <div className="text-sm">
+                            {target.incentive_cap_type === "percentage" ? (
+                              <span>{target.incentive_eligibility_cap}% ({formatCurrency(target.incentive_cap_calculated || 0)})</span>
+                            ) : (
+                              <span>{formatCurrency(target.incentive_eligibility_cap)}</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1 min-w-[100px]">
@@ -642,12 +721,32 @@ export function SalesTargetsManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Bottom Line (Profit)</Label>
-                  <Input
-                    type="number"
-                    placeholder="e.g., 60000"
-                    value={formData.fresh_sales_bottom_line}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fresh_sales_bottom_line: e.target.value }))}
-                  />
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.fresh_sales_bottom_line_type}
+                      onValueChange={(value: ValueType) => setFormData(prev => ({ ...prev, fresh_sales_bottom_line_type: value }))}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="value">₹</SelectItem>
+                        <SelectItem value="percentage">%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      placeholder={formData.fresh_sales_bottom_line_type === "percentage" ? "e.g., 20" : "e.g., 60000"}
+                      value={formData.fresh_sales_bottom_line}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fresh_sales_bottom_line: e.target.value }))}
+                      className="flex-1"
+                    />
+                  </div>
+                  {formData.fresh_sales_bottom_line_type === "percentage" && formData.fresh_sales_bottom_line && (
+                    <p className="text-xs text-muted-foreground">
+                      {getCalculatedDisplay(formData.fresh_sales_bottom_line, "percentage", parseFloat(formData.fresh_sales_top_line) || 0)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -670,24 +769,68 @@ export function SalesTargetsManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Bottom Line (Profit)</Label>
-                  <Input
-                    type="number"
-                    placeholder="e.g., 40000"
-                    value={formData.renewal_bottom_line}
-                    onChange={(e) => setFormData(prev => ({ ...prev, renewal_bottom_line: e.target.value }))}
-                  />
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.renewal_bottom_line_type}
+                      onValueChange={(value: ValueType) => setFormData(prev => ({ ...prev, renewal_bottom_line_type: value }))}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="value">₹</SelectItem>
+                        <SelectItem value="percentage">%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      placeholder={formData.renewal_bottom_line_type === "percentage" ? "e.g., 20" : "e.g., 40000"}
+                      value={formData.renewal_bottom_line}
+                      onChange={(e) => setFormData(prev => ({ ...prev, renewal_bottom_line: e.target.value }))}
+                      className="flex-1"
+                    />
+                  </div>
+                  {formData.renewal_bottom_line_type === "percentage" && formData.renewal_bottom_line && (
+                    <p className="text-xs text-muted-foreground">
+                      {getCalculatedDisplay(formData.renewal_bottom_line, "percentage", parseFloat(formData.renewal_top_line) || 0)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Incentive Eligibility Cap</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 50000"
-                value={formData.incentive_eligibility_cap}
-                onChange={(e) => setFormData(prev => ({ ...prev, incentive_eligibility_cap: e.target.value }))}
-              />
+              <div className="flex gap-2">
+                <Select
+                  value={formData.incentive_cap_type}
+                  onValueChange={(value: ValueType) => setFormData(prev => ({ ...prev, incentive_cap_type: value }))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="value">₹</SelectItem>
+                    <SelectItem value="percentage">%</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder={formData.incentive_cap_type === "percentage" ? "e.g., 10" : "e.g., 50000"}
+                  value={formData.incentive_eligibility_cap}
+                  onChange={(e) => setFormData(prev => ({ ...prev, incentive_eligibility_cap: e.target.value }))}
+                  className="flex-1"
+                />
+              </div>
+              {formData.incentive_cap_type === "percentage" && formData.incentive_eligibility_cap && (
+                <p className="text-xs text-muted-foreground">
+                  {getCalculatedDisplay(
+                    formData.incentive_eligibility_cap, 
+                    "percentage", 
+                    (parseFloat(formData.fresh_sales_top_line) || 0) + (parseFloat(formData.renewal_top_line) || 0)
+                  )}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
