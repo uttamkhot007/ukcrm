@@ -337,10 +337,38 @@ export function ContactsView() {
       if (!data.contact_owner_id) {
         throw new Error("Contact Owner is required");
       }
+      const emailToCheck = data.email.trim().toLowerCase();
+      
+      // Check for duplicate email in alliance_users
+      if (emailToCheck) {
+        const { data: existingAllianceUser } = await supabase
+          .from("alliance_users")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        if (existingAllianceUser) {
+          throw new Error("A contact with this email already exists");
+        }
+
+        // Also check contacts table
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        if (existingContact) {
+          throw new Error("A contact with this email already exists");
+        }
+      }
+
       // Create in alliance_users which will sync to contacts via trigger
       const { error } = await supabase.from("alliance_users").insert({
         name: data.name.trim(),
-        email: data.email.trim() || null,
+        email: emailToCheck || null,
         phone: data.phone.trim() || null,
         organization_id: data.organization_id || null,
         designation: data.designation.trim() || null,
@@ -366,13 +394,42 @@ export function ContactsView() {
 
   const updateContact = useMutation({
     mutationFn: async ({ id, data, isAllianceUser }: { id: string; data: typeof formData; isAllianceUser?: boolean }) => {
+      const emailToCheck = data.email.trim().toLowerCase();
+      
+      // Check for duplicate email (excluding current contact)
+      if (emailToCheck) {
+        const { data: existingAllianceUser } = await supabase
+          .from("alliance_users")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .neq("id", id)
+          .maybeSingle();
+        
+        if (existingAllianceUser) {
+          throw new Error("A contact with this email already exists");
+        }
+
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .neq("id", id)
+          .maybeSingle();
+        
+        if (existingContact) {
+          throw new Error("A contact with this email already exists");
+        }
+      }
+
       if (isAllianceUser) {
         // Update alliance_user which will sync to contacts via trigger
         const { error } = await supabase
           .from("alliance_users")
           .update({
             name: data.name.trim(),
-            email: data.email.trim() || null,
+            email: emailToCheck || null,
             phone: data.phone.trim() || null,
             organization_id: data.organization_id || null,
             designation: data.designation.trim() || null,
@@ -388,7 +445,7 @@ export function ContactsView() {
           .from("contacts")
           .update({
             name: data.name.trim(),
-            email: data.email.trim() || null,
+            email: emailToCheck || null,
             phone: data.phone.trim() || null,
             alliance_organization_id: data.organization_id || null,
             designation: data.designation.trim() || null,

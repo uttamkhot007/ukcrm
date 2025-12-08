@@ -661,13 +661,41 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       if (!contactData.name.trim()) {
         throw new Error("Contact name is required");
       }
+      
+      const emailToCheck = contactData.email?.trim().toLowerCase();
+      
+      // Check for duplicate email
+      if (emailToCheck) {
+        const { data: existingAllianceUser } = await supabase
+          .from("alliance_users")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        if (existingAllianceUser) {
+          throw new Error("A contact with this email already exists");
+        }
+
+        const { data: existingContact } = await supabase
+          .from("contacts")
+          .select("id, email")
+          .ilike("email", emailToCheck)
+          .eq("tenant_id", currentTenant?.id || "")
+          .maybeSingle();
+        
+        if (existingContact) {
+          throw new Error("A contact with this email already exists");
+        }
+      }
+
       const { data, error } = await supabase
         .from("alliance_users")
         .insert({
           tenant_id: currentTenant?.id,
           organization_id: organization?.id,
           name: contactData.name.trim(),
-          email: contactData.email?.trim() || null,
+          email: emailToCheck || null,
           phone: contactData.phone?.trim() || null,
           role: contactData.role || 'other',
           designation: contactData.role || 'other',
