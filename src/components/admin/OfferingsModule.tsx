@@ -55,10 +55,10 @@ interface SolutionTechnology extends JunctionRecord {
   technology_id: string;
 }
 
-type OfferingType = "solutions" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
+type OfferingType = "products" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
 
 const offeringTabs: { value: OfferingType; label: string; icon: React.ElementType; table: string }[] = [
-  { value: "solutions", label: "Solutions", icon: Package, table: "offerings_solutions" },
+  { value: "products", label: "Products", icon: Package, table: "offerings_solutions" },
   { value: "offensive_security", label: "Offensive Security", icon: Shield, table: "offerings_offensive_security" },
   { value: "managed_security", label: "Managed Security", icon: Server, table: "offerings_managed_security" },
   { value: "professional_services", label: "Professional Services", icon: Briefcase, table: "offerings_professional_services" },
@@ -68,13 +68,13 @@ const offeringTabs: { value: OfferingType; label: string; icon: React.ElementTyp
 ];
 
 export function OfferingsModule() {
-  const [activeTab, setActiveTab] = useState<OfferingType>("solutions");
+  const [activeTab, setActiveTab] = useState<OfferingType>("products");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Offering | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "solution-oem" | "solution-tech" | "tech-oem" | "tech-solution">("oem-tech");
+  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product">("oem-tech");
   const [selectedItemForLink, setSelectedItemForLink] = useState<Offering | null>(null);
   
   const { currentTenant } = useTenant();
@@ -113,9 +113,9 @@ export function OfferingsModule() {
     enabled: !!currentTenant,
   });
 
-  // Fetch Solutions
-  const { data: solutions = [] } = useQuery({
-    queryKey: ["offerings", "solutions", currentTenant?.id],
+  // Fetch Products (formerly Solutions)
+  const { data: products = [] } = useQuery({
+    queryKey: ["offerings", "products", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant) return [];
       const { data, error } = await supabase
@@ -170,7 +170,7 @@ export function OfferingsModule() {
       if (!currentTenant) return [];
       let query;
       switch (activeTab) {
-        case "solutions":
+        case "products":
           query = supabase.from("offerings_solutions").select("*").eq("tenant_id", currentTenant.id).order("name");
           break;
         case "offensive_security":
@@ -252,7 +252,7 @@ export function OfferingsModule() {
         status: itemData.status,
       };
       
-      if (activeTab === "solutions") {
+      if (activeTab === "products") {
         baseData.category = itemData.category;
       } else if (activeTab === "problem_areas") {
         baseData.area_type = itemData.area_type;
@@ -269,7 +269,7 @@ export function OfferingsModule() {
       if (editingItem) {
         let updateQuery;
         switch (activeTab) {
-          case "solutions":
+          case "products":
             updateQuery = supabase.from("offerings_solutions").update(baseData).eq("id", editingItem.id);
             break;
           case "offensive_security":
@@ -301,7 +301,7 @@ export function OfferingsModule() {
         };
         let insertQuery;
         switch (activeTab) {
-          case "solutions":
+          case "products":
             insertQuery = supabase.from("offerings_solutions").insert(insertData);
             break;
           case "offensive_security":
@@ -343,7 +343,7 @@ export function OfferingsModule() {
     mutationFn: async (id: string) => {
       let deleteQuery;
       switch (activeTab) {
-        case "solutions":
+        case "products":
           deleteQuery = supabase.from("offerings_solutions").delete().eq("id", id);
           break;
         case "offensive_security":
@@ -413,9 +413,9 @@ export function OfferingsModule() {
     return technologies.filter(t => linkedIds.includes(t.id));
   };
 
-  const getOemSolutions = (oemId: string) => {
+  const getOemProducts = (oemId: string) => {
     const linkedIds = solutionOems.filter(so => so.oem_id === oemId).map(so => so.solution_id);
-    return solutions.filter(s => linkedIds.includes(s.id));
+    return products.filter(s => linkedIds.includes(s.id));
   };
 
   const getTechOems = (techId: string) => {
@@ -423,18 +423,18 @@ export function OfferingsModule() {
     return oems.filter(o => linkedIds.includes(o.id));
   };
 
-  const getTechSolutions = (techId: string) => {
+  const getTechProducts = (techId: string) => {
     const linkedIds = solutionTechnologies.filter(st => st.technology_id === techId).map(st => st.solution_id);
-    return solutions.filter(s => linkedIds.includes(s.id));
+    return products.filter(s => linkedIds.includes(s.id));
   };
 
-  const getSolutionOems = (solutionId: string) => {
-    const linkedIds = solutionOems.filter(so => so.solution_id === solutionId).map(so => so.oem_id);
+  const getProductOems = (productId: string) => {
+    const linkedIds = solutionOems.filter(so => so.solution_id === productId).map(so => so.oem_id);
     return oems.filter(o => linkedIds.includes(o.id));
   };
 
-  const getSolutionTechs = (solutionId: string) => {
-    const linkedIds = solutionTechnologies.filter(st => st.solution_id === solutionId).map(st => st.technology_id);
+  const getProductTechs = (productId: string) => {
+    const linkedIds = solutionTechnologies.filter(st => st.solution_id === productId).map(st => st.technology_id);
     return technologies.filter(t => linkedIds.includes(t.id));
   };
 
@@ -443,18 +443,18 @@ export function OfferingsModule() {
       case "oem-tech":
         const linkedTechIds = oemTechnologies.filter(ot => ot.oem_id === itemId).map(ot => ot.technology_id);
         return technologies.filter(t => !linkedTechIds.includes(t.id) && t.status === "active");
-      case "solution-oem":
+      case "product-oem":
         const linkedOemIds = solutionOems.filter(so => so.solution_id === itemId).map(so => so.oem_id);
         return oems.filter(o => !linkedOemIds.includes(o.id) && o.status === "active");
-      case "solution-tech":
+      case "product-tech":
         const linkedTechIds2 = solutionTechnologies.filter(st => st.solution_id === itemId).map(st => st.technology_id);
         return technologies.filter(t => !linkedTechIds2.includes(t.id) && t.status === "active");
       case "tech-oem":
         const linkedOemIds2 = oemTechnologies.filter(ot => ot.technology_id === itemId).map(ot => ot.oem_id);
         return oems.filter(o => !linkedOemIds2.includes(o.id) && o.status === "active");
-      case "tech-solution":
+      case "tech-product":
         const linkedSolIds = solutionTechnologies.filter(st => st.technology_id === itemId).map(st => st.solution_id);
-        return solutions.filter(s => !linkedSolIds.includes(s.id) && s.status === "active");
+        return products.filter(s => !linkedSolIds.includes(s.id) && s.status === "active");
       default:
         return [];
     }
@@ -471,11 +471,11 @@ export function OfferingsModule() {
         table = "oem_technologies";
         data = { oem_id: selectedItemForLink.id, technology_id: targetId };
         break;
-      case "solution-oem":
+      case "product-oem":
         table = "solution_oems";
         data = { solution_id: selectedItemForLink.id, oem_id: targetId };
         break;
-      case "solution-tech":
+      case "product-tech":
         table = "solution_technologies";
         data = { solution_id: selectedItemForLink.id, technology_id: targetId };
         break;
@@ -483,7 +483,7 @@ export function OfferingsModule() {
         table = "oem_technologies";
         data = { technology_id: selectedItemForLink.id, oem_id: targetId };
         break;
-      case "tech-solution":
+      case "tech-product":
         table = "solution_technologies";
         data = { technology_id: selectedItemForLink.id, solution_id: targetId };
         break;
@@ -501,11 +501,11 @@ export function OfferingsModule() {
         table = "oem_technologies";
         record = oemTechnologies.find(ot => ot.oem_id === itemId && ot.technology_id === linkedId);
         break;
-      case "solution-oem":
+      case "product-oem":
         table = "solution_oems";
         record = solutionOems.find(so => so.solution_id === itemId && so.oem_id === linkedId);
         break;
-      case "solution-tech":
+      case "product-tech":
         table = "solution_technologies";
         record = solutionTechnologies.find(st => st.solution_id === itemId && st.technology_id === linkedId);
         break;
@@ -513,7 +513,7 @@ export function OfferingsModule() {
         table = "oem_technologies";
         record = oemTechnologies.find(ot => ot.technology_id === itemId && ot.oem_id === linkedId);
         break;
-      case "tech-solution":
+      case "tech-product":
         table = "solution_technologies";
         record = solutionTechnologies.find(st => st.technology_id === itemId && st.solution_id === linkedId);
         break;
@@ -534,14 +534,14 @@ export function OfferingsModule() {
     switch (linkDialogType) {
       case "oem-tech":
         return `Link Technologies to ${selectedItemForLink?.name}`;
-      case "solution-oem":
+      case "product-oem":
         return `Link OEMs to ${selectedItemForLink?.name}`;
-      case "solution-tech":
+      case "product-tech":
         return `Link Technologies to ${selectedItemForLink?.name}`;
       case "tech-oem":
         return `Link OEMs to ${selectedItemForLink?.name}`;
-      case "tech-solution":
-        return `Link Solutions to ${selectedItemForLink?.name}`;
+      case "tech-product":
+        return `Link Products to ${selectedItemForLink?.name}`;
       default:
         return "Link Items";
     }
@@ -549,7 +549,7 @@ export function OfferingsModule() {
 
   const renderFormFields = () => {
     switch (activeTab) {
-      case "solutions":
+      case "products":
         return (
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
@@ -646,17 +646,17 @@ export function OfferingsModule() {
     
     let linkedTechs: Offering[] = [];
     let linkedOems: Offering[] = [];
-    let linkedSolutions: Offering[] = [];
+    let linkedProducts: Offering[] = [];
     
     if (activeTab === "oems") {
       linkedTechs = getOemTechs(item.id);
-      linkedSolutions = getOemSolutions(item.id);
+      linkedProducts = getOemProducts(item.id);
     } else if (activeTab === "technologies") {
       linkedOems = getTechOems(item.id);
-      linkedSolutions = getTechSolutions(item.id);
-    } else if (activeTab === "solutions") {
-      linkedOems = getSolutionOems(item.id);
-      linkedTechs = getSolutionTechs(item.id);
+      linkedProducts = getTechProducts(item.id);
+    } else if (activeTab === "products") {
+      linkedOems = getProductOems(item.id);
+      linkedTechs = getProductTechs(item.id);
     }
 
     return (
@@ -677,9 +677,9 @@ export function OfferingsModule() {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {activeTab === "oems" && `${linkedTechs.length} technologies · ${linkedSolutions.length} solutions`}
-                    {activeTab === "technologies" && `${linkedOems.length} OEMs · ${linkedSolutions.length} solutions`}
-                    {activeTab === "solutions" && `${linkedOems.length} OEMs · ${linkedTechs.length} technologies`}
+                    {activeTab === "oems" && `${linkedTechs.length} technologies · ${linkedProducts.length} products`}
+                    {activeTab === "technologies" && `${linkedOems.length} OEMs · ${linkedProducts.length} products`}
+                    {activeTab === "products" && `${linkedOems.length} OEMs · ${linkedTechs.length} technologies`}
                   </p>
                 </div>
               </div>
@@ -696,19 +696,19 @@ export function OfferingsModule() {
                       <Link className="h-3 w-3" />
                       <span className="hidden sm:inline">OEM</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-solution")}>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "tech-product")}>
                       <Link className="h-3 w-3" />
-                      <span className="hidden sm:inline">Solution</span>
+                      <span className="hidden sm:inline">Product</span>
                     </Button>
                   </>
                 )}
-                {activeTab === "solutions" && (
+                {activeTab === "products" && (
                   <>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "solution-oem")}>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-oem")}>
                       <Link className="h-3 w-3" />
                       <span className="hidden sm:inline">OEM</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "solution-tech")}>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-tech")}>
                       <Link className="h-3 w-3" />
                       <span className="hidden sm:inline">Technology</span>
                     </Button>
@@ -738,9 +738,9 @@ export function OfferingsModule() {
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Solutions</p>
-                    {linkedSolutions.length > 0 ? renderLinkedBadges(linkedSolutions, "solution-oem", item.id, Package) : (
-                      <p className="text-sm text-muted-foreground">No solutions linked</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Products</p>
+                    {linkedProducts.length > 0 ? renderLinkedBadges(linkedProducts, "product-oem", item.id, Package) : (
+                      <p className="text-sm text-muted-foreground">No products linked</p>
                     )}
                   </div>
                 </div>
@@ -755,25 +755,25 @@ export function OfferingsModule() {
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Solutions</p>
-                    {linkedSolutions.length > 0 ? renderLinkedBadges(linkedSolutions, "tech-solution", item.id, Package) : (
-                      <p className="text-sm text-muted-foreground">No solutions linked</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Linked Products</p>
+                    {linkedProducts.length > 0 ? renderLinkedBadges(linkedProducts, "tech-product", item.id, Package) : (
+                      <p className="text-sm text-muted-foreground">No products linked</p>
                     )}
                   </div>
                 </div>
               )}
               
-              {activeTab === "solutions" && (
+              {activeTab === "products" && (
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2">Linked OEMs</p>
-                    {linkedOems.length > 0 ? renderLinkedBadges(linkedOems, "solution-oem", item.id, Building2) : (
+                    {linkedOems.length > 0 ? renderLinkedBadges(linkedOems, "product-oem", item.id, Building2) : (
                       <p className="text-sm text-muted-foreground">No OEMs linked</p>
                     )}
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2">Linked Technologies</p>
-                    {linkedTechs.length > 0 ? renderLinkedBadges(linkedTechs, "solution-tech", item.id, Cpu) : (
+                    {linkedTechs.length > 0 ? renderLinkedBadges(linkedTechs, "product-tech", item.id, Cpu) : (
                       <p className="text-sm text-muted-foreground">No technologies linked</p>
                     )}
                   </div>
@@ -786,14 +786,14 @@ export function OfferingsModule() {
     );
   };
 
-  const shouldShowExpandableView = activeTab === "oems" || activeTab === "technologies" || activeTab === "solutions";
+  const shouldShowExpandableView = activeTab === "oems" || activeTab === "technologies" || activeTab === "products";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Offerings Management</h2>
-          <p className="text-muted-foreground">Manage your solutions, services, technologies and OEM partnerships</p>
+          <p className="text-muted-foreground">Manage your products, services, technologies and OEM partnerships</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
