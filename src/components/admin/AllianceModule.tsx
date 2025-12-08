@@ -367,7 +367,12 @@ export function AllianceModule() {
     },
   });
 
-  const filteredOrgs = organizations.filter(org => {
+  // Filter organizations - exclude resellers (resellers have their own tab)
+  const nonResellerOrgs = organizations.filter(org => 
+    org.organization_type?.toLowerCase() !== "reseller"
+  );
+  
+  const filteredOrgs = nonResellerOrgs.filter(org => {
     const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = orgTypeFilter === "all" || org.organization_type === orgTypeFilter;
     return matchesSearch && matchesType;
@@ -453,8 +458,10 @@ export function AllianceModule() {
     }
   };
 
-  // Filter resellers
-  const resellers = organizations.filter(org => org.organization_type === "reseller");
+  // Filter resellers (case-insensitive)
+  const resellers = organizations.filter(org => 
+    org.organization_type?.toLowerCase() === "reseller"
+  );
   const filteredResellers = resellers.filter(org =>
     org.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
