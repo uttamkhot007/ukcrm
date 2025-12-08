@@ -14,9 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
+import { format } from "date-fns";
 
 interface Offering {
   id: string;
@@ -32,6 +33,27 @@ interface Offering {
   status: string;
   created_at: string;
   created_by: string;
+  // AI Enrichment fields
+  ai_enriched_data?: any;
+  last_enriched_at?: string | null;
+  // Product specific
+  unique_selling_points?: string[] | null;
+  awards?: string[] | null;
+  competitive_advantages?: string | null;
+  market_position?: string | null;
+  // OEM specific
+  founded_year?: number | null;
+  headquarters?: string | null;
+  employee_count?: string | null;
+  market_cap?: string | null;
+  key_products?: string[] | null;
+  certifications?: string[] | null;
+  // Technology specific
+  use_cases?: string[] | null;
+  benefits?: string[] | null;
+  limitations?: string[] | null;
+  adoption_rate?: string | null;
+  market_trends?: string | null;
 }
 
 interface JunctionRecord {
@@ -225,6 +247,54 @@ export function OfferingsModule() {
       }
     },
   });
+
+  // AI Enrichment mutation
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  
+  const enrichMutation = useMutation({
+    mutationFn: async (item: Offering) => {
+      let type: "product" | "oem" | "technology";
+      if (activeTab === "products") {
+        type = "product";
+      } else if (activeTab === "oems") {
+        type = "oem";
+      } else if (activeTab === "technologies") {
+        type = "technology";
+      } else {
+        throw new Error("Enrichment not supported for this type");
+      }
+      
+      const { data, error } = await supabase.functions.invoke("enrich-offering", {
+        body: {
+          type,
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          vendor: item.vendor,
+          website: item.website,
+        },
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offerings"] });
+      toast.success("AI enrichment complete");
+      setEnrichingId(null);
+    },
+    onError: (error) => {
+      toast.error("Enrichment failed: " + error.message);
+      setEnrichingId(null);
+    },
+  });
+
+  const handleEnrich = (item: Offering) => {
+    setEnrichingId(item.id);
+    enrichMutation.mutate(item);
+  };
 
   // Generic unlink mutation
   const unlinkMutation = useMutation({
@@ -684,6 +754,22 @@ export function OfferingsModule() {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                {/* AI Enrich Button */}
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                  onClick={() => handleEnrich(item)}
+                  disabled={enrichingId === item.id}
+                >
+                  {enrichingId === item.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
+                  <span className="hidden sm:inline">{enrichingId === item.id ? "Enriching..." : "AI Enrich"}</span>
+                </Button>
+                
                 {activeTab === "oems" && (
                   <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "oem-tech")}>
                     <Link className="h-3 w-3" />
@@ -727,6 +813,223 @@ export function OfferingsModule() {
             <div className="border-t bg-muted/30 p-4 space-y-4">
               {item.description && (
                 <p className="text-sm text-muted-foreground">{item.description}</p>
+              )}
+              
+              {/* AI Enriched Data Display */}
+              {item.last_enriched_at && (
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">AI Enriched Data</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Last updated: {format(new Date(item.last_enriched_at), "MMM d, yyyy 'at' h:mm a")}
+                    </span>
+                  </div>
+                  
+                  {/* Product Enrichment */}
+                  {activeTab === "products" && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {item.unique_selling_points && item.unique_selling_points.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Lightbulb className="h-4 w-4 text-yellow-500" />
+                            Unique Selling Points
+                          </div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            {item.unique_selling_points.map((usp, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <CheckCircle className="h-3 w-3 text-green-500 mt-1 shrink-0" />
+                                {usp}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {item.awards && item.awards.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Trophy className="h-4 w-4 text-amber-500" />
+                            Awards & Recognitions
+                          </div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            {item.awards.map((award, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <Award className="h-3 w-3 text-amber-500 mt-1 shrink-0" />
+                                {award}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {item.competitive_advantages && (
+                        <div className="space-y-2 md:col-span-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <TrendingUp className="h-4 w-4 text-blue-500" />
+                            Competitive Advantages
+                          </div>
+                          <p className="text-sm text-muted-foreground">{item.competitive_advantages}</p>
+                        </div>
+                      )}
+                      
+                      {item.market_position && (
+                        <div className="space-y-2 md:col-span-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <BarChart3 className="h-4 w-4 text-purple-500" />
+                            Market Position
+                          </div>
+                          <p className="text-sm text-muted-foreground">{item.market_position}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* OEM Enrichment */}
+                  {activeTab === "oems" && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-3">
+                        {item.headquarters && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">HQ:</span>
+                            <span>{item.headquarters}</span>
+                          </div>
+                        )}
+                        {item.founded_year && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">Founded:</span>
+                            <span>{item.founded_year}</span>
+                          </div>
+                        )}
+                        {item.employee_count && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Employees:</span>
+                            <span>{item.employee_count}</span>
+                          </div>
+                        )}
+                        {item.market_cap && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Market Cap:</span>
+                            <span>{item.market_cap}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {item.key_products && item.key_products.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Package className="h-4 w-4 text-blue-500" />
+                              Key Products
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {item.key_products.map((product, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">{product}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {item.certifications && item.certifications.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Shield className="h-4 w-4 text-green-500" />
+                              Certifications
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {item.certifications.map((cert, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">{cert}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Technology Enrichment */}
+                  {activeTab === "technologies" && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {item.use_cases && item.use_cases.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Target className="h-4 w-4 text-blue-500" />
+                            Use Cases
+                          </div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            {item.use_cases.map((uc, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <CheckCircle className="h-3 w-3 text-green-500 mt-1 shrink-0" />
+                                {uc}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {item.benefits && item.benefits.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Lightbulb className="h-4 w-4 text-green-500" />
+                            Benefits
+                          </div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            {item.benefits.map((benefit, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <CheckCircle className="h-3 w-3 text-green-500 mt-1 shrink-0" />
+                                {benefit}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {item.limitations && item.limitations.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <AlertCircle className="h-4 w-4 text-orange-500" />
+                            Limitations
+                          </div>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            {item.limitations.map((limitation, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <AlertCircle className="h-3 w-3 text-orange-500 mt-1 shrink-0" />
+                                {limitation}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-3">
+                        {item.adoption_rate && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <TrendingUp className="h-4 w-4 text-purple-500" />
+                              Adoption Rate
+                            </div>
+                            <p className="text-sm text-muted-foreground">{item.adoption_rate}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {item.market_trends && (
+                        <div className="space-y-2 md:col-span-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <BarChart3 className="h-4 w-4 text-blue-500" />
+                            Market Trends
+                          </div>
+                          <p className="text-sm text-muted-foreground">{item.market_trends}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               
               {activeTab === "oems" && (
