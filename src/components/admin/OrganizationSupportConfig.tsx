@@ -504,10 +504,10 @@ export default function OrganizationSupportConfig({
             <CardContent>
               {/* Solution Category Cards */}
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {solutionCategories.map((category) => {
+              {solutionCategories.map((category) => {
                   const Icon = category.icon;
                   const categorySolutions = solutions?.filter(
-                    (s) => s.category === category.value
+                    (s) => (s as any).category === category.value
                   ) || [];
                   return (
                     <div
@@ -540,7 +540,7 @@ export default function OrganizationSupportConfig({
               ) : (
                 <div className="space-y-2">
                   {solutions?.map((solution) => {
-                    const category = solutionCategories.find(c => c.value === solution.category);
+                    const category = solutionCategories.find(c => c.value === (solution as any).category);
                     const Icon = category?.icon || Package;
                     return (
                       <div key={solution.id} className="flex items-center justify-between p-3 border rounded-lg">

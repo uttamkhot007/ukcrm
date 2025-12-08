@@ -4283,6 +4283,7 @@ export type Database = {
       }
       organization_support_solutions: {
         Row: {
+          category: string | null
           created_at: string
           id: string
           is_active: boolean | null
@@ -4293,6 +4294,7 @@ export type Database = {
           tenant_id: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -4303,6 +4305,7 @@ export type Database = {
           tenant_id?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
