@@ -286,6 +286,42 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400;
   }
 
+  /* 3D Page Container */
+  .perspective-container {
+    perspective: 2000px;
+    perspective-origin: center top;
+  }
+
+  .page-3d {
+    transform-style: preserve-3d;
+    transform: rotateX(2deg) translateZ(0);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .page-3d:hover {
+    transform: rotateX(0deg) translateZ(20px);
+  }
+
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  }
+
+  .card-3d:hover {
+    transform: translateZ(10px) scale(1.01);
+    box-shadow: 0 25px 50px -12px hsl(var(--primary) / 0.15);
+  }
+
+  .card-3d-deep {
+    transform-style: preserve-3d;
+    transform: translateZ(-5px);
+    transition: transform 0.3s ease;
+  }
+
+  .card-3d-deep:hover {
+    transform: translateZ(5px);
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
