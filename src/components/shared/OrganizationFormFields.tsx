@@ -414,7 +414,7 @@ export function OrganizationFormFields({
             required 
             value={formData.name}
             onChange={(e) => onChange({ name: e.target.value })}
-            placeholder="AI will fetch exact company name"
+            placeholder="Enter company name or fetch from URL"
           />
         </div>
         <div className="space-y-2">
