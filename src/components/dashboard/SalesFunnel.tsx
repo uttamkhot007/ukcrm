@@ -11,6 +11,7 @@ interface FunnelStage {
   value: number;
   amount: number;
   color: string;
+  progress: number;
   substages?: SubStage[];
 }
 
@@ -103,36 +104,50 @@ export function SalesFunnel() {
     );
   }
 
+  // Each stage represents 20% of the sales progress (5 stages = 100%)
+  const STAGE_PROGRESS: Record<string, number> = {
+    pipeline: 20,
+    qualified: 40,
+    proposal: 60,
+    negotiation: 80,
+    closed_won: 100,
+  };
+
   const stages: FunnelStage[] = [
     { 
       name: "Pipeline", 
       value: dealStats?.stageStats.pipeline.count || 0, 
       amount: dealStats?.stageStats.pipeline.value || 0, 
-      color: "bg-sales/20" 
+      color: "bg-sales/20",
+      progress: STAGE_PROGRESS.pipeline,
     },
     { 
       name: "Qualified", 
       value: dealStats?.stageStats.qualified.count || 0, 
       amount: dealStats?.stageStats.qualified.value || 0, 
-      color: "bg-sales/40" 
+      color: "bg-sales/40",
+      progress: STAGE_PROGRESS.qualified,
     },
     { 
       name: "Proposal", 
       value: dealStats?.stageStats.proposal.count || 0, 
       amount: dealStats?.stageStats.proposal.value || 0, 
-      color: "bg-sales/60" 
+      color: "bg-sales/60",
+      progress: STAGE_PROGRESS.proposal,
     },
     { 
       name: "Negotiation", 
       value: dealStats?.stageStats.negotiation.count || 0, 
       amount: dealStats?.stageStats.negotiation.value || 0, 
-      color: "bg-sales/80" 
+      color: "bg-sales/80",
+      progress: STAGE_PROGRESS.negotiation,
     },
     { 
       name: "Closed Won", 
       value: dealStats?.stageStats.closed_won.count || 0, 
       amount: dealStats?.stageStats.closed_won.value || 0, 
       color: "bg-sales",
+      progress: STAGE_PROGRESS.closed_won,
       substages: Object.entries(dealStats?.substageStats || {}).map(([key, val]) => ({
         name: SUBSTAGE_LABELS[key] || key,
         value: val.count,
@@ -182,6 +197,9 @@ export function SalesFunnel() {
                     )}
                     <span className="text-sm font-medium text-foreground">
                       {stage.name}
+                    </span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-sales/10 text-sales font-medium">
+                      {stage.progress}%
                     </span>
                     {hasSubstages && (
                       <span className="text-xs text-muted-foreground">
