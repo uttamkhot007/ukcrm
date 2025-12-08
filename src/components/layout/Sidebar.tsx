@@ -475,10 +475,12 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Admin items (Management & Admin Panel)
-      items.push(...adminItems.filter(hasAccess));
+      // Admin items (Management & Admin Panel) - for admin role or super admin
+      if (role === "admin" || isSuperAdmin) {
+        items.push(...adminItems);
+      }
       
-      // Super admin items - only for super admins
+      // Super admin items - always shown for super admins
       if (isSuperAdmin) {
         items.push(...superAdminItems);
       }
