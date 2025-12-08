@@ -2347,11 +2347,157 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
             )}
 
             {activeTab === "intelligence" && (
-              <AccountIntelligence 
-                organizationName={organization.name} 
-                organizationType="alliance"
-                allianceOrgId={organization.id}
-              />
+              <div className="space-y-6">
+                {/* Account Intelligence */}
+                <AccountIntelligence 
+                  organizationName={organization.name} 
+                  organizationType="alliance"
+                  allianceOrgId={organization.id}
+                />
+
+                {/* Threat Intelligence Section */}
+                <div className="flex justify-between items-center pt-6 border-t">
+                  <div>
+                    <h3 className="font-semibold">Cyber Intelligence</h3>
+                    {lastRefresh && <p className="text-xs text-muted-foreground">Last updated: {lastRefresh.toLocaleTimeString()}</p>}
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => fetchThreatIntelligence(true)} disabled={isLoadingThreat} className="gap-1">
+                    {isLoadingThreat ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Refresh
+                  </Button>
+                </div>
+
+                {isLoadingThreat ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : threatIntel ? (
+                  <div className="space-y-4">
+                    {/* Email Security Intelligence - SPF, DMARC, DKIM */}
+                    {threatIntel.emailSecurity && (
+                      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-blue-500" />
+                            Email Security Intelligence
+                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">SPF / DMARC / DKIM</Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {/* Overall Score */}
+                          <div className="flex items-center gap-4 p-3 bg-background/80 rounded-lg border">
+                            <div className="text-center">
+                              <span className={`text-3xl font-bold ${
+                                threatIntel.emailSecurity.overallScore >= 80 ? 'text-green-500' :
+                                threatIntel.emailSecurity.overallScore >= 60 ? 'text-yellow-500' :
+                                threatIntel.emailSecurity.overallScore >= 40 ? 'text-orange-500' : 'text-red-500'
+                              }`}>{threatIntel.emailSecurity.overallScore}</span>
+                              <p className="text-xs text-muted-foreground">Email Security Score</p>
+                            </div>
+                            <Progress value={threatIntel.emailSecurity.overallScore} className="flex-1" />
+                          </div>
+
+                          {/* SPF, DKIM, DMARC Status */}
+                          <div className="grid gap-3 md:grid-cols-3">
+                            {/* SPF */}
+                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-blue-500" />
+                                  SPF
+                                </span>
+                                <Badge className={
+                                  threatIntel.emailSecurity.spf.status === 'valid' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.spf.status === 'softfail' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
+                                  'bg-red-500/10 text-red-600 border-red-500/20'
+                                }>
+                                  {threatIntel.emailSecurity.spf.status}
+                                </Badge>
+                              </div>
+                              {threatIntel.emailSecurity.spf.record && (
+                                <p className="text-xs text-muted-foreground font-mono truncate" title={threatIntel.emailSecurity.spf.record}>
+                                  {threatIntel.emailSecurity.spf.record}
+                                </p>
+                              )}
+                              {threatIntel.emailSecurity.spf.recommendation && (
+                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.spf.recommendation}</p>
+                              )}
+                            </div>
+
+                            {/* DKIM */}
+                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium flex items-center gap-2">
+                                  <Key className="h-4 w-4 text-purple-500" />
+                                  DKIM
+                                </span>
+                                <Badge className={
+                                  threatIntel.emailSecurity.dkim.status === 'active' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.dkim.status === 'unknown' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
+                                  'bg-red-500/10 text-red-600 border-red-500/20'
+                                }>
+                                  {threatIntel.emailSecurity.dkim.status}
+                                </Badge>
+                              </div>
+                              {threatIntel.emailSecurity.dkim.selectors.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {threatIntel.emailSecurity.dkim.selectors.map((sel, i) => (
+                                    <Badge key={i} variant="secondary" className="text-xs">{sel}</Badge>
+                                  ))}
+                                </div>
+                              )}
+                              {threatIntel.emailSecurity.dkim.recommendation && (
+                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.dkim.recommendation}</p>
+                              )}
+                            </div>
+
+                            {/* DMARC */}
+                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium flex items-center gap-2">
+                                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                  DMARC
+                                </span>
+                                <Badge className={
+                                  threatIntel.emailSecurity.dmarc.status === 'reject' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.dmarc.status === 'quarantine' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
+                                  threatIntel.emailSecurity.dmarc.status === 'none' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                                  'bg-red-500/10 text-red-600 border-red-500/20'
+                                }>
+                                  {threatIntel.emailSecurity.dmarc.status}
+                                </Badge>
+                              </div>
+                              {threatIntel.emailSecurity.dmarc.policy && (
+                                <p className="text-xs text-muted-foreground font-mono truncate" title={threatIntel.emailSecurity.dmarc.policy}>
+                                  {threatIntel.emailSecurity.dmarc.policy}
+                                </p>
+                              )}
+                              {threatIntel.emailSecurity.dmarc.recommendation && (
+                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.dmarc.recommendation}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className={getRiskScoreColor(threatIntel.riskScore)} />Overall Risk Score</CardTitle></CardHeader>
+                      <CardContent><div className="flex items-center gap-4"><span className={`text-4xl font-bold ${getRiskScoreColor(threatIntel.riskScore)}`}>{threatIntel.riskScore}</span><Progress value={threatIntel.riskScore} className="flex-1" /></div></CardContent>
+                    </Card>
+                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Database className="h-4 w-4 text-red-500" />Data Breaches ({threatIntel.breaches.length})</CardTitle></CardHeader>
+                      <CardContent>{threatIntel.breaches.length === 0 ? <p className="text-sm text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />No known breaches found</p> : <div className="space-y-2">{threatIntel.breaches.map((b, i) => <div key={i} className="p-2 bg-muted rounded flex items-center justify-between"><div><p className="font-medium text-sm">{b.name}</p><p className="text-xs text-muted-foreground">{b.date} - {b.records} records</p></div><Badge className={getSeverityColor(b.severity)}>{b.severity}</Badge></div>)}</div>}</CardContent>
+                    </Card>
+                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4 text-blue-500" />Exposed Services ({threatIntel.exposedServices.length})</CardTitle></CardHeader>
+                      <CardContent><div className="space-y-1">{threatIntel.exposedServices.map((svc, i) => <div key={i} className="flex items-center justify-between text-sm"><span>Port {svc.port}: {svc.service}</span><Badge variant={svc.risk === 'Low' ? 'secondary' : 'destructive'}>{svc.risk}</Badge></div>)}</div></CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <Card className="p-8 text-center">
+                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">No threat intelligence available</p>
+                    <Button variant="outline" size="sm" className="mt-2" onClick={() => fetchThreatIntelligence(true)}>Scan Now</Button>
+                  </Card>
+                )}
+              </div>
             )}
 
             {activeTab === "calendar" && (
@@ -2461,158 +2607,6 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
 
             {activeTab === "support" && (
               <OrganizationSupportConfig organizationId={organization.id} organizationName={organization.name} />
-            )}
-
-            {activeTab === "intelligence" && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">Threat Intelligence</h3>
-                    {lastRefresh && <p className="text-xs text-muted-foreground">Last updated: {lastRefresh.toLocaleTimeString()}</p>}
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => fetchThreatIntelligence(true)} disabled={isLoadingThreat} className="gap-1">
-                    {isLoadingThreat ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Refresh
-                  </Button>
-                </div>
-
-                {isLoadingThreat ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : threatIntel ? (
-                  <div className="space-y-4">
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className={getRiskScoreColor(threatIntel.riskScore)} />Overall Risk Score</CardTitle></CardHeader>
-                      <CardContent><div className="flex items-center gap-4"><span className={`text-4xl font-bold ${getRiskScoreColor(threatIntel.riskScore)}`}>{threatIntel.riskScore}</span><Progress value={threatIntel.riskScore} className="flex-1" /></div></CardContent>
-                    </Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Database className="h-4 w-4 text-red-500" />Data Breaches ({threatIntel.breaches.length})</CardTitle></CardHeader>
-                      <CardContent>{threatIntel.breaches.length === 0 ? <p className="text-sm text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />No known breaches found</p> : <div className="space-y-2">{threatIntel.breaches.map((b, i) => <div key={i} className="p-2 bg-muted rounded flex items-center justify-between"><div><p className="font-medium text-sm">{b.name}</p><p className="text-xs text-muted-foreground">{b.date} - {b.records} records</p></div><Badge className={getSeverityColor(b.severity)}>{b.severity}</Badge></div>)}</div>}</CardContent>
-                    </Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Key className="h-4 w-4 text-orange-500" />Leaked Credentials</CardTitle></CardHeader>
-                      <CardContent>{threatIntel.leakedCredentials.count === 0 ? <p className="text-sm text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />No leaked credentials found</p> : <div><p className="text-2xl font-bold text-orange-500">{threatIntel.leakedCredentials.count}</p><p className="text-xs text-muted-foreground">Last seen: {threatIntel.leakedCredentials.lastSeen}</p></div>}</CardContent>
-                    </Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Bug className="h-4 w-4 text-purple-500" />Vulnerabilities ({threatIntel.vulnerabilities.length})</CardTitle></CardHeader>
-                      <CardContent>{threatIntel.vulnerabilities.length === 0 ? <p className="text-sm text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />No known vulnerabilities</p> : <div className="space-y-2">{threatIntel.vulnerabilities.map((v, i) => <div key={i} className="p-2 bg-muted rounded"><div className="flex items-center justify-between"><code className="text-xs font-mono">{v.cve}</code><Badge className={getSeverityColor(v.severity)}>{v.severity}</Badge></div><p className="text-xs text-muted-foreground mt-1">{v.product}</p></div>)}</div>}</CardContent>
-                    </Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4 text-blue-500" />Exposed Services ({threatIntel.exposedServices.length})</CardTitle></CardHeader>
-                      <CardContent><div className="space-y-1">{threatIntel.exposedServices.map((svc, i) => <div key={i} className="flex items-center justify-between text-sm"><span>Port {svc.port}: {svc.service}</span><Badge variant={svc.risk === 'Low' ? 'secondary' : 'destructive'}>{svc.risk}</Badge></div>)}</div></CardContent>
-                    </Card>
-                    
-                    {/* Email Security Intelligence - SPF, DMARC, DKIM */}
-                    {threatIntel.emailSecurity && (
-                      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-blue-500" />
-                            Email Security Intelligence
-                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">Cyber Intel</Badge>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {/* Overall Score */}
-                          <div className="flex items-center gap-4 p-3 bg-background/80 rounded-lg border">
-                            <div className="text-center">
-                              <span className={`text-3xl font-bold ${
-                                threatIntel.emailSecurity.overallScore >= 80 ? 'text-green-500' :
-                                threatIntel.emailSecurity.overallScore >= 60 ? 'text-yellow-500' :
-                                threatIntel.emailSecurity.overallScore >= 40 ? 'text-orange-500' : 'text-red-500'
-                              }`}>{threatIntel.emailSecurity.overallScore}</span>
-                              <p className="text-xs text-muted-foreground">Security Score</p>
-                            </div>
-                            <Progress value={threatIntel.emailSecurity.overallScore} className="flex-1" />
-                          </div>
-
-                          {/* SPF, DKIM, DMARC Status */}
-                          <div className="grid gap-3 md:grid-cols-3">
-                            {/* SPF */}
-                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium flex items-center gap-2">
-                                  <Shield className="h-4 w-4 text-blue-500" />
-                                  SPF
-                                </span>
-                                <Badge className={
-                                  threatIntel.emailSecurity.spf.status === 'valid' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
-                                  threatIntel.emailSecurity.spf.status === 'softfail' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
-                                  'bg-red-500/10 text-red-600 border-red-500/20'
-                                }>
-                                  {threatIntel.emailSecurity.spf.status}
-                                </Badge>
-                              </div>
-                              {threatIntel.emailSecurity.spf.record && (
-                                <p className="text-xs text-muted-foreground font-mono truncate" title={threatIntel.emailSecurity.spf.record}>
-                                  {threatIntel.emailSecurity.spf.record}
-                                </p>
-                              )}
-                              {threatIntel.emailSecurity.spf.recommendation && (
-                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.spf.recommendation}</p>
-                              )}
-                            </div>
-
-                            {/* DKIM */}
-                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium flex items-center gap-2">
-                                  <Key className="h-4 w-4 text-purple-500" />
-                                  DKIM
-                                </span>
-                                <Badge className={
-                                  threatIntel.emailSecurity.dkim.status === 'active' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
-                                  threatIntel.emailSecurity.dkim.status === 'unknown' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
-                                  'bg-red-500/10 text-red-600 border-red-500/20'
-                                }>
-                                  {threatIntel.emailSecurity.dkim.status}
-                                </Badge>
-                              </div>
-                              {threatIntel.emailSecurity.dkim.selectors.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {threatIntel.emailSecurity.dkim.selectors.map((sel, i) => (
-                                    <Badge key={i} variant="secondary" className="text-xs">{sel}</Badge>
-                                  ))}
-                                </div>
-                              )}
-                              {threatIntel.emailSecurity.dkim.recommendation && (
-                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.dkim.recommendation}</p>
-                              )}
-                            </div>
-
-                            {/* DMARC */}
-                            <div className="p-3 bg-background/80 rounded-lg border space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium flex items-center gap-2">
-                                  <AlertTriangle className="h-4 w-4 text-orange-500" />
-                                  DMARC
-                                </span>
-                                <Badge className={
-                                  threatIntel.emailSecurity.dmarc.status === 'reject' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
-                                  threatIntel.emailSecurity.dmarc.status === 'quarantine' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
-                                  threatIntel.emailSecurity.dmarc.status === 'none' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
-                                  'bg-red-500/10 text-red-600 border-red-500/20'
-                                }>
-                                  {threatIntel.emailSecurity.dmarc.status}
-                                </Badge>
-                              </div>
-                              {threatIntel.emailSecurity.dmarc.policy && (
-                                <p className="text-xs text-muted-foreground font-mono truncate" title={threatIntel.emailSecurity.dmarc.policy}>
-                                  {threatIntel.emailSecurity.dmarc.policy}
-                                </p>
-                              )}
-                              {threatIntel.emailSecurity.dmarc.recommendation && (
-                                <p className="text-xs text-amber-600">{threatIntel.emailSecurity.dmarc.recommendation}</p>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                ) : (
-                  <Card className="p-8 text-center">
-                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">No threat intelligence available</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => fetchThreatIntelligence(true)}>Scan Now</Button>
-                  </Card>
-                )}
-              </div>
             )}
           </div>
         </ScrollArea>
