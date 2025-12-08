@@ -166,14 +166,14 @@ const adminItems: NavItem[] = [
     icon: Settings,
     color: "text-destructive",
     requiredRoles: ["admin"],
-    children: [
+  children: [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
       { id: "admin-center-users", label: "User Management", icon: Users },
       { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
       { id: "admin-center-offerings", label: "Offerings", icon: Package },
+      { id: "admin-center-support-management", label: "Support Management", icon: HeadphonesIcon },
       { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
       { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
-      
       { id: "admin-center-health", label: "Platform Health", icon: Activity },
     ],
   },

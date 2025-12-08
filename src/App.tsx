@@ -22,6 +22,7 @@ import AdminTenants from "./pages/admin/AdminTenants";
 import AdminAlliance from "./pages/admin/AdminAlliance";
 import AdminOfferings from "./pages/admin/AdminOfferings";
 import AdminProcurement from "./pages/admin/AdminProcurement";
+import AdminSupportManagement from "./pages/admin/AdminSupportManagement";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import SupportPortal from "./pages/SupportPortal";
@@ -67,6 +68,7 @@ const App = () => (
                   <Route path="tenants" element={<AdminTenants />} />
                   <Route path="health" element={<AdminHealth />} />
                   <Route path="procurement" element={<AdminProcurement />} />
+                  <Route path="support-management" element={<AdminSupportManagement />} />
                 </Route>
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
