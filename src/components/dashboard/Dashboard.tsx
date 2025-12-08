@@ -341,7 +341,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
                 { id: "notifications", component: <NotificationCenterWidget /> },
                 { id: "currency-converter", component: <CurrencyConverterWidget /> },
                 { id: "upcoming-events", component: <UpcomingEventsWidget onNavigate={onModuleChange} /> },
-                { id: "quick-actions", component: <QuickActions /> },
+                { id: "quick-actions", component: <QuickActions onNavigate={onModuleChange} /> },
                 { id: "pending-approvals", component: <PendingApprovalsWidget onNavigate={onModuleChange} /> },
                 { id: "upcoming-followups", component: <UpcomingFollowUps onNavigate={onModuleChange} /> },
                 { id: "upcoming-tasks", component: <UpcomingTasks onNavigate={onModuleChange} /> },
