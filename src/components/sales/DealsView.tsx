@@ -46,7 +46,10 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
 import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
 import { AddActivityDialog } from "./AddActivityDialog";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw } from "lucide-react";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw, Building2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -83,7 +86,24 @@ const initialFormData = {
   expected_close_date: "",
   probability: "10",
   contact_id: "",
+  organization_name: "",
+  problem_requirement: "",
+  deal_type: "new" as "new" | "replacement",
+  existing_solution: "",
+  quantity: "1",
+  buying_timeline: "",
+  is_budgeted: false,
+  tentative_budget: "",
+  next_steps: "",
+  solution_id: "",
 };
+
+const buyingTimelineOptions = [
+  { value: "immediate", label: "Immediate (< 1 month)" },
+  { value: "short_term", label: "Short Term (1-3 months)" },
+  { value: "medium_term", label: "Medium Term (3-6 months)" },
+  { value: "long_term", label: "Long Term (6+ months)" },
+];
 
 export function DealsView() {
   const [search, setSearch] = useState("");
@@ -124,9 +144,23 @@ export function DealsView() {
     },
   });
 
+  const { data: products } = useQuery<{ id: string; name: string; category: string | null }[]>({
+    queryKey: ["offerings-products"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any)
+        .from("offerings_products")
+        .select("id, name, category")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+      if (result.error) throw result.error;
+      return result.data || [];
+    },
+  });
+
   const createDeal = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("deals").insert({
+      const insertData = {
         title: data.title.trim(),
         value: parseFloat(data.value) || 0,
         stage: data.stage,
@@ -136,7 +170,18 @@ export function DealsView() {
         contact_id: data.contact_id || null,
         user_id: user!.id,
         tenant_id: currentTenant?.id,
-      });
+        organization_name: data.organization_name.trim(),
+        problem_requirement: data.problem_requirement.trim(),
+        deal_type: data.deal_type,
+        existing_solution: data.deal_type === "replacement" ? data.existing_solution.trim() : null,
+        quantity: parseInt(data.quantity) || 1,
+        buying_timeline: data.buying_timeline,
+        is_budgeted: data.is_budgeted,
+        tentative_budget: parseFloat(data.tentative_budget) || 0,
+        next_steps: data.next_steps.trim(),
+        solution_id: data.solution_id || null,
+      };
+      const { error } = await supabase.from("deals").insert(insertData as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -161,6 +206,16 @@ export function DealsView() {
           expected_close_date: data.expected_close_date || null,
           probability: parseInt(data.probability) || 10,
           contact_id: data.contact_id || null,
+          organization_name: data.organization_name.trim(),
+          problem_requirement: data.problem_requirement.trim(),
+          deal_type: data.deal_type,
+          existing_solution: data.deal_type === "replacement" ? data.existing_solution.trim() : null,
+          quantity: parseInt(data.quantity) || 1,
+          buying_timeline: data.buying_timeline,
+          is_budgeted: data.is_budgeted,
+          tentative_budget: parseFloat(data.tentative_budget) || 0,
+          next_steps: data.next_steps.trim(),
+          solution_id: data.solution_id || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -206,6 +261,16 @@ export function DealsView() {
       expected_close_date: deal.expected_close_date || "",
       probability: String(deal.probability || 10),
       contact_id: deal.contact_id || "",
+      organization_name: (deal as any).organization_name || "",
+      problem_requirement: (deal as any).problem_requirement || "",
+      deal_type: ((deal as any).deal_type || "new") as "new" | "replacement",
+      existing_solution: (deal as any).existing_solution || "",
+      quantity: String((deal as any).quantity || 1),
+      buying_timeline: (deal as any).buying_timeline || "",
+      is_budgeted: (deal as any).is_budgeted || false,
+      tentative_budget: String((deal as any).tentative_budget || ""),
+      next_steps: (deal as any).next_steps || "",
+      solution_id: (deal as any).solution_id || "",
     });
     setIsDialogOpen(true);
   };
@@ -355,108 +420,269 @@ export function DealsView() {
                 New Deal
               </Button>
             </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>{editingDeal ? "Edit Deal" : "Create New Deal"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  maxLength={200}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact">Contact</Label>
-                <Select
-                  value={formData.contact_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, contact_id: value === "none" ? "" : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a contact (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No contact</SelectItem>
-                    {contacts?.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {contact.name} {contact.company && `(${contact.company})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Organization & Title */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_name">Organization Name *</Label>
+                    <Input
+                      id="organization_name"
+                      value={formData.organization_name}
+                      onChange={(e) => setFormData({ ...formData, organization_name: e.target.value })}
+                      placeholder="Customer organization"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Deal Title *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      maxLength={200}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Problem/Requirement */}
                 <div className="space-y-2">
-                  <Label htmlFor="value">Value ({getCurrencySymbol()})</Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    min="0"
-                    value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  <Label htmlFor="problem_requirement">Problem / Requirement Statement *</Label>
+                  <Textarea
+                    id="problem_requirement"
+                    value={formData.problem_requirement}
+                    onChange={(e) => setFormData({ ...formData, problem_requirement: e.target.value })}
+                    placeholder="Describe the customer's problem or requirement..."
+                    rows={2}
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="probability">Probability (%)</Label>
-                  <Input
-                    id="probability"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.probability}
-                    onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="stage">Stage</Label>
-                  <Select
-                    value={formData.stage}
-                    onValueChange={(value) => setFormData({ ...formData, stage: value as DealStage })}
+
+                {/* Deal Type */}
+                <div className="space-y-3">
+                  <Label>Deal Type *</Label>
+                  <RadioGroup
+                    value={formData.deal_type}
+                    onValueChange={(value) => setFormData({ ...formData, deal_type: value as "new" | "replacement" })}
+                    className="flex gap-4"
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(stageLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="new" id="deal_type_new" />
+                      <Label htmlFor="deal_type_new" className="font-normal cursor-pointer">New Purchase</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="replacement" id="deal_type_replacement" />
+                      <Label htmlFor="deal_type_replacement" className="font-normal cursor-pointer">Replacement</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
+
+                {/* Existing Solution (conditional) */}
+                {formData.deal_type === "replacement" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="existing_solution">Existing Solution *</Label>
+                    <Input
+                      id="existing_solution"
+                      value={formData.existing_solution}
+                      onChange={(e) => setFormData({ ...formData, existing_solution: e.target.value })}
+                      placeholder="What solution are they replacing?"
+                      required={formData.deal_type === "replacement"}
+                    />
+                  </div>
+                )}
+
+                {/* Solution & Contact */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="solution_id">Solution/Product</Label>
+                    <Select
+                      value={formData.solution_id || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, solution_id: value === "none" ? "" : value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a solution" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No solution selected</SelectItem>
+                        {products?.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} {product.category && `(${product.category})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact">Contact</Label>
+                    <Select
+                      value={formData.contact_id || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, contact_id: value === "none" ? "" : value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No contact</SelectItem>
+                        {contacts?.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.name} {contact.company && `(${contact.company})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Quantity & Buying Timeline */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity *</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="buying_timeline">Buying Timeline *</Label>
+                    <Select
+                      value={formData.buying_timeline}
+                      onValueChange={(value) => setFormData({ ...formData, buying_timeline: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select timeline" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {buyingTimelineOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Budget Section */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2 pt-6">
+                    <Checkbox
+                      id="is_budgeted"
+                      checked={formData.is_budgeted}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_budgeted: !!checked })}
+                    />
+                    <Label htmlFor="is_budgeted" className="cursor-pointer">Is Budgeted?</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tentative_budget">Tentative Budget ({getCurrencySymbol()}) *</Label>
+                    <Input
+                      id="tentative_budget"
+                      type="number"
+                      min="0"
+                      value={formData.tentative_budget}
+                      onChange={(e) => setFormData({ ...formData, tentative_budget: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Value & Probability */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="value">Deal Value ({getCurrencySymbol()}) *</Label>
+                    <Input
+                      id="value"
+                      type="number"
+                      min="0"
+                      value={formData.value}
+                      onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="probability">Probability (%)</Label>
+                    <Input
+                      id="probability"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.probability}
+                      onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Stage & Expected Close */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stage">Stage</Label>
+                    <Select
+                      value={formData.stage}
+                      onValueChange={(value) => setFormData({ ...formData, stage: value as DealStage })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(stageLabels).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expected_close_date">Expected Close</Label>
+                    <Input
+                      id="expected_close_date"
+                      type="date"
+                      value={formData.expected_close_date}
+                      onChange={(e) => setFormData({ ...formData, expected_close_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Next Steps */}
                 <div className="space-y-2">
-                  <Label htmlFor="expected_close_date">Expected Close</Label>
-                  <Input
-                    id="expected_close_date"
-                    type="date"
-                    value={formData.expected_close_date}
-                    onChange={(e) => setFormData({ ...formData, expected_close_date: e.target.value })}
+                  <Label htmlFor="next_steps">Next Steps *</Label>
+                  <Textarea
+                    id="next_steps"
+                    value={formData.next_steps}
+                    onChange={(e) => setFormData({ ...formData, next_steps: e.target.value })}
+                    placeholder="What are the next steps for this deal?"
+                    rows={2}
+                    required
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  maxLength={1000}
-                  rows={3}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {editingDeal ? "Update Deal" : "Create Deal"}
-              </Button>
-            </form>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Additional Notes</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    maxLength={1000}
+                    rows={2}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {editingDeal ? "Update Deal" : "Create Deal"}
+                </Button>
+              </form>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
         </div>
