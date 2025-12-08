@@ -35,9 +35,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
@@ -47,14 +44,11 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DealsKanban } from "./DealsKanban";
 import { DealFiltersComponent, initialDealFilters, type DealFilters } from "./DealFilters";
 import { AddActivityDialog } from "./AddActivityDialog";
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw, Building2, AlertCircle, UserPlus } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Search, TrendingUp, DollarSign, Calendar, Loader2, MoreHorizontal, Pencil, Trash2, LayoutList, Kanban, User, Download, MessageSquarePlus, RefreshCw } from "lucide-react";
+import { DealWizard } from "./DealWizard";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -80,55 +74,17 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
-const requirementCategories = [
-  { value: "products", label: "Products" },
-  { value: "offensive_services", label: "Offensive Services" },
-  { value: "managed_security_services", label: "Managed Security Services" },
-  { value: "professional_services", label: "Professional Services" },
-  { value: "consulting", label: "Consulting" },
-];
-
-const initialFormData = {
-  title: "",
-  value: "",
-  stage: "pipeline" as DealStage,
-  description: "",
-  expected_close_date: "",
-  probability: "10",
-  contact_id: "",
-  organization_name: "",
-  problem_requirement: "",
-  deal_type: "new" as "new" | "replacement",
-  existing_solution: "",
-  quantity: "1",
-  buying_timeline: "",
-  is_budgeted: false,
-  tentative_budget: "",
-  next_steps: "",
-  solution_id: "",
-  alliance_organization_id: "",
-  requirement_category: "products",
-};
-
-const buyingTimelineOptions = [
-  { value: "immediate", label: "Immediate (< 1 month)" },
-  { value: "short_term", label: "Short Term (1-3 months)" },
-  { value: "medium_term", label: "Medium Term (3-6 months)" },
-  { value: "long_term", label: "Long Term (6+ months)" },
-];
-
 export function DealsView() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<DealWithContact | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DealWithContact | null>(null);
-  const [formData, setFormData] = useState(initialFormData);
   const [filters, setFilters] = useState<DealFilters>(initialDealFilters);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentTenant } = useTenant();
-  const { formatCurrency, getCurrencySymbol, currency: orgCurrency } = useOrganizationSettings();
+  const { formatCurrency, currency: orgCurrency } = useOrganizationSettings();
   const { formatConvertedAmount } = useExchangeRates();
   const queryClient = useQueryClient();
 
@@ -144,67 +100,31 @@ export function DealsView() {
     },
   });
 
-  const { data: contacts } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("id, name, company")
-        .order("name", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch Alliance Organizations
-  const { data: allianceOrganizations } = useQuery({
-    queryKey: ["alliance-organizations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("alliance_organizations")
-        .select("id, name, organization_type, status")
-        .eq("status", "active")
-        .order("name", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch Alliance Users (contacts from Alliance)
-  const { data: allianceUsers } = useQuery({
-    queryKey: ["alliance-users", formData.alliance_organization_id],
-    queryFn: async () => {
-      let query = supabase
-        .from("alliance_users")
-        .select("id, name, email, designation, organization_id")
-        .order("name", { ascending: true });
-      
-      if (formData.alliance_organization_id) {
-        query = query.eq("organization_id", formData.alliance_organization_id);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: true,
-  });
-
-  const { data: products } = useQuery<{ id: string; name: string; category: string | null }[]>({
-    queryKey: ["offerings-products"],
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (supabase as any)
-        .from("offerings_products")
-        .select("id, name, category")
-        .order("name", { ascending: true });
-      if (result.error) throw result.error;
-      return result.data || [];
-    },
-  });
+  // Define form data type for mutations
+  type DealFormInput = {
+    title: string;
+    value: string;
+    stage: DealStage;
+    description: string;
+    expected_close_date: string;
+    probability: string;
+    contact_id: string;
+    organization_name: string;
+    problem_requirement: string;
+    deal_type: "new" | "replacement";
+    existing_solution: string;
+    quantity: string;
+    buying_timeline: string;
+    is_budgeted: boolean;
+    tentative_budget: string;
+    next_steps: string;
+    solution_id: string;
+    alliance_organization_id: string;
+    requirement_category: string;
+  };
 
   const createDeal = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: DealFormInput) => {
       const insertData = {
         title: data.title.trim(),
         value: parseFloat(data.value) || 0,
@@ -242,7 +162,7 @@ export function DealsView() {
   });
 
   const updateDeal = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+    mutationFn: async ({ id, data }: { id: string; data: DealFormInput }) => {
       const { error } = await supabase
         .from("deals")
         .update({
@@ -297,42 +217,11 @@ export function DealsView() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingDeal(null);
-    setFormData(initialFormData);
   };
 
   const openEditDialog = (deal: DealWithContact) => {
     setEditingDeal(deal);
-    setFormData({
-      title: deal.title,
-      value: String(deal.value),
-      stage: deal.stage,
-      description: deal.description || "",
-      expected_close_date: deal.expected_close_date || "",
-      probability: String(deal.probability || 10),
-      contact_id: deal.contact_id || "",
-      organization_name: (deal as any).organization_name || "",
-      problem_requirement: (deal as any).problem_requirement || "",
-      deal_type: ((deal as any).deal_type || "new") as "new" | "replacement",
-      existing_solution: (deal as any).existing_solution || "",
-      quantity: String((deal as any).quantity || 1),
-      buying_timeline: (deal as any).buying_timeline || "",
-      is_budgeted: (deal as any).is_budgeted || false,
-      tentative_budget: String((deal as any).tentative_budget || ""),
-      next_steps: (deal as any).next_steps || "",
-      solution_id: (deal as any).solution_id || "",
-      alliance_organization_id: (deal as any).alliance_organization_id || "",
-      requirement_category: (deal as any).requirement_category || "products",
-    });
     setIsDialogOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingDeal) {
-      updateDeal.mutate({ id: editingDeal.id, data: formData });
-    } else {
-      createDeal.mutate(formData);
-    }
   };
 
   const filteredDeals = deals?.filter((deal) => {
@@ -471,352 +360,64 @@ export function DealsView() {
                 New Deal
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh]">
+          <DialogContent className="max-w-3xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>{editingDeal ? "Edit Deal" : "Create New Deal"}</DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Requirement Category Tabs */}
-                <div className="space-y-2">
-                  <Label>Requirement Type *</Label>
-                  <Tabs
-                    value={formData.requirement_category}
-                    onValueChange={(value) => setFormData({ ...formData, requirement_category: value })}
-                    className="w-full"
-                  >
-                    <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
-                      {requirementCategories.map((cat) => (
-                        <TabsTrigger key={cat.value} value={cat.value} className="text-xs">
-                          {cat.label}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
-                </div>
-
-                {/* Organization & Title */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="alliance_organization_id">Organization *</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={formData.alliance_organization_id || "none"}
-                        onValueChange={(value) => {
-                          const org = allianceOrganizations?.find(o => o.id === value);
-                          setFormData({ 
-                            ...formData, 
-                            alliance_organization_id: value === "none" ? "" : value,
-                            organization_name: org?.name || formData.organization_name,
-                            contact_id: "" // Reset contact when org changes
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select organization" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Select organization...</SelectItem>
-                          {allianceOrganizations?.map((org) => (
-                            <SelectItem key={org.id} value={org.id}>
-                              <div className="flex items-center gap-2">
-                                <Building2 className="w-3 h-3" />
-                                {org.name}
-                                <Badge variant="outline" className="text-[10px] ml-1">
-                                  {org.organization_type}
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => window.open('/admin/alliance', '_blank')}
-                        title="Add New Organization"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    {!allianceOrganizations?.length && (
-                      <p className="text-xs text-muted-foreground">No organizations found. Add one from Alliance tab.</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Deal Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      maxLength={200}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Problem/Requirement */}
-                <div className="space-y-2">
-                  <Label htmlFor="problem_requirement">Problem / Requirement Statement *</Label>
-                  <Textarea
-                    id="problem_requirement"
-                    value={formData.problem_requirement}
-                    onChange={(e) => setFormData({ ...formData, problem_requirement: e.target.value })}
-                    placeholder="Describe the customer's problem or requirement..."
-                    rows={2}
-                    required
-                  />
-                </div>
-
-                {/* Deal Type */}
-                <div className="space-y-3">
-                  <Label>Deal Type *</Label>
-                  <RadioGroup
-                    value={formData.deal_type}
-                    onValueChange={(value) => setFormData({ ...formData, deal_type: value as "new" | "replacement" })}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="new" id="deal_type_new" />
-                      <Label htmlFor="deal_type_new" className="font-normal cursor-pointer">New Purchase</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="replacement" id="deal_type_replacement" />
-                      <Label htmlFor="deal_type_replacement" className="font-normal cursor-pointer">Replacement</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Existing Solution (conditional) */}
-                {formData.deal_type === "replacement" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="existing_solution">Existing Solution *</Label>
-                    <Input
-                      id="existing_solution"
-                      value={formData.existing_solution}
-                      onChange={(e) => setFormData({ ...formData, existing_solution: e.target.value })}
-                      placeholder="What solution are they replacing?"
-                      required={formData.deal_type === "replacement"}
-                    />
-                  </div>
-                )}
-
-                {/* Solution & Contact */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="solution_id">Solution/Product</Label>
-                    {products?.length ? (
-                      <Select
-                        value={formData.solution_id || "none"}
-                        onValueChange={(value) => setFormData({ ...formData, solution_id: value === "none" ? "" : value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a solution" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No solution selected</SelectItem>
-                          {products?.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name} {product.category && `(${product.category})`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          No products available. Contact Administrator to add offerings.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contact">Contact (from Alliance)</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={formData.contact_id || "none"}
-                        onValueChange={(value) => setFormData({ ...formData, contact_id: value === "none" ? "" : value })}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select a contact" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No contact</SelectItem>
-                          {allianceUsers?.map((contact) => (
-                            <SelectItem key={contact.id} value={contact.id}>
-                              {contact.name} {contact.designation && `(${contact.designation})`}
-                            </SelectItem>
-                          ))}
-                          {contacts?.map((contact) => (
-                            <SelectItem key={contact.id} value={contact.id}>
-                              {contact.name} {contact.company && `(${contact.company})`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => window.open('/admin/alliance', '_blank')}
-                        title="Add New Contact"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    {!allianceUsers?.length && !contacts?.length && (
-                      <p className="text-xs text-muted-foreground">No contacts found. Add one from Alliance tab.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quantity & Buying Timeline */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity *</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      min="1"
-                      value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="buying_timeline">Buying Timeline *</Label>
-                    <Select
-                      value={formData.buying_timeline}
-                      onValueChange={(value) => setFormData({ ...formData, buying_timeline: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select timeline" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {buyingTimelineOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Budget Section */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2 pt-6">
-                    <Checkbox
-                      id="is_budgeted"
-                      checked={formData.is_budgeted}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_budgeted: !!checked })}
-                    />
-                    <Label htmlFor="is_budgeted" className="cursor-pointer">Is Budgeted?</Label>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tentative_budget">Tentative Budget ({getCurrencySymbol()}) *</Label>
-                    <Input
-                      id="tentative_budget"
-                      type="number"
-                      min="0"
-                      value={formData.tentative_budget}
-                      onChange={(e) => setFormData({ ...formData, tentative_budget: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Value & Probability */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="value">Deal Value ({getCurrencySymbol()}) *</Label>
-                    <Input
-                      id="value"
-                      type="number"
-                      min="0"
-                      value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="probability">Probability (%)</Label>
-                    <Input
-                      id="probability"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.probability}
-                      onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {/* Stage & Expected Close */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="stage">Stage</Label>
-                    <Select
-                      value={formData.stage}
-                      onValueChange={(value) => setFormData({ ...formData, stage: value as DealStage })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(stageLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expected_close_date">Expected Close</Label>
-                    <Input
-                      id="expected_close_date"
-                      type="date"
-                      value={formData.expected_close_date}
-                      onChange={(e) => setFormData({ ...formData, expected_close_date: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {/* Next Steps */}
-                <div className="space-y-2">
-                  <Label htmlFor="next_steps">Next Steps *</Label>
-                  <Textarea
-                    id="next_steps"
-                    value={formData.next_steps}
-                    onChange={(e) => setFormData({ ...formData, next_steps: e.target.value })}
-                    placeholder="What are the next steps for this deal?"
-                    rows={2}
-                    required
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Additional Notes</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    maxLength={1000}
-                    rows={2}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isPending}>
-                  {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {editingDeal ? "Update Deal" : "Create Deal"}
-                </Button>
-              </form>
-            </ScrollArea>
+            <DealWizard
+              initialData={editingDeal ? {
+                alliance_organization_id: (editingDeal as any).alliance_organization_id || "",
+                organization_name: (editingDeal as any).organization_name || "",
+                title: editingDeal.title,
+                deal_type: ((editingDeal as any).deal_type === "replacement" ? "cross_sale" : "new") as "new" | "cross_sale",
+                requirement_category: (editingDeal as any).requirement_category || "products",
+                problem_requirement: (editingDeal as any).problem_requirement || "",
+                solution_id: (editingDeal as any).solution_id || "",
+                contact_id: editingDeal.contact_id || "",
+                quantity: String((editingDeal as any).quantity || 1),
+                buying_timeline: (editingDeal as any).buying_timeline || "",
+                is_budgeted: (editingDeal as any).is_budgeted || false,
+                tentative_budget: String((editingDeal as any).tentative_budget || ""),
+                value: String(editingDeal.value),
+                probability: String(editingDeal.probability || 10),
+                expected_close_date: editingDeal.expected_close_date || "",
+                next_steps: (editingDeal as any).next_steps || "",
+                description: editingDeal.description || "",
+                stage: editingDeal.stage,
+                existing_solution: (editingDeal as any).existing_solution || "",
+              } : undefined}
+              onSubmit={(data) => {
+                const submitData = {
+                  title: data.title,
+                  value: data.value,
+                  stage: data.stage,
+                  description: data.description,
+                  expected_close_date: data.expected_close_date,
+                  probability: data.probability,
+                  contact_id: data.contact_id,
+                  organization_name: data.organization_name,
+                  problem_requirement: data.problem_requirement,
+                  deal_type: data.deal_type === "cross_sale" ? "replacement" : "new" as "new" | "replacement",
+                  existing_solution: data.existing_solution,
+                  quantity: data.quantity,
+                  buying_timeline: data.buying_timeline,
+                  is_budgeted: data.is_budgeted,
+                  tentative_budget: data.tentative_budget,
+                  next_steps: data.next_steps,
+                  solution_id: data.solution_id,
+                  alliance_organization_id: data.alliance_organization_id,
+                  requirement_category: data.requirement_category,
+                };
+                if (editingDeal) {
+                  updateDeal.mutate({ id: editingDeal.id, data: submitData });
+                } else {
+                  createDeal.mutate(submitData);
+                }
+              }}
+              onCancel={closeDialog}
+              isSubmitting={isPending}
+              isEditing={!!editingDeal}
+            />
           </DialogContent>
         </Dialog>
         </div>
