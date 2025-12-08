@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -35,8 +37,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Target, Plus, Edit, Trash2, Loader2, Award, RefreshCcw, Sparkles } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { Target, Plus, Edit, Trash2, Loader2, Award, RefreshCcw, Sparkles, CalendarIcon } from "lucide-react";
+import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface SalesTarget {
   id: string;
@@ -687,19 +690,53 @@ export function SalesTargetsManagement() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Period Start</Label>
-                <Input
-                  type="date"
-                  value={formData.period_start}
-                  onChange={(e) => setFormData(prev => ({ ...prev, period_start: e.target.value }))}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.period_start && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.period_start ? format(parseISO(formData.period_start), "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.period_start ? parseISO(formData.period_start) : undefined}
+                      onSelect={(date) => date && setFormData(prev => ({ ...prev, period_start: format(date, "yyyy-MM-dd") }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Period End</Label>
-                <Input
-                  type="date"
-                  value={formData.period_end}
-                  onChange={(e) => setFormData(prev => ({ ...prev, period_end: e.target.value }))}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.period_end && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.period_end ? format(parseISO(formData.period_end), "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.period_end ? parseISO(formData.period_end) : undefined}
+                      onSelect={(date) => date && setFormData(prev => ({ ...prev, period_end: format(date, "yyyy-MM-dd") }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
