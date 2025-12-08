@@ -264,6 +264,7 @@ interface AllianceOrgProfilePageProps {
 export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProfilePageProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [newContactData, setNewContactData] = useState({ name: '', email: '', phone: '', role: 'other', isChampion: false });
   const [isAddDealOpen, setIsAddDealOpen] = useState(false);
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
@@ -653,19 +654,26 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
 
   // Add contact mutation
   const addContactMutation = useMutation({
-    mutationFn: async (contactData: any) => {
+    mutationFn: async (contactData: { name: string; email: string; phone: string; role: string; isChampion: boolean }) => {
+      if (!user?.id) {
+        throw new Error("You must be logged in to add contacts");
+      }
+      if (!contactData.name.trim()) {
+        throw new Error("Contact name is required");
+      }
       const { data, error } = await supabase
         .from("alliance_users")
         .insert({
           tenant_id: currentTenant?.id,
           organization_id: organization?.id,
-          name: contactData.name,
-          email: contactData.email || null,
-          phone: contactData.phone || null,
-          role: contactData.role,
+          name: contactData.name.trim(),
+          email: contactData.email?.trim() || null,
+          phone: contactData.phone?.trim() || null,
+          role: contactData.role || 'other',
+          designation: contactData.role || 'other',
           notes: contactData.isChampion ? '[CHAMPION]' : null,
           status: 'active',
-          created_by: user?.id!,
+          created_by: user.id,
         })
         .select()
         .single();
@@ -677,6 +685,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       // Invalidate alliance-users query so Users tab in Alliance module updates
       queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
       setIsAddContactOpen(false);
+      setNewContactData({ name: '', email: '', phone: '', role: 'other', isChampion: false });
       toast.success("Contact added - enriching with AI...");
       
       // Auto-enrich the newly added contact
@@ -2627,17 +2636,17 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                   <DialogTrigger asChild><Button variant="ghost" size="sm" className="text-primary gap-1 h-7"><Plus className="h-4 w-4" />Add</Button></DialogTrigger>
                   <DialogContent>
                     <DialogHeader><DialogTitle>Add Contact to {organization.name}</DialogTitle></DialogHeader>
-                    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); addContactMutation.mutate({ name: fd.get('name'), email: fd.get('email'), phone: fd.get('phone'), role: fd.get('role'), isChampion: fd.get('isChampion') === 'on' }); }} className="space-y-4">
+                    <form onSubmit={(e) => { e.preventDefault(); addContactMutation.mutate(newContactData); }} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Name *</Label><Input name="name" required /></div>
-                        <div className="space-y-2"><Label>Role</Label><Select name="role" defaultValue="other"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CONTACT_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent></Select></div>
+                        <div className="space-y-2"><Label>Name *</Label><Input value={newContactData.name} onChange={(e) => setNewContactData(prev => ({ ...prev, name: e.target.value }))} required /></div>
+                        <div className="space-y-2"><Label>Role</Label><Select value={newContactData.role} onValueChange={(value) => setNewContactData(prev => ({ ...prev, role: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CONTACT_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent></Select></div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Email</Label><Input name="email" type="email" /></div>
-                        <div className="space-y-2"><Label>Phone</Label><Input name="phone" /></div>
+                        <div className="space-y-2"><Label>Email</Label><Input value={newContactData.email} onChange={(e) => setNewContactData(prev => ({ ...prev, email: e.target.value }))} type="email" /></div>
+                        <div className="space-y-2"><Label>Phone</Label><Input value={newContactData.phone} onChange={(e) => setNewContactData(prev => ({ ...prev, phone: e.target.value }))} /></div>
                       </div>
                       <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-                        <input type="checkbox" name="isChampion" id="isChampion" className="h-5 w-5 rounded accent-amber-500" />
+                        <Checkbox id="isChampion" checked={newContactData.isChampion} onCheckedChange={(checked) => setNewContactData(prev => ({ ...prev, isChampion: checked === true }))} className="h-5 w-5" />
                         <Label htmlFor="isChampion" className="flex items-center gap-2 cursor-pointer"><Star className="h-5 w-5 text-amber-500 fill-amber-500" /><span className="font-medium">Set as Champion</span></Label>
                       </div>
                       <Button type="submit" className="w-full" disabled={addContactMutation.isPending}>{addContactMutation.isPending ? "Adding..." : "Add Contact"}</Button>
