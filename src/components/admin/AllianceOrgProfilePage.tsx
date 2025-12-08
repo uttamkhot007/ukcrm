@@ -632,6 +632,8 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
     },
     onSuccess: async (data) => {
       refetchContacts();
+      // Invalidate alliance-users query so Users tab in Alliance module updates
+      queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
       setIsAddContactOpen(false);
       toast.success("Contact added - enriching with AI...");
       
