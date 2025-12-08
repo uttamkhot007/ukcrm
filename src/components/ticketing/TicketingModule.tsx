@@ -8,11 +8,7 @@ import { TicketAnalytics } from "./TicketAnalytics";
 import { TicketAutomation } from "./TicketAutomation";
 import { CannedResponses } from "./CannedResponses";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Plus, LayoutGrid, List, BarChart3, Zap, MessageSquare, 
-  Ticket, Clock, AlertTriangle, CheckCircle 
-} from "lucide-react";
+import { Plus, LayoutGrid, List, Ticket } from "lucide-react";
 
 interface TicketingModuleProps {
   initialTab?: string;
@@ -45,7 +41,7 @@ export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
     }
   };
 
-  const isTicketView = ["all", "open", "escalated", "resolved"].includes(activeTab);
+  const isTicketView = ["all", "open", "escalated"].includes(activeTab);
 
   return (
     <div className="p-6 space-y-6">
@@ -62,48 +58,10 @@ export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
             Manage support tickets with SLA tracking, templates & automation
           </p>
         </div>
-        <Button onClick={() => setIsNewTicketOpen(true)} size="lg">
-          <Plus className="w-4 h-4 mr-2" />
-          New Ticket
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <TicketStats />
-
-      {/* Navigation Tabs - Vertical Layout */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex gap-6">
-        <div className="flex flex-col gap-2">
-          <TabsList className="flex flex-col h-auto bg-transparent gap-1">
-            <TabsTrigger value="all" className="w-full justify-start gap-2 data-[state=active]:bg-muted">
-              <List className="w-4 h-4" />
-              All Tickets
-            </TabsTrigger>
-            <TabsTrigger value="open" className="w-full justify-start gap-2 data-[state=active]:bg-muted">
-              <Clock className="w-4 h-4" />
-              Open
-            </TabsTrigger>
-            <TabsTrigger value="escalated" className="w-full justify-start gap-2 data-[state=active]:bg-muted">
-              <AlertTriangle className="w-4 h-4" />
-              Escalated
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="w-full justify-start gap-2 data-[state=active]:bg-muted">
-              <MessageSquare className="w-4 h-4" />
-              Templates
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="w-full justify-start gap-2 data-[state=active]:bg-muted">
-              <BarChart3 className="w-4 h-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="automation" className="w-full justify-start gap-2 data-[state=active]:bg-muted">
-              <Zap className="w-4 h-4" />
-              Automation
-            </TabsTrigger>
-          </TabsList>
-
+        <div className="flex items-center gap-2">
           {/* View Toggle - only for ticket views */}
           {isTicketView && (
-            <div className="flex items-center gap-1 border rounded-lg p-1 mt-2">
+            <div className="flex items-center gap-1 border rounded-lg p-1">
               <Button
                 variant={activeView === "list" ? "secondary" : "ghost"}
                 size="sm"
@@ -120,29 +78,18 @@ export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
               </Button>
             </div>
           )}
+          <Button onClick={() => setIsNewTicketOpen(true)} size="lg">
+            <Plus className="w-4 h-4 mr-2" />
+            New Ticket
+          </Button>
         </div>
+      </div>
 
-        <div className="flex-1">
-          <TabsContent value="all" className="mt-0">
-            {renderMainContent()}
-          </TabsContent>
-          <TabsContent value="open" className="mt-0">
-            {renderMainContent()}
-          </TabsContent>
-          <TabsContent value="escalated" className="mt-0">
-            {renderMainContent()}
-          </TabsContent>
-          <TabsContent value="templates" className="mt-0">
-            {renderMainContent()}
-          </TabsContent>
-          <TabsContent value="analytics" className="mt-0">
-            {renderMainContent()}
-          </TabsContent>
-          <TabsContent value="automation" className="mt-0">
-            {renderMainContent()}
-          </TabsContent>
-        </div>
-      </Tabs>
+      {/* Stats */}
+      <TicketStats />
+
+      {/* Main Content */}
+      {renderMainContent()}
 
       {/* Dialogs & Sheets */}
       <NewTicketDialog open={isNewTicketOpen} onOpenChange={setIsNewTicketOpen} />
