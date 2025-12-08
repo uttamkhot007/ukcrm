@@ -1205,11 +1205,13 @@ export function AllianceModule() {
 
       {/* Organization Profile Page */}
       {showOrgProfile && selectedOrg && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <AllianceOrgProfilePage 
-            organization={selectedOrg}
-            onBack={() => setShowOrgProfile(false)}
-          />
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <div className="min-h-screen">
+            <AllianceOrgProfilePage 
+              organization={selectedOrg}
+              onBack={() => setShowOrgProfile(false)}
+            />
+          </div>
         </div>
       )}
 
