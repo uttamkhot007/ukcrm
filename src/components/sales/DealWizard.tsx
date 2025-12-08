@@ -120,14 +120,15 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
   const [formData, setFormData] = useState<DealFormData>({ ...initialFormData, ...initialData });
   const { getCurrencySymbol } = useOrganizationSettings();
 
-  // Fetch Alliance Organizations
+  // Fetch Alliance Organizations (excluding resellers - those are competitors, not prospects)
   const { data: allianceOrganizations } = useQuery({
-    queryKey: ["alliance-organizations"],
+    queryKey: ["alliance-organizations-prospects"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alliance_organizations")
         .select("id, name, organization_type, status")
         .eq("status", "active")
+        .not("organization_type", "ilike", "reseller")
         .order("name", { ascending: true });
       if (error) throw error;
       return data;
