@@ -204,8 +204,13 @@ export function ContactsView() {
   const { data: contacts, isLoading } = useQuery({
     queryKey: ["contacts-with-relations", myAllianceOrgs, allUserIds],
     queryFn: async () => {
-      // First, get all regular contacts created by user or subordinates
-      let regularContacts: ContactWithRelations[] = [];
+      // Fetch all contacts accessible to the user
+      // The sync_alliance_user_to_contacts trigger already syncs alliance_users to contacts table
+      // So we only need to query the contacts table
+      
+      let allContacts: ContactWithRelations[] = [];
+      
+      // Fetch contacts created by user or subordinates
       if (allUserIds?.length) {
         const { data, error } = await supabase
           .from("contacts")
@@ -213,12 +218,11 @@ export function ContactsView() {
           .in("user_id", allUserIds)
           .order("created_at", { ascending: false });
         if (!error && data) {
-          regularContacts = data as ContactWithRelations[];
+          allContacts = [...allContacts, ...data as ContactWithRelations[]];
         }
       }
 
-      // If user has alliance orgs, also fetch alliance contacts linked to those orgs
-      let allianceContacts: ContactWithRelations[] = [];
+      // Also fetch contacts linked to alliance orgs managed by user/subordinates
       if (myAllianceOrgs && myAllianceOrgs.length > 0) {
         const { data: allianceData, error: allianceError } = await supabase
           .from("contacts")
@@ -227,108 +231,29 @@ export function ContactsView() {
           .order("created_at", { ascending: false });
         
         if (!allianceError && allianceData) {
-          allianceContacts = allianceData as ContactWithRelations[];
+          allContacts = [...allContacts, ...allianceData as ContactWithRelations[]];
         }
       }
 
-      // Also fetch alliance_users (contacts from Alliance module) 
-      // - for alliance orgs managed by user/subordinates OR created by user/subordinates
-      let allianceUserContacts: ContactWithRelations[] = [];
-      const allianceUserIds = new Set<string>();
+      // Deduplicate by ID first, then by email (case-insensitive)
+      const seenIds = new Set<string>();
+      const seenEmails = new Set<string>();
+      const uniqueContacts: ContactWithRelations[] = [];
       
-      // Fetch alliance_users for managed orgs
-      if (myAllianceOrgs && myAllianceOrgs.length > 0) {
-        const { data: allianceUsers, error: auError } = await supabase
-          .from("alliance_users")
-          .select("*")
-          .in("organization_id", myAllianceOrgs)
-          .order("created_at", { ascending: false });
+      for (const contact of allContacts) {
+        // Skip if we've already seen this ID
+        if (seenIds.has(contact.id)) continue;
+        seenIds.add(contact.id);
         
-        if (!auError && allianceUsers) {
-          allianceUsers.forEach(au => allianceUserIds.add(au.id));
-          allianceUserContacts = allianceUsers.map(au => ({
-            id: au.id,
-            name: au.name,
-            email: au.email,
-            phone: au.phone,
-            company: null,
-            designation: au.designation,
-            notes: au.notes,
-            user_id: au.created_by,
-            tenant_id: au.tenant_id,
-            created_at: au.created_at,
-            updated_at: au.updated_at,
-            alliance_organization_id: au.organization_id,
-            alliance_user_id: au.id,
-            avatar_url: au.profile_image_url,
-            department: null,
-            engagement_score: null,
-            is_champion: null,
-            last_contacted_at: null,
-            linkedin_url: au.linkedin_url,
-            reporting_manager_id: null,
-            role_in_deal: au.role,
-            seniority_level: null,
-            source_type: 'alliance',
-            deals: [],
-            leads: [],
-            created_by: au.created_by,
-            updated_by: au.updated_by,
-          } as ContactWithRelations));
-        }
-      }
-
-      // Also fetch alliance_users created by user/subordinates (regardless of org)
-      if (allUserIds?.length) {
-        const { data: myCreatedAllianceUsers, error: mcError } = await supabase
-          .from("alliance_users")
-          .select("*")
-          .in("created_by", allUserIds)
-          .order("created_at", { ascending: false });
+        // Skip if we've already seen this email (case-insensitive)
+        const emailKey = contact.email?.toLowerCase().trim();
+        if (emailKey && seenEmails.has(emailKey)) continue;
+        if (emailKey) seenEmails.add(emailKey);
         
-        if (!mcError && myCreatedAllianceUsers) {
-          myCreatedAllianceUsers.forEach(au => {
-            if (!allianceUserIds.has(au.id)) {
-              allianceUserIds.add(au.id);
-              allianceUserContacts.push({
-                id: au.id,
-                name: au.name,
-                email: au.email,
-                phone: au.phone,
-                company: null,
-                designation: au.designation,
-                notes: au.notes,
-                user_id: au.created_by,
-                tenant_id: au.tenant_id,
-                created_at: au.created_at,
-                updated_at: au.updated_at,
-                alliance_organization_id: au.organization_id,
-                alliance_user_id: au.id,
-                avatar_url: au.profile_image_url,
-                department: null,
-                engagement_score: null,
-                is_champion: null,
-                last_contacted_at: null,
-                linkedin_url: au.linkedin_url,
-                reporting_manager_id: null,
-                role_in_deal: au.role,
-                seniority_level: null,
-                source_type: 'alliance',
-                deals: [],
-                leads: [],
-                created_by: au.created_by,
-                updated_by: au.updated_by,
-              } as ContactWithRelations);
-            }
-          });
-        }
+        uniqueContacts.push(contact);
       }
-
-      // Merge and deduplicate by id
-      const allContacts = [...regularContacts, ...allianceContacts, ...allianceUserContacts];
-      const uniqueContacts = Array.from(new Map(allContacts.map(c => [c.id, c])).values());
       
-      return uniqueContacts as ContactWithRelations[];
+      return uniqueContacts;
     },
   });
 
