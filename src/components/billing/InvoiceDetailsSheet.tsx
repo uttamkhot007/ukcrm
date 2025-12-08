@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format } from "date-fns";
 import { User, Building, CreditCard, Calendar, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { AuditInfo } from "@/components/shared/AuditInfo";
 
 interface InvoiceDetailsSheetProps {
   invoiceId: string | null;
@@ -331,6 +332,15 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                   </div>
                 </div>
               )}
+
+              {/* Audit Information */}
+              <AuditInfo
+                createdAt={invoice?.created_at}
+                updatedAt={invoice?.updated_at}
+                createdBy={invoice?.created_by}
+                updatedBy={(invoice as any)?.updated_by}
+                compact
+              />
             </div>
           </ScrollArea>
         </SheetContent>

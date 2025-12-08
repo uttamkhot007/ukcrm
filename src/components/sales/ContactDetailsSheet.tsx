@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Mail, Phone, Building, Briefcase, Calendar, DollarSign, TrendingUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { AuditInfo } from "@/components/shared/AuditInfo";
 
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 type DealStage = Database["public"]["Enums"]["deal_stage"];
@@ -233,6 +234,14 @@ export function ContactDetailsSheet({ contact, open, onOpenChange }: ContactDeta
                 </div>
               )}
             </div>
+
+            {/* Audit Information */}
+            <AuditInfo
+              createdAt={contact.created_at}
+              updatedAt={contact.updated_at}
+              createdBy={(contact as any).created_by}
+              updatedBy={(contact as any).updated_by}
+            />
           </div>
         </ScrollArea>
       </SheetContent>

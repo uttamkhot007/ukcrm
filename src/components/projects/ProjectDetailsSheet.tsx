@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { FolderKanban, Calendar, DollarSign, Users } from "lucide-react";
 import { format } from "date-fns";
+import { AuditInfo } from "@/components/shared/AuditInfo";
 
 interface ProjectDetailsSheetProps {
   project: any;
@@ -166,6 +167,14 @@ export function ProjectDetailsSheet({
               </CardContent>
             </Card>
           )}
+
+          {/* Audit Information */}
+          <AuditInfo
+            createdAt={project.created_at}
+            updatedAt={project.updated_at}
+            createdBy={project.created_by}
+            updatedBy={project.updated_by}
+          />
         </div>
       </SheetContent>
     </Sheet>

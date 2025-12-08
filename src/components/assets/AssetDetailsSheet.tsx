@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Calendar, MapPin, Tag, DollarSign } from "lucide-react";
 import { format } from "date-fns";
+import { AuditInfo } from "@/components/shared/AuditInfo";
 
 interface AssetDetailsSheetProps {
   asset: any;
@@ -187,6 +188,14 @@ export function AssetDetailsSheet({
               </CardContent>
             </Card>
           )}
+
+          {/* Audit Information */}
+          <AuditInfo
+            createdAt={asset.created_at}
+            updatedAt={asset.updated_at}
+            createdBy={asset.created_by}
+            updatedBy={asset.updated_by}
+          />
         </div>
       </SheetContent>
     </Sheet>
