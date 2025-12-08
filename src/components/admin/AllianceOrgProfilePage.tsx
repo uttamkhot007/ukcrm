@@ -1865,12 +1865,13 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                               key={os}
                               type="button"
                               size="sm"
-                              variant={infrastructure.endpointOS.includes(os) ? "default" : "outline"}
-                              className={infrastructure.endpointOS.includes(os) ? "bg-primary" : ""}
+                              variant={(infrastructure.endpointOS || []).includes(os) ? "default" : "outline"}
+                              className={(infrastructure.endpointOS || []).includes(os) ? "bg-primary" : ""}
                               onClick={() => {
-                                const newOS = infrastructure.endpointOS.includes(os)
-                                  ? infrastructure.endpointOS.filter(o => o !== os)
-                                  : [...infrastructure.endpointOS, os];
+                                const currentOS = infrastructure.endpointOS || [];
+                                const newOS = currentOS.includes(os)
+                                  ? currentOS.filter(o => o !== os)
+                                  : [...currentOS, os];
                                 setInfrastructure({...infrastructure, endpointOS: newOS});
                               }}
                             >
@@ -1887,12 +1888,13 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                               key={os}
                               type="button"
                               size="sm"
-                              variant={infrastructure.serverOS.includes(os) ? "default" : "outline"}
-                              className={infrastructure.serverOS.includes(os) ? "bg-primary" : ""}
+                              variant={(infrastructure.serverOS || []).includes(os) ? "default" : "outline"}
+                              className={(infrastructure.serverOS || []).includes(os) ? "bg-primary" : ""}
                               onClick={() => {
-                                const newOS = infrastructure.serverOS.includes(os)
-                                  ? infrastructure.serverOS.filter(o => o !== os)
-                                  : [...infrastructure.serverOS, os];
+                                const currentOS = infrastructure.serverOS || [];
+                                const newOS = currentOS.includes(os)
+                                  ? currentOS.filter(o => o !== os)
+                                  : [...currentOS, os];
                                 setInfrastructure({...infrastructure, serverOS: newOS});
                               }}
                             >
