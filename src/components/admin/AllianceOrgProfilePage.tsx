@@ -911,15 +911,60 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const upcomingMeetings = meetings.filter(m => new Date(m.scheduled_at) >= new Date());
   const pendingTasks = tasks.filter(t => t.status !== 'completed');
 
+  // Load saved settings when organization changes
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await supabase
+        .from("alliance_organizations")
+        .select("account_manager_id, technical_account_manager_id, team_config, infrastructure_config, security_controls, solution_configs")
+        .eq("id", organization.id)
+        .single();
+      
+      if (data) {
+        if (data.account_manager_id || data.technical_account_manager_id || data.team_config) {
+          setTeamConfig({
+            accountManager: data.account_manager_id || '',
+            technicalAccountManager: data.technical_account_manager_id || '',
+            collaborators: (data.team_config as any)?.collaborators || [],
+          });
+        }
+        if (data.infrastructure_config) {
+          setInfrastructure(data.infrastructure_config as unknown as InfrastructureConfig);
+        }
+        if (data.security_controls) {
+          setSelectedControls(data.security_controls);
+        }
+        if (data.solution_configs) {
+          setSolutionConfigs(data.solution_configs as unknown as Record<string, SolutionConfig>);
+        }
+      }
+    };
+    
+    loadSettings();
+  }, [organization.id]);
+
   // Save all settings
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      // Here you would save the security controls, infrastructure, and solution configs
-      // For now, we'll just show a success message
-      // In production, you'd save these to a database table
+      const { error } = await supabase
+        .from("alliance_organizations")
+        .update({
+          account_manager_id: teamConfig.accountManager || null,
+          technical_account_manager_id: teamConfig.technicalAccountManager || null,
+          team_config: JSON.parse(JSON.stringify({ collaborators: teamConfig.collaborators })),
+          infrastructure_config: JSON.parse(JSON.stringify(infrastructure)),
+          security_controls: selectedControls,
+          solution_configs: JSON.parse(JSON.stringify(solutionConfigs)),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", organization.id);
+
+      if (error) throw error;
+      
       toast.success("Settings saved successfully");
     } catch (error: any) {
+      console.error("Save error:", error);
       toast.error("Failed to save settings: " + error.message);
     } finally {
       setIsSaving(false);
