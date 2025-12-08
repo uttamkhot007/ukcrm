@@ -17,8 +17,9 @@ import {
   Plus, X, Save, Loader2, Search, Shield, ShieldCheck, ShieldX, ShieldAlert,
   Server, Cloud, Database, Lock, UserCircle, Phone, Mail, Calendar, 
   Briefcase, Building, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
-  AlertTriangle, Key, Bug, Ticket, Package, FileWarning
+  AlertTriangle, Key, Bug, Ticket, Package, FileWarning, Contact
 } from "lucide-react";
+import { OrganizationContacts } from "./OrganizationContacts";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -332,10 +333,14 @@ export function OrganizationProfilePage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="vinca">Vinca Services</TabsTrigger>
-          <TabsTrigger value="contact">Contact</TabsTrigger>
+          <TabsTrigger value="contact">Location</TabsTrigger>
+          <TabsTrigger value="contacts" className="flex items-center gap-1">
+            <Contact className="w-3 h-3" />
+            Contacts
+          </TabsTrigger>
           <TabsTrigger value="infrastructure">Infrastructure</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="threats">Threat Intel</TabsTrigger>
@@ -551,6 +556,11 @@ export function OrganizationProfilePage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Customer Contacts Tab */}
+        <TabsContent value="contacts" className="space-y-4">
+          <OrganizationContacts />
         </TabsContent>
 
         {/* Infrastructure Tab */}

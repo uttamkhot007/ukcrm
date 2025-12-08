@@ -1085,45 +1085,79 @@ export type Database = {
       }
       contacts: {
         Row: {
+          avatar_url: string | null
           company: string | null
           created_at: string
+          department: string | null
           designation: string | null
           email: string | null
+          engagement_score: number | null
           id: string
+          is_champion: boolean | null
+          last_contacted_at: string | null
+          linkedin_url: string | null
           name: string
           notes: string | null
           phone: string | null
+          reporting_manager_id: string | null
+          role_in_deal: string | null
+          seniority_level: string | null
           tenant_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           company?: string | null
           created_at?: string
+          department?: string | null
           designation?: string | null
           email?: string | null
+          engagement_score?: number | null
           id?: string
+          is_champion?: boolean | null
+          last_contacted_at?: string | null
+          linkedin_url?: string | null
           name: string
           notes?: string | null
           phone?: string | null
+          reporting_manager_id?: string | null
+          role_in_deal?: string | null
+          seniority_level?: string | null
           tenant_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           company?: string | null
           created_at?: string
+          department?: string | null
           designation?: string | null
           email?: string | null
+          engagement_score?: number | null
           id?: string
+          is_champion?: boolean | null
+          last_contacted_at?: string | null
+          linkedin_url?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
+          reporting_manager_id?: string | null
+          role_in_deal?: string | null
+          seniority_level?: string | null
           tenant_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contacts_reporting_manager_id_fkey"
+            columns: ["reporting_manager_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contacts_tenant_id_fkey"
             columns: ["tenant_id"]
