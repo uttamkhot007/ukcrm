@@ -36,6 +36,8 @@ import { CurrencyConverterWidget } from "./CurrencyConverterWidget";
 import { SalesRepDashboard } from "./SalesRepDashboard";
 import { SalesManagerDashboard } from "./SalesManagerDashboard";
 import { PresalesDashboard } from "./PresalesDashboard";
+import { MotivationalQuoteWidget } from "./MotivationalQuoteWidget";
+import { CyberSecurityNewsBar } from "./CyberSecurityNewsBar";
 
 interface DashboardProps {
   onModuleChange: (module: string) => void;
@@ -286,6 +288,9 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {/* Welcome Section */}
       <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
 
+      {/* Motivational Quote Widget - For all users */}
+      <MotivationalQuoteWidget />
+
       {/* Metrics Grid - Only for Admin/Manager */}
       {metrics.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -303,6 +308,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
             <SalesFunnel />
           </div>
           <div className="space-y-6">
+            <CyberSecurityNewsBar showKnowledgeBase={true} />
             <NotificationCenterWidget />
             <CurrencyConverterWidget />
             <UpcomingEventsWidget />
@@ -317,10 +323,11 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {/* Employee-Specific Widgets - For non-admin/manager users */}
       {!isAdmin && !isManager && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <EmployeeWidgets onNavigate={onModuleChange} />
           </div>
-          <div>
+          <div className="space-y-6">
+            <CyberSecurityNewsBar />
             <UpcomingEventsWidget />
           </div>
         </div>
