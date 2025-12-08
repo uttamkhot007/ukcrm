@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload } from "lucide-react";
+import { BulkUploadDialog, BulkUploadType } from "./BulkUploadDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -103,6 +104,8 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product">("oem-tech");
   const [selectedItemForLink, setSelectedItemForLink] = useState<Offering | null>(null);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [bulkUploadType, setBulkUploadType] = useState<BulkUploadType>("products");
   
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -1137,51 +1140,66 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">{tab.label} ({filteredOfferings.length})</h3>
               {!readOnly && (
-                <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                  setIsDialogOpen(open);
-                  if (!open) setEditingItem(null);
-                }}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add {tab.label.includes("&") ? tab.label.split("&")[0].trim() : tab.label.replace(" Services", "").replace("s", "")}
+                <div className="flex gap-2">
+                  {(tab.value === "products" || tab.value === "technologies" || tab.value === "oems") && (
+                    <Button 
+                      variant="outline" 
+                      className="gap-2"
+                      onClick={() => {
+                        setBulkUploadType(tab.value as BulkUploadType);
+                        setBulkUploadOpen(true);
+                      }}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Bulk Upload
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingItem ? "Edit" : "Add"} {tab.label.includes("&") ? "Item" : tab.label.replace(" Services", "")}</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name *</Label>
-                        <Input id="name" name="name" required defaultValue={editingItem?.name} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea id="description" name="description" defaultValue={editingItem?.description || ""} />
-                      </div>
-                      {renderFormFields()}
-                      <div className="space-y-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select name="status" defaultValue={editingItem?.status || "active"}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={mutation.isPending}>
-                          {mutation.isPending ? "Saving..." : "Save"}
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                  )}
+                  <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                    setIsDialogOpen(open);
+                    if (!open) setEditingItem(null);
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add {tab.label.includes("&") ? tab.label.split("&")[0].trim() : tab.label.replace(" Services", "").replace("s", "")}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{editingItem ? "Edit" : "Add"} {tab.label.includes("&") ? "Item" : tab.label.replace(" Services", "")}</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Name *</Label>
+                          <Input id="name" name="name" required defaultValue={editingItem?.name} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea id="description" name="description" defaultValue={editingItem?.description || ""} />
+                        </div>
+                        {renderFormFields()}
+                        <div className="space-y-2">
+                          <Label htmlFor="status">Status</Label>
+                          <Select name="status" defaultValue={editingItem?.status || "active"}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                          <Button type="submit" disabled={mutation.isPending}>
+                            {mutation.isPending ? "Saving..." : "Save"}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               )}
             </div>
 
@@ -1299,6 +1317,15 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <BulkUploadDialog
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
+        uploadType={bulkUploadType}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["offerings"] });
+        }}
+      />
     </div>
   );
 }

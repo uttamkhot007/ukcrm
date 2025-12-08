@@ -1,0 +1,4 @@
+name,category,vendor,description,status
+Zero Trust Architecture,Security Framework,,Security model requiring strict identity verification,active
+AI-Powered Threat Detection,Machine Learning,Various,Uses artificial intelligence for threat identification,active
+Cloud-Native Security,Cloud Security,AWS/Azure/GCP,Security solutions built for cloud environments,active

@@ -18,7 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe, UserCircle, Handshake } from "lucide-react";
+import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe, UserCircle, Handshake, Upload } from "lucide-react";
+import { BulkUploadDialog, BulkUploadType } from "./BulkUploadDialog";
 import { AllianceContactDetailsSheet } from "./AllianceContactDetailsSheet";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
 import { AllianceOrgProfilePage } from "./AllianceOrgProfilePage";
@@ -74,6 +75,8 @@ export function AllianceModule() {
   const [userIntelligence, setUserIntelligence] = useState<Record<string, any>>({});
   const [selectedContact, setSelectedContact] = useState<AllianceUser | null>(null);
   const [showContactDetails, setShowContactDetails] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [bulkUploadType, setBulkUploadType] = useState<BulkUploadType>("alliance-contacts");
   
   // Use shared organization form state
   const { formData: orgFormData, updateFormData: updateOrgFormData, resetFormData: resetOrgFormData, setFormData: setOrgFormData } = useOrganizationFormState();
@@ -505,16 +508,28 @@ export function AllianceModule() {
         <TabsContent value="users" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Alliance Contacts ({filteredUsers.length})</h3>
-            <Dialog open={isUserDialogOpen} onOpenChange={(open) => {
-              setIsUserDialogOpen(open);
-              if (!open) setEditingUser(null);
-            }}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Contact
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => {
+                  setBulkUploadType("alliance-contacts");
+                  setBulkUploadOpen(true);
+                }}
+              >
+                <Upload className="h-4 w-4" />
+                Bulk Upload
+              </Button>
+              <Dialog open={isUserDialogOpen} onOpenChange={(open) => {
+                setIsUserDialogOpen(open);
+                if (!open) setEditingUser(null);
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Contact
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>{editingUser ? "Edit Contact" : "Add New Contact"}</DialogTitle>
@@ -601,6 +616,7 @@ export function AllianceModule() {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           <Card>
@@ -1013,39 +1029,52 @@ export function AllianceModule() {
         <TabsContent value="resellers" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Cyber Security Resellers & MSSPs ({filteredResellers.length})</h3>
-            <Dialog open={isOrgDialogOpen && activeTab === 'resellers' && !editingOrg} onOpenChange={(open) => {
-              if (open) {
-                resetOrgForm();
-                updateOrgFormData({ organizationType: "reseller" });
-              }
-              setIsOrgDialogOpen(open);
-            }}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Reseller
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Reseller / MSSP</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleOrgSubmit} className="space-y-4">
-                  <OrganizationFormFields 
-                    formData={orgFormData}
-                    onChange={updateOrgFormData}
-                    showExtendedFields={true}
-                    isEditing={false}
-                  />
-                  <div className="flex justify-end gap-2 pt-4 border-t">
-                    <Button type="button" variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={orgMutation.isPending}>
-                      {orgMutation.isPending ? "Saving..." : "Save Reseller"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => {
+                  setBulkUploadType("resellers");
+                  setBulkUploadOpen(true);
+                }}
+              >
+                <Upload className="h-4 w-4" />
+                Bulk Upload
+              </Button>
+              <Dialog open={isOrgDialogOpen && activeTab === 'resellers' && !editingOrg} onOpenChange={(open) => {
+                if (open) {
+                  resetOrgForm();
+                  updateOrgFormData({ organizationType: "reseller" });
+                }
+                setIsOrgDialogOpen(open);
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Reseller
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Reseller / MSSP</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleOrgSubmit} className="space-y-4">
+                    <OrganizationFormFields 
+                      formData={orgFormData}
+                      onChange={updateOrgFormData}
+                      showExtendedFields={true}
+                      isEditing={false}
+                    />
+                    <div className="flex justify-end gap-2 pt-4 border-t">
+                      <Button type="button" variant="outline" onClick={() => setIsOrgDialogOpen(false)}>Cancel</Button>
+                      <Button type="submit" disabled={orgMutation.isPending}>
+                        {orgMutation.isPending ? "Saving..." : "Save Reseller"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1170,6 +1199,16 @@ export function AllianceModule() {
           />
         </div>
       )}
+
+      <BulkUploadDialog
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
+        uploadType={bulkUploadType}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
+          queryClient.invalidateQueries({ queryKey: ["alliance-users"] });
+        }}
+      />
     </div>
   );
 }
