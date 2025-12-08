@@ -4329,6 +4329,62 @@ export type Database = {
           },
         ]
       }
+      organization_support_types: {
+        Row: {
+          created_at: string
+          custom_features: Json | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string
+          price: number | null
+          resolution_hours: number | null
+          response_hours: number | null
+          tier: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_features?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id: string
+          price?: number | null
+          resolution_hours?: number | null
+          response_hours?: number | null
+          tier?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_features?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string
+          price?: number | null
+          resolution_hours?: number | null
+          response_hours?: number | null
+          tier?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_support_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_tasks: {
         Row: {
           assigned_to: string | null
