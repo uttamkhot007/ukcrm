@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe, UserCircle } from "lucide-react";
+import { Plus, Building2, Users, Search, Pencil, Trash2, UserPlus, ExternalLink, ChevronDown, ChevronRight, Mail, Phone, MapPin, Linkedin, Star, Sparkles, Brain, Shield, Calendar, Briefcase, Loader2, Globe, UserCircle, Handshake } from "lucide-react";
 import { AllianceContactDetailsSheet } from "./AllianceContactDetailsSheet";
 import { OrganizationFormFields, useOrganizationFormState, ORGANIZATION_TYPES, INDUSTRY_TYPES } from "@/components/shared/OrganizationFormFields";
 import { AllianceOrgProfilePage } from "./AllianceOrgProfilePage";
@@ -447,11 +447,17 @@ export function AllianceModule() {
       case "customer": return "default";
       case "distributor": return "secondary";
       case "oem": return "outline";
-      case "partner": return "default";
+      case "reseller": return "default";
       case "location": return "secondary";
       default: return "outline";
     }
   };
+
+  // Filter resellers
+  const resellers = organizations.filter(org => org.organization_type === "reseller");
+  const filteredResellers = resellers.filter(org =>
+    org.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -482,6 +488,10 @@ export function AllianceModule() {
           <TabsTrigger value="organizations" className="gap-2">
             <Building2 className="h-4 w-4" />
             Organizations
+          </TabsTrigger>
+          <TabsTrigger value="resellers" className="gap-2">
+            <Handshake className="h-4 w-4" />
+            Resellers
           </TabsTrigger>
         </TabsList>
 
@@ -962,6 +972,122 @@ export function AllianceModule() {
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           {orgUsers.length} user(s)
+                        </p>
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingOrg(org);
+                              setIsOrgDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => deleteOrgMutation.mutate(org.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Resellers Tab */}
+        <TabsContent value="resellers" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Cyber Security Resellers & MSSPs ({filteredResellers.length})</h3>
+            <Dialog open={isOrgDialogOpen && !editingOrg} onOpenChange={(open) => {
+              if (open) {
+                resetOrgForm();
+                updateOrgFormData({ organizationType: "reseller" });
+              }
+              setIsOrgDialogOpen(open);
+            }}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Reseller
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {orgsLoading ? (
+              <p>Loading...</p>
+            ) : filteredResellers.length === 0 ? (
+              <p className="text-muted-foreground col-span-full text-center py-8">No resellers found. Add cyber security MSSPs and resellers from India, Kenya, Uganda, Rwanda and other regions.</p>
+            ) : (
+              filteredResellers.map(org => {
+                const orgUsers = getOrgUsers(org.id);
+                return (
+                  <Card 
+                    key={org.id} 
+                    className="cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => {
+                      setSelectedOrg(org);
+                      setShowOrgProfile(true);
+                    }}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={org.logo_url || ""} alt={org.name} />
+                            <AvatarFallback>{org.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <CardTitle className="text-lg">{org.name}</CardTitle>
+                            <CardDescription>{org.address || org.industry || "No location"}</CardDescription>
+                          </div>
+                        </div>
+                        <Badge variant={org.status === "active" ? "default" : "secondary"}>
+                          {org.status}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {org.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{org.description}</p>
+                      )}
+                      {org.solutions && org.solutions.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {org.solutions.slice(0, 3).map((s, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">{s}</Badge>
+                          ))}
+                          {org.solutions.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">+{org.solutions.length - 3}</Badge>
+                          )}
+                        </div>
+                      )}
+                      {org.website && (
+                        <p className="text-sm flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          <a 
+                            href={org.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-primary hover:underline truncate"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {org.website.replace(/^https?:\/\//, "")}
+                          </a>
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {orgUsers.length} contact(s)
                         </p>
                         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button
