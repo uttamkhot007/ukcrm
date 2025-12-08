@@ -37,8 +37,8 @@ export function BusinessInsights() {
 
       const paidInvoices = invoices?.filter(inv => inv.status === "paid") || [];
       const overdueInvoices = invoices?.filter(inv => inv.status === "overdue") || [];
-      const totalRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
-      const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
+      const totalRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+      const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
 
       if (overdueAmount > 0) needsAttention.push({ title: "Overdue Invoices", description: `${overdueInvoices.length} invoices past due date`, metric: formatCurrency(overdueAmount), severity: overdueAmount > totalRevenue * 0.2 ? "critical" : "warning" });
       if (paidInvoices.length > 0) {
