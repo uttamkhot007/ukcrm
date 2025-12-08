@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { CONTACT_ROLES } from "@/components/shared/OrganizationFormFields";
 import { AccountIntelligence } from "./AccountIntelligence";
+import { OrgAccountMetrics } from "./OrgAccountMetrics";
 
 interface AllianceOrganization {
   id: string;
@@ -1460,6 +1461,12 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                     </CardContent>
                   )}
                 </Card>
+
+                {/* Account Performance Metrics */}
+                <OrgAccountMetrics 
+                  organizationId={organization.id} 
+                  organizationType={organization.organization_type}
+                />
 
                 {/* Account Management Team */}
                 <Card>
