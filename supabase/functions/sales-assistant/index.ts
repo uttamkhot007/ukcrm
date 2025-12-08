@@ -6,21 +6,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are a Sales AI Assistant for the CRM system. You help sales professionals manage their deals, contacts, and organizations efficiently.
+const SYSTEM_PROMPT = `You are a Sales AI Assistant for the CRM system. You help sales professionals manage their deals, contacts, organizations, products, and OEMs efficiently.
 
 ## Your Capabilities:
 1. **Create New Deals**: Help users create new sales opportunities with all required information
 2. **Add Contacts**: Create new contact records with complete details
-3. **Add Organizations**: Create new organization/company records
+3. **Add Organizations**: Create new organization/company records (customers, partners, resellers)
+4. **Add Products**: Create new product offerings in the catalog
+5. **Add OEMs**: Create new OEM/vendor records
 
 ## Important Instructions:
-- When a user wants to create a deal, contact, or organization, use the appropriate tool
+- When a user wants to create any entity, use the appropriate tool
 - Ask clarifying questions if important information is missing
 - Be conversational and helpful
 - Confirm successful actions with the user
 - For deals, the default stage is "discovery" and default probability is 10%
 - Always validate email formats before creating contacts
 - Be proactive in suggesting related actions (e.g., after creating an organization, ask if they want to add a contact)
+- For products, ask for the OEM/vendor name if not provided
+- For OEMs, try to get website and headquarters info if possible
 
 ## Response Style:
 - Be professional but friendly
@@ -66,7 +70,9 @@ const TOOLS = [
           email: { type: "string", description: "Email address" },
           phone: { type: "string", description: "Phone number" },
           company: { type: "string", description: "Company/Organization name" },
-          designation: { type: "string", description: "Job title or designation" }
+          designation: { type: "string", description: "Job title or designation" },
+          department: { type: "string", description: "Department within the company" },
+          linkedin_url: { type: "string", description: "LinkedIn profile URL" }
         },
         required: ["name"],
         additionalProperties: false
@@ -77,19 +83,73 @@ const TOOLS = [
     type: "function",
     function: {
       name: "create_organization",
-      description: "Create a new organization/company in the CRM",
+      description: "Create a new organization/company in the CRM (customer, partner, reseller, etc.)",
       parameters: {
         type: "object",
         properties: {
           name: { type: "string", description: "Organization/Company name" },
           organization_type: { 
             type: "string", 
-            enum: ["customer", "distributor", "oem", "partner", "location"],
+            enum: ["customer", "partner", "reseller", "distributor", "oem"],
             description: "Type of organization"
           },
           industry: { type: "string", description: "Industry sector" },
           website: { type: "string", description: "Company website URL" },
-          address: { type: "string", description: "Business address" }
+          address: { type: "string", description: "Business address" },
+          description: { type: "string", description: "Brief description of the organization" }
+        },
+        required: ["name"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_product",
+      description: "Create a new product/offering in the catalog",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Product name" },
+          description: { type: "string", description: "Product description" },
+          category: { type: "string", description: "Product category (e.g., Software, Hardware, Service)" },
+          oem_name: { type: "string", description: "Name of the OEM/vendor that makes this product" },
+          unique_selling_points: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "List of unique selling points or key features"
+          },
+          competitive_advantages: { type: "string", description: "Competitive advantages of this product" }
+        },
+        required: ["name"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_oem",
+      description: "Create a new OEM/vendor record",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "OEM/Vendor company name" },
+          description: { type: "string", description: "Description of the OEM" },
+          website: { type: "string", description: "Company website URL" },
+          partnership_level: { 
+            type: "string", 
+            enum: ["platinum", "gold", "silver", "bronze", "registered"],
+            description: "Partnership tier level"
+          },
+          headquarters: { type: "string", description: "Location of headquarters" },
+          key_products: { 
+            type: "array", 
+            items: { type: "string" },
+            description: "List of key products from this OEM"
+          },
+          founded_year: { type: "number", description: "Year the company was founded" }
         },
         required: ["name"],
         additionalProperties: false
@@ -114,6 +174,8 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    console.log("Processing sales assistant request for user:", userId, "tenant:", tenantId);
 
     // First call to get AI response with potential tool calls
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -168,6 +230,8 @@ serve(async (req) => {
         let result = { success: false, message: "", data: null };
         
         try {
+          console.log(`Executing tool: ${functionName} with args:`, args);
+
           if (functionName === "create_deal") {
             const { data, error } = await supabase.from("deals").insert({
               tenant_id: tenantId,
@@ -207,7 +271,7 @@ serve(async (req) => {
                 .maybeSingle();
               
               if (existingAllianceUser) {
-                throw new Error("A contact with this email already exists");
+                throw new Error("A contact with this email already exists in alliance users");
               }
             }
             
@@ -219,30 +283,139 @@ serve(async (req) => {
               phone: args.phone || null,
               company: args.company || null,
               designation: args.designation || null,
+              department: args.department || null,
+              linkedin_url: args.linkedin_url || null,
             }).select().single();
             
             if (error) throw error;
             result = { success: true, message: `Contact "${args.name}" created successfully`, data };
             
           } else if (functionName === "create_organization") {
+            // Check for duplicate organization name
+            const { data: existingOrg } = await supabase
+              .from("alliance_organizations")
+              .select("id")
+              .ilike("name", args.name.trim())
+              .eq("tenant_id", tenantId)
+              .maybeSingle();
+            
+            if (existingOrg) {
+              throw new Error(`Organization "${args.name}" already exists`);
+            }
+
             const { data, error } = await supabase.from("alliance_organizations").insert({
               tenant_id: tenantId,
               created_by: userId,
               name: args.name,
-              organization_type: args.organization_type || null,
+              organization_type: args.organization_type || "customer",
               industry: args.industry || null,
               website: args.website || null,
               address: args.address || null,
+              description: args.description || null,
               status: "active",
             }).select().single();
             
             if (error) throw error;
-            result = { success: true, message: `Organization "${args.name}" created successfully`, data };
+            result = { success: true, message: `Organization "${args.name}" created successfully as ${args.organization_type || 'customer'}`, data };
+
+          } else if (functionName === "create_product") {
+            // Check for duplicate product name
+            const { data: existingProduct } = await supabase
+              .from("offerings_products")
+              .select("id")
+              .ilike("name", args.name.trim())
+              .eq("tenant_id", tenantId)
+              .maybeSingle();
+            
+            if (existingProduct) {
+              throw new Error(`Product "${args.name}" already exists`);
+            }
+
+            // If OEM name provided, try to find or create OEM
+            let oemId = null;
+            if (args.oem_name) {
+              const { data: existingOem } = await supabase
+                .from("offerings_oems")
+                .select("id")
+                .ilike("name", args.oem_name.trim())
+                .eq("tenant_id", tenantId)
+                .maybeSingle();
+              
+              if (existingOem) {
+                oemId = existingOem.id;
+              } else {
+                // Create new OEM
+                const { data: newOem, error: oemError } = await supabase.from("offerings_oems").insert({
+                  tenant_id: tenantId,
+                  created_by: userId,
+                  name: args.oem_name,
+                  status: "active",
+                }).select("id").single();
+                
+                if (oemError) {
+                  console.error("Error creating OEM:", oemError);
+                } else {
+                  oemId = newOem.id;
+                }
+              }
+            }
+
+            const { data, error } = await supabase.from("offerings_products").insert({
+              tenant_id: tenantId,
+              created_by: userId,
+              name: args.name,
+              description: args.description || null,
+              category: args.category || null,
+              oem_id: oemId,
+              unique_selling_points: args.unique_selling_points || null,
+              competitive_advantages: args.competitive_advantages || null,
+              status: "active",
+            }).select().single();
+            
+            if (error) throw error;
+            result = { 
+              success: true, 
+              message: `Product "${args.name}" created successfully${oemId ? ` (linked to OEM: ${args.oem_name})` : ''}`, 
+              data 
+            };
+
+          } else if (functionName === "create_oem") {
+            // Check for duplicate OEM name
+            const { data: existingOem } = await supabase
+              .from("offerings_oems")
+              .select("id")
+              .ilike("name", args.name.trim())
+              .eq("tenant_id", tenantId)
+              .maybeSingle();
+            
+            if (existingOem) {
+              throw new Error(`OEM "${args.name}" already exists`);
+            }
+
+            const { data, error } = await supabase.from("offerings_oems").insert({
+              tenant_id: tenantId,
+              created_by: userId,
+              name: args.name,
+              description: args.description || null,
+              website: args.website || null,
+              partnership_level: args.partnership_level || null,
+              headquarters: args.headquarters || null,
+              key_products: args.key_products || null,
+              founded_year: args.founded_year || null,
+              status: "active",
+            }).select().single();
+            
+            if (error) throw error;
+            result = { 
+              success: true, 
+              message: `OEM "${args.name}" created successfully${args.partnership_level ? ` with ${args.partnership_level} partnership` : ''}`, 
+              data 
+            };
           }
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Unknown error";
           console.error(`Error executing ${functionName}:`, err);
-          result = { success: false, message: `Failed to execute ${functionName}: ${errorMessage}`, data: null };
+          result = { success: false, message: `Failed to create: ${errorMessage}`, data: null };
         }
         
         toolResults.push({
