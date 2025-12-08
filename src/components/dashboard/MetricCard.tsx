@@ -9,6 +9,7 @@ interface MetricCardProps {
   icon: LucideIcon;
   color: "sales" | "finance" | "hr" | "tech" | "support" | "marketing" | "management" | "employee";
   delay?: number;
+  onClick?: () => void;
 }
 
 const colorClasses = {
@@ -41,16 +42,18 @@ export function MetricCard({
   icon: Icon,
   color,
   delay = 0,
+  onClick,
 }: MetricCardProps) {
   const isPositive = change >= 0;
 
   return (
     <div
       className={cn(
-        "glass rounded-xl p-5 border hover:border-opacity-40 transition-all duration-300 group cursor-pointer",
+        "glass rounded-xl p-5 border hover:border-opacity-40 transition-all duration-300 group cursor-pointer hover:scale-[1.02]",
         colorClasses[color]
       )}
       style={{ animationDelay: `${delay}ms` }}
+      onClick={onClick}
     >
       <div className="flex items-start justify-between mb-4">
         <div

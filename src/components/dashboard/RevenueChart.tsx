@@ -13,7 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function RevenueChart() {
+interface RevenueChartProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function RevenueChart({ onNavigate }: RevenueChartProps) {
   const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
 
   const { data: chartData, isLoading } = useQuery({
@@ -71,7 +75,10 @@ export function RevenueChart() {
   const hasData = chartData?.some(d => d.revenue > 0);
   
   return (
-    <div className="glass rounded-xl p-6 border border-border animate-fade-in">
+    <div 
+      className="glass rounded-xl p-6 border border-border animate-fade-in cursor-pointer hover:border-primary/30 transition-colors"
+      onClick={() => onNavigate?.("billing")}
+    >
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold">Revenue Trend</h3>

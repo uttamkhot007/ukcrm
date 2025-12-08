@@ -46,7 +46,11 @@ const SUBSTAGE_COLORS: Record<string, string> = {
   payment_received: "bg-emerald-500",
 };
 
-export function SalesFunnel() {
+interface SalesFunnelProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function SalesFunnel({ onNavigate }: SalesFunnelProps) {
   const { formatCurrency } = useOrganizationSettings();
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
 
@@ -164,7 +168,10 @@ export function SalesFunnel() {
 
   return (
     <div className="glass rounded-xl p-6 border border-border animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+      <div 
+        className="flex items-center justify-between mb-6 cursor-pointer hover:opacity-80"
+        onClick={() => onNavigate?.("sales")}
+      >
         <h3 className="text-lg font-semibold">Sales Funnel</h3>
         <select className="text-sm bg-muted border border-border rounded-lg px-3 py-1.5 text-muted-foreground">
           <option>All Time</option>

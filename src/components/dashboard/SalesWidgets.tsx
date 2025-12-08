@@ -19,7 +19,11 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
-export function SalesWidgets() {
+interface SalesWidgetsProps {
+  onNavigate?: (module: string) => void;
+}
+
+export function SalesWidgets({ onNavigate }: SalesWidgetsProps) {
   const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
   const { data: deals, isLoading: dealsLoading } = useQuery({
     queryKey: ["sales-widget-deals"],
@@ -98,7 +102,10 @@ export function SalesWidgets() {
     <div className="space-y-6">
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 glass border-border">
+        <Card 
+          className="p-4 glass border-border cursor-pointer hover:border-primary/30 transition-colors"
+          onClick={() => onNavigate?.("sales")}
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/20">
               <DollarSign className="w-5 h-5 text-primary" />
@@ -110,7 +117,10 @@ export function SalesWidgets() {
           </div>
         </Card>
 
-        <Card className="p-4 glass border-border">
+        <Card 
+          className="p-4 glass border-border cursor-pointer hover:border-primary/30 transition-colors"
+          onClick={() => onNavigate?.("sales")}
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-500/20">
               <TrendingUp className="w-5 h-5 text-emerald-400" />
