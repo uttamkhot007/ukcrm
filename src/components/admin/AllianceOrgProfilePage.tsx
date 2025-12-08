@@ -281,6 +281,12 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
   const [isAddCollaboratorOpen, setIsAddCollaboratorOpen] = useState(false);
   const [newCollaborator, setNewCollaborator] = useState({ name: '', team: '', expectation: '', userId: '' });
   
+  // Editable organization fields
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editableName, setEditableName] = useState(organization.name);
+  const [editableIndustry, setEditableIndustry] = useState(organization.industry || '');
+  const [editableDescription, setEditableDescription] = useState(organization.description || '');
+  
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -975,6 +981,9 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
       const { error } = await supabase
         .from("alliance_organizations")
         .update({
+          name: editableName,
+          industry: editableIndustry || null,
+          description: editableDescription || null,
           account_manager_id: teamConfig.accountManager || null,
           technical_account_manager_id: teamConfig.technicalAccountManager || null,
           team_config: JSON.parse(JSON.stringify({ collaborators: teamConfig.collaborators })),
@@ -987,6 +996,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
 
       if (error) throw error;
       
+      setIsEditingName(false);
       toast.success("Settings saved successfully");
     } catch (error: any) {
       console.error("Save error:", error);
@@ -1038,11 +1048,11 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
               <Avatar className="h-14 w-14">
                 <AvatarImage src={getLogoUrl(organization) || ""} alt={organization.name} />
                 <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                  {organization.name.substring(0, 2).toUpperCase()}
+                  {(editableName || organization.name).substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold truncate">{organization.name}</h1>
+                <h1 className="text-lg font-bold truncate">{editableName || organization.name}</h1>
                 {organization.website && (
                   <a href={organization.website} target="_blank" rel="noopener noreferrer"
                      className="text-sm text-primary hover:underline flex items-center gap-1">
@@ -1426,9 +1436,38 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                       {/* Company Info */}
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
-                          <div>
-                            <h2 className="text-2xl font-bold">{organization.name}</h2>
-                            <p className="text-muted-foreground">{organization.industry || 'Industry not specified'}</p>
+                          <div className="flex-1">
+                            {isEditingName ? (
+                              <div className="space-y-2">
+                                <Input
+                                  value={editableName}
+                                  onChange={(e) => setEditableName(e.target.value)}
+                                  className="text-xl font-bold h-9"
+                                  placeholder="Organization name"
+                                />
+                                <Input
+                                  value={editableIndustry}
+                                  onChange={(e) => setEditableIndustry(e.target.value)}
+                                  className="h-8"
+                                  placeholder="Industry"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex items-start gap-2">
+                                <div>
+                                  <h2 className="text-2xl font-bold">{editableName || organization.name}</h2>
+                                  <p className="text-muted-foreground">{editableIndustry || organization.industry || 'Industry not specified'}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0"
+                                  onClick={() => setIsEditingName(true)}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
                             {organization.website && (
                               <a href={organization.website} target="_blank" rel="noopener noreferrer" 
                                 className="text-primary hover:underline flex items-center gap-1 mt-1">
