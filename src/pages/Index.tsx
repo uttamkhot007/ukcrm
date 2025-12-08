@@ -33,6 +33,7 @@ import { ExpenseModule } from "@/components/expenses/ExpenseModule";
 import { AssetsModule } from "@/components/assets/AssetsModule";
 import { ProjectsModule } from "@/components/projects/ProjectsModule";
 import { ITModule } from "@/components/it/ITModule";
+import { ManagementAnalyticsModule } from "@/components/analytics/ManagementAnalyticsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -300,6 +301,8 @@ const Index = () => {
       
       // Management modules
       case "management":
+      case "management-analytics":
+        return <ManagementAnalyticsModule />;
       case "management-performance":
       case "management-cashflow":
         return <PlaceholderModule title="Management" section={activeModule} />;
