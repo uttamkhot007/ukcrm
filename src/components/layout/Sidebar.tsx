@@ -690,15 +690,20 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         });
       }
 
-      // Ticketing Module
+      // Support Center
       if (hasTeamAccess(["technical", "managed_services", "management"], "ticketing")) {
         items.push({
           id: "helpdesk",
-          label: "Help Desk",
+          label: "Support Center",
           icon: HeadphonesIcon,
           color: "text-support",
           children: [
             { id: "helpdesk-tickets", label: "Tickets", icon: Ticket },
+            { id: "helpdesk-open", label: "Open", icon: Clock },
+            { id: "helpdesk-escalated", label: "Escalated", icon: Bell },
+            { id: "helpdesk-templates", label: "Templates", icon: FileText },
+            { id: "helpdesk-analytics", label: "Analytics", icon: BarChart3 },
+            { id: "helpdesk-automation", label: "Automation", icon: Sparkles },
           ],
         });
       }
