@@ -152,16 +152,15 @@ export function ContactsView() {
     enabled: !!allUserIds?.length,
   });
 
-  // Fetch sales team members (Sales, Inside Sales, Presales, Pre-Sales departments)
+  // Fetch all team members for contact owner selection
   const { data: salesTeamMembers = [] } = useQuery({
-    queryKey: ["sales-team-members", currentTenant?.id],
+    queryKey: ["all-team-members", currentTenant?.id],
     queryFn: async () => {
       if (!currentTenant?.id) return [];
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, full_name, department")
         .eq("tenant_id", currentTenant.id)
-        .in("department", ["Sales", "Inside Sales", "Presales", "Pre-Sales"])
         .order("full_name");
       if (error) throw error;
       return data || [];
@@ -682,7 +681,12 @@ export function ContactsView() {
                   <SelectContent>
                     {salesTeamMembers.map((member) => (
                       <SelectItem key={member.user_id} value={member.user_id}>
-                        {member.full_name} ({member.department})
+                        <div className="flex flex-col">
+                          <span>{member.full_name || 'Unknown'}</span>
+                          {member.department && (
+                            <span className="text-xs text-muted-foreground">{member.department}</span>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
