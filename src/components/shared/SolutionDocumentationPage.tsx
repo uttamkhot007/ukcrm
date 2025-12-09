@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import { toast } from 'sonner';
 import { 
   FileText, Target, CheckCircle, ListChecks, Users, Calendar,
   Plus, Trash2, Edit, Sparkles, Loader2, Save, Eye, ArrowLeft,
-  AlertCircle, Clock, CheckSquare, XSquare, Download, History
+  AlertCircle, Clock, CheckSquare, XSquare, Download, History, Palette
 } from 'lucide-react';
 import { GanttChart } from './GanttChart';
 import { RACIMatrix } from './RACIMatrix';
@@ -73,7 +74,9 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
   teamType
 }) => {
   const queryClient = useQueryClient();
+  const { currentTenant } = useTenant();
   const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
@@ -148,6 +151,26 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch document templates
+  const templateType = docType === 'poc' ? 'poc_plan' : 'implementation_plan';
+  const { data: templates = [] } = useQuery({
+    queryKey: ['document-templates', currentTenant?.id, templateType],
+    queryFn: async () => {
+      if (!currentTenant?.id) return [];
+      const { data, error } = await supabase
+        .from('document_templates')
+        .select('*')
+        .eq('tenant_id', currentTenant.id)
+        .eq('template_type', templateType)
+        .eq('is_active', true)
+        .order('is_default', { ascending: false })
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentTenant?.id,
   });
 
   // Load selected document
@@ -306,6 +329,12 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
   };
 
   const handleCreateNew = () => {
+    // Find selected template branding if any
+    const template = templates.find(t => t.id === selectedTemplate);
+    const templateBranding = (template?.branding as Record<string, any>) || {};
+    const templateHeader = (template?.header_content as Record<string, any>) || {};
+    const templateFooter = (template?.footer_content as Record<string, any>) || {};
+    
     setFormData({
       product_id: selectedProduct,
       doc_type: docType,
@@ -325,10 +354,17 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
       reviewed_by: '',
       approved_by: '',
       revision_history: [],
-      branding: {},
+      branding: {
+        ...templateBranding,
+        templateId: template?.id,
+        templateName: template?.name,
+        headerSettings: templateHeader,
+        footerSettings: templateFooter,
+      },
     });
     setIsCreating(true);
     setSelectedDoc(null);
+    setSelectedTemplate('');
   };
 
   const handleSave = () => {
@@ -366,13 +402,13 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
                 New {docTypeLabel}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Create New {docTypeLabel}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label>Select Product/Solution</Label>
+                  <Label>Select Product/Solution *</Label>
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose a product" />
@@ -386,12 +422,78 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Template Selection */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Palette className="h-4 w-4" />
+                    Choose Template (Optional)
+                  </Label>
+                  {templates.length > 0 ? (
+                    <div className="grid gap-2">
+                      {templates.map(template => {
+                        const branding = (template.branding as Record<string, any>) || {};
+                        const isSelected = selectedTemplate === template.id;
+                        return (
+                          <div
+                            key={template.id}
+                            onClick={() => setSelectedTemplate(isSelected ? '' : template.id)}
+                            className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                                : 'hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-8 h-8 rounded-md flex items-center justify-center"
+                                style={{ backgroundColor: branding.primaryColor || 'hsl(var(--primary))' }}
+                              >
+                                <FileText className="h-4 w-4 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{template.name}</span>
+                                  {template.is_default && (
+                                    <Badge variant="secondary" className="text-xs">Default</Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {template.description || branding.theme || 'Custom template'}
+                                </p>
+                              </div>
+                              {/* Color palette preview */}
+                              <div className="flex gap-1">
+                                <div 
+                                  className="w-4 h-4 rounded-full border"
+                                  style={{ backgroundColor: branding.primaryColor }}
+                                />
+                                <div 
+                                  className="w-4 h-4 rounded-full border"
+                                  style={{ backgroundColor: branding.accentColor }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-4 border border-dashed rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-2">No templates available</p>
+                      <Button variant="link" size="sm" className="text-xs" onClick={() => window.open('/admin/document-templates', '_blank')}>
+                        Create templates in Admin Center
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
                 <Button 
                   className="w-full" 
                   onClick={handleCreateNew}
                   disabled={!selectedProduct}
                 >
-                  Continue
+                  {selectedTemplate ? 'Create with Template' : 'Create Blank Document'}
                 </Button>
               </div>
             </DialogContent>
@@ -475,9 +577,15 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
             <h2 className="text-2xl font-bold">
               {formData.title || `New ${docTypeLabel}`}
             </h2>
-            <p className="text-muted-foreground">
-              {selectedProductData?.name} • {selectedProductData?.category}
-            </p>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span>{selectedProductData?.name} • {selectedProductData?.category}</span>
+              {formData.branding?.templateName && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Palette className="h-3 w-3" />
+                  {formData.branding.templateName}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
