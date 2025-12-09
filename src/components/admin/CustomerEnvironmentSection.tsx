@@ -83,7 +83,7 @@ export function CustomerEnvironmentSection({ organizationId, isEditable = true }
     mutationFn: async (data: CustomerEnvironment) => {
       const { error } = await supabase
         .from('alliance_organizations')
-        .update({ customer_environment: data as unknown as Record<string, unknown>, updated_at: new Date().toISOString() })
+        .update({ customer_environment: JSON.parse(JSON.stringify(data)), updated_at: new Date().toISOString() })
         .eq('id', organizationId);
       if (error) throw error;
     },
@@ -124,10 +124,10 @@ export function CustomerEnvironmentSection({ organizationId, isEditable = true }
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Monitor className="h-4 w-4" />Infrastructure</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            {[['total_endpoints', 'Endpoints'], ['total_servers', 'Servers'], ['total_users', 'Users'], ['num_branches', 'Branches'], ['network_devices', 'Network Devices']].map(([key, label]) => (
+            {(['total_endpoints', 'total_servers', 'total_users', 'num_branches', 'network_devices'] as const).map((key) => (
               <div key={key} className="space-y-2">
-                <Label>{label}</Label>
-                <Input type="number" value={(environment as Record<string, number>)[key] || ''} onChange={(e) => updateField(key as keyof CustomerEnvironment, parseInt(e.target.value) || 0)} disabled={!isEditable} />
+                <Label>{key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace('Num ', '')}</Label>
+                <Input type="number" value={environment[key] || ''} onChange={(e) => updateField(key, parseInt(e.target.value) || 0)} disabled={!isEditable} />
               </div>
             ))}
           </CardContent>
@@ -136,15 +136,27 @@ export function CustomerEnvironmentSection({ organizationId, isEditable = true }
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Server className="h-4 w-4" />System Environment</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            {[['domain_type', 'Domain Type', DOMAIN_OPTIONS], ['system_environment', 'Environment', ENVIRONMENT_OPTIONS], ['datacenter_type', 'Datacenter', DATACENTER_OPTIONS]].map(([key, label, options]) => (
-              <div key={key} className="space-y-2">
-                <Label>{label}</Label>
-                <Select value={(environment as Record<string, string>)[key]} onValueChange={(v) => updateField(key as keyof CustomerEnvironment, v)} disabled={!isEditable}>
-                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent>{(options as string[]).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            ))}
+            <div className="space-y-2">
+              <Label>Domain Type</Label>
+              <Select value={environment.domain_type} onValueChange={(v) => updateField('domain_type', v)} disabled={!isEditable}>
+                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>{DOMAIN_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Environment</Label>
+              <Select value={environment.system_environment} onValueChange={(v) => updateField('system_environment', v)} disabled={!isEditable}>
+                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>{ENVIRONMENT_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Datacenter</Label>
+              <Select value={environment.datacenter_type} onValueChange={(v) => updateField('datacenter_type', v)} disabled={!isEditable}>
+                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>{DATACENTER_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
