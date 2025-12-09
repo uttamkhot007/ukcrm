@@ -3733,6 +3733,51 @@ export type Database = {
           },
         ]
       }
+      offering_problem_area_mappings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          offering_id: string
+          offering_type: string
+          problem_area_id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          offering_id: string
+          offering_type: string
+          problem_area_id: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          offering_id?: string
+          offering_type?: string
+          problem_area_id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offering_problem_area_mappings_problem_area_id_fkey"
+            columns: ["problem_area_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_problem_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offering_problem_area_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offerings_managed_security: {
         Row: {
           created_at: string
