@@ -12,7 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 
 export const ORGANIZATION_TYPES = [
+  { value: "prospect", label: "Prospect" },
   { value: "customer", label: "Customer" },
+  { value: "partner", label: "Partner" },
   { value: "distributor", label: "Distributor" },
   { value: "oem", label: "OEM" },
   { value: "reseller", label: "Reseller" },
