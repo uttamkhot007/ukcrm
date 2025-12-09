@@ -6554,17 +6554,22 @@ export type Database = {
       solution_documentation: {
         Row: {
           additional_notes: string | null
+          approved_by: string | null
           assigned_to: string | null
+          branding: Json | null
           created_at: string
           created_by: string
           customer_name: string | null
           doc_type: string
           id: string
           milestones: Json | null
+          prepared_by: string | null
           problem_statement: string | null
           product_id: string | null
           proposed_solution: string | null
           raci_matrix: Json | null
+          reviewed_by: string | null
+          revision_history: Json | null
           scope_exclusions: string[] | null
           scope_inclusions: string[] | null
           status: string | null
@@ -6572,20 +6577,26 @@ export type Database = {
           title: string
           updated_at: string
           use_cases: Json | null
+          version_number: string | null
         }
         Insert: {
           additional_notes?: string | null
+          approved_by?: string | null
           assigned_to?: string | null
+          branding?: Json | null
           created_at?: string
           created_by: string
           customer_name?: string | null
           doc_type: string
           id?: string
           milestones?: Json | null
+          prepared_by?: string | null
           problem_statement?: string | null
           product_id?: string | null
           proposed_solution?: string | null
           raci_matrix?: Json | null
+          reviewed_by?: string | null
+          revision_history?: Json | null
           scope_exclusions?: string[] | null
           scope_inclusions?: string[] | null
           status?: string | null
@@ -6593,20 +6604,26 @@ export type Database = {
           title: string
           updated_at?: string
           use_cases?: Json | null
+          version_number?: string | null
         }
         Update: {
           additional_notes?: string | null
+          approved_by?: string | null
           assigned_to?: string | null
+          branding?: Json | null
           created_at?: string
           created_by?: string
           customer_name?: string | null
           doc_type?: string
           id?: string
           milestones?: Json | null
+          prepared_by?: string | null
           problem_statement?: string | null
           product_id?: string | null
           proposed_solution?: string | null
           raci_matrix?: Json | null
+          reviewed_by?: string | null
+          revision_history?: Json | null
           scope_exclusions?: string[] | null
           scope_inclusions?: string[] | null
           status?: string | null
@@ -6614,6 +6631,7 @@ export type Database = {
           title?: string
           updated_at?: string
           use_cases?: Json | null
+          version_number?: string | null
         }
         Relationships: [
           {

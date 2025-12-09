@@ -16,12 +16,13 @@ import { toast } from 'sonner';
 import { 
   FileText, Target, CheckCircle, ListChecks, Users, Calendar,
   Plus, Trash2, Edit, Sparkles, Loader2, Save, Eye, ArrowLeft,
-  AlertCircle, Clock, CheckSquare, XSquare
+  AlertCircle, Clock, CheckSquare, XSquare, Download, History
 } from 'lucide-react';
 import { GanttChart } from './GanttChart';
 import { RACIMatrix } from './RACIMatrix';
 import { UseCasesSection } from './UseCasesSection';
 import { ScopeSection } from './ScopeSection';
+import { DocumentExportDialog } from './DocumentExportDialog';
 
 interface SolutionDocumentationPageProps {
   docType: 'poc' | 'implementation';
@@ -51,6 +52,12 @@ interface DocumentationData {
   raci_matrix: any[];
   additional_notes: string;
   status: string;
+  version_number: string;
+  prepared_by: string;
+  reviewed_by: string;
+  approved_by: string;
+  revision_history: any[];
+  branding: any;
 }
 
 const statusColors: Record<string, string> = {
@@ -71,6 +78,7 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
   const [isCreating, setIsCreating] = useState(false);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showExportDialog, setShowExportDialog] = useState(false);
   
   const [formData, setFormData] = useState<DocumentationData>({
     product_id: '',
@@ -86,6 +94,12 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
     raci_matrix: [],
     additional_notes: '',
     status: 'draft',
+    version_number: '1.0',
+    prepared_by: '',
+    reviewed_by: '',
+    approved_by: '',
+    revision_history: [],
+    branding: {},
   });
 
   // Fetch products
@@ -136,6 +150,12 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
           raci_matrix: (doc.raci_matrix as any[]) || [],
           additional_notes: doc.additional_notes || '',
           status: doc.status,
+          version_number: doc.version_number || '1.0',
+          prepared_by: doc.prepared_by || '',
+          reviewed_by: doc.reviewed_by || '',
+          approved_by: doc.approved_by || '',
+          revision_history: (doc.revision_history as any[]) || [],
+          branding: (doc.branding as any) || {},
         });
         setSelectedProduct(doc.product_id);
       }
@@ -280,6 +300,12 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
       raci_matrix: [],
       additional_notes: '',
       status: 'draft',
+      version_number: '1.0',
+      prepared_by: '',
+      reviewed_by: '',
+      approved_by: '',
+      revision_history: [],
+      branding: {},
     });
     setIsCreating(true);
     setSelectedDoc(null);
@@ -384,11 +410,17 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center flex-wrap gap-3 text-sm text-muted-foreground">
                     {doc.customer_name && (
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         {doc.customer_name}
+                      </span>
+                    )}
+                    {doc.version_number && (
+                      <span className="flex items-center gap-1">
+                        <History className="h-3 w-3" />
+                        v{doc.version_number}
                       </span>
                     )}
                     <span className="flex items-center gap-1">
@@ -456,6 +488,13 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
             )}
             AI Generate All
           </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setShowExportDialog(true)}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
           <Button onClick={handleSave} disabled={saveMutation.isPending}>
             {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -475,6 +514,44 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
           )}
         </div>
       </div>
+
+      {/* Export Dialog */}
+      <DocumentExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        documentData={{
+          title: formData.title,
+          customerName: formData.customer_name,
+          productName: selectedProductData?.name || '',
+          productCategory: selectedProductData?.category || undefined,
+          problemStatement: formData.problem_statement,
+          proposedSolution: formData.proposed_solution,
+          scopeInclusions: formData.scope_inclusions,
+          scopeExclusions: formData.scope_exclusions,
+          useCases: formData.use_cases,
+          milestones: formData.milestones,
+          raciMatrix: formData.raci_matrix,
+          additionalNotes: formData.additional_notes,
+          docType: docType,
+        }}
+        initialBranding={formData.branding?.companyName ? formData.branding : undefined}
+        initialVersionInfo={{
+          versionNumber: formData.version_number,
+          preparedBy: formData.prepared_by,
+          reviewedBy: formData.reviewed_by,
+          approvedBy: formData.approved_by,
+          revisionHistory: formData.revision_history || [],
+        }}
+        onSaveBranding={(branding) => setFormData(prev => ({ ...prev, branding }))}
+        onSaveVersionInfo={(versionInfo) => setFormData(prev => ({
+          ...prev,
+          version_number: versionInfo.versionNumber,
+          prepared_by: versionInfo.preparedBy,
+          reviewed_by: versionInfo.reviewedBy,
+          approved_by: versionInfo.approvedBy,
+          revision_history: versionInfo.revisionHistory,
+        }))}
+      />
 
       {/* Basic Info */}
       <Card>
