@@ -6551,6 +6551,87 @@ export type Database = {
         }
         Relationships: []
       }
+      solution_documentation: {
+        Row: {
+          additional_notes: string | null
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          customer_name: string | null
+          doc_type: string
+          id: string
+          milestones: Json | null
+          problem_statement: string | null
+          product_id: string | null
+          proposed_solution: string | null
+          raci_matrix: Json | null
+          scope_exclusions: string[] | null
+          scope_inclusions: string[] | null
+          status: string | null
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          use_cases: Json | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          customer_name?: string | null
+          doc_type: string
+          id?: string
+          milestones?: Json | null
+          problem_statement?: string | null
+          product_id?: string | null
+          proposed_solution?: string | null
+          raci_matrix?: Json | null
+          scope_exclusions?: string[] | null
+          scope_inclusions?: string[] | null
+          status?: string | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          use_cases?: Json | null
+        }
+        Update: {
+          additional_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          customer_name?: string | null
+          doc_type?: string
+          id?: string
+          milestones?: Json | null
+          problem_statement?: string | null
+          product_id?: string | null
+          proposed_solution?: string | null
+          raci_matrix?: Json | null
+          scope_exclusions?: string[] | null
+          scope_inclusions?: string[] | null
+          status?: string | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          use_cases?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solution_documentation_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solution_documentation_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solution_expiry_notifications: {
         Row: {
           acknowledged_at: string | null
