@@ -434,20 +434,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Technical Team Module
-      items.push({
-        id: "tech",
-        label: "Technical Team",
-        icon: Code,
-        color: "text-tech",
-        children: [
-          { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
-          { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
-          { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
-          { id: "tech-implementation-sow", label: "Implementation SOW", icon: FileText },
-        ],
-      });
-
       // Admin Module
       items.push({
         id: "admin",
