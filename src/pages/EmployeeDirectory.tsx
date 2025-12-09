@@ -29,6 +29,7 @@ const DEPARTMENTS = [
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-500/20 text-green-700 dark:text-green-400",
+  new_hire: "bg-blue-500/20 text-blue-700 dark:text-blue-400",
   probation: "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400",
   pip: "bg-red-500/20 text-red-700 dark:text-red-400",
   notice_period: "bg-orange-500/20 text-orange-700 dark:text-orange-400",
