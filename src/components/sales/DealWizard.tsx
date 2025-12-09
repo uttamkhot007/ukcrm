@@ -577,22 +577,45 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
             {/* Multi-select Problem Areas */}
             <div className="space-y-3">
               <Label>Problem / Requirement Areas * <span className="text-xs text-muted-foreground">(Select one or more)</span></Label>
+              {formData.problem_area_ids && formData.problem_area_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-lg">
+                  <span className="text-xs text-muted-foreground mr-2">Selected:</span>
+                  {formData.problem_area_ids.map(id => {
+                    const area = problemAreas?.find(a => a.id === id);
+                    return area ? (
+                      <Badge 
+                        key={id} 
+                        variant="default" 
+                        className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => toggleProblemArea(id)}
+                      >
+                        {area.name} ×
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
               {problemAreas && problemAreas.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1">
                   {problemAreas.map((area) => {
                     const isSelected = formData.problem_area_ids?.includes(area.id);
                     return (
                       <div
                         key={area.id}
-                        onClick={() => toggleProblemArea(area.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleProblemArea(area.id);
+                        }}
                         className={cn(
                           "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-start gap-2",
-                          isSelected ? "border-primary bg-primary/5" : "border-border"
+                          isSelected ? "border-primary bg-primary/10" : "border-border"
                         )}
                       >
                         <Checkbox 
                           checked={isSelected} 
-                          className="mt-0.5 pointer-events-none"
+                          className="mt-0.5"
+                          onCheckedChange={() => toggleProblemArea(area.id)}
                         />
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-medium block truncate">{area.name}</span>
@@ -611,18 +634,6 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                     No problem areas configured. Go to Offerings → Problem Areas to add them.
                   </AlertDescription>
                 </Alert>
-              )}
-              {formData.problem_area_ids && formData.problem_area_ids.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {formData.problem_area_ids.map(id => {
-                    const area = problemAreas?.find(a => a.id === id);
-                    return area ? (
-                      <Badge key={id} variant="secondary" className="text-xs">
-                        {area.name}
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
               )}
             </div>
 
@@ -797,7 +808,12 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   max="100"
                   value={formData.probability}
                   onChange={(e) => updateFormData({ probability: e.target.value })}
+                  disabled={!isEditing}
+                  className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
                 />
+                {!isEditing && (
+                  <p className="text-[10px] text-muted-foreground">Probability is set automatically based on deal stage</p>
+                )}
               </div>
             </div>
           </div>
