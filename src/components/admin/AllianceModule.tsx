@@ -1233,7 +1233,7 @@ export function AllianceModule() {
 
       {/* Contact Profile Page - Full Window */}
       {showContactDetails && selectedContact && (
-        <div className="fixed inset-0 md:left-64 z-50 bg-background overflow-y-auto">
+        <div className="fixed top-0 right-0 bottom-0 left-0 md:left-[var(--sidebar-width,256px)] z-50 bg-background overflow-y-auto">
           <AllianceContactProfilePage
             contact={selectedContact}
             organization={organizations.find(o => o.id === selectedContact.organization_id) || null}
