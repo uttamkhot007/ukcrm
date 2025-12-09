@@ -3940,31 +3940,52 @@ export type Database = {
       offerings_problem_areas: {
         Row: {
           area_type: string | null
+          attack_vectors: string[] | null
+          compliance_frameworks: string[] | null
           created_at: string
           created_by: string
           description: string | null
           id: string
+          last_enriched_at: string | null
+          mitigation_strategies: string[] | null
           name: string
+          possible_impact: string | null
+          recommended_controls: string[] | null
+          risk_level: string | null
           status: string | null
           tenant_id: string | null
         }
         Insert: {
           area_type?: string | null
+          attack_vectors?: string[] | null
+          compliance_frameworks?: string[] | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
+          last_enriched_at?: string | null
+          mitigation_strategies?: string[] | null
           name: string
+          possible_impact?: string | null
+          recommended_controls?: string[] | null
+          risk_level?: string | null
           status?: string | null
           tenant_id?: string | null
         }
         Update: {
           area_type?: string | null
+          attack_vectors?: string[] | null
+          compliance_frameworks?: string[] | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
+          last_enriched_at?: string | null
+          mitigation_strategies?: string[] | null
           name?: string
+          possible_impact?: string | null
+          recommended_controls?: string[] | null
+          risk_level?: string | null
           status?: string | null
           tenant_id?: string | null
         }

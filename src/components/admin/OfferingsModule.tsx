@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload, ShieldAlert, Zap, FileWarning, Scale, CircleDot } from "lucide-react";
 import { BulkUploadDialog, BulkUploadType } from "./BulkUploadDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,6 +56,13 @@ interface Offering {
   limitations?: string[] | null;
   adoption_rate?: string | null;
   market_trends?: string | null;
+  // Problem Area enrichment fields
+  recommended_controls?: string[] | null;
+  possible_impact?: string | null;
+  attack_vectors?: string[] | null;
+  risk_level?: string | null;
+  mitigation_strategies?: string[] | null;
+  compliance_frameworks?: string[] | null;
 }
 
 interface JunctionRecord {
@@ -300,6 +307,22 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   
   const enrichMutation = useMutation({
     mutationFn: async (item: Offering) => {
+      if (activeTab === "problem_areas") {
+        // Use problem area enrichment function
+        const { data, error } = await supabase.functions.invoke("enrich-problem-area", {
+          body: {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            area_type: item.area_type,
+          },
+        });
+        
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      }
+      
       let type: "product" | "oem" | "technology";
       if (activeTab === "products") {
         type = "product";
@@ -341,6 +364,16 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   const handleEnrich = (item: Offering) => {
     setEnrichingId(item.id);
     enrichMutation.mutate(item);
+  };
+
+  const getRiskLevelColor = (level: string | null | undefined) => {
+    switch (level) {
+      case "critical": return "text-red-600 bg-red-100 border-red-200";
+      case "high": return "text-orange-600 bg-orange-100 border-orange-200";
+      case "medium": return "text-yellow-600 bg-yellow-100 border-yellow-200";
+      case "low": return "text-green-600 bg-green-100 border-green-200";
+      default: return "text-muted-foreground bg-muted border-muted";
+    }
   };
 
   // Generic unlink mutation
@@ -850,6 +883,17 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
                     {activeTab === "oems" && `${linkedTechs.length} technologies · ${linkedProducts.length} products`}
                     {activeTab === "technologies" && `${linkedOems.length} OEMs · ${linkedProducts.length} products`}
                     {activeTab === "products" && `${linkedOems.length} OEMs · ${linkedTechs.length} technologies · ${linkedProblemAreas.length} problem areas`}
+                    {activeTab === "problem_areas" && (
+                      <>
+                        {item.area_type && <span className="capitalize">{item.area_type}</span>}
+                        {item.risk_level && (
+                          <Badge variant="outline" className={cn("ml-2 text-xs capitalize", getRiskLevelColor(item.risk_level))}>
+                            {item.risk_level} risk
+                          </Badge>
+                        )}
+                        {item.last_enriched_at && <span className="ml-2">· AI Enriched</span>}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -1196,6 +1240,118 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
                   </div>
                 </div>
               )}
+              
+              {/* Problem Areas AI Enrichment Display */}
+              {activeTab === "problem_areas" && item.last_enriched_at && (
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">AI Security Intelligence</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Last updated: {format(new Date(item.last_enriched_at), "MMM d, yyyy 'at' h:mm a")}
+                    </span>
+                  </div>
+                  
+                  {/* Risk Level and Impact */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {item.risk_level && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <ShieldAlert className="h-4 w-4 text-red-500" />
+                          Risk Level
+                        </div>
+                        <Badge variant="outline" className={cn("capitalize", getRiskLevelColor(item.risk_level))}>
+                          {item.risk_level}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {item.possible_impact && (
+                      <div className="space-y-2 md:col-span-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <FileWarning className="h-4 w-4 text-orange-500" />
+                          Possible Impact
+                        </div>
+                        <p className="text-sm text-muted-foreground">{item.possible_impact}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Attack Vectors and Controls */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {item.attack_vectors && item.attack_vectors.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Zap className="h-4 w-4 text-red-500" />
+                          Attack Vectors
+                        </div>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          {item.attack_vectors.map((vector, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <AlertCircle className="h-3 w-3 text-red-500 mt-1 shrink-0" />
+                              {vector}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {item.recommended_controls && item.recommended_controls.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Shield className="h-4 w-4 text-green-500" />
+                          Recommended Controls
+                        </div>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          {item.recommended_controls.map((control, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <CheckCircle className="h-3 w-3 text-green-500 mt-1 shrink-0" />
+                              {control}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Mitigation Strategies */}
+                  {item.mitigation_strategies && item.mitigation_strategies.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Lightbulb className="h-4 w-4 text-yellow-500" />
+                        Mitigation Strategies
+                      </div>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {item.mitigation_strategies.map((strategy, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <CircleDot className="h-3 w-3 text-primary mt-1 shrink-0" />
+                            {strategy}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Compliance Frameworks */}
+                  {item.compliance_frameworks && item.compliance_frameworks.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Scale className="h-4 w-4 text-blue-500" />
+                        Related Compliance Frameworks
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {item.compliance_frameworks.map((framework, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {framework}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -1203,7 +1359,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
     );
   };
 
-  const shouldShowExpandableView = activeTab === "oems" || activeTab === "technologies" || activeTab === "products";
+  const shouldShowExpandableView = activeTab === "oems" || activeTab === "technologies" || activeTab === "products" || activeTab === "problem_areas";
 
   return (
     <div className="space-y-6">
