@@ -57,6 +57,16 @@ import {
   Handshake,
   Server,
   Gavel,
+  ShieldAlert,
+  Eye,
+  Radar,
+  AlertTriangle,
+  Bug,
+  Crosshair,
+  FileSearch,
+  Siren,
+  MonitorCheck,
+  CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -431,6 +441,38 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "presales-rfp", label: "RFP/RFI", icon: FileText },
           { id: "presales-recommendations", label: "Recommendations", icon: BookOpen },
           { id: "presales-poc-plans", label: "POC Plans", icon: FileText },
+        ],
+      });
+
+      // Managed Security Services Module
+      items.push({
+        id: "mss",
+        label: "Managed Security",
+        icon: ShieldAlert,
+        color: "text-blue-600",
+        children: [
+          { id: "mss-soc", label: "SOC Operations", icon: MonitorCheck },
+          { id: "mss-monitoring", label: "Threat Monitoring", icon: Radar },
+          { id: "mss-incidents", label: "Incident Response", icon: Siren },
+          { id: "mss-alerts", label: "Security Alerts", icon: AlertTriangle },
+          { id: "mss-reports", label: "Security Reports", icon: FileSearch },
+          { id: "mss-clients", label: "Client Portals", icon: Users },
+        ],
+      });
+
+      // Offensive Security Services Module
+      items.push({
+        id: "offensive",
+        label: "Offensive Security",
+        icon: Crosshair,
+        color: "text-red-600",
+        children: [
+          { id: "offensive-pentest", label: "Penetration Testing", icon: Bug },
+          { id: "offensive-vapt", label: "VAPT Assessments", icon: Eye },
+          { id: "offensive-redteam", label: "Red Team Ops", icon: Target },
+          { id: "offensive-audits", label: "Security Audits", icon: ClipboardCheck },
+          { id: "offensive-findings", label: "Findings & Reports", icon: FileText },
+          { id: "offensive-remediation", label: "Remediation Tracking", icon: CheckSquare },
         ],
       });
 
