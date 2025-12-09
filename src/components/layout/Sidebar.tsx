@@ -455,7 +455,52 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Marketing - Coming Soon (hidden for now)
+      // Marketing Module
+      items.push({
+        id: "marketing",
+        label: "Marketing",
+        icon: Megaphone,
+        color: "text-pink-500",
+        children: [
+          { id: "marketing-campaigns", label: "Campaigns", icon: Target },
+          { id: "marketing-content", label: "Content", icon: FileText },
+          { id: "marketing-leads", label: "Lead Generation", icon: UserPlus },
+          { id: "marketing-analytics", label: "Analytics", icon: BarChart3 },
+          { id: "marketing-social", label: "Social Media", icon: Globe },
+          { id: "marketing-events", label: "Events", icon: Calendar },
+        ],
+      });
+
+      // Public Relations Module
+      items.push({
+        id: "pr",
+        label: "Public Relations",
+        icon: Newspaper,
+        color: "text-indigo-500",
+        children: [
+          { id: "pr-media", label: "Media Relations", icon: Newspaper },
+          { id: "pr-press", label: "Press Releases", icon: FileText },
+          { id: "pr-coverage", label: "Media Coverage", icon: Eye },
+          { id: "pr-contacts", label: "Media Contacts", icon: Phone },
+          { id: "pr-events", label: "PR Events", icon: Calendar },
+          { id: "pr-crisis", label: "Crisis Management", icon: AlertTriangle },
+        ],
+      });
+
+      // Communications Module
+      items.push({
+        id: "communications",
+        label: "Communications",
+        icon: Mail,
+        color: "text-teal-500",
+        children: [
+          { id: "communications-internal", label: "Internal Comms", icon: Users },
+          { id: "communications-external", label: "External Comms", icon: Globe },
+          { id: "communications-newsletters", label: "Newsletters", icon: Mail },
+          { id: "communications-announcements", label: "Announcements", icon: Bell },
+          { id: "communications-templates", label: "Templates", icon: FileText },
+        ],
+      });
 
       // Solution Engineering / Presales Module
       items.push({
