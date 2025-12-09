@@ -31,12 +31,43 @@ import {
   Users,
   Clock,
   FileText,
-  Target
+  Target,
+  Mail,
+  Globe,
+  Database,
+  Monitor,
+  Cloud,
+  Network,
+  Scale,
+  Star,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 type DealType = "new" | "cross_sale";
+type ProblemCategory = "security" | "compliance" | "both";
+type AttackVector = "email" | "web_application" | "database" | "endpoint" | "cloud" | "network";
+type PreferredSolution = "product" | "managed_service";
+
+interface EmailSecurityDetails {
+  attackTypes: string[];
+  platform: "cloud" | "onprem" | "hybrid";
+  cloudProvider?: string;
+  otherCloudProvider?: string;
+  hybridCloudProvider?: string;
+  hybridOnpremPlatform?: string;
+  mailboxCount: string;
+  preferredSolution: PreferredSolution;
+}
+
+interface WebAppSecurityDetails {
+  protectionTypes: string[];
+  webAppCount: string;
+  bandwidth: string;
+  transactions: string;
+  preferredSolution: PreferredSolution;
+}
 
 interface DealFormData {
   alliance_organization_id: string;
@@ -45,7 +76,12 @@ interface DealFormData {
   deal_type: DealType;
   requirement_category: string;
   problem_requirement: string;
-  problem_area_ids: string[]; // Multi-select for problem areas
+  problem_area_ids: string[];
+  problem_category: ProblemCategory;
+  attack_vector: AttackVector;
+  email_security: EmailSecurityDetails;
+  web_app_security: WebAppSecurityDetails;
+  compliance_frameworks: string[];
   solution_id: string;
   contact_id: string;
   quantity: string;
@@ -55,8 +91,11 @@ interface DealFormData {
   value: string;
   probability: string;
   expected_close_date: string;
+  next_steps_actions: string[];
+  critical_factors: string[];
   next_steps: string;
   description: string;
+  motivational_message: string;
   stage: "pipeline" | "upside" | "strong_upside" | "commit" | "closed_won" | "closed_lost";
   existing_solution: string;
 }
@@ -70,13 +109,14 @@ interface DealWizardProps {
 }
 
 const WIZARD_STEPS = [
-  { id: 1, title: "Prospect", icon: Building2, description: "Select organization" },
+  { id: 1, title: "Customer", icon: Building2, description: "Select organization" },
   { id: 2, title: "Deal Type", icon: Target, description: "New or Cross Sale" },
-  { id: 3, title: "Requirement", icon: FileText, description: "Problem statement" },
+  { id: 3, title: "Problem Area", icon: Shield, description: "Security needs" },
   { id: 4, title: "Solution", icon: Package, description: "Product or service" },
   { id: 5, title: "Timeline", icon: Clock, description: "Buying timeline" },
   { id: 6, title: "Next Steps", icon: ChevronRight, description: "Action items" },
-  { id: 7, title: "Finish", icon: Check, description: "Review & submit" },
+  { id: 7, title: "Critical Factors", icon: Star, description: "Key considerations" },
+  { id: 8, title: "Finish", icon: Check, description: "Review & submit" },
 ];
 
 const buyingTimelineOptions = [
@@ -86,13 +126,52 @@ const buyingTimelineOptions = [
   { value: "long_term", label: "Long Term", description: "6+ months" },
 ];
 
-// Dynamic requirement categories based on offerings tables
-const DEFAULT_REQUIREMENT_CATEGORIES = [
-  { value: "products", label: "Products", icon: Package, description: "Hardware & Software Products" },
-  { value: "offensive_services", label: "Offensive Services", icon: Shield, description: "Penetration Testing, Red Team" },
-  { value: "managed_security_services", label: "Managed Security Services", icon: Users, description: "SOC, Monitoring, MDR" },
-  { value: "professional_services", label: "Professional Services", icon: Briefcase, description: "Implementation, Consulting" },
-  { value: "consulting", label: "Consulting", icon: Users, description: "Advisory, Strategy" },
+const emailAttackTypes = [
+  { value: "phishing", label: "Phishing" },
+  { value: "quishing", label: "Quishing (QR Code Phishing)" },
+  { value: "bec", label: "BEC (Business Email Compromise)" },
+  { value: "advanced_malware", label: "Advanced Malware" },
+  { value: "all", label: "All of the Above" },
+];
+
+const webAppProtectionTypes = [
+  { value: "owasp_top10", label: "OWASP Top 10 Protection" },
+  { value: "app_ddos", label: "Application DDoS" },
+  { value: "api_discovery", label: "API Discovery" },
+  { value: "bot_protection", label: "BOT Protection" },
+];
+
+const complianceFrameworks = [
+  { value: "iso27001", label: "ISO 27001" },
+  { value: "soc2", label: "SOC 2" },
+  { value: "sebi_guidelines", label: "SEBI Guidelines" },
+  { value: "rbi_guidelines", label: "RBI Guidelines" },
+  { value: "gdpr", label: "GDPR" },
+  { value: "hipaa", label: "HIPAA" },
+  { value: "pci_dss", label: "PCI DSS" },
+  { value: "nist", label: "NIST Framework" },
+  { value: "other", label: "Other" },
+];
+
+const nextStepActions = [
+  { value: "technical_presentation", label: "Technical Presentation", icon: FileText },
+  { value: "demo", label: "Demo", icon: Monitor },
+  { value: "poc", label: "POC (Proof of Concept)", icon: Target },
+];
+
+const criticalFactors = [
+  { value: "executive_connect", label: "Executive Connect", description: "Need C-level engagement" },
+  { value: "technical_capabilities", label: "Technical Capabilities", description: "Technical fit is critical" },
+  { value: "pricing", label: "Pricing", description: "Budget is a key factor" },
+];
+
+const attackVectorOptions = [
+  { value: "email", label: "Email Security", icon: Mail, description: "Email-based threats" },
+  { value: "web_application", label: "Web Application", icon: Globe, description: "Web app protection" },
+  { value: "database", label: "Database", icon: Database, description: "Database security" },
+  { value: "endpoint", label: "Endpoint", icon: Monitor, description: "Endpoint protection" },
+  { value: "cloud", label: "Cloud", icon: Cloud, description: "Cloud security" },
+  { value: "network", label: "Network", icon: Network, description: "Network security" },
 ];
 
 const initialFormData: DealFormData = {
@@ -103,6 +182,26 @@ const initialFormData: DealFormData = {
   requirement_category: "products",
   problem_requirement: "",
   problem_area_ids: [],
+  problem_category: "security",
+  attack_vector: "email",
+  email_security: {
+    attackTypes: [],
+    platform: "cloud",
+    cloudProvider: "",
+    otherCloudProvider: "",
+    hybridCloudProvider: "",
+    hybridOnpremPlatform: "",
+    mailboxCount: "",
+    preferredSolution: "product",
+  },
+  web_app_security: {
+    protectionTypes: [],
+    webAppCount: "",
+    bandwidth: "",
+    transactions: "",
+    preferredSolution: "product",
+  },
+  compliance_frameworks: [],
   solution_id: "",
   contact_id: "",
   quantity: "1",
@@ -112,8 +211,11 @@ const initialFormData: DealFormData = {
   value: "",
   probability: "10",
   expected_close_date: "",
+  next_steps_actions: [],
+  critical_factors: [],
   next_steps: "",
   description: "",
+  motivational_message: "",
   stage: "pipeline",
   existing_solution: "",
 };
@@ -123,7 +225,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
   const [formData, setFormData] = useState<DealFormData>({ ...initialFormData, ...initialData });
   const { getCurrencySymbol } = useOrganizationSettings();
 
-  // Fetch Alliance Organizations (excluding resellers - those are competitors, not prospects)
+  // Fetch Alliance Organizations
   const { data: allianceOrganizations } = useQuery({
     queryKey: ["alliance-organizations-prospects"],
     queryFn: async () => {
@@ -138,7 +240,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
     },
   });
 
-  // Fetch Alliance Users (contacts from Alliance)
+  // Fetch Alliance Users (contacts)
   const { data: allianceUsers } = useQuery({
     queryKey: ["alliance-users", formData.alliance_organization_id],
     queryFn: async () => {
@@ -158,7 +260,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
     enabled: true,
   });
 
-  // Fetch Products/Offerings
+  // Fetch Products
   const { data: products } = useQuery<{ id: string; name: string; category: string | null }[]>({
     queryKey: ["offerings-products"],
     queryFn: async () => {
@@ -173,7 +275,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
     },
   });
 
-  // Fetch Problem Areas from offerings_problem_areas
+  // Fetch Problem Areas
   const { data: problemAreas } = useQuery<{ id: string; name: string; description: string | null; area_type: string | null }[]>({
     queryKey: ["offerings-problem-areas"],
     queryFn: async () => {
@@ -188,113 +290,75 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
     },
   });
 
-  // Fetch services for requirement categories
-  const { data: managedSecurityServices } = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["offerings-managed-security"],
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (supabase as any)
-        .from("offerings_managed_security")
-        .select("id, name")
-        .eq("status", "active");
-      if (result.error) throw result.error;
-      return result.data || [];
-    },
-  });
+  const updateFormData = (updates: Partial<DealFormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
 
-  const { data: offensiveServices } = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["offerings-offensive-security"],
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (supabase as any)
-        .from("offerings_offensive_security")
-        .select("id, name")
-        .eq("status", "active");
-      if (result.error) throw result.error;
-      return result.data || [];
-    },
-  });
+  const updateEmailSecurity = (updates: Partial<EmailSecurityDetails>) => {
+    setFormData(prev => ({
+      ...prev,
+      email_security: { ...prev.email_security, ...updates }
+    }));
+  };
 
-  const { data: professionalServices } = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["offerings-professional-services"],
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (supabase as any)
-        .from("offerings_professional_services")
-        .select("id, name")
-        .eq("status", "active");
-      if (result.error) throw result.error;
-      return result.data || [];
-    },
-  });
+  const updateWebAppSecurity = (updates: Partial<WebAppSecurityDetails>) => {
+    setFormData(prev => ({
+      ...prev,
+      web_app_security: { ...prev.web_app_security, ...updates }
+    }));
+  };
 
-  // Build dynamic requirement categories based on available offerings
-  const requirementCategories = [
-    { 
-      value: "products", 
-      label: "Products", 
-      icon: Package, 
-      description: "Hardware & Software Products",
-      hasData: (products?.length || 0) > 0
-    },
-    { 
-      value: "offensive_services", 
-      label: "Offensive Services", 
-      icon: Shield, 
-      description: "Penetration Testing, Red Team",
-      hasData: (offensiveServices?.length || 0) > 0
-    },
-    { 
-      value: "managed_security_services", 
-      label: "Managed Security Services", 
-      icon: Users, 
-      description: "SOC, Monitoring, MDR",
-      hasData: (managedSecurityServices?.length || 0) > 0
-    },
-    { 
-      value: "professional_services", 
-      label: "Professional Services", 
-      icon: Briefcase, 
-      description: "Implementation, Consulting",
-      hasData: (professionalServices?.length || 0) > 0
-    },
-    { 
-      value: "consulting", 
-      label: "Consulting", 
-      icon: Users, 
-      description: "Advisory, Strategy",
-      hasData: true // Always show consulting
-    },
-  ];
-
-  // Filter products based on requirement category
-  const filteredProducts = products?.filter(p => {
-    if (!formData.requirement_category) return true;
-    if (formData.requirement_category === "products") {
-      return !p.category || p.category?.toLowerCase().includes("product");
+  const toggleEmailAttackType = (type: string) => {
+    const current = formData.email_security.attackTypes || [];
+    if (type === "all") {
+      const allTypes = emailAttackTypes.filter(t => t.value !== "all").map(t => t.value);
+      updateEmailSecurity({ attackTypes: current.includes("all") ? [] : allTypes });
+    } else {
+      const updated = current.includes(type)
+        ? current.filter(t => t !== type && t !== "all")
+        : [...current.filter(t => t !== "all"), type];
+      updateEmailSecurity({ attackTypes: updated });
     }
-    return p.category?.toLowerCase().includes(formData.requirement_category.replace("_", " "));
-  }) || products;
+  };
 
-  // AI Suggested products (simple match based on problem statement)
-  const suggestedProducts = products?.filter(p => {
-    if (!formData.problem_requirement) return false;
-    const problem = formData.problem_requirement.toLowerCase();
-    const name = p.name.toLowerCase();
-    return problem.split(" ").some(word => word.length > 3 && name.includes(word));
-  }).slice(0, 3);
+  const toggleWebAppProtection = (type: string) => {
+    const current = formData.web_app_security.protectionTypes || [];
+    const updated = current.includes(type)
+      ? current.filter(t => t !== type)
+      : [...current, type];
+    updateWebAppSecurity({ protectionTypes: updated });
+  };
 
-  // Toggle problem area selection
+  const toggleComplianceFramework = (framework: string) => {
+    const current = formData.compliance_frameworks || [];
+    const updated = current.includes(framework)
+      ? current.filter(f => f !== framework)
+      : [...current, framework];
+    updateFormData({ compliance_frameworks: updated });
+  };
+
+  const toggleNextStepAction = (action: string) => {
+    const current = formData.next_steps_actions || [];
+    const updated = current.includes(action)
+      ? current.filter(a => a !== action)
+      : [...current, action];
+    updateFormData({ next_steps_actions: updated });
+  };
+
+  const toggleCriticalFactor = (factor: string) => {
+    const current = formData.critical_factors || [];
+    const updated = current.includes(factor)
+      ? current.filter(f => f !== factor)
+      : [...current, factor];
+    updateFormData({ critical_factors: updated });
+  };
+
   const toggleProblemArea = (areaId: string) => {
     const current = formData.problem_area_ids || [];
     const updated = current.includes(areaId)
       ? current.filter(id => id !== areaId)
       : [...current, areaId];
     updateFormData({ problem_area_ids: updated });
-  };
-
-  const updateFormData = (updates: Partial<DealFormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
   };
 
   const canProceed = () => {
@@ -304,14 +368,16 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
       case 2:
         return formData.deal_type;
       case 3:
-        return formData.requirement_category && (formData.problem_area_ids?.length > 0 || formData.problem_requirement);
+        return formData.problem_category;
       case 4:
-        return true; // Solution is optional
+        return true;
       case 5:
         return formData.buying_timeline && formData.value;
       case 6:
-        return true; // Next steps optional
+        return true;
       case 7:
+        return true;
+      case 8:
         return true;
       default:
         return true;
@@ -336,6 +402,287 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
 
   const progress = (currentStep / WIZARD_STEPS.length) * 100;
 
+  const renderEmailSecurityOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Mail className="w-4 h-4" />
+        Email Security Details
+      </h4>
+
+      {/* Attack Types */}
+      <div className="space-y-2">
+        <Label>Attack Types to Protect Against</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {emailAttackTypes.map((type) => (
+            <div
+              key={type.value}
+              onClick={() => toggleEmailAttackType(type.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.email_security.attackTypes?.includes(type.value) || 
+                (type.value === "all" && formData.email_security.attackTypes?.length === emailAttackTypes.length - 1)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox 
+                checked={
+                  formData.email_security.attackTypes?.includes(type.value) ||
+                  (type.value === "all" && formData.email_security.attackTypes?.length === emailAttackTypes.length - 1)
+                }
+                onCheckedChange={() => toggleEmailAttackType(type.value)}
+              />
+              <span className="text-sm">{type.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Email Platform */}
+      <div className="space-y-2">
+        <Label>Email Platform</Label>
+        <RadioGroup
+          value={formData.email_security.platform}
+          onValueChange={(value) => updateEmailSecurity({ platform: value as "cloud" | "onprem" | "hybrid" })}
+          className="grid grid-cols-3 gap-2"
+        >
+          {["cloud", "onprem", "hybrid"].map((platform) => (
+            <Label
+              key={platform}
+              htmlFor={`platform-${platform}`}
+              className={cn(
+                "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+                formData.email_security.platform === platform ? "border-primary bg-primary/5" : "border-border"
+              )}
+            >
+              <RadioGroupItem value={platform} id={`platform-${platform}`} />
+              <span className="capitalize">{platform}</span>
+            </Label>
+          ))}
+        </RadioGroup>
+      </div>
+
+      {/* Cloud Provider Options */}
+      {(formData.email_security.platform === "cloud" || formData.email_security.platform === "hybrid") && (
+        <div className="space-y-2">
+          <Label>Cloud Email Provider</Label>
+          <Select
+            value={formData.email_security.cloudProvider || "none"}
+            onValueChange={(value) => updateEmailSecurity({ cloudProvider: value === "none" ? "" : value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select provider" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select provider...</SelectItem>
+              <SelectItem value="o365">Microsoft 365</SelectItem>
+              <SelectItem value="gsuite">Google Workspace (G-Suite)</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+          {formData.email_security.cloudProvider === "other" && (
+            <Input
+              value={formData.email_security.otherCloudProvider || ""}
+              onChange={(e) => updateEmailSecurity({ otherCloudProvider: e.target.value })}
+              placeholder="Please specify cloud provider"
+              className="mt-2"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Hybrid On-Prem Platform */}
+      {formData.email_security.platform === "hybrid" && (
+        <div className="space-y-2">
+          <Label>On-Prem Email Platform</Label>
+          <Input
+            value={formData.email_security.hybridOnpremPlatform || ""}
+            onChange={(e) => updateEmailSecurity({ hybridOnpremPlatform: e.target.value })}
+            placeholder="E.g., Exchange Server"
+          />
+        </div>
+      )}
+
+      {/* Number of Mailboxes */}
+      <div className="space-y-2">
+        <Label>Number of Mailboxes</Label>
+        <Input
+          type="number"
+          min="0"
+          value={formData.email_security.mailboxCount}
+          onChange={(e) => updateEmailSecurity({ mailboxCount: e.target.value })}
+          placeholder="Enter total mailbox count"
+        />
+      </div>
+
+      {/* Preferred Solution */}
+      <div className="space-y-2">
+        <Label>Preferred Solution</Label>
+        <RadioGroup
+          value={formData.email_security.preferredSolution}
+          onValueChange={(value) => updateEmailSecurity({ preferredSolution: value as PreferredSolution })}
+          className="grid grid-cols-2 gap-2"
+        >
+          <Label
+            htmlFor="email-product"
+            className={cn(
+              "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+              formData.email_security.preferredSolution === "product" ? "border-primary bg-primary/5" : "border-border"
+            )}
+          >
+            <RadioGroupItem value="product" id="email-product" />
+            <Package className="w-4 h-4" />
+            <span>Product</span>
+          </Label>
+          <Label
+            htmlFor="email-managed"
+            className={cn(
+              "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+              formData.email_security.preferredSolution === "managed_service" ? "border-primary bg-primary/5" : "border-border"
+            )}
+          >
+            <RadioGroupItem value="managed_service" id="email-managed" />
+            <Users className="w-4 h-4" />
+            <span>Managed Service</span>
+          </Label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const renderWebAppSecurityOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Globe className="w-4 h-4" />
+        Web Application Security Details
+      </h4>
+
+      {/* Protection Types */}
+      <div className="space-y-2">
+        <Label>Protection Requirements</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {webAppProtectionTypes.map((type) => (
+            <div
+              key={type.value}
+              onClick={() => toggleWebAppProtection(type.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.web_app_security.protectionTypes?.includes(type.value)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox 
+                checked={formData.web_app_security.protectionTypes?.includes(type.value)}
+                onCheckedChange={() => toggleWebAppProtection(type.value)}
+              />
+              <span className="text-sm">{type.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sizing */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Sizing Information</Label>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">No. of Web Apps</Label>
+            <Input
+              type="number"
+              min="0"
+              value={formData.web_app_security.webAppCount}
+              onChange={(e) => updateWebAppSecurity({ webAppCount: e.target.value })}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">App Bandwidth (Mbps)</Label>
+            <Input
+              type="number"
+              min="0"
+              value={formData.web_app_security.bandwidth}
+              onChange={(e) => updateWebAppSecurity({ bandwidth: e.target.value })}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Transactions/Month</Label>
+            <Input
+              type="text"
+              value={formData.web_app_security.transactions}
+              onChange={(e) => updateWebAppSecurity({ transactions: e.target.value })}
+              placeholder="E.g., 1M"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Preferred Solution */}
+      <div className="space-y-2">
+        <Label>Preferred Solution</Label>
+        <RadioGroup
+          value={formData.web_app_security.preferredSolution}
+          onValueChange={(value) => updateWebAppSecurity({ preferredSolution: value as PreferredSolution })}
+          className="grid grid-cols-2 gap-2"
+        >
+          <Label
+            htmlFor="webapp-product"
+            className={cn(
+              "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+              formData.web_app_security.preferredSolution === "product" ? "border-primary bg-primary/5" : "border-border"
+            )}
+          >
+            <RadioGroupItem value="product" id="webapp-product" />
+            <Package className="w-4 h-4" />
+            <span>Product</span>
+          </Label>
+          <Label
+            htmlFor="webapp-managed"
+            className={cn(
+              "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+              formData.web_app_security.preferredSolution === "managed_service" ? "border-primary bg-primary/5" : "border-border"
+            )}
+          >
+            <RadioGroupItem value="managed_service" id="webapp-managed" />
+            <Users className="w-4 h-4" />
+            <span>Managed Service</span>
+          </Label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const renderComplianceOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Scale className="w-4 h-4" />
+        Compliance Frameworks
+      </h4>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {complianceFrameworks.map((framework) => (
+          <div
+            key={framework.value}
+            onClick={() => toggleComplianceFramework(framework.value)}
+            className={cn(
+              "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+              formData.compliance_frameworks?.includes(framework.value)
+                ? "border-primary bg-primary/10"
+                : "border-border"
+            )}
+          >
+            <Checkbox 
+              checked={formData.compliance_frameworks?.includes(framework.value)}
+              onCheckedChange={() => toggleComplianceFramework(framework.value)}
+            />
+            <span className="text-sm">{framework.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full max-h-[80vh]">
       {/* Progress Header */}
@@ -347,7 +694,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
         <Progress value={progress} className="h-2" />
         
         {/* Step Indicators */}
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-between mt-4 overflow-x-auto">
           {WIZARD_STEPS.map((step) => {
             const StepIcon = step.icon;
             const isActive = currentStep === step.id;
@@ -357,7 +704,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
               <div 
                 key={step.id}
                 className={cn(
-                  "flex flex-col items-center gap-1 cursor-pointer transition-all",
+                  "flex flex-col items-center gap-1 cursor-pointer transition-all min-w-[40px]",
                   isActive && "scale-110",
                   !isActive && !isCompleted && "opacity-50"
                 )}
@@ -380,11 +727,11 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
 
       {/* Step Content */}
       <div className="flex-1 overflow-y-auto px-1">
-        {/* Step 1: Prospect Selection */}
+        {/* Step 1: Customer Selection */}
         {currentStep === 1 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold">Select Prospect Organization</h3>
+              <h3 className="text-lg font-semibold">Select Customer</h3>
               <p className="text-sm text-muted-foreground">Choose an existing organization or add a new one</p>
             </div>
 
@@ -481,7 +828,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
         {currentStep === 2 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold">What type of deal is this?</h3>
+              <h3 className="text-lg font-semibold">Requirement Type</h3>
               <p className="text-sm text-muted-foreground">Select if this is a new opportunity or cross-sale</p>
             </div>
 
@@ -540,110 +887,131 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 3: Requirement */}
+        {/* Step 3: Problem Area */}
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold">What is the requirement?</h3>
-              <p className="text-sm text-muted-foreground">Select category and problem areas</p>
+              <h3 className="text-lg font-semibold">Select Problem Area</h3>
+              <p className="text-sm text-muted-foreground">What is the customer's primary need?</p>
             </div>
 
+            {/* Problem Category Selection */}
             <div className="space-y-4">
-              <Label>Requirement Category *</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {requirementCategories.map((cat) => {
-                  const CatIcon = cat.icon;
-                  const isSelected = formData.requirement_category === cat.value;
-                  return (
-                    <div
-                      key={cat.value}
-                      onClick={() => updateFormData({ requirement_category: cat.value })}
-                      className={cn(
-                        "p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
-                        isSelected ? "border-primary bg-primary/5" : "border-border"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <CatIcon className={cn("w-4 h-4", isSelected && "text-primary")} />
-                        <span className="text-sm font-medium">{cat.label}</span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">{cat.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
+              <Label>Problem Category *</Label>
+              <RadioGroup
+                value={formData.problem_category}
+                onValueChange={(value) => updateFormData({ problem_category: value as ProblemCategory })}
+                className="grid grid-cols-3 gap-3"
+              >
+                <Label
+                  htmlFor="cat-security"
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+                    formData.problem_category === "security" ? "border-primary bg-primary/5" : "border-border"
+                  )}
+                >
+                  <RadioGroupItem value="security" id="cat-security" className="sr-only" />
+                  <Shield className={cn("w-6 h-6", formData.problem_category === "security" && "text-primary")} />
+                  <span className="font-medium text-sm">Security</span>
+                </Label>
+                <Label
+                  htmlFor="cat-compliance"
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+                    formData.problem_category === "compliance" ? "border-primary bg-primary/5" : "border-border"
+                  )}
+                >
+                  <RadioGroupItem value="compliance" id="cat-compliance" className="sr-only" />
+                  <Scale className={cn("w-6 h-6", formData.problem_category === "compliance" && "text-primary")} />
+                  <span className="font-medium text-sm">Compliance</span>
+                </Label>
+                <Label
+                  htmlFor="cat-both"
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+                    formData.problem_category === "both" ? "border-primary bg-primary/5" : "border-border"
+                  )}
+                >
+                  <RadioGroupItem value="both" id="cat-both" className="sr-only" />
+                  <div className="flex gap-1">
+                    <Shield className={cn("w-5 h-5", formData.problem_category === "both" && "text-primary")} />
+                    <Scale className={cn("w-5 h-5", formData.problem_category === "both" && "text-primary")} />
+                  </div>
+                  <span className="font-medium text-sm">Both</span>
+                </Label>
+              </RadioGroup>
             </div>
 
-            {/* Multi-select Problem Areas */}
-            <div className="space-y-3">
-              <Label>Problem / Requirement Areas * <span className="text-xs text-muted-foreground">(Select one or more)</span></Label>
-              {formData.problem_area_ids && formData.problem_area_ids.length > 0 && (
-                <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-lg">
-                  <span className="text-xs text-muted-foreground mr-2">Selected:</span>
-                  {formData.problem_area_ids.map(id => {
-                    const area = problemAreas?.find(a => a.id === id);
-                    return area ? (
-                      <Badge 
-                        key={id} 
-                        variant="default" 
-                        className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={() => toggleProblemArea(id)}
+            {/* Security Attack Vector Selection */}
+            {(formData.problem_category === "security" || formData.problem_category === "both") && (
+              <div className="space-y-4">
+                <Label>Choose Attack Vector</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {attackVectorOptions.map((option) => {
+                    const VectorIcon = option.icon;
+                    const isSelected = formData.attack_vector === option.value;
+                    return (
+                      <div
+                        key={option.value}
+                        onClick={() => updateFormData({ attack_vector: option.value as AttackVector })}
+                        className={cn(
+                          "p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+                          isSelected ? "border-primary bg-primary/5" : "border-border"
+                        )}
                       >
-                        {area.name} ×
-                      </Badge>
-                    ) : null;
+                        <div className="flex items-center gap-2 mb-1">
+                          <VectorIcon className={cn("w-4 h-4", isSelected && "text-primary")} />
+                          <span className="text-sm font-medium">{option.label}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">{option.description}</p>
+                      </div>
+                    );
                   })}
                 </div>
-              )}
-              {problemAreas && problemAreas.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1">
+
+                {/* Render detailed options based on attack vector */}
+                {formData.attack_vector === "email" && renderEmailSecurityOptions()}
+                {formData.attack_vector === "web_application" && renderWebAppSecurityOptions()}
+              </div>
+            )}
+
+            {/* Compliance Frameworks */}
+            {(formData.problem_category === "compliance" || formData.problem_category === "both") && 
+              renderComplianceOptions()
+            }
+
+            {/* Additional Problem Areas from DB */}
+            {problemAreas && problemAreas.length > 0 && (
+              <div className="space-y-3">
+                <Label>Related Problem Areas <span className="text-xs text-muted-foreground">(Optional)</span></Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1">
                   {problemAreas.map((area) => {
                     const isSelected = formData.problem_area_ids?.includes(area.id);
                     return (
                       <div
                         key={area.id}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleProblemArea(area.id);
-                        }}
+                        onClick={() => toggleProblemArea(area.id)}
                         className={cn(
                           "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-start gap-2",
                           isSelected ? "border-primary bg-primary/10" : "border-border"
                         )}
                       >
-                        <Checkbox 
-                          checked={isSelected} 
-                          className="mt-0.5"
-                          onCheckedChange={() => toggleProblemArea(area.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs font-medium block truncate">{area.name}</span>
-                          {area.description && (
-                            <span className="text-[10px] text-muted-foreground line-clamp-2">{area.description}</span>
-                          )}
-                        </div>
+                        <Checkbox checked={isSelected} className="mt-0.5" />
+                        <span className="text-xs font-medium truncate">{area.name}</span>
                       </div>
                     );
                   })}
                 </div>
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    No problem areas configured. Go to Offerings → Problem Areas to add them.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Additional Notes</Label>
               <Textarea
                 value={formData.problem_requirement}
                 onChange={(e) => updateFormData({ problem_requirement: e.target.value })}
-                placeholder="Describe the customer's problem or requirement in more detail (optional)..."
-                rows={3}
+                placeholder="Describe the customer's problem or requirement in more detail..."
+                rows={2}
               />
             </div>
           </div>
@@ -654,46 +1022,12 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Recommended Solutions</h3>
-              <p className="text-sm text-muted-foreground">AI-suggested solutions based on the requirement</p>
+              <p className="text-sm text-muted-foreground">Select product or service based on requirements</p>
             </div>
 
-            {suggestedProducts && suggestedProducts.length > 0 && (
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-sm text-primary">
-                  <Sparkles className="w-4 h-4" />
-                  <span className="font-medium">AI Suggestions</span>
-                </div>
-                <div className="grid gap-2">
-                  {suggestedProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      onClick={() => updateFormData({ solution_id: product.id })}
-                      className={cn(
-                        "p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50 flex items-center justify-between",
-                        formData.solution_id === product.id ? "border-primary bg-primary/5" : "border-border"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Package className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{product.name}</p>
-                          {product.category && (
-                            <p className="text-xs text-muted-foreground">{product.category}</p>
-                          )}
-                        </div>
-                      </div>
-                      {formData.solution_id === product.id && (
-                        <Check className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="space-y-2">
-              <Label>All Solutions/Products</Label>
-              {filteredProducts?.length ? (
+              <Label>Solution/Product</Label>
+              {products?.length ? (
                 <Select
                   value={formData.solution_id || "none"}
                   onValueChange={(value) => updateFormData({ solution_id: value === "none" ? "" : value })}
@@ -703,7 +1037,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No solution selected</SelectItem>
-                    {filteredProducts.map((product) => (
+                    {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
                         {product.name} {product.category && `(${product.category})`}
                       </SelectItem>
@@ -732,7 +1066,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 5: Timeline */}
+        {/* Step 5: Timeline & Budget */}
         {currentStep === 5 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -759,6 +1093,15 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
               </div>
             </div>
 
+            <div className="flex items-center space-x-2 p-4 rounded-lg bg-muted/50">
+              <Checkbox
+                id="is_budgeted"
+                checked={formData.is_budgeted}
+                onCheckedChange={(checked) => updateFormData({ is_budgeted: !!checked })}
+              />
+              <Label htmlFor="is_budgeted" className="cursor-pointer font-medium">Is it Budgeted?</Label>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Deal Value ({getCurrencySymbol()}) *</Label>
@@ -782,15 +1125,6 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_budgeted"
-                checked={formData.is_budgeted}
-                onCheckedChange={(checked) => updateFormData({ is_budgeted: !!checked })}
-              />
-              <Label htmlFor="is_budgeted" className="cursor-pointer">Customer has budget allocated</Label>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Expected Close Date</Label>
@@ -811,9 +1145,6 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   disabled={!isEditing}
                   className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
                 />
-                {!isEditing && (
-                  <p className="text-[10px] text-muted-foreground">Probability is set automatically based on deal stage</p>
-                )}
               </div>
             </div>
           </div>
@@ -823,36 +1154,92 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
         {currentStep === 6 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold">Next Steps & Notes</h3>
-              <p className="text-sm text-muted-foreground">Define action items and additional details</p>
+              <h3 className="text-lg font-semibold">Define Next Steps</h3>
+              <p className="text-sm text-muted-foreground">What actions are needed to move forward?</p>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Next Steps</Label>
-                <Textarea
-                  value={formData.next_steps}
-                  onChange={(e) => updateFormData({ next_steps: e.target.value })}
-                  placeholder="What are the next actions to move this deal forward?"
-                  rows={3}
-                />
+              <Label>Planned Actions</Label>
+              <div className="grid grid-cols-3 gap-3">
+                {nextStepActions.map((action) => {
+                  const ActionIcon = action.icon;
+                  const isSelected = formData.next_steps_actions?.includes(action.value);
+                  return (
+                    <div
+                      key={action.value}
+                      onClick={() => toggleNextStepAction(action.value)}
+                      className={cn(
+                        "p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50 flex flex-col items-center gap-2",
+                        isSelected ? "border-primary bg-primary/5" : "border-border"
+                      )}
+                    >
+                      <Checkbox checked={isSelected} className="sr-only" />
+                      <ActionIcon className={cn("w-6 h-6", isSelected && "text-primary")} />
+                      <span className="text-sm font-medium text-center">{action.label}</span>
+                    </div>
+                  );
+                })}
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label>Additional Notes</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => updateFormData({ description: e.target.value })}
-                  placeholder="Any additional notes or context..."
-                  rows={3}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>Additional Notes</Label>
+              <Textarea
+                value={formData.next_steps}
+                onChange={(e) => updateFormData({ next_steps: e.target.value })}
+                placeholder="Any additional details about next steps..."
+                rows={3}
+              />
             </div>
           </div>
         )}
 
-        {/* Step 7: Review & Finish */}
+        {/* Step 7: Critical Factors */}
         {currentStep === 7 && (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold">Critical Factors to Consider</h3>
+              <p className="text-sm text-muted-foreground">What are the key success factors for this deal?</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {criticalFactors.map((factor) => {
+                  const isSelected = formData.critical_factors?.includes(factor.value);
+                  return (
+                    <div
+                      key={factor.value}
+                      onClick={() => toggleCriticalFactor(factor.value)}
+                      className={cn(
+                        "p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50 flex items-center gap-3",
+                        isSelected ? "border-primary bg-primary/5" : "border-border"
+                      )}
+                    >
+                      <Checkbox checked={isSelected} />
+                      <div>
+                        <p className="font-medium">{factor.label}</p>
+                        <p className="text-xs text-muted-foreground">{factor.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Additional Notes</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => updateFormData({ description: e.target.value })}
+                placeholder="Any additional context or notes..."
+                rows={3}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 8: Review & Finish */}
+        {currentStep === 8 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Review Deal Details</h3>
@@ -874,79 +1261,99 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   <p className="font-medium capitalize">{formData.deal_type.replace("_", " ")}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Category</p>
-                  <p className="font-medium capitalize">{formData.requirement_category.replace(/_/g, " ")}</p>
+                  <p className="text-muted-foreground">Problem Category</p>
+                  <p className="font-medium capitalize">{formData.problem_category}</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-muted-foreground">Problem/Requirement Areas</p>
-                  {formData.problem_area_ids && formData.problem_area_ids.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {formData.problem_area_ids.map(id => {
-                        const area = problemAreas?.find(a => a.id === id);
-                        return area ? (
-                          <Badge key={id} variant="secondary" className="text-xs">
-                            {area.name}
-                          </Badge>
-                        ) : null;
-                      })}
-                    </div>
-                  ) : (
-                    <p className="font-medium">Not set</p>
-                  )}
-                  {formData.problem_requirement && (
-                    <p className="text-xs text-muted-foreground mt-1">{formData.problem_requirement}</p>
-                  )}
+                {(formData.problem_category === "security" || formData.problem_category === "both") && (
+                  <div>
+                    <p className="text-muted-foreground">Attack Vector</p>
+                    <p className="font-medium capitalize">{formData.attack_vector?.replace("_", " ")}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-muted-foreground">Buying Timeline</p>
+                  <p className="font-medium capitalize">{formData.buying_timeline?.replace("_", " ") || "Not set"}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Deal Value</p>
                   <p className="font-medium">{getCurrencySymbol()}{formData.value || "0"}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Timeline</p>
-                  <p className="font-medium capitalize">{formData.buying_timeline?.replace(/_/g, " ") || "Not set"}</p>
+                  <p className="text-muted-foreground">Budgeted</p>
+                  <p className="font-medium">{formData.is_budgeted ? "Yes" : "No"}</p>
                 </div>
-                {formData.next_steps && (
-                  <div className="col-span-2">
-                    <p className="text-muted-foreground">Next Steps</p>
-                    <p className="font-medium">{formData.next_steps}</p>
-                  </div>
-                )}
               </div>
+
+              {formData.next_steps_actions && formData.next_steps_actions.length > 0 && (
+                <div className="pt-3 border-t border-border">
+                  <p className="text-muted-foreground text-sm mb-2">Next Steps</p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.next_steps_actions.map(action => (
+                      <Badge key={action} variant="secondary" className="capitalize">
+                        {action.replace("_", " ")}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {formData.critical_factors && formData.critical_factors.length > 0 && (
+                <div className="pt-3 border-t border-border">
+                  <p className="text-muted-foreground text-sm mb-2">Critical Factors</p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.critical_factors.map(factor => (
+                      <Badge key={factor} variant="outline" className="capitalize">
+                        {factor.replace("_", " ")}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Motivational Message */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                Add a Message
+              </Label>
+              <Textarea
+                value={formData.motivational_message}
+                onChange={(e) => updateFormData({ motivational_message: e.target.value })}
+                placeholder="Good job. Let's do it! 🚀"
+                rows={2}
+                className="resize-none"
+              />
             </div>
           </div>
         )}
       </div>
 
-      {/* Navigation Footer */}
-      <div className="border-t border-border pt-4 mt-4 flex justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={currentStep === 1 ? onCancel : handleBack}
-        >
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          {currentStep === 1 ? "Cancel" : "Back"}
-        </Button>
-
-        {currentStep < WIZARD_STEPS.length ? (
-          <Button 
-            type="button" 
-            onClick={handleNext}
-            disabled={!canProceed()}
-          >
-            Next
-            <ChevronRight className="w-4 h-4 ml-1" />
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-4 border-t border-border mt-4">
+        <div>
+          {currentStep > 1 && (
+            <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Back
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+            Cancel
           </Button>
-        ) : (
-          <Button 
-            type="button" 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : isEditing ? "Update Deal" : "Create Deal"}
-            <Check className="w-4 h-4 ml-1" />
-          </Button>
-        )}
+          {currentStep < WIZARD_STEPS.length ? (
+            <Button onClick={handleNext} disabled={!canProceed()}>
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : isEditing ? "Update Deal" : "Create Deal"}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
