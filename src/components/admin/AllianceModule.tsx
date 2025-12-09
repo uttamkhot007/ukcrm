@@ -1233,17 +1233,19 @@ export function AllianceModule() {
 
       {/* Contact Profile Page - Full Window */}
       {showContactDetails && selectedContact && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <AllianceContactProfilePage
-            contact={selectedContact}
-            organization={organizations.find(o => o.id === selectedContact.organization_id) || null}
-            onBack={() => setShowContactDetails(false)}
-            onEdit={(contact) => {
-              setEditingUser(contact as AllianceUser);
-              setShowContactDetails(false);
-              setIsUserDialogOpen(true);
-            }}
-          />
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+          <div className="min-h-full">
+            <AllianceContactProfilePage
+              contact={selectedContact}
+              organization={organizations.find(o => o.id === selectedContact.organization_id) || null}
+              onBack={() => setShowContactDetails(false)}
+              onEdit={(contact) => {
+                setEditingUser(contact as AllianceUser);
+                setShowContactDetails(false);
+                setIsUserDialogOpen(true);
+              }}
+            />
+          </div>
         </div>
       )}
 

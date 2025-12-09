@@ -177,7 +177,7 @@ export function AllianceContactProfilePage({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-background">
       {/* Header */}
       <div className="border-b p-4 md:p-6">
         <div className="flex items-center gap-4 mb-4">
