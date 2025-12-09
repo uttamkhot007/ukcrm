@@ -8,6 +8,11 @@ import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
 import { MyAccountsView } from "./MyAccountsView";
 import { DealRegistrationModule } from "./DealRegistrationModule";
+import { LeadScoring } from "./LeadScoring";
+import { DealInsights } from "./DealInsights";
+import { SalesForecasting } from "./SalesForecasting";
+import { EmailSequences } from "./EmailSequences";
+import { SalesAutomations } from "./SalesAutomations";
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -45,6 +50,16 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         return <SalesReports />;
       case "deal-registration":
         return <DealRegistrationModule />;
+      case "lead-scoring":
+        return <LeadScoring />;
+      case "deal-insights":
+        return <DealInsights />;
+      case "forecasting":
+        return <SalesForecasting />;
+      case "email-sequences":
+        return <EmailSequences />;
+      case "automations":
+        return <SalesAutomations />;
       default:
         return <DealsView />;
     }
