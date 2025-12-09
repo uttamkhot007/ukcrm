@@ -15,8 +15,13 @@ import {
   Loader2, Star, MapPin, Linkedin, Clock, BarChart3,
   Pencil, Brain, ArrowLeft, Award, GraduationCap, Trophy,
   Target, Users, Github, Twitter, Heart, Shield, FileText,
-  TrendingUp, CheckCircle, AlertCircle, ShieldCheck
+  TrendingUp, CheckCircle, AlertCircle, ShieldCheck, UserCog
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
 import { EmployeeVerificationsTab } from "./EmployeeVerificationsTab";
 
@@ -52,13 +57,26 @@ interface EmployeeProfilePageProps {
   onEdit?: (employee: EmployeeProfile) => void;
 }
 
+const EMPLOYMENT_STATUSES = [
+  { value: "active", label: "Active", description: "Regular active employee" },
+  { value: "new_hire", label: "New Hire", description: "New employee - triggers onboarding workflow" },
+  { value: "probation", label: "Probation", description: "Under probation period" },
+  { value: "pip", label: "PIP", description: "Performance Improvement Plan" },
+  { value: "notice_period", label: "Notice Period", description: "Serving notice period" },
+  { value: "inactive", label: "Inactive", description: "Currently inactive" },
+  { value: "terminated", label: "Terminated", description: "Employment terminated" },
+];
+
 export function EmployeeProfilePage({ 
   employee, 
   onBack,
   onEdit 
 }: EmployeeProfilePageProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(employee.employment_status || "active");
   const { currentTenant } = useTenant();
+  const queryClient = useQueryClient();
 
   // Fetch manager info
   const { data: manager } = useQuery({
@@ -192,12 +210,39 @@ export function EmployeeProfilePage({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active": return "bg-green-500/10 text-green-600 border-green-500/20";
+      case "new_hire": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
       case "probation": return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
       case "pip": return "bg-red-500/10 text-red-600 border-red-500/20";
       case "notice_period": return "bg-orange-500/10 text-orange-600 border-orange-500/20";
       default: return "bg-muted text-muted-foreground";
     }
   };
+
+  // Mutation to update employee status
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ employment_status: newStatus as any })
+        .eq("user_id", employee.user_id);
+      
+      if (error) throw error;
+      return newStatus;
+    },
+    onSuccess: (newStatus) => {
+      queryClient.invalidateQueries({ queryKey: ["employee-directory"] });
+      toast.success(
+        newStatus === "new_hire" 
+          ? "Status updated to New Hire - Onboarding workflow will be initiated" 
+          : "Employment status updated successfully"
+      );
+      setShowStatusDialog(false);
+    },
+    onError: (error) => {
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update employment status");
+    },
+  });
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -245,20 +290,98 @@ export function EmployeeProfilePage({
                 </span>
               )}
             </div>
-            {onEdit && (
+            <div className="flex gap-2 mt-2">
+              {onEdit && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => onEdit(employee)}
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit Profile
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="mt-2 gap-1"
-                onClick={() => onEdit(employee)}
+                className="gap-1"
+                onClick={() => {
+                  setSelectedStatus(employee.employment_status || "active");
+                  setShowStatusDialog(true);
+                }}
               >
-                <Pencil className="h-3 w-3" />
-                Edit Profile
+                <UserCog className="h-3 w-3" />
+                Change Status
               </Button>
-            )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Status Change Dialog */}
+      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Employment Status</DialogTitle>
+            <DialogDescription>
+              Update the employment status for {employee.full_name}. Setting status to "New Hire" will automatically trigger an onboarding workflow.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Current Status</Label>
+              <Badge className={getStatusColor(employee.employment_status || "active")}>
+                {employee.employment_status?.replace(/_/g, " ") || "Active"}
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <Label>New Status</Label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EMPLOYMENT_STATUSES.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      <div className="flex flex-col">
+                        <span>{status.label}</span>
+                        <span className="text-xs text-muted-foreground">{status.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedStatus === "new_hire" && (
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm">
+                <p className="font-medium text-blue-600">Onboarding Workflow</p>
+                <p className="text-muted-foreground mt-1">
+                  Setting this status will automatically create an HR onboarding workflow for this employee.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => updateStatusMutation.mutate(selectedStatus)}
+              disabled={updateStatusMutation.isPending || selectedStatus === employee.employment_status}
+            >
+              {updateStatusMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Status"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="w-full justify-start rounded-none border-b px-4 md:px-6 overflow-x-auto">
