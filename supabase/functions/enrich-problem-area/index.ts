@@ -96,12 +96,32 @@ Be specific and technical. Focus on real-world cybersecurity scenarios.`;
     // Parse the JSON from the response
     let enrichedData;
     try {
-      // Extract JSON from markdown code blocks if present
+      // Try multiple parsing strategies
+      let jsonStr = content.trim();
+      
+      // Strategy 1: Extract JSON from markdown code blocks
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
+      if (jsonMatch && jsonMatch[1].trim().startsWith('{')) {
+        jsonStr = jsonMatch[1].trim();
+      } else {
+        // Strategy 2: Find the first { and last } to extract JSON object
+        const firstBrace = content.indexOf('{');
+        const lastBrace = content.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonStr = content.substring(firstBrace, lastBrace + 1);
+        }
+      }
+      
+      // Validate we have something that looks like JSON
+      if (!jsonStr.startsWith('{')) {
+        console.error("AI response does not contain valid JSON object:", content.substring(0, 200));
+        throw new Error("AI response does not contain a JSON object");
+      }
+      
       enrichedData = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
+      console.error("Raw content (first 500 chars):", content.substring(0, 500));
       throw new Error("Failed to parse AI response as JSON");
     }
 
