@@ -100,14 +100,14 @@ export function LeaveManagement() {
     mutationFn: async (data: typeof requestFormData) => {
       const { data: user } = await supabase.auth.getUser();
       const days = differenceInDays(new Date(data.end_date), new Date(data.start_date)) + 1;
-      const { error } = await supabase.from("leave_requests").insert([{
-        user_id: user.user?.id,
+      const { error } = await supabase.from("leave_requests").insert({
+        user_id: user.user?.id!,
         policy_id: data.policy_id,
         start_date: data.start_date,
         end_date: data.end_date,
         days_requested: days,
         reason: data.reason || null,
-      }]);
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
