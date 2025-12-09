@@ -129,6 +129,8 @@ const Index = () => {
         return <SalesModule initialTab="team-contacts" />;
       case "sales-offerings":
         return <OfferingsModule readOnly />;
+      case "sales-deal-registration":
+        return <SalesModule initialTab="deal-registration" />;
       case "inside-sales":
         return <InsideSalesModule />;
       

@@ -7,6 +7,7 @@ import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
 import { MyAccountsView } from "./MyAccountsView";
+import { DealRegistrationModule } from "./DealRegistrationModule";
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -42,6 +43,8 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         );
       case "reports":
         return <SalesReports />;
+      case "deal-registration":
+        return <DealRegistrationModule />;
       default:
         return <DealsView />;
     }

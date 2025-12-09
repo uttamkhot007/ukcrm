@@ -1726,6 +1726,185 @@ export type Database = {
           },
         ]
       }
+      deal_registration_comments: {
+        Row: {
+          content: string
+          created_at: string
+          deal_registration_id: string
+          id: string
+          is_internal: boolean | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          deal_registration_id: string
+          id?: string
+          is_internal?: boolean | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          deal_registration_id?: string
+          id?: string
+          is_internal?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_registration_comments_deal_registration_id_fkey"
+            columns: ["deal_registration_id"]
+            isOneToOne: false
+            referencedRelation: "deal_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_registration_history: {
+        Row: {
+          action: string
+          created_at: string
+          deal_registration_id: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          deal_registration_id: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          deal_registration_id?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_registration_history_deal_registration_id_fkey"
+            columns: ["deal_registration_id"]
+            isOneToOne: false
+            referencedRelation: "deal_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_registrations: {
+        Row: {
+          approval_date: string | null
+          assigned_to: string | null
+          competitor_info: string | null
+          created_at: string
+          customer_name: string
+          customer_organization_id: string | null
+          deal_id: string | null
+          description: string | null
+          dr_expiry_date: string | null
+          dr_id_from_vendor: string | null
+          dr_number: string
+          expected_close_date: string | null
+          id: string
+          notes: string | null
+          opportunity_value: number | null
+          priority: string | null
+          rejection_reason: string | null
+          requester_id: string
+          requirements: string | null
+          sla_deadline: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          vendor_name: string
+          vendor_program: string | null
+        }
+        Insert: {
+          approval_date?: string | null
+          assigned_to?: string | null
+          competitor_info?: string | null
+          created_at?: string
+          customer_name: string
+          customer_organization_id?: string | null
+          deal_id?: string | null
+          description?: string | null
+          dr_expiry_date?: string | null
+          dr_id_from_vendor?: string | null
+          dr_number: string
+          expected_close_date?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_value?: number | null
+          priority?: string | null
+          rejection_reason?: string | null
+          requester_id: string
+          requirements?: string | null
+          sla_deadline?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          vendor_name: string
+          vendor_program?: string | null
+        }
+        Update: {
+          approval_date?: string | null
+          assigned_to?: string | null
+          competitor_info?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_organization_id?: string | null
+          deal_id?: string | null
+          description?: string | null
+          dr_expiry_date?: string | null
+          dr_id_from_vendor?: string | null
+          dr_number?: string
+          expected_close_date?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_value?: number | null
+          priority?: string | null
+          rejection_reason?: string | null
+          requester_id?: string
+          requirements?: string | null
+          sla_deadline?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          vendor_name?: string
+          vendor_program?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_registrations_customer_organization_id_fkey"
+            columns: ["customer_organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_registrations_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_registrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           actual_close_date: string | null
