@@ -52,6 +52,7 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
   const [activeTab, setActiveTab] = useState(initialTab);
   const [tenders, setTenders] = useState<any[]>([]);
   const [dealRegistrations, setDealRegistrations] = useState<any[]>([]);
+  const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewTenderDialog, setShowNewTenderDialog] = useState(false);
@@ -93,6 +94,20 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
       const { data: drData, error: drError } = await drQuery;
       if (drError) throw drError;
       setDealRegistrations(drData || []);
+
+      // Fetch deals for OEM funnel (all registered deals from sales team)
+      let dealsQuery = supabase
+        .from('deals')
+        .select('id, title, value, stage, organization_name, alliance_organization_id, solution_id')
+        .order('created_at', { ascending: false });
+
+      if (currentTenant) {
+        dealsQuery = dealsQuery.eq('tenant_id', currentTenant.id);
+      }
+
+      const { data: dealsData, error: dealsError } = await dealsQuery;
+      if (dealsError) throw dealsError;
+      setDeals(dealsData || []);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -305,6 +320,7 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
         <TabsContent value="oem-funnel" className="mt-4">
           <OEMFunnelTab 
             dealRegistrations={dealRegistrations}
+            deals={deals}
             loading={loading}
           />
         </TabsContent>
@@ -347,6 +363,7 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
       <NewDealRegistrationDialog 
         open={showNewDRDialog} 
         onOpenChange={setShowNewDRDialog}
+        onSuccess={fetchData}
       />
 
       <TenderDetailsSheet
