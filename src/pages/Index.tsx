@@ -272,6 +272,8 @@ const Index = () => {
         return <TechnicalModule initialTab="contacts" />;
       case "tech-recommendations":
         return <TechnicalModule initialTab="recommendations" />;
+      case "tech-implementation-sow":
+        return <TechnicalModule initialTab="implementation-sow" />;
       
       // Activity Tracker
       case "employee-activity-tracker":
@@ -290,6 +292,8 @@ const Index = () => {
         return <SolutionEngineeringModule initialTab="rfp" />;
       case "presales-recommendations":
         return <SolutionEngineeringModule initialTab="recommendations" />;
+      case "presales-poc-plans":
+        return <SolutionEngineeringModule initialTab="poc-plans" />;
       
       // Admin modules
       case "admin":

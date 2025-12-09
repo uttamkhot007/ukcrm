@@ -2,6 +2,7 @@ import { Wrench } from "lucide-react";
 import { CustomerContractsView } from "./CustomerContractsView";
 import { CustomerContactsView } from "./CustomerContactsView";
 import { ProductRecommendationSteps } from "@/components/shared/ProductRecommendationSteps";
+import { SolutionDocumentationPage } from "@/components/shared/SolutionDocumentationPage";
 
 interface TechnicalModuleProps {
   initialTab?: string;
@@ -16,6 +17,8 @@ export function TechnicalModule({ initialTab = "contracts" }: TechnicalModulePro
         return <CustomerContactsView />;
       case "recommendations":
         return <ProductRecommendationSteps teamType="technical" />;
+      case "implementation-sow":
+        return <SolutionDocumentationPage docType="implementation" teamType="technical" />;
       default:
         return <CustomerContractsView />;
     }

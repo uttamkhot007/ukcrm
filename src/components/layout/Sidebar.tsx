@@ -348,6 +348,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
           { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
+          { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
+          { id: "tech-implementation-sow", label: "Implementation SOW", icon: FileText },
         ],
       });
 
@@ -428,6 +430,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "presales-assessments", label: "Assessments", icon: ClipboardCheck },
           { id: "presales-rfp", label: "RFP/RFI", icon: FileText },
           { id: "presales-recommendations", label: "Recommendations", icon: BookOpen },
+          { id: "presales-poc-plans", label: "POC Plans", icon: FileText },
         ],
       });
 
@@ -441,6 +444,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
           { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
           { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
+          { id: "tech-implementation-sow", label: "Implementation SOW", icon: FileText },
         ],
       });
 

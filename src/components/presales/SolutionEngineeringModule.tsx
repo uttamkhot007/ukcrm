@@ -5,6 +5,7 @@ import { TechnicalAssessmentsTab } from "./TechnicalAssessmentsTab";
 import { RFPResponsesTab } from "./RFPResponsesTab";
 import { PresalesWorkflowsTab } from "./PresalesWorkflowsTab";
 import { ProductRecommendationSteps } from "@/components/shared/ProductRecommendationSteps";
+import { SolutionDocumentationPage } from "@/components/shared/SolutionDocumentationPage";
 
 interface SolutionEngineeringModuleProps {
   initialTab?: string;
@@ -25,6 +26,8 @@ export function SolutionEngineeringModule({ initialTab = "poc" }: SolutionEngine
         return <PresalesWorkflowsTab />;
       case "recommendations":
         return <ProductRecommendationSteps teamType="solution_engineering" />;
+      case "poc-plans":
+        return <SolutionDocumentationPage docType="poc" teamType="solution_engineering" />;
       default:
         return <POCRequestsTab />;
     }
