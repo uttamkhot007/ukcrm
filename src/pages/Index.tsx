@@ -36,6 +36,7 @@ import { ITModule } from "@/components/it/ITModule";
 import { ManagementAnalyticsModule } from "@/components/analytics/ManagementAnalyticsModule";
 import { TechnicalModule } from "@/components/technical/TechnicalModule";
 import { DailyActivityTracker } from "@/components/employee/DailyActivityTracker";
+import { DealDeskModule } from "@/components/tenders/DealDeskModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -147,6 +148,18 @@ const Index = () => {
       case "inside-sales-offerings":
         return <InsideSalesModule initialTab="offerings" />;
       
+      // Tenders & Deal Desk with sub-routes
+      case "deal-desk":
+      case "deal-desk-registration":
+        return <DealDeskModule initialTab="deal-registration" />;
+      case "deal-desk-oem-funnel":
+        return <DealDeskModule initialTab="oem-funnel" />;
+      case "deal-desk-opportunities":
+        return <DealDeskModule initialTab="opportunities" />;
+      case "deal-desk-bid-preparation":
+        return <DealDeskModule initialTab="bid-preparation" />;
+      case "deal-desk-evaluation":
+        return <DealDeskModule initialTab="evaluation" />;
       // Alliance module
       case "admin-center-alliance":
         return <AllianceModule />;
@@ -318,11 +331,40 @@ const Index = () => {
       case "admin-procurement":
         return <PlaceholderModule title="Administration" section={activeModule} />;
       
-      // Help Desk
+      // Help Desk / Support Center
       case "helpdesk":
-        return <TicketingModule initialTab="all" />;
       case "helpdesk-tickets":
         return <TicketingModule initialTab="all" />;
+      case "helpdesk-open":
+        return <TicketingModule initialTab="open" />;
+      case "helpdesk-escalated":
+        return <TicketingModule initialTab="escalated" />;
+      case "helpdesk-templates":
+        return <TicketingModule initialTab="templates" />;
+      case "helpdesk-analytics":
+        return <TicketingModule initialTab="analytics" />;
+      case "helpdesk-automation":
+        return <TicketingModule initialTab="automation" />;
+      
+      // Managed Security Services (MSS)
+      case "mss":
+      case "mss-soc":
+      case "mss-monitoring":
+      case "mss-incidents":
+      case "mss-alerts":
+      case "mss-reports":
+      case "mss-clients":
+        return <PlaceholderModule title="Managed Security Services" section={activeModule} />;
+      
+      // Offensive Security
+      case "offensive":
+      case "offensive-pentest":
+      case "offensive-vapt":
+      case "offensive-redteam":
+      case "offensive-audits":
+      case "offensive-findings":
+      case "offensive-remediation":
+        return <PlaceholderModule title="Offensive Security" section={activeModule} />;
       
       // Billing
       case "billing":
@@ -378,6 +420,20 @@ const Index = () => {
       "admin-procurement": "Procurement",
       "management-performance": "People Performance",
       "management-cashflow": "Inflow vs Outflow",
+      // MSS Section Labels
+      "mss-soc": "SOC Operations",
+      "mss-monitoring": "Threat Monitoring",
+      "mss-incidents": "Incident Response",
+      "mss-alerts": "Security Alerts",
+      "mss-reports": "Security Reports",
+      "mss-clients": "Client Portals",
+      // Offensive Security Labels
+      "offensive-pentest": "Penetration Testing",
+      "offensive-vapt": "VAPT Assessments",
+      "offensive-redteam": "Red Team Operations",
+      "offensive-audits": "Security Audits",
+      "offensive-findings": "Findings & Reports",
+      "offensive-remediation": "Remediation Tracking",
     };
 
     return (
