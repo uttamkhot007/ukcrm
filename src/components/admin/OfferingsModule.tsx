@@ -79,6 +79,12 @@ interface ProductTechnology extends JunctionRecord {
   technology_id: string;
 }
 
+interface OfferingProblemAreaMapping extends JunctionRecord {
+  offering_id: string;
+  offering_type: "product" | "offensive_security" | "managed_security" | "professional_services";
+  problem_area_id: string;
+}
+
 type OfferingType = "products" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
 
 const offeringTabs: { value: OfferingType; label: string; icon: React.ElementType; table: string }[] = [
@@ -102,7 +108,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   const [editingItem, setEditingItem] = useState<Offering | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product">("oem-tech");
+  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product" | "product-problem" | "offensive-problem" | "managed-problem" | "professional-problem">("oem-tech");
   const [selectedItemForLink, setSelectedItemForLink] = useState<Offering | null>(null);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [bulkUploadType, setBulkUploadType] = useState<BulkUploadType>("products");
@@ -193,6 +199,38 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
     enabled: !!currentTenant,
   });
 
+  // Fetch problem areas
+  const { data: problemAreas = [] } = useQuery({
+    queryKey: ["offerings", "problem_areas", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant) return [];
+      const { data, error } = await supabase
+        .from("offerings_problem_areas")
+        .select("*")
+        .eq("tenant_id", currentTenant.id)
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return data as Offering[];
+    },
+    enabled: !!currentTenant,
+  });
+
+  // Fetch problem area mappings
+  const { data: problemAreaMappings = [] } = useQuery({
+    queryKey: ["offering_problem_area_mappings", currentTenant?.id],
+    queryFn: async () => {
+      if (!currentTenant) return [];
+      const { data, error } = await supabase
+        .from("offering_problem_area_mappings" as any)
+        .select("*")
+        .eq("tenant_id", currentTenant.id);
+      if (error) throw error;
+      return (data || []) as unknown as OfferingProblemAreaMapping[];
+    },
+    enabled: !!currentTenant,
+  });
+
   // Fetch offerings for current tab
   const { data: offerings = [], isLoading } = useQuery({
     queryKey: ["offerings", activeTab, currentTenant?.id],
@@ -245,6 +283,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       queryClient.invalidateQueries({ queryKey: ["oem_technologies"] });
       queryClient.invalidateQueries({ queryKey: ["product_oems"] });
       queryClient.invalidateQueries({ queryKey: ["product_technologies"] });
+      queryClient.invalidateQueries({ queryKey: ["offering_problem_area_mappings"] });
       toast.success("Link created");
     },
     onError: (error: any) => {
@@ -314,6 +353,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       queryClient.invalidateQueries({ queryKey: ["oem_technologies"] });
       queryClient.invalidateQueries({ queryKey: ["product_oems"] });
       queryClient.invalidateQueries({ queryKey: ["product_technologies"] });
+      queryClient.invalidateQueries({ queryKey: ["offering_problem_area_mappings"] });
       toast.success("Link removed");
     },
     onError: (error) => {
@@ -516,6 +556,14 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
     return technologies.filter(t => linkedIds.includes(t.id));
   };
 
+  // Get problem areas linked to an offering
+  const getOfferingProblemAreas = (offeringId: string, offeringType: string) => {
+    const linkedIds = problemAreaMappings
+      .filter(m => m.offering_id === offeringId && m.offering_type === offeringType)
+      .map(m => m.problem_area_id);
+    return problemAreas.filter(pa => linkedIds.includes(pa.id));
+  };
+
   const getUnlinkedItems = (type: typeof linkDialogType, itemId: string) => {
     switch (type) {
       case "oem-tech":
@@ -533,6 +581,18 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       case "tech-product":
         const linkedProdIds = productTechnologies.filter(pt => pt.technology_id === itemId).map(pt => pt.product_id);
         return products.filter(s => !linkedProdIds.includes(s.id) && s.status === "active");
+      case "product-problem":
+        const linkedProblemIds1 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "product").map(m => m.problem_area_id);
+        return problemAreas.filter(pa => !linkedProblemIds1.includes(pa.id));
+      case "offensive-problem":
+        const linkedProblemIds2 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "offensive_security").map(m => m.problem_area_id);
+        return problemAreas.filter(pa => !linkedProblemIds2.includes(pa.id));
+      case "managed-problem":
+        const linkedProblemIds3 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "managed_security").map(m => m.problem_area_id);
+        return problemAreas.filter(pa => !linkedProblemIds3.includes(pa.id));
+      case "professional-problem":
+        const linkedProblemIds4 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "professional_services").map(m => m.problem_area_id);
+        return problemAreas.filter(pa => !linkedProblemIds4.includes(pa.id));
       default:
         return [];
     }
@@ -565,6 +625,22 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         table = "product_technologies";
         data = { technology_id: selectedItemForLink.id, product_id: targetId };
         break;
+      case "product-problem":
+        table = "offering_problem_area_mappings";
+        data = { offering_id: selectedItemForLink.id, offering_type: "product", problem_area_id: targetId };
+        break;
+      case "offensive-problem":
+        table = "offering_problem_area_mappings";
+        data = { offering_id: selectedItemForLink.id, offering_type: "offensive_security", problem_area_id: targetId };
+        break;
+      case "managed-problem":
+        table = "offering_problem_area_mappings";
+        data = { offering_id: selectedItemForLink.id, offering_type: "managed_security", problem_area_id: targetId };
+        break;
+      case "professional-problem":
+        table = "offering_problem_area_mappings";
+        data = { offering_id: selectedItemForLink.id, offering_type: "professional_services", problem_area_id: targetId };
+        break;
     }
     
     linkMutation.mutate({ table, data });
@@ -595,6 +671,13 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         table = "product_technologies";
         record = productTechnologies.find(pt => pt.technology_id === itemId && pt.product_id === linkedId);
         break;
+      case "product-problem":
+      case "offensive-problem":
+      case "managed-problem":
+      case "professional-problem":
+        table = "offering_problem_area_mappings";
+        record = problemAreaMappings.find(m => m.offering_id === itemId && m.problem_area_id === linkedId);
+        break;
     }
     
     if (record) {
@@ -620,6 +703,11 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         return `Link OEMs to ${selectedItemForLink?.name}`;
       case "tech-product":
         return `Link Products to ${selectedItemForLink?.name}`;
+      case "product-problem":
+      case "offensive-problem":
+      case "managed-problem":
+      case "professional-problem":
+        return `Link Problem Areas to ${selectedItemForLink?.name}`;
       default:
         return "Link Items";
     }
@@ -727,6 +815,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
     let linkedTechs: Offering[] = [];
     let linkedOems: Offering[] = [];
     let linkedProducts: Offering[] = [];
+    let linkedProblemAreas: Offering[] = [];
     
     if (activeTab === "oems") {
       linkedTechs = getOemTechs(item.id);
@@ -737,6 +826,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
     } else if (activeTab === "products") {
       linkedOems = getProductOems(item.id);
       linkedTechs = getProductTechs(item.id);
+      linkedProblemAreas = getOfferingProblemAreas(item.id, "product");
     }
 
     return (
@@ -759,7 +849,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
                   <p className="text-sm text-muted-foreground">
                     {activeTab === "oems" && `${linkedTechs.length} technologies · ${linkedProducts.length} products`}
                     {activeTab === "technologies" && `${linkedOems.length} OEMs · ${linkedProducts.length} products`}
-                    {activeTab === "products" && `${linkedOems.length} OEMs · ${linkedTechs.length} technologies`}
+                    {activeTab === "products" && `${linkedOems.length} OEMs · ${linkedTechs.length} technologies · ${linkedProblemAreas.length} problem areas`}
                   </p>
                 </div>
               </div>
@@ -809,6 +899,10 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
                         <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-tech")}>
                           <Link className="h-3 w-3" />
                           <span className="hidden sm:inline">Technology</span>
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => openLinkDialog(item, "product-problem")}>
+                          <Target className="h-3 w-3" />
+                          <span className="hidden sm:inline">Problem</span>
                         </Button>
                       </>
                     )}
@@ -1092,6 +1186,12 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
                     <p className="text-xs font-medium text-muted-foreground mb-2">Linked Technologies</p>
                     {linkedTechs.length > 0 ? renderLinkedBadges(linkedTechs, "product-tech", item.id, Cpu) : (
                       <p className="text-sm text-muted-foreground">No technologies linked</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Problem Areas Solved</p>
+                    {linkedProblemAreas.length > 0 ? renderLinkedBadges(linkedProblemAreas, "product-problem", item.id, Target) : (
+                      <p className="text-sm text-muted-foreground">No problem areas linked</p>
                     )}
                   </div>
                 </div>
