@@ -45,6 +45,7 @@ interface DealFormData {
   deal_type: DealType;
   requirement_category: string;
   problem_requirement: string;
+  problem_area_ids: string[]; // Multi-select for problem areas
   solution_id: string;
   contact_id: string;
   quantity: string;
@@ -78,19 +79,20 @@ const WIZARD_STEPS = [
   { id: 7, title: "Finish", icon: Check, description: "Review & submit" },
 ];
 
-const requirementCategories = [
-  { value: "products", label: "Products", icon: Package, description: "Hardware & Software Products" },
-  { value: "offensive_services", label: "Offensive Services", icon: Shield, description: "Penetration Testing, Red Team" },
-  { value: "managed_security_services", label: "Managed Security Services", icon: Users, description: "SOC, Monitoring, MDR" },
-  { value: "professional_services", label: "Professional Services", icon: Briefcase, description: "Implementation, Consulting" },
-  { value: "consulting", label: "Consulting", icon: Users, description: "Advisory, Strategy" },
-];
-
 const buyingTimelineOptions = [
   { value: "immediate", label: "Immediate", description: "< 1 month" },
   { value: "short_term", label: "Short Term", description: "1-3 months" },
   { value: "medium_term", label: "Medium Term", description: "3-6 months" },
   { value: "long_term", label: "Long Term", description: "6+ months" },
+];
+
+// Dynamic requirement categories based on offerings tables
+const DEFAULT_REQUIREMENT_CATEGORIES = [
+  { value: "products", label: "Products", icon: Package, description: "Hardware & Software Products" },
+  { value: "offensive_services", label: "Offensive Services", icon: Shield, description: "Penetration Testing, Red Team" },
+  { value: "managed_security_services", label: "Managed Security Services", icon: Users, description: "SOC, Monitoring, MDR" },
+  { value: "professional_services", label: "Professional Services", icon: Briefcase, description: "Implementation, Consulting" },
+  { value: "consulting", label: "Consulting", icon: Users, description: "Advisory, Strategy" },
 ];
 
 const initialFormData: DealFormData = {
@@ -100,6 +102,7 @@ const initialFormData: DealFormData = {
   deal_type: "new",
   requirement_category: "products",
   problem_requirement: "",
+  problem_area_ids: [],
   solution_id: "",
   contact_id: "",
   quantity: "1",
@@ -163,11 +166,106 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
       const result = await (supabase as any)
         .from("offerings_products")
         .select("id, name, category")
+        .eq("status", "active")
         .order("name", { ascending: true });
       if (result.error) throw result.error;
       return result.data || [];
     },
   });
+
+  // Fetch Problem Areas from offerings_problem_areas
+  const { data: problemAreas } = useQuery<{ id: string; name: string; description: string | null; area_type: string | null }[]>({
+    queryKey: ["offerings-problem-areas"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any)
+        .from("offerings_problem_areas")
+        .select("id, name, description, area_type")
+        .eq("status", "active")
+        .order("name", { ascending: true });
+      if (result.error) throw result.error;
+      return result.data || [];
+    },
+  });
+
+  // Fetch services for requirement categories
+  const { data: managedSecurityServices } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["offerings-managed-security"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any)
+        .from("offerings_managed_security")
+        .select("id, name")
+        .eq("status", "active");
+      if (result.error) throw result.error;
+      return result.data || [];
+    },
+  });
+
+  const { data: offensiveServices } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["offerings-offensive-security"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any)
+        .from("offerings_offensive_security")
+        .select("id, name")
+        .eq("status", "active");
+      if (result.error) throw result.error;
+      return result.data || [];
+    },
+  });
+
+  const { data: professionalServices } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["offerings-professional-services"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any)
+        .from("offerings_professional_services")
+        .select("id, name")
+        .eq("status", "active");
+      if (result.error) throw result.error;
+      return result.data || [];
+    },
+  });
+
+  // Build dynamic requirement categories based on available offerings
+  const requirementCategories = [
+    { 
+      value: "products", 
+      label: "Products", 
+      icon: Package, 
+      description: "Hardware & Software Products",
+      hasData: (products?.length || 0) > 0
+    },
+    { 
+      value: "offensive_services", 
+      label: "Offensive Services", 
+      icon: Shield, 
+      description: "Penetration Testing, Red Team",
+      hasData: (offensiveServices?.length || 0) > 0
+    },
+    { 
+      value: "managed_security_services", 
+      label: "Managed Security Services", 
+      icon: Users, 
+      description: "SOC, Monitoring, MDR",
+      hasData: (managedSecurityServices?.length || 0) > 0
+    },
+    { 
+      value: "professional_services", 
+      label: "Professional Services", 
+      icon: Briefcase, 
+      description: "Implementation, Consulting",
+      hasData: (professionalServices?.length || 0) > 0
+    },
+    { 
+      value: "consulting", 
+      label: "Consulting", 
+      icon: Users, 
+      description: "Advisory, Strategy",
+      hasData: true // Always show consulting
+    },
+  ];
 
   // Filter products based on requirement category
   const filteredProducts = products?.filter(p => {
@@ -186,6 +284,15 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
     return problem.split(" ").some(word => word.length > 3 && name.includes(word));
   }).slice(0, 3);
 
+  // Toggle problem area selection
+  const toggleProblemArea = (areaId: string) => {
+    const current = formData.problem_area_ids || [];
+    const updated = current.includes(areaId)
+      ? current.filter(id => id !== areaId)
+      : [...current, areaId];
+    updateFormData({ problem_area_ids: updated });
+  };
+
   const updateFormData = (updates: Partial<DealFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
@@ -197,7 +304,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
       case 2:
         return formData.deal_type;
       case 3:
-        return formData.requirement_category && formData.problem_requirement;
+        return formData.requirement_category && (formData.problem_area_ids?.length > 0 || formData.problem_requirement);
       case 4:
         return true; // Solution is optional
       case 5:
@@ -438,7 +545,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">What is the requirement?</h3>
-              <p className="text-sm text-muted-foreground">Select category and describe the problem</p>
+              <p className="text-sm text-muted-foreground">Select category and problem areas</p>
             </div>
 
             <div className="space-y-4">
@@ -467,13 +574,65 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
               </div>
             </div>
 
+            {/* Multi-select Problem Areas */}
+            <div className="space-y-3">
+              <Label>Problem / Requirement Areas * <span className="text-xs text-muted-foreground">(Select one or more)</span></Label>
+              {problemAreas && problemAreas.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
+                  {problemAreas.map((area) => {
+                    const isSelected = formData.problem_area_ids?.includes(area.id);
+                    return (
+                      <div
+                        key={area.id}
+                        onClick={() => toggleProblemArea(area.id)}
+                        className={cn(
+                          "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-start gap-2",
+                          isSelected ? "border-primary bg-primary/5" : "border-border"
+                        )}
+                      >
+                        <Checkbox 
+                          checked={isSelected} 
+                          className="mt-0.5 pointer-events-none"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-medium block truncate">{area.name}</span>
+                          {area.description && (
+                            <span className="text-[10px] text-muted-foreground line-clamp-2">{area.description}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No problem areas configured. Go to Offerings → Problem Areas to add them.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {formData.problem_area_ids && formData.problem_area_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {formData.problem_area_ids.map(id => {
+                    const area = problemAreas?.find(a => a.id === id);
+                    return area ? (
+                      <Badge key={id} variant="secondary" className="text-xs">
+                        {area.name}
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
-              <Label>Problem / Requirement Statement *</Label>
+              <Label>Additional Notes</Label>
               <Textarea
                 value={formData.problem_requirement}
                 onChange={(e) => updateFormData({ problem_requirement: e.target.value })}
-                placeholder="Describe the customer's problem or requirement in detail..."
-                rows={4}
+                placeholder="Describe the customer's problem or requirement in more detail (optional)..."
+                rows={3}
               />
             </div>
           </div>
