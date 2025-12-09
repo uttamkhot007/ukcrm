@@ -37,6 +37,9 @@ import { ManagementAnalyticsModule } from "@/components/analytics/ManagementAnal
 import { TechnicalModule } from "@/components/technical/TechnicalModule";
 import { DailyActivityTracker } from "@/components/employee/DailyActivityTracker";
 import { DealDeskModule } from "@/components/tenders/DealDeskModule";
+import { MarketingModule } from "@/components/marketing/MarketingModule";
+import { CommunicationsModule } from "@/components/communications/CommunicationsModule";
+import { PublicRelationsModule } from "@/components/pr/PublicRelationsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
