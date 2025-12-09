@@ -84,6 +84,7 @@ const SALES_SUB_TEAMS = [
 
 const EMPLOYMENT_STATUS = [
   { value: "active", label: "Active", color: "bg-green-500/20 text-green-600 border-green-500/30" },
+  { value: "new_hire", label: "New Hire", color: "bg-blue-500/20 text-blue-600 border-blue-500/30" },
   { value: "probation", label: "Probation", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30" },
   { value: "pip", label: "PIP", color: "bg-red-500/20 text-red-600 border-red-500/30" },
   { value: "notice_period", label: "Notice Period", color: "bg-orange-500/20 text-orange-600 border-orange-500/30" },
@@ -403,9 +404,20 @@ export function EmployeesManagement() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+    <div className="space-y-6">
+      {/* Header & Search */}
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Employees</h2>
+            <p className="text-sm text-muted-foreground">{employees.length} total employees</p>
+          </div>
+        </div>
+        <div className="flex-1" />
+        <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search employees..."
@@ -414,91 +426,117 @@ export function EmployeesManagement() {
             className="pl-9"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {EMPLOYMENT_STATUS.slice(0, 4).map((status) => (
-            <Badge key={status.value} variant="outline" className={cn("text-xs", status.color)}>
-              {status.label}
-            </Badge>
-          ))}
-        </div>
       </div>
 
-      <div className="glass rounded-xl border border-border overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {filteredEmployees.map((employee) => (
-              <div
-                key={employee.id}
-                className="p-4 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold">
-                      {employee.full_name?.slice(0, 2).toUpperCase() || "U"}
+      {/* Status Filters */}
+      <div className="flex flex-wrap gap-2">
+        {EMPLOYMENT_STATUS.map((status) => (
+          <Badge key={status.value} variant="outline" className={cn("text-xs cursor-pointer hover:opacity-80", status.color)}>
+            {status.label}
+          </Badge>
+        ))}
+      </div>
+
+      {/* Employee Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse border rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-muted"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredEmployees.length === 0 ? (
+        <div className="border rounded-xl p-12 text-center">
+          <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No employees found</h3>
+          <p className="text-muted-foreground">Try adjusting your search criteria</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredEmployees.map((employee) => (
+            <div
+              key={employee.id}
+              className="border rounded-xl p-5 hover:shadow-md transition-all hover:border-primary/50 bg-card"
+            >
+              {/* Header */}
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-semibold text-lg shrink-0">
+                  {employee.full_name?.slice(0, 2).toUpperCase() || "U"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold truncate">{employee.full_name || "Unknown"}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{employee.job_title || "No title"}</p>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{employee.full_name || "Unknown"}</p>
-                        {employee.employee_code && (
-                          <Badge variant="outline" className="text-xs">
-                            {employee.employee_code}
-                          </Badge>
-                        )}
-                        <Badge
-                          variant="outline"
-                          className={cn("text-xs", getStatusBadge(employee.employment_status || "active"))}
-                        >
-                          {EMPLOYMENT_STATUS.find((s) => s.value === employee.employment_status)?.label || "Active"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{employee.email}</p>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                        {employee.job_title && (
-                          <span className="flex items-center gap-1">
-                            <Briefcase className="w-3 h-3" />
-                            {employee.job_title}
-                          </span>
-                        )}
-                        {employee.department && (
-                          <span className="flex items-center gap-1">
-                            <Building2 className="w-3 h-3" />
-                            {employee.department}
-                          </span>
-                        )}
-                        {employee.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {employee.location}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewingEmployee(employee)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(employee)}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setViewingEmployee(employee)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(employee)}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
+                  <div className="flex items-center gap-2 mt-1">
+                    {employee.employee_code && (
+                      <Badge variant="outline" className="text-xs font-mono">
+                        {employee.employee_code}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className={cn("text-xs", getStatusBadge(employee.employment_status || "active"))}>
+                      {EMPLOYMENT_STATUS.find((s) => s.value === employee.employment_status)?.label || "Active"}
+                    </Badge>
                   </div>
                 </div>
+              </div>
 
-                {/* Teams - filtered by department */}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {getRelevantTeams(employee.department).map((team) => {
+              {/* Info */}
+              <div className="mt-4 space-y-2 text-sm">
+                {employee.department && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{employee.department}</span>
+                  </div>
+                )}
+                {employee.location && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{employee.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-4 text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Cake className="w-4 h-4 text-pink-500" />
+                    <span>{employee.birth_date ? format(parseISO(employee.birth_date), "MMM d") : "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CalendarHeart className="w-4 h-4 text-purple-500" />
+                    <span>{employee.hire_date ? format(parseISO(employee.hire_date), "MMM yyyy") : "—"}</span>
+                  </div>
+                </div>
+                {employee.manager_id && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <UserCheck className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span className="truncate">
+                      Reports to: {employees.find((e) => e.user_id === employee.manager_id)?.full_name || "Unknown"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Teams */}
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2">Team Assignments</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {getRelevantTeams(employee.department).slice(0, 6).map((team) => {
                     const hasTeam = employee.teams.includes(team.value);
                     const isRelevant = team.departments?.some(
                       (d) => d.toLowerCase() === employee.department?.toLowerCase()
@@ -511,14 +549,14 @@ export function EmployeesManagement() {
                         disabled={updatingUser === employee.user_id}
                         onClick={() => toggleTeam(employee.user_id, team.value, employee.teams)}
                         className={cn(
-                          "text-xs transition-all",
+                          "text-xs h-7 px-2 transition-all",
                           hasTeam && team.color,
                           hasTeam && "border",
-                          !hasTeam && !isRelevant && "opacity-50"
+                          !hasTeam && !isRelevant && "opacity-40"
                         )}
                       >
                         {updatingUser === employee.user_id ? (
-                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : hasTeam ? (
                           <Check className="w-3 h-3 mr-1" />
                         ) : (
@@ -529,44 +567,16 @@ export function EmployeesManagement() {
                     );
                   })}
                 </div>
-
-                {/* Sales Sub-Team (if in sales) */}
                 {employee.teams.includes("sales") && employee.sales_sub_team && (
-                  <div className="mt-2">
-                    <Badge variant="secondary" className="text-xs">
-                      Sales Team: {SALES_SUB_TEAMS.find((t) => t.value === employee.sales_sub_team)?.label}
-                    </Badge>
-                  </div>
+                  <Badge variant="secondary" className="text-xs mt-2">
+                    {SALES_SUB_TEAMS.find((t) => t.value === employee.sales_sub_team)?.label}
+                  </Badge>
                 )}
-
-                {/* Dates Row */}
-                <div className="mt-3 flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Cake className="w-4 h-4 text-pink-500" />
-                    {employee.birth_date ? format(parseISO(employee.birth_date), "MMM d") : "No birthday"}
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <CalendarHeart className="w-4 h-4 text-purple-500" />
-                    {employee.hire_date ? format(parseISO(employee.hire_date), "MMM d, yyyy") : "No hire date"}
-                  </div>
-                  {employee.manager_id && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <UserCheck className="w-4 h-4 text-blue-500" />
-                      Manager: {employees.find((e) => e.user_id === employee.manager_id)?.full_name || "Unknown"}
-                    </div>
-                  )}
-                </div>
               </div>
-            ))}
-
-            {filteredEmployees.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                No employees found
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Edit Employee Dialog */}
       <Dialog open={!!editingEmployee} onOpenChange={() => setEditingEmployee(null)}>
