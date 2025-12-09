@@ -69,6 +69,32 @@ interface WebAppSecurityDetails {
   preferredSolution: PreferredSolution;
 }
 
+interface DatabaseSecurityDetails {
+  databaseTypes: string[];
+  databaseCount: string;
+  preferredSolution: PreferredSolution;
+}
+
+interface EndpointSecurityDetails {
+  endpointTypes: string[];
+  endpointCount: string;
+  preferredSolution: PreferredSolution;
+}
+
+interface CloudSecurityDetails {
+  cloudProviders: string[];
+  cloudServices: string[];
+  workloadCount: string;
+  preferredSolution: PreferredSolution;
+}
+
+interface NetworkSecurityDetails {
+  networkRequirements: string[];
+  siteCount: string;
+  bandwidth: string;
+  preferredSolution: PreferredSolution;
+}
+
 interface DealFormData {
   alliance_organization_id: string;
   organization_name: string;
@@ -80,9 +106,13 @@ interface DealFormData {
   problem_requirement: string;
   problem_area_ids: string[];
   problem_category: ProblemCategory;
-  attack_vector: AttackVector;
+  attack_vectors: AttackVector[];
   email_security: EmailSecurityDetails;
   web_app_security: WebAppSecurityDetails;
+  database_security: DatabaseSecurityDetails;
+  endpoint_security: EndpointSecurityDetails;
+  cloud_security: CloudSecurityDetails;
+  network_security: NetworkSecurityDetails;
   compliance_frameworks: string[];
   solution_id: string;
   contact_id: string;
@@ -177,6 +207,48 @@ const attackVectorOptions = [
   { value: "network", label: "Network", icon: Network, description: "Network security" },
 ];
 
+const databaseTypes = [
+  { value: "oracle", label: "Oracle" },
+  { value: "sql_server", label: "SQL Server" },
+  { value: "mysql", label: "MySQL" },
+  { value: "postgresql", label: "PostgreSQL" },
+  { value: "mongodb", label: "MongoDB" },
+  { value: "other", label: "Other" },
+];
+
+const endpointTypes = [
+  { value: "workstations", label: "Workstations" },
+  { value: "laptops", label: "Laptops" },
+  { value: "servers", label: "Servers" },
+  { value: "mobile_devices", label: "Mobile Devices" },
+  { value: "virtual_desktops", label: "Virtual Desktops" },
+];
+
+const cloudProviders = [
+  { value: "aws", label: "AWS" },
+  { value: "azure", label: "Microsoft Azure" },
+  { value: "gcp", label: "Google Cloud Platform" },
+  { value: "oracle_cloud", label: "Oracle Cloud" },
+  { value: "other", label: "Other" },
+];
+
+const cloudServices = [
+  { value: "iaas", label: "IaaS (Infrastructure)" },
+  { value: "paas", label: "PaaS (Platform)" },
+  { value: "saas", label: "SaaS (Software)" },
+  { value: "containers", label: "Containers/Kubernetes" },
+  { value: "serverless", label: "Serverless" },
+];
+
+const networkRequirements = [
+  { value: "firewall", label: "Next-Gen Firewall" },
+  { value: "ids_ips", label: "IDS/IPS" },
+  { value: "vpn", label: "VPN/Remote Access" },
+  { value: "network_monitoring", label: "Network Monitoring" },
+  { value: "zero_trust", label: "Zero Trust Architecture" },
+  { value: "ddos_protection", label: "DDoS Protection" },
+];
+
 const initialFormData: DealFormData = {
   alliance_organization_id: "",
   organization_name: "",
@@ -188,7 +260,7 @@ const initialFormData: DealFormData = {
   problem_requirement: "",
   problem_area_ids: [],
   problem_category: "security",
-  attack_vector: "email",
+  attack_vectors: [],
   email_security: {
     attackTypes: [],
     platform: "cloud",
@@ -204,6 +276,28 @@ const initialFormData: DealFormData = {
     webAppCount: "",
     bandwidth: "",
     transactions: "",
+    preferredSolution: "product",
+  },
+  database_security: {
+    databaseTypes: [],
+    databaseCount: "",
+    preferredSolution: "product",
+  },
+  endpoint_security: {
+    endpointTypes: [],
+    endpointCount: "",
+    preferredSolution: "product",
+  },
+  cloud_security: {
+    cloudProviders: [],
+    cloudServices: [],
+    workloadCount: "",
+    preferredSolution: "product",
+  },
+  network_security: {
+    networkRequirements: [],
+    siteCount: "",
+    bandwidth: "",
     preferredSolution: "product",
   },
   compliance_frameworks: [],
@@ -364,6 +458,72 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
       ? current.filter(id => id !== areaId)
       : [...current, areaId];
     updateFormData({ problem_area_ids: updated });
+  };
+
+  const toggleAttackVector = (vector: AttackVector) => {
+    const current = formData.attack_vectors || [];
+    const updated = current.includes(vector)
+      ? current.filter(v => v !== vector)
+      : [...current, vector];
+    updateFormData({ attack_vectors: updated });
+  };
+
+  const updateDatabaseSecurity = (updates: Partial<DatabaseSecurityDetails>) => {
+    setFormData(prev => ({
+      ...prev,
+      database_security: { ...prev.database_security, ...updates }
+    }));
+  };
+
+  const updateEndpointSecurity = (updates: Partial<EndpointSecurityDetails>) => {
+    setFormData(prev => ({
+      ...prev,
+      endpoint_security: { ...prev.endpoint_security, ...updates }
+    }));
+  };
+
+  const updateCloudSecurity = (updates: Partial<CloudSecurityDetails>) => {
+    setFormData(prev => ({
+      ...prev,
+      cloud_security: { ...prev.cloud_security, ...updates }
+    }));
+  };
+
+  const updateNetworkSecurity = (updates: Partial<NetworkSecurityDetails>) => {
+    setFormData(prev => ({
+      ...prev,
+      network_security: { ...prev.network_security, ...updates }
+    }));
+  };
+
+  const toggleDatabaseType = (type: string) => {
+    const current = formData.database_security.databaseTypes || [];
+    const updated = current.includes(type) ? current.filter(t => t !== type) : [...current, type];
+    updateDatabaseSecurity({ databaseTypes: updated });
+  };
+
+  const toggleEndpointType = (type: string) => {
+    const current = formData.endpoint_security.endpointTypes || [];
+    const updated = current.includes(type) ? current.filter(t => t !== type) : [...current, type];
+    updateEndpointSecurity({ endpointTypes: updated });
+  };
+
+  const toggleCloudProvider = (provider: string) => {
+    const current = formData.cloud_security.cloudProviders || [];
+    const updated = current.includes(provider) ? current.filter(p => p !== provider) : [...current, provider];
+    updateCloudSecurity({ cloudProviders: updated });
+  };
+
+  const toggleCloudService = (service: string) => {
+    const current = formData.cloud_security.cloudServices || [];
+    const updated = current.includes(service) ? current.filter(s => s !== service) : [...current, service];
+    updateCloudSecurity({ cloudServices: updated });
+  };
+
+  const toggleNetworkRequirement = (req: string) => {
+    const current = formData.network_security.networkRequirements || [];
+    const updated = current.includes(req) ? current.filter(r => r !== req) : [...current, req];
+    updateNetworkSecurity({ networkRequirements: updated });
   };
 
   const canProceed = () => {
@@ -652,6 +812,307 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
             )}
           >
             <RadioGroupItem value="managed_service" id="webapp-managed" />
+            <Users className="w-4 h-4" />
+            <span>Managed Service</span>
+          </Label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const renderDatabaseSecurityOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Database className="w-4 h-4" />
+        Database Security Details
+      </h4>
+
+      <div className="space-y-2">
+        <Label>Database Types</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {databaseTypes.map((type) => (
+            <div
+              key={type.value}
+              onClick={() => toggleDatabaseType(type.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.database_security.databaseTypes?.includes(type.value)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox checked={formData.database_security.databaseTypes?.includes(type.value)} />
+              <span className="text-sm">{type.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Number of Databases</Label>
+        <Input
+          type="number"
+          min="0"
+          value={formData.database_security.databaseCount}
+          onChange={(e) => updateDatabaseSecurity({ databaseCount: e.target.value })}
+          placeholder="Enter total database count"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Preferred Solution</Label>
+        <RadioGroup
+          value={formData.database_security.preferredSolution}
+          onValueChange={(value) => updateDatabaseSecurity({ preferredSolution: value as PreferredSolution })}
+          className="grid grid-cols-2 gap-2"
+        >
+          <Label htmlFor="db-product" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.database_security.preferredSolution === "product" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="product" id="db-product" />
+            <Package className="w-4 h-4" />
+            <span>Product</span>
+          </Label>
+          <Label htmlFor="db-managed" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.database_security.preferredSolution === "managed_service" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="managed_service" id="db-managed" />
+            <Users className="w-4 h-4" />
+            <span>Managed Service</span>
+          </Label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const renderEndpointSecurityOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Monitor className="w-4 h-4" />
+        Endpoint Security Details
+      </h4>
+
+      <div className="space-y-2">
+        <Label>Endpoint Types</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {endpointTypes.map((type) => (
+            <div
+              key={type.value}
+              onClick={() => toggleEndpointType(type.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.endpoint_security.endpointTypes?.includes(type.value)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox checked={formData.endpoint_security.endpointTypes?.includes(type.value)} />
+              <span className="text-sm">{type.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Total Endpoint Count</Label>
+        <Input
+          type="number"
+          min="0"
+          value={formData.endpoint_security.endpointCount}
+          onChange={(e) => updateEndpointSecurity({ endpointCount: e.target.value })}
+          placeholder="Enter total endpoint count"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Preferred Solution</Label>
+        <RadioGroup
+          value={formData.endpoint_security.preferredSolution}
+          onValueChange={(value) => updateEndpointSecurity({ preferredSolution: value as PreferredSolution })}
+          className="grid grid-cols-2 gap-2"
+        >
+          <Label htmlFor="ep-product" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.endpoint_security.preferredSolution === "product" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="product" id="ep-product" />
+            <Package className="w-4 h-4" />
+            <span>Product</span>
+          </Label>
+          <Label htmlFor="ep-managed" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.endpoint_security.preferredSolution === "managed_service" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="managed_service" id="ep-managed" />
+            <Users className="w-4 h-4" />
+            <span>Managed Service</span>
+          </Label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const renderCloudSecurityOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Cloud className="w-4 h-4" />
+        Cloud Security Details
+      </h4>
+
+      <div className="space-y-2">
+        <Label>Cloud Providers</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {cloudProviders.map((provider) => (
+            <div
+              key={provider.value}
+              onClick={() => toggleCloudProvider(provider.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.cloud_security.cloudProviders?.includes(provider.value)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox checked={formData.cloud_security.cloudProviders?.includes(provider.value)} />
+              <span className="text-sm">{provider.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Cloud Services</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {cloudServices.map((service) => (
+            <div
+              key={service.value}
+              onClick={() => toggleCloudService(service.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.cloud_security.cloudServices?.includes(service.value)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox checked={formData.cloud_security.cloudServices?.includes(service.value)} />
+              <span className="text-sm">{service.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Cloud Workload Count</Label>
+        <Input
+          type="number"
+          min="0"
+          value={formData.cloud_security.workloadCount}
+          onChange={(e) => updateCloudSecurity({ workloadCount: e.target.value })}
+          placeholder="Enter workload count"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Preferred Solution</Label>
+        <RadioGroup
+          value={formData.cloud_security.preferredSolution}
+          onValueChange={(value) => updateCloudSecurity({ preferredSolution: value as PreferredSolution })}
+          className="grid grid-cols-2 gap-2"
+        >
+          <Label htmlFor="cloud-product" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.cloud_security.preferredSolution === "product" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="product" id="cloud-product" />
+            <Package className="w-4 h-4" />
+            <span>Product</span>
+          </Label>
+          <Label htmlFor="cloud-managed" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.cloud_security.preferredSolution === "managed_service" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="managed_service" id="cloud-managed" />
+            <Users className="w-4 h-4" />
+            <span>Managed Service</span>
+          </Label>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  const renderNetworkSecurityOptions = () => (
+    <div className="space-y-4 border border-border rounded-lg p-4 mt-4">
+      <h4 className="font-medium flex items-center gap-2">
+        <Network className="w-4 h-4" />
+        Network Security Details
+      </h4>
+
+      <div className="space-y-2">
+        <Label>Network Security Requirements</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {networkRequirements.map((req) => (
+            <div
+              key={req.value}
+              onClick={() => toggleNetworkRequirement(req.value)}
+              className={cn(
+                "p-2 rounded-lg border cursor-pointer transition-all hover:border-primary/50 flex items-center gap-2",
+                formData.network_security.networkRequirements?.includes(req.value)
+                  ? "border-primary bg-primary/10"
+                  : "border-border"
+              )}
+            >
+              <Checkbox checked={formData.network_security.networkRequirements?.includes(req.value)} />
+              <span className="text-sm">{req.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Number of Sites</Label>
+          <Input
+            type="number"
+            min="0"
+            value={formData.network_security.siteCount}
+            onChange={(e) => updateNetworkSecurity({ siteCount: e.target.value })}
+            placeholder="Enter site count"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Network Bandwidth (Mbps)</Label>
+          <Input
+            type="number"
+            min="0"
+            value={formData.network_security.bandwidth}
+            onChange={(e) => updateNetworkSecurity({ bandwidth: e.target.value })}
+            placeholder="Enter bandwidth"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Preferred Solution</Label>
+        <RadioGroup
+          value={formData.network_security.preferredSolution}
+          onValueChange={(value) => updateNetworkSecurity({ preferredSolution: value as PreferredSolution })}
+          className="grid grid-cols-2 gap-2"
+        >
+          <Label htmlFor="net-product" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.network_security.preferredSolution === "product" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="product" id="net-product" />
+            <Package className="w-4 h-4" />
+            <span>Product</span>
+          </Label>
+          <Label htmlFor="net-managed" className={cn(
+            "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
+            formData.network_security.preferredSolution === "managed_service" ? "border-primary bg-primary/5" : "border-border"
+          )}>
+            <RadioGroupItem value="managed_service" id="net-managed" />
             <Users className="w-4 h-4" />
             <span>Managed Service</span>
           </Label>
@@ -1001,33 +1462,38 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
             {/* Security Attack Vector Selection */}
             {(formData.problem_category === "security" || formData.problem_category === "both") && (
               <div className="space-y-4">
-                <Label>Choose Attack Vector</Label>
+                <Label>Choose Attack Vectors <span className="text-xs text-muted-foreground">(Select all that apply)</span></Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {attackVectorOptions.map((option) => {
                     const VectorIcon = option.icon;
-                    const isSelected = formData.attack_vector === option.value;
+                    const isSelected = formData.attack_vectors?.includes(option.value as AttackVector);
                     return (
                       <div
                         key={option.value}
-                        onClick={() => updateFormData({ attack_vector: option.value as AttackVector })}
+                        onClick={() => toggleAttackVector(option.value as AttackVector)}
                         className={cn(
                           "p-3 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50",
                           isSelected ? "border-primary bg-primary/5" : "border-border"
                         )}
                       >
                         <div className="flex items-center gap-2 mb-1">
+                          <Checkbox checked={isSelected} />
                           <VectorIcon className={cn("w-4 h-4", isSelected && "text-primary")} />
                           <span className="text-sm font-medium">{option.label}</span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground">{option.description}</p>
+                        <p className="text-[10px] text-muted-foreground ml-6">{option.description}</p>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Render detailed options based on attack vector */}
-                {formData.attack_vector === "email" && renderEmailSecurityOptions()}
-                {formData.attack_vector === "web_application" && renderWebAppSecurityOptions()}
+                {/* Render detailed options for each selected attack vector */}
+                {formData.attack_vectors?.includes("email") && renderEmailSecurityOptions()}
+                {formData.attack_vectors?.includes("web_application") && renderWebAppSecurityOptions()}
+                {formData.attack_vectors?.includes("database") && renderDatabaseSecurityOptions()}
+                {formData.attack_vectors?.includes("endpoint") && renderEndpointSecurityOptions()}
+                {formData.attack_vectors?.includes("cloud") && renderCloudSecurityOptions()}
+                {formData.attack_vectors?.includes("network") && renderNetworkSecurityOptions()}
               </div>
             )}
 
@@ -1324,10 +1790,12 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   <p className="text-muted-foreground">Problem Category</p>
                   <p className="font-medium capitalize">{formData.problem_category}</p>
                 </div>
-                {(formData.problem_category === "security" || formData.problem_category === "both") && (
+                {(formData.problem_category === "security" || formData.problem_category === "both") && formData.attack_vectors?.length > 0 && (
                   <div>
-                    <p className="text-muted-foreground">Attack Vector</p>
-                    <p className="font-medium capitalize">{formData.attack_vector?.replace("_", " ")}</p>
+                    <p className="text-muted-foreground">Attack Vectors</p>
+                    <p className="font-medium capitalize">
+                      {formData.attack_vectors?.map(v => v.replace("_", " ")).join(", ")}
+                    </p>
                   </div>
                 )}
                 <div>
