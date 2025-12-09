@@ -131,8 +131,21 @@ const Index = () => {
         return <OfferingsModule readOnly />;
       case "sales-deal-registration":
         return <SalesModule initialTab="deal-registration" />;
+      case "sales-documentation":
+        return <DocumentationModule />;
+      
+      // Inside Sales with sub-routes
       case "inside-sales":
-        return <InsideSalesModule />;
+      case "inside-sales-prospects":
+        return <InsideSalesModule initialTab="prospects" />;
+      case "inside-sales-leads":
+        return <InsideSalesModule initialTab="leads" />;
+      case "inside-sales-contacts":
+        return <InsideSalesModule initialTab="contacts" />;
+      case "inside-sales-accounts":
+        return <InsideSalesModule initialTab="accounts" />;
+      case "inside-sales-offerings":
+        return <InsideSalesModule initialTab="offerings" />;
       
       // Alliance module
       case "admin-center-alliance":

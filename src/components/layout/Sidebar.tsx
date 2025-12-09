@@ -305,6 +305,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "sales-quotations", label: "Quotations", icon: FileText },
           { id: "sales-leads", label: "Lead Tracking", icon: Activity },
           { id: "sales-offerings", label: "Offerings", icon: Package },
+          { id: "sales-documentation", label: "Sales SOPs", icon: BookOpen },
         ],
       });
 
@@ -314,6 +315,13 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Inside Sales",
         icon: PhoneOutgoing,
         color: "text-orange-500",
+        children: [
+          { id: "inside-sales-prospects", label: "Prospects", icon: Target },
+          { id: "inside-sales-leads", label: "Leads", icon: Activity },
+          { id: "inside-sales-contacts", label: "Contacts", icon: Phone },
+          { id: "inside-sales-accounts", label: "Accounts", icon: Building2 },
+          { id: "inside-sales-offerings", label: "Offerings", icon: Package },
+        ],
       });
 
       // Tenders & Deal Desk

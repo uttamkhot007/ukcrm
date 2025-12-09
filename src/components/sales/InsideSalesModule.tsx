@@ -111,13 +111,17 @@ const getPriorityBadge = (priority: string) => {
   );
 };
 
-export function InsideSalesModule() {
+interface InsideSalesModuleProps {
+  initialTab?: string;
+}
+
+export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModuleProps) {
   const { user } = useAuth();
   const { formatCurrency, settings } = useOrganizationSettings();
   const { convert, isLoading: isLoadingRates } = useExchangeRates();
   const orgCurrency = settings?.currency || "INR";
   const alternateCurrency = orgCurrency === "INR" ? "USD" : "INR";
-  const [activeTab, setActiveTab] = useState("prospects");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
