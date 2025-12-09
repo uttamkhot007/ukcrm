@@ -37,7 +37,7 @@ import { SalesRepDashboard } from "./SalesRepDashboard";
 import { SalesManagerDashboard } from "./SalesManagerDashboard";
 import { PresalesDashboard } from "./PresalesDashboard";
 import { MotivationalQuoteWidget } from "./MotivationalQuoteWidget";
-import { CyberSecurityNewsBar } from "./CyberSecurityNewsBar";
+import { SecurityCenterWidget } from "./SecurityCenterWidget";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { DraggableWidgetContainer } from "./DraggableWidgetContainer";
 
@@ -337,7 +337,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
           <div className="relative pt-8">
             <DraggableWidgetContainer
               widgets={[
-                { id: "cyber-news", component: <CyberSecurityNewsBar showKnowledgeBase={true} /> },
+                { id: "cyber-news", component: <SecurityCenterWidget /> },
                 { id: "notifications", component: <NotificationCenterWidget /> },
                 { id: "currency-converter", component: <CurrencyConverterWidget /> },
                 { id: "upcoming-events", component: <UpcomingEventsWidget onNavigate={onModuleChange} /> },
@@ -371,7 +371,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
             <EmployeeWidgets onNavigate={onModuleChange} />
           </div>
           <div className="space-y-6">
-            <CyberSecurityNewsBar />
+            <SecurityCenterWidget />
             <UpcomingEventsWidget onNavigate={onModuleChange} />
           </div>
         </div>
