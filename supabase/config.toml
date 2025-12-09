@@ -65,3 +65,6 @@ verify_jwt = true
 
 [functions.enrich-problem-area]
 verify_jwt = false
+
+[functions.batch-enrich-offerings]
+verify_jwt = false
