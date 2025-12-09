@@ -29,6 +29,7 @@ import { SolutionEngineeringModule } from "@/components/presales/SolutionEnginee
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { AllianceModule } from "@/components/admin/AllianceModule";
 import { OfferingsModule } from "@/components/admin/OfferingsModule";
+import { DocumentTemplatesModule } from "@/components/admin/DocumentTemplatesModule";
 import { ExpenseModule } from "@/components/expenses/ExpenseModule";
 import { AssetsModule } from "@/components/assets/AssetsModule";
 import { ProjectsModule } from "@/components/projects/ProjectsModule";
@@ -170,6 +171,10 @@ const Index = () => {
       // Offerings module
       case "admin-center-offerings":
         return <OfferingsModule />;
+      
+      // Document Templates module
+      case "admin-center-document-templates":
+        return <DocumentTemplatesModule />;
       
       // Legal module
       case "legal":

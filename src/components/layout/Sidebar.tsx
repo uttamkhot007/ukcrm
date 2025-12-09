@@ -202,6 +202,7 @@ const adminItems: NavItem[] = [
       { id: "admin-center-users", label: "User Management", icon: Users },
       { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
       { id: "admin-center-offerings", label: "Offerings", icon: Package },
+      { id: "admin-center-document-templates", label: "Document Templates", icon: FileText },
       { id: "admin-center-support-management", label: "Support Management", icon: HeadphonesIcon },
       { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
       { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
