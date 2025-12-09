@@ -878,8 +878,24 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   <p className="font-medium capitalize">{formData.requirement_category.replace(/_/g, " ")}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-muted-foreground">Problem/Requirement</p>
-                  <p className="font-medium">{formData.problem_requirement || "Not set"}</p>
+                  <p className="text-muted-foreground">Problem/Requirement Areas</p>
+                  {formData.problem_area_ids && formData.problem_area_ids.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {formData.problem_area_ids.map(id => {
+                        const area = problemAreas?.find(a => a.id === id);
+                        return area ? (
+                          <Badge key={id} variant="secondary" className="text-xs">
+                            {area.name}
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  ) : (
+                    <p className="font-medium">Not set</p>
+                  )}
+                  {formData.problem_requirement && (
+                    <p className="text-xs text-muted-foreground mt-1">{formData.problem_requirement}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground">Deal Value</p>
