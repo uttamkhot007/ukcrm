@@ -330,8 +330,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Tenders & Deal Desk",
         icon: Gavel,
         color: "text-amber-600",
-        isLink: true,
-        linkPath: "/tenders",
         children: [
           { id: "deal-desk-registration", label: "Deal Registration", icon: FileCheck },
           { id: "deal-desk-oem-funnel", label: "OEM Funnel", icon: Target },
