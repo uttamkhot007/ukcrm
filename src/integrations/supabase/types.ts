@@ -5356,6 +5356,84 @@ export type Database = {
           },
         ]
       }
+      product_recommendation_steps: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deliverables: string[] | null
+          description: string | null
+          details: string | null
+          duration_estimate: string | null
+          id: string
+          is_active: boolean | null
+          prerequisites: string[] | null
+          product_id: string
+          resources: string[] | null
+          step_order: number
+          step_type: string
+          team_type: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deliverables?: string[] | null
+          description?: string | null
+          details?: string | null
+          duration_estimate?: string | null
+          id?: string
+          is_active?: boolean | null
+          prerequisites?: string[] | null
+          product_id: string
+          resources?: string[] | null
+          step_order?: number
+          step_type: string
+          team_type: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deliverables?: string[] | null
+          description?: string | null
+          details?: string | null
+          duration_estimate?: string | null
+          id?: string
+          is_active?: boolean | null
+          prerequisites?: string[] | null
+          product_id?: string
+          resources?: string[] | null
+          step_order?: number
+          step_type?: string
+          team_type?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recommendation_steps_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "offerings_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recommendation_steps_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_technologies: {
         Row: {
           created_at: string

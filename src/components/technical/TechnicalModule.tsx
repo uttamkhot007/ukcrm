@@ -1,6 +1,7 @@
 import { Wrench } from "lucide-react";
 import { CustomerContractsView } from "./CustomerContractsView";
 import { CustomerContactsView } from "./CustomerContactsView";
+import { ProductRecommendationSteps } from "@/components/shared/ProductRecommendationSteps";
 
 interface TechnicalModuleProps {
   initialTab?: string;
@@ -13,6 +14,8 @@ export function TechnicalModule({ initialTab = "contracts" }: TechnicalModulePro
         return <CustomerContractsView />;
       case "contacts":
         return <CustomerContactsView />;
+      case "recommendations":
+        return <ProductRecommendationSteps teamType="technical" />;
       default:
         return <CustomerContractsView />;
     }

@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.batch-enrich-offerings]
 verify_jwt = false
+
+[functions.generate-recommendation-steps]
+verify_jwt = true
