@@ -147,7 +147,7 @@ export const DocumentExportDialog: React.FC<DocumentExportDialogProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [newRevision, setNewRevision] = useState({ version: '', date: '', author: '', changes: '' });
 
-  const docTypeLabel = documentData.docType === 'poc' ? 'POC Plan' : 'Implementation SOW';
+  const docTypeLabel = documentData.docType === 'poc' ? 'POC Plan' : 'Implementation Plan';
 
   const addRevisionEntry = () => {
     if (!newRevision.version || !newRevision.author) {

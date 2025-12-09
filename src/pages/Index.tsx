@@ -303,8 +303,8 @@ const Index = () => {
         return <TechnicalModule initialTab="contacts" />;
       case "tech-recommendations":
         return <TechnicalModule initialTab="recommendations" />;
-      case "tech-implementation-sow":
-        return <TechnicalModule initialTab="implementation-sow" />;
+      case "tech-implementation-plan":
+        return <TechnicalModule initialTab="implementation-plan" />;
       
       // Activity Tracker
       case "employee-activity-tracker":
