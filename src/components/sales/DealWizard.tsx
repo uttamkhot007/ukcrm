@@ -72,6 +72,8 @@ interface WebAppSecurityDetails {
 interface DealFormData {
   alliance_organization_id: string;
   organization_name: string;
+  prospect_id: string;
+  prospect_name: string;
   title: string;
   deal_type: DealType;
   requirement_category: string;
@@ -110,13 +112,14 @@ interface DealWizardProps {
 
 const WIZARD_STEPS = [
   { id: 1, title: "Customer", icon: Building2, description: "Select organization" },
-  { id: 2, title: "Deal Type", icon: Target, description: "New or Cross Sale" },
-  { id: 3, title: "Problem Area", icon: Shield, description: "Security needs" },
-  { id: 4, title: "Solution", icon: Package, description: "Product or service" },
-  { id: 5, title: "Timeline", icon: Clock, description: "Buying timeline" },
-  { id: 6, title: "Next Steps", icon: ChevronRight, description: "Action items" },
-  { id: 7, title: "Critical Factors", icon: Star, description: "Key considerations" },
-  { id: 8, title: "Finish", icon: Check, description: "Review & submit" },
+  { id: 2, title: "Prospect", icon: Users, description: "Select prospect" },
+  { id: 3, title: "Deal Type", icon: Target, description: "New or Cross Sale" },
+  { id: 4, title: "Problem Area", icon: Shield, description: "Security needs" },
+  { id: 5, title: "Solution", icon: Package, description: "Product or service" },
+  { id: 6, title: "Timeline", icon: Clock, description: "Buying timeline" },
+  { id: 7, title: "Next Steps", icon: ChevronRight, description: "Action items" },
+  { id: 8, title: "Critical Factors", icon: Star, description: "Key considerations" },
+  { id: 9, title: "Finish", icon: Check, description: "Review & submit" },
 ];
 
 const buyingTimelineOptions = [
@@ -177,6 +180,8 @@ const attackVectorOptions = [
 const initialFormData: DealFormData = {
   alliance_organization_id: "",
   organization_name: "",
+  prospect_id: "",
+  prospect_name: "",
   title: "",
   deal_type: "new",
   requirement_category: "products",
@@ -364,20 +369,22 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return formData.alliance_organization_id && formData.title;
+        return formData.alliance_organization_id;
       case 2:
-        return formData.deal_type;
+        return formData.prospect_id && formData.title;
       case 3:
-        return formData.problem_category;
+        return formData.deal_type;
       case 4:
-        return true;
+        return formData.problem_category;
       case 5:
-        return formData.buying_timeline && formData.value;
-      case 6:
         return true;
+      case 6:
+        return formData.buying_timeline && formData.value;
       case 7:
         return true;
       case 8:
+        return true;
+      case 9:
         return true;
       default:
         return true;
@@ -746,6 +753,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                       updateFormData({ 
                         alliance_organization_id: value === "none" ? "" : value,
                         organization_name: org?.name || "",
+                        prospect_id: "",
+                        prospect_name: "",
                         contact_id: ""
                       });
                     }}
@@ -753,7 +762,7 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select organization..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover z-50">
                       <SelectItem value="none">Select organization...</SelectItem>
                       {allianceOrganizations?.map((org) => (
                         <SelectItem key={org.id} value={org.id}>
@@ -779,6 +788,62 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Prospect Selection */}
+        {currentStep === 2 && (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold">Select Prospect</h3>
+              <p className="text-sm text-muted-foreground">Choose the prospect contact and deal title</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Prospect Name *</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.prospect_id || "none"}
+                    onValueChange={(value) => {
+                      const prospect = allianceUsers?.find(u => u.id === value);
+                      updateFormData({ 
+                        prospect_id: value === "none" ? "" : value,
+                        prospect_name: prospect?.name || "",
+                        contact_id: value === "none" ? "" : value
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select prospect..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="none">Select prospect...</SelectItem>
+                      {allianceUsers?.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          <div className="flex items-center gap-2">
+                            <Users className="w-3 h-3" />
+                            {user.name}
+                            {user.designation && (
+                              <span className="text-xs text-muted-foreground">({user.designation})</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open('/admin/alliance', '_blank')}
+                    title="Add New Prospect"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <Label>Deal Title *</Label>
@@ -791,41 +856,32 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
               </div>
 
               <div className="space-y-2">
-                <Label>Primary Contact</Label>
+                <Label>Additional Contacts</Label>
                 <div className="flex gap-2">
                   <Select
                     value={formData.contact_id || "none"}
                     onValueChange={(value) => updateFormData({ contact_id: value === "none" ? "" : value })}
                   >
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select a contact" />
+                      <SelectValue placeholder="Select additional contact" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No contact selected</SelectItem>
-                      {allianceUsers?.map((contact) => (
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="none">No additional contact</SelectItem>
+                      {allianceUsers?.filter(u => u.id !== formData.prospect_id).map((contact) => (
                         <SelectItem key={contact.id} value={contact.id}>
                           {contact.name} {contact.designation && `(${contact.designation})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => window.open('/admin/alliance', '_blank')}
-                    title="Add New Contact"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 2: Deal Type */}
-        {currentStep === 2 && (
+        {/* Step 3: Deal Type */}
+        {currentStep === 3 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Requirement Type</h3>
@@ -887,8 +943,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 3: Problem Area */}
-        {currentStep === 3 && (
+        {/* Step 4: Problem Area */}
+        {currentStep === 4 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Select Problem Area</h3>
@@ -1017,8 +1073,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 4: Solution */}
-        {currentStep === 4 && (
+        {/* Step 5: Solution */}
+        {currentStep === 5 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Recommended Solutions</h3>
@@ -1066,8 +1122,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 5: Timeline & Budget */}
-        {currentStep === 5 && (
+        {/* Step 6: Timeline & Budget */}
+        {currentStep === 6 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Buying Timeline & Budget</h3>
@@ -1150,8 +1206,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 6: Next Steps */}
-        {currentStep === 6 && (
+        {/* Step 7: Next Steps */}
+        {currentStep === 7 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Define Next Steps</h3>
@@ -1194,8 +1250,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 7: Critical Factors */}
-        {currentStep === 7 && (
+        {/* Step 8: Critical Factors */}
+        {currentStep === 8 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Critical Factors to Consider</h3>
@@ -1238,8 +1294,8 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
           </div>
         )}
 
-        {/* Step 8: Review & Finish */}
-        {currentStep === 8 && (
+        {/* Step 9: Review & Finish */}
+        {currentStep === 9 && (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Review Deal Details</h3>
@@ -1251,6 +1307,10 @@ export function DealWizard({ initialData, onSubmit, onCancel, isSubmitting, isEd
                 <div>
                   <p className="text-muted-foreground">Organization</p>
                   <p className="font-medium">{formData.organization_name || "Not selected"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Prospect</p>
+                  <p className="font-medium">{formData.prospect_name || "Not selected"}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Deal Title</p>
