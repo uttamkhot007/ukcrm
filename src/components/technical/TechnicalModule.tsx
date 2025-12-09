@@ -17,7 +17,7 @@ export function TechnicalModule({ initialTab = "contracts" }: TechnicalModulePro
         return <CustomerContactsView />;
       case "recommendations":
         return <ProductRecommendationSteps teamType="technical" />;
-      case "implementation-sow":
+      case "implementation-plan":
         return <SolutionDocumentationPage docType="implementation" teamType="technical" />;
       default:
         return <CustomerContractsView />;

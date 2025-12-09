@@ -206,6 +206,7 @@ export type Database = {
           address: string | null
           created_at: string
           created_by: string
+          customer_environment: Json | null
           description: string | null
           id: string
           industry: string | null
@@ -230,6 +231,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           created_by: string
+          customer_environment?: Json | null
           description?: string | null
           id?: string
           industry?: string | null
@@ -254,6 +256,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           created_by?: string
+          customer_environment?: Json | null
           description?: string | null
           id?: string
           industry?: string | null
@@ -2216,6 +2219,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "distributors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          branding: Json | null
+          content: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          footer_content: Json | null
+          header_content: Json | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          template_type: string
+          tenant_id: string | null
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          branding?: Json | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          footer_content?: Json | null
+          header_content?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          template_type: string
+          tenant_id?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          branding?: Json | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          footer_content?: Json | null
+          header_content?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          template_type?: string
+          tenant_id?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

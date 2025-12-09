@@ -394,7 +394,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
           { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
           { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
-          { id: "tech-implementation-sow", label: "Implementation SOW", icon: FileText },
+          { id: "tech-implementation-plan", label: "Implementation Plan", icon: FileText },
         ],
       });
 

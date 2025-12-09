@@ -346,7 +346,7 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
     });
   };
 
-  const docTypeLabel = docType === 'poc' ? 'POC Plan' : 'Implementation SOW';
+  const docTypeLabel = docType === 'poc' ? 'POC Plan' : 'Implementation Plan';
 
   // List view
   if (!isCreating && !selectedDoc) {
@@ -356,7 +356,7 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
           <div>
             <h2 className="text-2xl font-bold">{docTypeLabel} Documentation</h2>
             <p className="text-muted-foreground">
-              Create and manage {docType === 'poc' ? 'Proof of Concept plans' : 'Implementation SOW documents'} with AI assistance
+              Create and manage {docType === 'poc' ? 'Proof of Concept plans' : 'Implementation Plan documents'} with AI assistance
             </p>
           </div>
           <Dialog>
