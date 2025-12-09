@@ -316,6 +316,23 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-orange-500",
       });
 
+      // Tenders & Deal Desk
+      items.push({
+        id: "deal-desk",
+        label: "Tenders & Deal Desk",
+        icon: Gavel,
+        color: "text-amber-600",
+        isLink: true,
+        linkPath: "/tenders",
+        children: [
+          { id: "deal-desk-registration", label: "Deal Registration", icon: FileCheck },
+          { id: "deal-desk-oem-funnel", label: "OEM Funnel", icon: Target },
+          { id: "deal-desk-opportunities", label: "Tender Opportunities", icon: FileText },
+          { id: "deal-desk-bid-preparation", label: "Bid Preparation", icon: Users },
+          { id: "deal-desk-evaluation", label: "Awards", icon: Award },
+        ],
+      });
+
       // Accounts & Finance (merged module)
       items.push({
         id: "accounts-finance",
@@ -352,10 +369,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Technical Team
+      // Technical Module
       items.push({
         id: "tech",
-        label: "Technical Team",
+        label: "Technical Module",
         icon: Code,
         color: "text-tech",
         children: [
