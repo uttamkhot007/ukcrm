@@ -116,6 +116,19 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
     },
   });
 
+  // Fetch organizations from alliance_organizations
+  const { data: organizations = [] } = useQuery({
+    queryKey: ['alliance-organizations-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('alliance_organizations')
+        .select('id, name, organization_type, status')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch existing documentation
   const { data: documents = [], isLoading: isLoadingDocs } = useQuery({
     queryKey: ['solution-documentation', docType],
@@ -566,12 +579,22 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
               />
             </div>
             <div className="space-y-2">
-              <Label>Customer Name</Label>
-              <Input
-                value={formData.customer_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
-                placeholder="Enter customer name"
-              />
+              <Label>{docType === 'poc' ? 'Prospect Name' : 'Customer Name'}</Label>
+              <Select 
+                value={formData.customer_name} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, customer_name: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${docType === 'poc' ? 'prospect' : 'customer'}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map(org => (
+                    <SelectItem key={org.id} value={org.name}>
+                      {org.name} {org.organization_type && `(${org.organization_type})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
