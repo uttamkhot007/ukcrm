@@ -285,8 +285,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const getNavItems = (): NavItem[] => {
     const items: NavItem[] = [];
 
-    // Admin mode OR super admin shows ALL modules
-    if (portalMode === "admin" || isSuperAdmin) {
+    // Customer mode takes priority - only show customer portal items
+    if (portalMode === "customer") {
+      items.push(...customerPortalItems);
+      return items;
+    }
+
+    // Admin mode shows ALL modules (super admins in admin mode also get all modules)
+    if (portalMode === "admin") {
       // Dashboard first
       items.push({
         id: "dashboard",
@@ -592,9 +598,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       if (isSuperAdmin) {
         items.push(...superAdminItems);
       }
-    } else if (portalMode === "customer") {
-      // Customer mode - only support
-      items.push(...customerPortalItems);
     } else if (portalMode === "workspace") {
       // Workspace mode: Team-based access control
       // But if user has employee-only access, skip all team-based modules
