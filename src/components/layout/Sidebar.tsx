@@ -299,6 +299,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "sales-ai-assistant", label: "Sales AI", icon: Sparkles },
           { id: "sales-funnel", label: "Funnel Management", icon: Target },
+          { id: "sales-deal-registration", label: "Deal Registration", icon: FileCheck },
           { id: "sales-quotations", label: "Quotations", icon: FileText },
           { id: "sales-leads", label: "Lead Tracking", icon: Activity },
           { id: "sales-offerings", label: "Offerings", icon: Package },
