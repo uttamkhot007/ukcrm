@@ -238,11 +238,11 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // IMPORTANT: "manager" role does NOT automatically get all module access
   // Access is strictly based on user_teams assignments
   const hasTeamAccess = (requiredTeams: TeamType[], moduleId?: string): boolean => {
-    // Super admins always have access (only when in admin portal mode)
-    if (isSuperAdmin && portalMode === "admin") return true;
+    // Super admins always have access to all modules in any portal mode
+    if (isSuperAdmin) return true;
     
-    // Admin role has access to admin portal
-    if (role === "admin" && portalMode === "admin") return true;
+    // Admin role always has access to all modules
+    if (role === "admin") return true;
     
     // If console access exists but user doesn't have full_access, they only get employee modules
     if (consoleAccess && !consoleAccess.has_full_access) {
