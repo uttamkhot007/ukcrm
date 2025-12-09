@@ -662,7 +662,17 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
           additionalNotes: formData.additional_notes,
           docType: docType,
         }}
-        initialBranding={formData.branding?.companyName ? formData.branding : undefined}
+        initialBranding={formData.branding ? {
+          companyName: formData.branding.companyName || formData.branding.headerSettings?.companyName || '',
+          companyLogo: formData.branding.companyLogo || formData.branding.headerSettings?.logoUrl || '',
+          primaryColor: formData.branding.primaryColor || '#1e40af',
+          secondaryColor: formData.branding.secondaryColor || formData.branding.accentColor || '#3b82f6',
+          tagline: formData.branding.tagline || formData.branding.headerSettings?.tagline || '',
+          address: formData.branding.address || formData.branding.footerSettings?.address || '',
+          website: formData.branding.website || formData.branding.footerSettings?.website || '',
+          email: formData.branding.email || formData.branding.footerSettings?.contactEmail || '',
+          phone: formData.branding.phone || formData.branding.footerSettings?.phone || '',
+        } : undefined}
         initialVersionInfo={{
           versionNumber: formData.version_number,
           preparedBy: formData.prepared_by,
@@ -670,7 +680,10 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
           approvedBy: formData.approved_by,
           revisionHistory: formData.revision_history || [],
         }}
-        onSaveBranding={(branding) => setFormData(prev => ({ ...prev, branding }))}
+        onSaveBranding={(branding) => setFormData(prev => ({ 
+          ...prev, 
+          branding: { ...prev.branding, ...branding } 
+        }))}
         onSaveVersionInfo={(versionInfo) => setFormData(prev => ({
           ...prev,
           version_number: versionInfo.versionNumber,
