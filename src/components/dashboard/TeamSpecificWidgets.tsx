@@ -13,9 +13,14 @@ import {
   Phone,
   Calendar,
   FileText,
-  Briefcase
+  Briefcase,
+  Ticket,
+  Headphones,
+  AlertCircle,
+  CheckCircle
 } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { TechnicalTicketNotificationsWidget } from "./TechnicalTicketNotificationsWidget";
 
 interface TeamSpecificWidgetsProps {
   onNavigate: (module: string) => void;
@@ -28,6 +33,7 @@ export function TeamSpecificWidgets({ onNavigate }: TeamSpecificWidgetsProps) {
   const isPresalesTeam = teams.includes("presales");
   const isHRTeam = teams.includes("hr");
   const isFinanceTeam = teams.includes("finance");
+  const isTechnicalTeam = teams.includes("technical") || teams.includes("managed_services");
 
   if (isSalesTeam || isPresalesTeam) {
     return <SalesTeamWidgets onNavigate={onNavigate} userId={user?.id} />;
@@ -39,6 +45,10 @@ export function TeamSpecificWidgets({ onNavigate }: TeamSpecificWidgetsProps) {
 
   if (isFinanceTeam) {
     return <FinanceTeamWidgets onNavigate={onNavigate} />;
+  }
+
+  if (isTechnicalTeam) {
+    return <TechnicalTeamWidgets onNavigate={onNavigate} userId={user?.id} />;
   }
 
   return null;
@@ -533,6 +543,219 @@ function FinanceTeamWidgets({ onNavigate }: { onNavigate: (module: string) => vo
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function TechnicalTeamWidgets({ onNavigate, userId }: { onNavigate: (module: string) => void; userId?: string }) {
+  // Fetch tickets assigned to user
+  const { data: assignedTickets } = useQuery({
+    queryKey: ["technical-team-assigned-tickets", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .eq("assigned_to", userId)
+        .not("status", "in", '("resolved","closed")')
+        .order("priority", { ascending: true })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch tickets user created (internal tickets they raised)
+  const { data: myTickets } = useQuery({
+    queryKey: ["technical-team-my-tickets", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .eq("created_by", userId)
+        .not("status", "in", '("resolved","closed")')
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch ticket stats
+  const { data: ticketStats } = useQuery({
+    queryKey: ["technical-team-ticket-stats", userId],
+    queryFn: async () => {
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      
+      const [assignedResult, resolvedResult, myOpenResult] = await Promise.all([
+        supabase
+          .from("tickets")
+          .select("id, priority")
+          .eq("assigned_to", userId)
+          .not("status", "in", '("resolved","closed")'),
+        supabase
+          .from("tickets")
+          .select("id")
+          .eq("assigned_to", userId)
+          .eq("status", "resolved")
+          .gte("resolved_at", thirtyDaysAgo),
+        supabase
+          .from("tickets")
+          .select("id")
+          .eq("created_by", userId)
+          .not("status", "in", '("resolved","closed")'),
+      ]);
+
+      const openCount = assignedResult.data?.length || 0;
+      const criticalCount = assignedResult.data?.filter(t => t.priority === 'critical' || t.priority === 'high').length || 0;
+      const resolvedCount = resolvedResult.data?.length || 0;
+      const myOpenCount = myOpenResult.data?.length || 0;
+
+      return { openCount, criticalCount, resolvedCount, myOpenCount };
+    },
+    enabled: !!userId,
+  });
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "critical": return "bg-destructive text-destructive-foreground";
+      case "high": return "bg-orange-500 text-white";
+      case "medium": return "bg-amber-500 text-black";
+      case "low": return "bg-blue-500 text-white";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "open": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+      case "in_progress": return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+      case "pending_customer": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+      case "escalated": return "bg-red-500/10 text-red-600 border-red-500/20";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Technical Support Dashboard</h2>
+      
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+          <CardContent className="p-4 text-center">
+            <Ticket className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+            <p className="text-2xl font-bold">{ticketStats?.openCount || 0}</p>
+            <p className="text-xs text-muted-foreground">Open Tickets</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20">
+          <CardContent className="p-4 text-center">
+            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
+            <p className="text-2xl font-bold">{ticketStats?.criticalCount || 0}</p>
+            <p className="text-xs text-muted-foreground">High Priority</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+          <CardContent className="p-4 text-center">
+            <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+            <p className="text-2xl font-bold">{ticketStats?.resolvedCount || 0}</p>
+            <p className="text-xs text-muted-foreground">Resolved (30d)</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+          <CardContent className="p-4 text-center">
+            <Headphones className="h-8 w-8 mx-auto mb-2 text-purple-500" />
+            <p className="text-2xl font-bold">{ticketStats?.myOpenCount || 0}</p>
+            <p className="text-xs text-muted-foreground">My Open Requests</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Assigned Tickets */}
+        <Card className="bg-card/50 border-border/50 lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg font-semibold">Assigned Tickets</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onNavigate("support")}
+              className="text-primary hover:text-primary/80"
+            >
+              View All <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {!assignedTickets || assignedTickets.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle className="h-10 w-10 mx-auto mb-2 text-green-500" />
+                <p className="text-sm">No open tickets assigned to you</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {assignedTickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors cursor-pointer"
+                    onClick={() => onNavigate("support")}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-mono text-muted-foreground">{ticket.ticket_number}</span>
+                        <Badge className={`text-[10px] px-1.5 py-0 ${getPriorityColor(ticket.priority)}`}>
+                          {ticket.priority}
+                        </Badge>
+                      </div>
+                      <p className="font-medium text-sm truncate">{ticket.title}</p>
+                    </div>
+                    <Badge variant="outline" className={`text-xs capitalize ml-2 ${getStatusColor(ticket.status)}`}>
+                      {ticket.status.replace("_", " ")}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Ticket Notifications Widget */}
+        <div className="lg:col-span-1">
+          <TechnicalTicketNotificationsWidget onNavigate={onNavigate} />
+        </div>
+      </div>
+
+      {/* My Requests */}
+      {myTickets && myTickets.length > 0 && (
+        <Card className="bg-card/50 border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg font-semibold">My Open Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {myTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{ticket.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Created {format(new Date(ticket.created_at), "MMM d, yyyy")}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className={`text-xs capitalize ${getStatusColor(ticket.status)}`}>
+                    {ticket.status.replace("_", " ")}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
