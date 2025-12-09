@@ -29,6 +29,7 @@ interface NewDealRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   dealId?: string;
+  onSuccess?: () => void;
 }
 
 const vendorPrograms = [
@@ -42,7 +43,7 @@ const vendorPrograms = [
   { vendor: "Other", programs: ["Custom"] },
 ];
 
-export function NewDealRegistrationDialog({ open, onOpenChange, dealId }: NewDealRegistrationDialogProps) {
+export function NewDealRegistrationDialog({ open, onOpenChange, dealId, onSuccess }: NewDealRegistrationDialogProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
@@ -109,6 +110,7 @@ export function NewDealRegistrationDialog({ open, onOpenChange, dealId }: NewDea
       toast.success(`Deal Registration ${data.dr_number} created successfully`);
       onOpenChange(false);
       resetForm();
+      onSuccess?.();
     },
     onError: (error) => {
       toast.error("Failed to create deal registration: " + error.message);

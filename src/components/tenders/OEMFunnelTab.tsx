@@ -23,8 +23,19 @@ interface DealRegistration {
   requester_id: string;
 }
 
+interface Deal {
+  id: string;
+  title: string;
+  value: number;
+  stage: string;
+  organization_name: string | null;
+  alliance_organization_id: string | null;
+  solution_id: string | null;
+}
+
 interface OEMFunnelTabProps {
   dealRegistrations: DealRegistration[];
+  deals?: Deal[];
   loading: boolean;
 }
 
@@ -49,7 +60,7 @@ const statusColors = {
   closed: 'bg-purple-500',
 };
 
-export function OEMFunnelTab({ dealRegistrations, loading }: OEMFunnelTabProps) {
+export function OEMFunnelTab({ dealRegistrations, deals = [], loading }: OEMFunnelTabProps) {
   const [selectedOEM, setSelectedOEM] = useState<string>('all');
   const [expandedOEM, setExpandedOEM] = useState<string | null>(null);
 
