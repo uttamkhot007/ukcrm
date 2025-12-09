@@ -116,13 +116,20 @@ export const SolutionDocumentationPage: React.FC<SolutionDocumentationPageProps>
     },
   });
 
-  // Fetch organizations from alliance_organizations
+  // Fetch organizations from alliance_organizations (only customers, prospects, partners)
   const { data: organizations = [] } = useQuery({
-    queryKey: ['alliance-organizations-list'],
+    queryKey: ['alliance-organizations-list', docType],
     queryFn: async () => {
+      // For POC Plans: show prospects and partners
+      // For Implementation Plans: show customers and partners
+      const validTypes = docType === 'poc' 
+        ? ['prospect', 'partner'] 
+        : ['customer', 'partner'];
+      
       const { data, error } = await supabase
         .from('alliance_organizations')
         .select('id, name, organization_type, status')
+        .in('organization_type', validTypes)
         .order('name');
       if (error) throw error;
       return data;
