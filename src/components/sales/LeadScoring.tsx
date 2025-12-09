@@ -1,0 +1,261 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap } from "lucide-react";
+
+interface LeadScore {
+  score: number;
+  breakdown: {
+    company_presence: number;
+    email_quality: number;
+    source_quality: number;
+    engagement: number;
+    industry_fit: number;
+  };
+  insights: string;
+  recommended_actions: string[];
+}
+
+export function LeadScoring() {
+  const queryClient = useQueryClient();
+  const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
+
+  const { data: leads, isLoading } = useQuery({
+    queryKey: ['leads-with-scores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('lead_score', { ascending: false, nullsFirst: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const scoreLead = useMutation({
+    mutationFn: async (lead: any) => {
+      setScoringLeadId(lead.id);
+      const { data, error } = await supabase.functions.invoke('sales-ai-insights', {
+        body: { action: 'score_lead', data: { lead } }
+      });
+      
+      if (error) throw error;
+      return data as LeadScore;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads-with-scores'] });
+      toast.success("Lead scored successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to score lead: " + error.message);
+    },
+    onSettled: () => {
+      setScoringLeadId(null);
+    }
+  });
+
+  const scoreAllLeads = useMutation({
+    mutationFn: async () => {
+      const unscored = leads?.filter(l => !l.lead_score || !l.last_scored_at) || [];
+      for (const lead of unscored.slice(0, 10)) {
+        await scoreLead.mutateAsync(lead);
+      }
+    },
+    onSuccess: () => {
+      toast.success("All leads scored");
+    }
+  });
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-500";
+    if (score >= 60) return "text-yellow-500";
+    if (score >= 40) return "text-orange-500";
+    return "text-red-500";
+  };
+
+  const getScoreBadge = (score: number) => {
+    if (score >= 80) return { label: "Hot", variant: "default" as const, icon: Zap };
+    if (score >= 60) return { label: "Warm", variant: "secondary" as const, icon: TrendingUp };
+    if (score >= 40) return { label: "Cool", variant: "outline" as const, icon: AlertCircle };
+    return { label: "Cold", variant: "destructive" as const, icon: AlertCircle };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  const hotLeads = leads?.filter(l => (l.lead_score || 0) >= 80) || [];
+  const warmLeads = leads?.filter(l => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80) || [];
+  const unscoredLeads = leads?.filter(l => !l.lead_score) || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Brain className="h-6 w-6 text-primary" />
+            AI Lead Scoring
+          </h2>
+          <p className="text-muted-foreground">AI-powered lead scoring to identify hot prospects</p>
+        </div>
+        <Button
+          onClick={() => scoreAllLeads.mutate()}
+          disabled={scoreAllLeads.isPending || unscoredLeads.length === 0}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
+          Score All Leads ({unscoredLeads.length})
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Hot Leads</p>
+                <p className="text-2xl font-bold text-green-500">{hotLeads.length}</p>
+              </div>
+              <Zap className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Warm Leads</p>
+                <p className="text-2xl font-bold text-yellow-500">{warmLeads.length}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Leads</p>
+                <p className="text-2xl font-bold">{leads?.length || 0}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Unscored</p>
+                <p className="text-2xl font-bold text-muted-foreground">{unscoredLeads.length}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lead List */}
+      <div className="space-y-4">
+        {leads?.map((lead) => {
+          const score = lead.lead_score || 0;
+          const badge = getScoreBadge(score);
+          const BadgeIcon = badge.icon;
+          const breakdown = lead.score_breakdown as LeadScore['breakdown'] | null;
+
+          return (
+            <Card key={lead.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">{lead.title || 'Unnamed Lead'}</h3>
+                      {score > 0 && (
+                        <Badge variant={badge.variant} className="flex items-center gap-1">
+                          <BadgeIcon className="h-3 w-3" />
+                          {badge.label}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">{lead.source || 'Unknown'} • {lead.status}</p>
+                    
+                    {lead.ai_insights && (
+                      <p className="mt-2 text-sm bg-muted/50 p-2 rounded">{lead.ai_insights}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {score > 0 ? (
+                      <div className="text-center">
+                        <p className={`text-3xl font-bold ${getScoreColor(score)}`}>{score}</p>
+                        <p className="text-xs text-muted-foreground">Score</p>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => scoreLead.mutate(lead)}
+                        disabled={scoringLeadId === lead.id}
+                      >
+                        {scoringLeadId === lead.id ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Brain className="h-4 w-4 mr-1" />
+                            Score
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {breakdown && (
+                  <div className="mt-4 grid grid-cols-5 gap-2">
+                    {Object.entries(breakdown).map(([key, value]) => (
+                      <div key={key} className="text-center">
+                        <Progress value={value * 5} className="h-2 mb-1" />
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {key.replace(/_/g, ' ')}
+                        </p>
+                        <p className="text-sm font-medium">{value}/20</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {score > 0 && (
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Last scored: {lead.last_scored_at ? new Date(lead.last_scored_at).toLocaleDateString() : 'Never'}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => scoreLead.mutate(lead)}
+                      disabled={scoringLeadId === lead.id}
+                    >
+                      <RefreshCw className={`h-3 w-3 mr-1 ${scoringLeadId === lead.id ? 'animate-spin' : ''}`} />
+                      Rescore
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

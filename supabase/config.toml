@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.generate-solution-documentation]
 verify_jwt = true
+
+[functions.sales-ai-insights]
+verify_jwt = true

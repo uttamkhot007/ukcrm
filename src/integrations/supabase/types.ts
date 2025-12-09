@@ -1911,6 +1911,7 @@ export type Database = {
       deals: {
         Row: {
           actual_close_date: string | null
+          ai_recommendations: string[] | null
           alliance_organization_id: string | null
           assigned_to: string | null
           buying_timeline: string | null
@@ -1926,14 +1927,17 @@ export type Database = {
           expected_close_date: string | null
           id: string
           is_budgeted: boolean | null
+          last_analyzed_at: string | null
           lead_id: string | null
           loss_reason: string | null
+          next_best_actions: string[] | null
           next_steps: string | null
           organization_name: string | null
           probability: number | null
           problem_requirement: string | null
           quantity: number | null
           requirement_category: string | null
+          risk_factors: string[] | null
           solution_id: string | null
           stage: Database["public"]["Enums"]["deal_stage"]
           tenant_id: string | null
@@ -1943,9 +1947,11 @@ export type Database = {
           updated_by: string | null
           user_id: string
           value: number
+          win_probability: number | null
         }
         Insert: {
           actual_close_date?: string | null
+          ai_recommendations?: string[] | null
           alliance_organization_id?: string | null
           assigned_to?: string | null
           buying_timeline?: string | null
@@ -1961,14 +1967,17 @@ export type Database = {
           expected_close_date?: string | null
           id?: string
           is_budgeted?: boolean | null
+          last_analyzed_at?: string | null
           lead_id?: string | null
           loss_reason?: string | null
+          next_best_actions?: string[] | null
           next_steps?: string | null
           organization_name?: string | null
           probability?: number | null
           problem_requirement?: string | null
           quantity?: number | null
           requirement_category?: string | null
+          risk_factors?: string[] | null
           solution_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           tenant_id?: string | null
@@ -1978,9 +1987,11 @@ export type Database = {
           updated_by?: string | null
           user_id: string
           value?: number
+          win_probability?: number | null
         }
         Update: {
           actual_close_date?: string | null
+          ai_recommendations?: string[] | null
           alliance_organization_id?: string | null
           assigned_to?: string | null
           buying_timeline?: string | null
@@ -1996,14 +2007,17 @@ export type Database = {
           expected_close_date?: string | null
           id?: string
           is_budgeted?: boolean | null
+          last_analyzed_at?: string | null
           lead_id?: string | null
           loss_reason?: string | null
+          next_best_actions?: string[] | null
           next_steps?: string | null
           organization_name?: string | null
           probability?: number | null
           problem_requirement?: string | null
           quantity?: number | null
           requirement_category?: string | null
+          risk_factors?: string[] | null
           solution_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           tenant_id?: string | null
@@ -2013,6 +2027,7 @@ export type Database = {
           updated_by?: string | null
           user_id?: string
           value?: number
+          win_probability?: number | null
         }
         Relationships: [
           {
@@ -2281,6 +2296,162 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "document_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_sequence_enrollments: {
+        Row: {
+          completed_at: string | null
+          contact_id: string | null
+          current_step: number | null
+          deal_id: string | null
+          enrolled_at: string
+          enrolled_by: string
+          id: string
+          lead_id: string | null
+          sequence_id: string | null
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id?: string | null
+          current_step?: number | null
+          deal_id?: string | null
+          enrolled_at?: string
+          enrolled_by: string
+          id?: string
+          lead_id?: string | null
+          sequence_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string | null
+          current_step?: number | null
+          deal_id?: string | null
+          enrolled_at?: string
+          enrolled_by?: string
+          id?: string
+          lead_id?: string | null
+          sequence_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequence_enrollments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_sequence_enrollments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_sequence_enrollments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_sequence_enrollments_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "email_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_sequence_steps: {
+        Row: {
+          body: string
+          created_at: string
+          delay_days: number | null
+          delay_hours: number | null
+          id: string
+          sequence_id: string | null
+          step_order: number
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          delay_days?: number | null
+          delay_hours?: number | null
+          id?: string
+          sequence_id?: string | null
+          step_order: number
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          delay_days?: number | null
+          delay_hours?: number | null
+          id?: string
+          sequence_id?: string | null
+          step_order?: number
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "email_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_sequences: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          status: string | null
+          tenant_id: string | null
+          trigger_conditions: Json | null
+          trigger_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          tenant_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          tenant_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequences_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -3562,13 +3733,17 @@ export type Database = {
       }
       leads: {
         Row: {
+          ai_insights: string | null
           assigned_to: string | null
           contact_id: string | null
           created_at: string
           created_by: string | null
           estimated_value: number | null
           id: string
+          last_scored_at: string | null
+          lead_score: number | null
           notes: string | null
+          score_breakdown: Json | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
           tenant_id: string | null
@@ -3578,13 +3753,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_insights?: string | null
           assigned_to?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
           estimated_value?: number | null
           id?: string
+          last_scored_at?: string | null
+          lead_score?: number | null
           notes?: string | null
+          score_breakdown?: Json | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           tenant_id?: string | null
@@ -3594,13 +3773,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_insights?: string | null
           assigned_to?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
           estimated_value?: number | null
           id?: string
+          last_scored_at?: string | null
+          lead_score?: number | null
           notes?: string | null
+          score_breakdown?: Json | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           tenant_id?: string | null
@@ -6634,6 +6817,112 @@ export type Database = {
           },
           {
             foreignKeyName: "rfp_responses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_automations: {
+        Row: {
+          actions: Json | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          tenant_id: string | null
+          trigger_conditions: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          tenant_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          tenant_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_automations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_forecasts: {
+        Row: {
+          ai_analysis: string | null
+          confidence_score: number | null
+          created_at: string
+          factors: Json | null
+          forecast_period: string
+          id: string
+          period_end: string
+          period_start: string
+          predicted_revenue: number | null
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+          weighted_pipeline: number | null
+        }
+        Insert: {
+          ai_analysis?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          factors?: Json | null
+          forecast_period: string
+          id?: string
+          period_end: string
+          period_start: string
+          predicted_revenue?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+          weighted_pipeline?: number | null
+        }
+        Update: {
+          ai_analysis?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          factors?: Json | null
+          forecast_period?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          predicted_revenue?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+          weighted_pipeline?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_forecasts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
