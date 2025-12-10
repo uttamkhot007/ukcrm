@@ -35,6 +35,9 @@ import { AssetsModule } from "@/components/assets/AssetsModule";
 import { ProjectsModule } from "@/components/projects/ProjectsModule";
 import { ITModule } from "@/components/it/ITModule";
 import { ManagementAnalyticsModule } from "@/components/analytics/ManagementAnalyticsModule";
+import { VCFODashboard } from "@/components/dashboard/VCFODashboard";
+import { VCISODashboard } from "@/components/dashboard/VCISODashboard";
+import { VCRODashboard } from "@/components/dashboard/VCRODashboard";
 import { TechnicalModule } from "@/components/technical/TechnicalModule";
 import { DailyActivityTracker } from "@/components/employee/DailyActivityTracker";
 import { DealDeskModule } from "@/components/tenders/DealDeskModule";
@@ -386,8 +389,13 @@ const Index = () => {
       case "management":
       case "management-analytics":
         return <ManagementAnalyticsModule />;
+      case "management-vcfo":
+        return <VCFODashboard />;
+      case "management-vciso":
+        return <VCISODashboard />;
+      case "management-vcro":
+        return <VCRODashboard />;
       case "management-performance":
-      case "management-cashflow":
         return <PlaceholderModule title="Management" section={activeModule} />;
       
       // Customer Portal

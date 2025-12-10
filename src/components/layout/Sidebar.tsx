@@ -187,8 +187,10 @@ const adminItems: NavItem[] = [
     requiredRoles: ["admin"],
     children: [
       { id: "management-analytics", label: "Analytics Dashboard", icon: BarChart3 },
+      { id: "management-vcfo", label: "vCFO Dashboard", icon: DollarSign },
+      { id: "management-vciso", label: "vCISO Dashboard", icon: Shield },
+      { id: "management-vcro", label: "vCRO Dashboard", icon: TrendingUp },
       { id: "management-performance", label: "People Performance", icon: Activity },
-      { id: "management-cashflow", label: "Inflow vs Outflow", icon: DollarSign },
     ],
   },
   {
