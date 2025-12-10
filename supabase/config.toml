@@ -77,3 +77,6 @@ verify_jwt = true
 
 [functions.sales-ai-insights]
 verify_jwt = true
+
+[functions.executive-insights]
+verify_jwt = true

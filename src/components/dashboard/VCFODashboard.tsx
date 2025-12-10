@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useExecutiveInsights } from "@/hooks/useExecutiveInsights";
+import { AIInsightsPanel } from "./AIInsightsPanel";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -34,6 +37,7 @@ import {
 
 export function VCFODashboard() {
   const { currentTenant } = useTenant();
+  const { insights, isLoading: aiLoading, fetchInsights } = useExecutiveInsights();
 
   const { data: financialData } = useQuery({
     queryKey: ["vcfo-financial-data", currentTenant?.id],
@@ -136,6 +140,24 @@ export function VCFODashboard() {
   };
 
   const collectionRate = totalInvoiced > 0 ? (paidInvoices / totalInvoiced) * 100 : 0;
+
+  const handleFetchInsights = () => {
+    fetchInsights("vcfo", {
+      totalRevenue,
+      pipelineValue,
+      pendingInvoices,
+      overdueInvoices,
+      totalExpenses,
+      collectionRate,
+    });
+  };
+
+  // Auto-fetch insights on initial load when data is ready
+  useEffect(() => {
+    if (financialData && !insights && !aiLoading) {
+      handleFetchInsights();
+    }
+  }, [financialData]);
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
@@ -345,33 +367,43 @@ export function VCFODashboard() {
         </Card>
       </div>
 
-      {/* Cash Flow */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Cash Flow Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cashFlowData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis tickFormatter={(v) => formatCurrency(v)} className="text-xs" />
-                <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{ 
-                    backgroundColor: "hsl(var(--card))", 
-                    border: "1px solid hsl(var(--border))" 
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-2))" />
-                <Bar dataKey="expenses" name="Expenses" fill="hsl(var(--chart-4))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {/* AI Insights & Cash Flow */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AIInsightsPanel
+          insights={insights}
+          isLoading={aiLoading}
+          error={null}
+          onRefresh={handleFetchInsights}
+          title="AI Financial Insights"
+        />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Cash Flow Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={cashFlowData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" />
+                  <YAxis tickFormatter={(v) => formatCurrency(v)} className="text-xs" />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{ 
+                      backgroundColor: "hsl(var(--card))", 
+                      border: "1px solid hsl(var(--border))" 
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-2))" />
+                  <Bar dataKey="expenses" name="Expenses" fill="hsl(var(--chart-4))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
