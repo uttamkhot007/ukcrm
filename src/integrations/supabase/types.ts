@@ -1655,6 +1655,96 @@ export type Database = {
           },
         ]
       }
+      cynet_licenses: {
+        Row: {
+          assigned_endpoints: number | null
+          billing_type: string | null
+          clm_retention: string | null
+          created_at: string
+          created_by: string | null
+          cynet_id: string
+          endpoints_used: number | null
+          hierarchy_path: string | null
+          id: string
+          integrations_count: number | null
+          integrations_info: string | null
+          monthly_data_ingestion: number | null
+          notes: string | null
+          organization_id: string | null
+          parent_cynet_id: string | null
+          parent_name: string | null
+          procured_licenses: number | null
+          site_name: string
+          status: string | null
+          tenant_id: string | null
+          total_groups: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_endpoints?: number | null
+          billing_type?: string | null
+          clm_retention?: string | null
+          created_at?: string
+          created_by?: string | null
+          cynet_id: string
+          endpoints_used?: number | null
+          hierarchy_path?: string | null
+          id?: string
+          integrations_count?: number | null
+          integrations_info?: string | null
+          monthly_data_ingestion?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          parent_cynet_id?: string | null
+          parent_name?: string | null
+          procured_licenses?: number | null
+          site_name: string
+          status?: string | null
+          tenant_id?: string | null
+          total_groups?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_endpoints?: number | null
+          billing_type?: string | null
+          clm_retention?: string | null
+          created_at?: string
+          created_by?: string | null
+          cynet_id?: string
+          endpoints_used?: number | null
+          hierarchy_path?: string | null
+          id?: string
+          integrations_count?: number | null
+          integrations_info?: string | null
+          monthly_data_ingestion?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          parent_cynet_id?: string | null
+          parent_name?: string | null
+          procured_licenses?: number | null
+          site_name?: string
+          status?: string | null
+          tenant_id?: string | null
+          total_groups?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cynet_licenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cynet_licenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_activities: {
         Row: {
           activity_category: string

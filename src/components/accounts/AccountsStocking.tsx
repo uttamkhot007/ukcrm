@@ -18,6 +18,7 @@ import {
   TrendingDown,
   Warehouse,
   BarChart3,
+  Shield,
 } from "lucide-react";
 import {
   Table,
@@ -48,6 +49,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CynetLicensesTab } from "./CynetLicensesTab";
 
 interface InventoryItem {
   id: string;
@@ -446,6 +448,10 @@ export function AccountsStocking() {
               <TabsList>
                 <TabsTrigger value="inventory">Inventory</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="cynet" className="flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  Cynet Licenses
+                </TabsTrigger>
               </TabsList>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -558,6 +564,10 @@ export function AccountsStocking() {
                   </TableBody>
                 </Table>
               )}
+            </TabsContent>
+
+            <TabsContent value="cynet" className="m-0">
+              <CynetLicensesTab />
             </TabsContent>
           </Tabs>
         </CardContent>
