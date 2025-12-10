@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useExecutiveInsights } from "@/hooks/useExecutiveInsights";
+import { AIInsightsPanel } from "./AIInsightsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -39,6 +42,7 @@ import {
 
 export function VCRODashboard() {
   const { currentTenant } = useTenant();
+  const { insights, isLoading: aiLoading, fetchInsights } = useExecutiveInsights();
 
   const { data: revenueData } = useQuery({
     queryKey: ["vcro-revenue-data", currentTenant?.id],
@@ -189,6 +193,25 @@ export function VCRODashboard() {
         return sum + days;
       }, 0) / closedWonDeals.length
     : 0;
+
+  const handleFetchInsights = () => {
+    fetchInsights("vcro", {
+      totalRevenue,
+      pipelineValue,
+      winRate,
+      avgDealSize,
+      targetAttainment,
+      avgDealCycle,
+      activeDeals: activeDeals.length,
+      expiringRenewals: expiringRenewals.length,
+    });
+  };
+
+  useEffect(() => {
+    if (revenueData && !insights && !aiLoading) {
+      handleFetchInsights();
+    }
+  }, [revenueData]);
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
@@ -428,42 +451,52 @@ export function VCRODashboard() {
         </Card>
       </div>
 
-      {/* Target Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quarterly Target Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm">
-              <span>Current: {formatCurrency(totalRevenue)}</span>
-              <span>Target: {formatCurrency(quarterlyTarget)}</span>
+      {/* AI Insights & Target Progress */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AIInsightsPanel
+          insights={insights}
+          isLoading={aiLoading}
+          error={null}
+          onRefresh={handleFetchInsights}
+          title="AI Revenue Insights"
+        />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Quarterly Target Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <span>Current: {formatCurrency(totalRevenue)}</span>
+                <span>Target: {formatCurrency(quarterlyTarget)}</span>
+              </div>
+              <Progress 
+                value={Math.min(targetAttainment, 100)} 
+                className="h-4"
+              />
+              <div className="grid grid-cols-4 gap-4 text-center text-sm">
+                <div>
+                  <div className="font-semibold">{formatCurrency(quarterlyTarget * 0.25)}</div>
+                  <div className="text-muted-foreground">25%</div>
+                </div>
+                <div>
+                  <div className="font-semibold">{formatCurrency(quarterlyTarget * 0.5)}</div>
+                  <div className="text-muted-foreground">50%</div>
+                </div>
+                <div>
+                  <div className="font-semibold">{formatCurrency(quarterlyTarget * 0.75)}</div>
+                  <div className="text-muted-foreground">75%</div>
+                </div>
+                <div>
+                  <div className="font-semibold">{formatCurrency(quarterlyTarget)}</div>
+                  <div className="text-muted-foreground">100%</div>
+                </div>
+              </div>
             </div>
-            <Progress 
-              value={Math.min(targetAttainment, 100)} 
-              className="h-4"
-            />
-            <div className="grid grid-cols-4 gap-4 text-center text-sm">
-              <div>
-                <div className="font-semibold">{formatCurrency(quarterlyTarget * 0.25)}</div>
-                <div className="text-muted-foreground">25%</div>
-              </div>
-              <div>
-                <div className="font-semibold">{formatCurrency(quarterlyTarget * 0.5)}</div>
-                <div className="text-muted-foreground">50%</div>
-              </div>
-              <div>
-                <div className="font-semibold">{formatCurrency(quarterlyTarget * 0.75)}</div>
-                <div className="text-muted-foreground">75%</div>
-              </div>
-              <div>
-                <div className="font-semibold">{formatCurrency(quarterlyTarget)}</div>
-                <div className="text-muted-foreground">100%</div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

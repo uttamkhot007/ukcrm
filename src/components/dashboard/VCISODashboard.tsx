@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useExecutiveInsights } from "@/hooks/useExecutiveInsights";
+import { AIInsightsPanel } from "./AIInsightsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -39,6 +42,7 @@ import {
 
 export function VCISODashboard() {
   const { currentTenant } = useTenant();
+  const { insights, isLoading: aiLoading, fetchInsights } = useExecutiveInsights();
 
   const { data: securityData } = useQuery({
     queryKey: ["vciso-security-data", currentTenant?.id],
@@ -156,6 +160,24 @@ export function VCISODashboard() {
   };
 
   const risk = getRiskLevel();
+
+  const handleFetchInsights = () => {
+    fetchInsights("vciso", {
+      complianceScore,
+      openIncidents,
+      criticalTickets,
+      nonCompliantControls,
+      totalControls,
+      frameworkCount: frameworks.length,
+      riskLevel: risk.level,
+    });
+  };
+
+  useEffect(() => {
+    if (securityData && !insights && !aiLoading) {
+      handleFetchInsights();
+    }
+  }, [securityData]);
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
@@ -453,6 +475,15 @@ export function VCISODashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Security Insights */}
+      <AIInsightsPanel
+        insights={insights}
+        isLoading={aiLoading}
+        error={null}
+        onRefresh={handleFetchInsights}
+        title="AI Security Insights"
+      />
     </div>
   );
 }
