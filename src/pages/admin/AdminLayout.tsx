@@ -18,6 +18,7 @@ export default function AdminLayout() {
   const getActiveModule = () => {
     const path = location.pathname;
     if (path.includes("/admin/organization")) return "admin-center-organization";
+    if (path.includes("/admin/whitelabel")) return "admin-center-whitelabel";
     if (path.includes("/admin/users")) return "admin-center-users";
     if (path.includes("/admin/integrations")) return "admin-center-integrations";
     if (path.includes("/admin/documentation")) return "admin-center-documentation";

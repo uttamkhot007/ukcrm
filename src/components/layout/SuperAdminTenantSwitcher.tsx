@@ -71,10 +71,12 @@ export function SuperAdminTenantSwitcher() {
               <Avatar className="h-5 w-5">
                 <AvatarImage src={currentTenant.logo_url || undefined} />
                 <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                  {getInitials(currentTenant.name)}
+                  {getInitials(currentTenant.branding?.display_name || currentTenant.name)}
                 </AvatarFallback>
               </Avatar>
-              <span className="truncate text-sm">{currentTenant.name}</span>
+              <span className="truncate text-sm">
+                {currentTenant.branding?.display_name || currentTenant.name}
+              </span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -101,11 +103,13 @@ export function SuperAdminTenantSwitcher() {
                     <Avatar className="h-6 w-6 shrink-0">
                       <AvatarImage src={membership.tenant.logo_url || undefined} />
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                        {getInitials(membership.tenant.name)}
+                        {getInitials(membership.tenant.branding?.display_name || membership.tenant.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col min-w-0">
-                      <span className="truncate text-sm font-medium">{membership.tenant.name}</span>
+                      <span className="truncate text-sm font-medium">
+                        {membership.tenant.branding?.display_name || membership.tenant.name}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {membership.tenant.slug}
                       </span>
