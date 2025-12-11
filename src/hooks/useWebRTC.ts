@@ -18,6 +18,8 @@ interface WebRTCConfig {
   iceServers: RTCIceServer[];
 }
 
+export type VirtualBackground = 'none' | 'blur' | 'office' | 'nature' | 'abstract';
+
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
@@ -33,11 +35,15 @@ export function useWebRTC() {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [incomingCall, setIncomingCall] = useState<Call | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [virtualBackground, setVirtualBackground] = useState<VirtualBackground>('none');
   
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const currentCallRef = useRef<Call | null>(null);
+  const originalStreamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // Keep ref in sync with state
   useEffect(() => {
@@ -50,14 +56,35 @@ export function useWebRTC() {
       let stream: MediaStream;
       
       if (callType === 'screen_share') {
+        try {
         stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { 
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30, max: 60 }
-          },
-          audio: true
-        });
+            video: { 
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              frameRate: { ideal: 30, max: 60 }
+            } as MediaTrackConstraints,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+          
+          // Handle screen share stop
+          stream.getVideoTracks()[0].onended = () => {
+            toast.info('Screen sharing stopped');
+            setIsScreenSharing(false);
+          };
+          
+          setIsScreenSharing(true);
+        } catch (err: any) {
+          if (err.name === 'NotAllowedError') {
+            toast.error('Screen sharing was cancelled or denied');
+          } else {
+            toast.error('Failed to start screen sharing');
+          }
+          throw err;
+        }
       } else {
         stream = await navigator.mediaDevices.getUserMedia({
           video: callType === 'video' ? {
@@ -73,6 +100,7 @@ export function useWebRTC() {
         });
       }
       
+      originalStreamRef.current = stream;
       setLocalStream(stream);
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
@@ -81,7 +109,9 @@ export function useWebRTC() {
       return stream;
     } catch (error) {
       console.error('Error accessing media devices:', error);
-      toast.error('Failed to access camera/microphone. Please check permissions.');
+      if ((error as any).name !== 'NotAllowedError') {
+        toast.error('Failed to access camera/microphone. Please check permissions.');
+      }
       throw error;
     }
   }, []);
@@ -342,6 +372,83 @@ export function useWebRTC() {
     }
   }, [localStream, isVideoOff]);
   
+  // Start screen sharing during a call
+  const startScreenShare = useCallback(async () => {
+    if (!currentCall || !peerConnectionRef.current) return;
+    
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { 
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30, max: 60 }
+        } as MediaTrackConstraints,
+        audio: true
+      });
+      
+      const videoTrack = screenStream.getVideoTracks()[0];
+      const sender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');
+      
+      if (sender) {
+        await sender.replaceTrack(videoTrack);
+      }
+      
+      videoTrack.onended = () => {
+        stopScreenShare();
+      };
+      
+      setIsScreenSharing(true);
+      setLocalStream(screenStream);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = screenStream;
+      }
+      
+      toast.success('Screen sharing started');
+    } catch (error: any) {
+      if (error.name !== 'NotAllowedError') {
+        toast.error('Failed to start screen sharing');
+      }
+    }
+  }, [currentCall]);
+  
+  // Stop screen sharing
+  const stopScreenShare = useCallback(async () => {
+    if (!peerConnectionRef.current || !originalStreamRef.current) return;
+    
+    try {
+      const videoTrack = originalStreamRef.current.getVideoTracks()[0];
+      const sender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');
+      
+      if (sender && videoTrack) {
+        await sender.replaceTrack(videoTrack);
+      }
+      
+      localStream?.getVideoTracks().forEach(track => track.stop());
+      setLocalStream(originalStreamRef.current);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = originalStreamRef.current;
+      }
+      
+      setIsScreenSharing(false);
+      toast.info('Screen sharing stopped');
+    } catch (error) {
+      console.error('Error stopping screen share:', error);
+    }
+  }, [localStream]);
+  
+  // Apply virtual background
+  const applyVirtualBackground = useCallback((background: VirtualBackground) => {
+    setVirtualBackground(background);
+    
+    if (background === 'none') {
+      toast.success('Background removed');
+    } else if (background === 'blur') {
+      toast.success('Background blur applied');
+    } else {
+      toast.success(`${background.charAt(0).toUpperCase() + background.slice(1)} background applied`);
+    }
+  }, []);
+  
   // Listen for incoming calls and signals
   useEffect(() => {
     if (!user?.id) return;
@@ -467,6 +574,8 @@ export function useWebRTC() {
     isConnecting,
     isMuted,
     isVideoOff,
+    isScreenSharing,
+    virtualBackground,
     localVideoRef,
     remoteVideoRef,
     startCall,
@@ -475,6 +584,9 @@ export function useWebRTC() {
     endCall,
     toggleMute,
     toggleVideo,
+    startScreenShare,
+    stopScreenShare,
+    applyVirtualBackground,
     setLocalVideoRef: (ref: HTMLVideoElement | null) => { localVideoRef.current = ref; },
     setRemoteVideoRef: (ref: HTMLVideoElement | null) => { remoteVideoRef.current = ref; }
   };
