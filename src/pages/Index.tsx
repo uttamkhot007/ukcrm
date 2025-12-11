@@ -78,16 +78,18 @@ const Index = () => {
         return;
       }
       
-      // Only redirect to create workspace if user has NO tenant memberships at all
-      // If they have memberships but no current tenant selected, wait for auto-selection
-      if (tenantMemberships.length === 0) {
+      // Check if user has tenant access via memberships OR profile tenant_id (for employees)
+      const hasTenantAccess = tenantMemberships.length > 0 || profile?.tenant_id;
+      
+      // Only redirect to create workspace if user has NO tenant access at all
+      if (!hasTenantAccess) {
         navigate("/workspace/new");
       }
       // If user has exactly one tenant, TenantContext will auto-select it
       // If user has multiple tenants, TenantContext will select from localStorage or first one
       // So we don't need to redirect to /workspace/select anymore
     }
-  }, [user, isLoading, tenantLoading, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded]);
+  }, [user, isLoading, tenantLoading, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded, profile?.tenant_id]);
 
   // Set initial module based on portal mode - only on initial mount
   useEffect(() => {
