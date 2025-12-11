@@ -160,6 +160,7 @@ const employeePortalItems: NavItem[] = [
       { id: "employee-profile", label: "My Profile", icon: UserCircle },
       { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
       { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
+      { id: "employee-skill-matrix", label: "Skill Matrix", icon: Target },
       { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
       { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
       { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
@@ -415,6 +416,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "hr-directory", label: "Employee Directory", icon: Users },
           { id: "hr-workflows", label: "Workflows", icon: FolderKanban },
+          { id: "hr-skill-matrix", label: "Skill Matrix", icon: Target },
           { id: "hr-people", label: "People Management", icon: UserPlus },
           { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
           { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
@@ -758,6 +760,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           children: [
             { id: "hr-directory", label: "Employee Directory", icon: Users },
             { id: "hr-workflows", label: "Workflows", icon: FolderKanban },
+            { id: "hr-skill-matrix", label: "Skill Matrix", icon: Target },
             { id: "hr-people", label: "People Management", icon: UserPlus },
             { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
             { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
