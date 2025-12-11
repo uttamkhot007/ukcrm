@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Headphones, Plus, TicketIcon, Clock, CheckCircle2 } from "lucide-react";
+import { Headphones, Plus, TicketIcon, Clock, CheckCircle2, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { NewTicketDialog } from "@/components/ticketing/NewTicketDialog";
 import { TicketDetailsSheet } from "@/components/ticketing/TicketDetailsSheet";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { RemoteSessionsModule } from "@/components/remote-sessions/RemoteSessionsModule";
 
 export function CustomerPortal() {
   const { user, profile } = useAuth();
@@ -112,6 +113,10 @@ export function CustomerPortal() {
             <TicketIcon className="h-4 w-4" />
             My Tickets
           </TabsTrigger>
+          <TabsTrigger value="remote-sessions" className="gap-2">
+            <Video className="h-4 w-4" />
+            Remote Sessions
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-4">
@@ -164,6 +169,10 @@ export function CustomerPortal() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="remote-sessions">
+          <RemoteSessionsModule context="customer" />
         </TabsContent>
       </Tabs>
 

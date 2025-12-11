@@ -46,6 +46,7 @@ import { CommunicationsModule } from "@/components/communications/Communications
 import { PublicRelationsModule } from "@/components/pr/PublicRelationsModule";
 import { TeamCommunication } from "@/components/employee/TeamCommunication";
 import { LearningHubModule } from "@/components/employee/LearningHubModule";
+import { RemoteSessionsModule } from "@/components/remote-sessions/RemoteSessionsModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -323,6 +324,8 @@ const Index = () => {
         return <TechnicalModule initialTab="recommendations" />;
       case "tech-implementation-plan":
         return <TechnicalModule initialTab="implementation-plan" />;
+      case "tech-remote-sessions":
+        return <TechnicalModule initialTab="remote-sessions" />;
       
       // Activity Tracker
       case "employee-activity-tracker":
@@ -360,6 +363,8 @@ const Index = () => {
         return <TicketingModule initialTab="open" />;
       case "helpdesk-escalated":
         return <TicketingModule initialTab="escalated" />;
+      case "helpdesk-remote-sessions":
+        return <RemoteSessionsModule context="support" />;
       case "helpdesk-templates":
         return <TicketingModule initialTab="templates" />;
       case "helpdesk-analytics":

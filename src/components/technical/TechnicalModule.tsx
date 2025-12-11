@@ -3,6 +3,7 @@ import { CustomerContractsView } from "./CustomerContractsView";
 import { CustomerContactsView } from "./CustomerContactsView";
 import { ProductRecommendationSteps } from "@/components/shared/ProductRecommendationSteps";
 import { SolutionDocumentationPage } from "@/components/shared/SolutionDocumentationPage";
+import { RemoteSessionsModule } from "@/components/remote-sessions/RemoteSessionsModule";
 
 interface TechnicalModuleProps {
   initialTab?: string;
@@ -19,6 +20,8 @@ export function TechnicalModule({ initialTab = "contracts" }: TechnicalModulePro
         return <ProductRecommendationSteps teamType="technical" />;
       case "implementation-plan":
         return <SolutionDocumentationPage docType="implementation" teamType="technical" />;
+      case "remote-sessions":
+        return <RemoteSessionsModule context="technical" />;
       default:
         return <CustomerContractsView />;
     }
