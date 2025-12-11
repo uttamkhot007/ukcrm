@@ -685,6 +685,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "employee-organization", label: "My Organization", icon: Network },
             { id: "employee-profile", label: "My Profile", icon: UserCircle },
             { id: "employee-communication", label: "Team Communication", icon: Video },
+            { id: "learning-hub", label: "Learning Hub", icon: GraduationCap },
             { id: "employee-attendance", label: "Attendance", icon: Clock },
             { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
             { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
