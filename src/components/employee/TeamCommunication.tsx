@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useWebRTC, Call, VirtualBackground } from '@/hooks/useWebRTC';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
+import { useBrowserNotifications } from '@/hooks/useBrowserNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -52,11 +53,19 @@ export function TeamCommunication() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
+  const { showNotification, requestPermission, permission } = useBrowserNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('team');
   const [selectedChatUser, setSelectedChatUser] = useState<Employee | null>(null);
   const [chatMessage, setChatMessage] = useState('');
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  
+  // Request notification permission on mount
+  useEffect(() => {
+    if (permission === 'default') {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
   
   const {
     localStream,
@@ -146,8 +155,21 @@ export function TeamCommunication() {
           table: 'team_chat_messages',
           filter: `receiver_id=eq.${user.id}`
         },
-        () => {
+        (payload) => {
           queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
+          
+          // Show browser notification for new messages
+          const newMessage = payload.new as ChatMessage;
+          const senderEmployee = employees.find(e => e.user_id === newMessage.sender_id);
+          const senderName = senderEmployee?.full_name || 'Team member';
+          
+          showNotification(`New message from ${senderName}`, {
+            body: newMessage.message.substring(0, 100),
+            tag: `chat-${newMessage.id}`,
+          });
+          
+          // Also show toast when app is in foreground
+          toast.info(`${senderName}: ${newMessage.message.substring(0, 50)}${newMessage.message.length > 50 ? '...' : ''}`);
         }
       )
       .subscribe();
@@ -155,7 +177,7 @@ export function TeamCommunication() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, showNotification, employees]);
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
