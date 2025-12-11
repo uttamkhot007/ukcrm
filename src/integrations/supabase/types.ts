@@ -1769,6 +1769,71 @@ export type Database = {
           },
         ]
       }
+      cybersecurity_news: {
+        Row: {
+          affected_systems: string[] | null
+          category: string
+          created_at: string
+          created_by: string
+          full_content: string | null
+          id: string
+          is_published: boolean | null
+          published_at: string | null
+          recommendations: string[] | null
+          severity: string | null
+          source_name: string | null
+          source_url: string | null
+          summary: string | null
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_systems?: string[] | null
+          category: string
+          created_at?: string
+          created_by: string
+          full_content?: string | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          recommendations?: string[] | null
+          severity?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          summary?: string | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_systems?: string[] | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          full_content?: string | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          recommendations?: string[] | null
+          severity?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          summary?: string | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cybersecurity_news_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cynet_licenses: {
         Row: {
           assigned_endpoints: number | null
@@ -4663,6 +4728,137 @@ export type Database = {
           },
           {
             foreignKeyName: "leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_courses: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          display_order: number | null
+          duration_minutes: number | null
+          id: string
+          instructor: string | null
+          is_active: boolean | null
+          level: string | null
+          modules_count: number | null
+          tags: string[] | null
+          team_type: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number | null
+          id?: string
+          instructor?: string | null
+          is_active?: boolean | null
+          level?: string | null
+          modules_count?: number | null
+          tags?: string[] | null
+          team_type?: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number | null
+          id?: string
+          instructor?: string | null
+          is_active?: boolean | null
+          level?: string | null
+          modules_count?: number | null
+          tags?: string[] | null
+          team_type?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_courses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_progress: {
+        Row: {
+          completed_at: string | null
+          completed_modules: number | null
+          course_id: string
+          created_at: string
+          id: string
+          last_accessed_at: string | null
+          notes: string | null
+          progress_percent: number | null
+          started_at: string | null
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_modules?: number | null
+          course_id: string
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          notes?: string | null
+          progress_percent?: number | null
+          started_at?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_modules?: number | null
+          course_id?: string
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          notes?: string | null
+          progress_percent?: number | null
+          started_at?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "learning_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_progress_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
