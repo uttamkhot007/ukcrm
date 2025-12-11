@@ -17,6 +17,7 @@ interface Profile {
   job_title: string | null;
   user_category: UserCategory | null;
   is_super_admin: boolean | null;
+  tenant_id: string | null;
 }
 
 interface ConsoleAccess {
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           job_title: profileData.job_title,
           user_category: profileData.user_category as UserCategory | null,
           is_super_admin: (profileData as any).is_super_admin ?? false,
+          tenant_id: (profileData as any).tenant_id ?? null,
         });
         
         // Set portal mode based on user category

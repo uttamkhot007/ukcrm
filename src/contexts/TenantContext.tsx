@@ -146,6 +146,33 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         selectedMembership = formattedMemberships[0];
       }
 
+      // If no membership found but profile has tenant_id (for employees), fetch that tenant
+      if (!selectedMembership && profile?.tenant_id) {
+        const { data: employeeTenant } = await supabase
+          .from('tenants')
+          .select('id, name, slug, tier, logo_url, settings, created_at')
+          .eq('id', profile.tenant_id)
+          .single() as { data: any | null; error: any };
+
+        if (employeeTenant) {
+          const employeeTenantData: Tenant = {
+            id: employeeTenant.id,
+            name: employeeTenant.name,
+            slug: employeeTenant.slug,
+            tier: employeeTenant.tier as TenantTier,
+            logo_url: employeeTenant.logo_url,
+            settings: employeeTenant.settings || {},
+            is_active: true,
+            created_at: employeeTenant.created_at,
+          };
+          setCurrentTenant(employeeTenantData);
+          setCurrentRole('member');
+          localStorage.setItem(`tenant_${user.id}`, profile.tenant_id);
+          await fetchTenantModules(profile.tenant_id);
+          return;
+        }
+      }
+
       if (selectedMembership) {
         setCurrentTenant(selectedMembership.tenant);
         setCurrentRole(isSuperAdmin ? 'owner' : selectedMembership.role);
