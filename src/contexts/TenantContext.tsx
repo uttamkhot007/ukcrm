@@ -5,12 +5,20 @@ import { useAuth } from '@/hooks/useAuth';
 export type TenantTier = 'starter' | 'professional' | 'enterprise';
 export type TenantMemberRole = 'owner' | 'admin' | 'member';
 
+export interface TenantBranding {
+  display_name?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  favicon_url?: string;
+}
+
 export interface Tenant {
   id: string;
   name: string;
   slug: string;
   tier: TenantTier;
   logo_url: string | null;
+  branding: TenantBranding | null;
   settings: Record<string, unknown>;
   is_active: boolean;
   created_at: string;
@@ -83,7 +91,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // Using raw query to avoid type issues with columns not yet in generated types
         const { data: allTenants, error: tenantsError } = await supabase
           .from('tenants')
-          .select('id, name, slug, tier, logo_url, settings, created_at')
+          .select('id, name, slug, tier, logo_url, branding, settings, created_at')
           .order('name') as { data: any[] | null; error: any };
 
         if (tenantsError) throw tenantsError;
@@ -97,6 +105,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             slug: tenant.slug,
             tier: tenant.tier as TenantTier,
             logo_url: tenant.logo_url,
+            branding: tenant.branding as TenantBranding | null,
             settings: tenant.settings || {},
             is_active: true,
             created_at: tenant.created_at,
@@ -109,7 +118,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           .select(`
             tenant_id,
             role,
-            tenant:tenants (id, name, slug, tier, logo_url, settings, created_at)
+            tenant:tenants (id, name, slug, tier, logo_url, branding, settings, created_at)
           `)
           .eq('user_id', user.id)
           .eq('status', 'active') as { data: any[] | null; error: any };
@@ -127,6 +136,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
               slug: m.tenant.slug,
               tier: m.tenant.tier as TenantTier,
               logo_url: m.tenant.logo_url,
+              branding: m.tenant.branding as TenantBranding | null,
               settings: m.tenant.settings || {},
               is_active: true,
               created_at: m.tenant.created_at,
@@ -150,7 +160,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       if (!selectedMembership && profile?.tenant_id) {
         const { data: employeeTenant } = await supabase
           .from('tenants')
-          .select('id, name, slug, tier, logo_url, settings, created_at')
+          .select('id, name, slug, tier, logo_url, branding, settings, created_at')
           .eq('id', profile.tenant_id)
           .single() as { data: any | null; error: any };
 
@@ -161,6 +171,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             slug: employeeTenant.slug,
             tier: employeeTenant.tier as TenantTier,
             logo_url: employeeTenant.logo_url,
+            branding: employeeTenant.branding as TenantBranding | null,
             settings: employeeTenant.settings || {},
             is_active: true,
             created_at: employeeTenant.created_at,

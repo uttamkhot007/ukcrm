@@ -99,7 +99,9 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
                         {getInitials(membership.tenant.name)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="flex-1 truncate">{membership.tenant.name}</span>
+                    <span className="flex-1 truncate">
+                      {membership.tenant.branding?.display_name || membership.tenant.name}
+                    </span>
                     {currentTenant.id === membership.tenant_id && (
                       <Check className="ml-2 h-4 w-4 text-primary" />
                     )}
@@ -127,10 +129,10 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
             <Avatar className="h-6 w-6">
               <AvatarImage src={currentTenant.logo_url || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {getInitials(currentTenant.name)}
+                {getInitials(currentTenant.branding?.display_name || currentTenant.name)}
               </AvatarFallback>
             </Avatar>
-            <span className="truncate">{currentTenant.name}</span>
+            <span className="truncate">{currentTenant.branding?.display_name || currentTenant.name}</span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -155,7 +157,9 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col min-w-0">
-                      <span className="truncate text-sm">{membership.tenant.name}</span>
+                      <span className="truncate text-sm">
+                        {membership.tenant.branding?.display_name || membership.tenant.name}
+                      </span>
                       <span className="text-xs text-muted-foreground capitalize">
                         {membership.role}
                       </span>

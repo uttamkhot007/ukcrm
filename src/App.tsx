@@ -24,6 +24,7 @@ import AdminOfferings from "./pages/admin/AdminOfferings";
 import AdminProcurement from "./pages/admin/AdminProcurement";
 import AdminSupportManagement from "./pages/admin/AdminSupportManagement";
 import AdminDocumentTemplates from "./pages/admin/AdminDocumentTemplates";
+import AdminWhitelabel from "./pages/admin/AdminWhitelabel";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import SupportPortal from "./pages/SupportPortal";
@@ -71,6 +72,7 @@ const App = () => (
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<Navigate to="/admin/organization" replace />} />
                   <Route path="organization" element={<AdminOrganization />} />
+                  <Route path="whitelabel" element={<AdminWhitelabel />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="alliance" element={<AdminAlliance />} />
                   <Route path="offerings" element={<AdminOfferings />} />

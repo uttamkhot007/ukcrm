@@ -71,6 +71,7 @@ import {
   Star,
   Newspaper,
   Video,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -216,6 +217,7 @@ const adminItems: NavItem[] = [
     requiredRoles: ["admin"],
   children: [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
+      { id: "admin-center-whitelabel", label: "Whitelabel", icon: Palette },
       { id: "admin-center-users", label: "User Management", icon: Users },
       { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
       { id: "admin-center-offerings", label: "Offerings", icon: Package },
@@ -994,14 +996,24 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo */}
+      {/* Logo - Shows tenant branding if available */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg text-foreground">NexusCRM</span>
+            {currentTenant?.logo_url ? (
+              <img 
+                src={currentTenant.logo_url} 
+                alt={currentTenant.branding?.display_name || currentTenant.name} 
+                className="w-8 h-8 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </div>
+            )}
+            <span className="font-bold text-lg text-foreground truncate max-w-[140px]">
+              {currentTenant?.branding?.display_name || currentTenant?.name || "NexusCRM"}
+            </span>
           </div>
         )}
         <Button
