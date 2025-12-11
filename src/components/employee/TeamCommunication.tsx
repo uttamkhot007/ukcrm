@@ -7,18 +7,28 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { useWebRTC, Call } from '@/hooks/useWebRTC';
+import { useWebRTC, Call, VirtualBackground } from '@/hooks/useWebRTC';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Phone, Video, Monitor, PhoneOff, Mic, MicOff, VideoOff,
-  Camera, Search, Users, Clock, MessageSquare, Send, X
+  Camera, Search, Users, Clock, MessageSquare, Send, X,
+  MonitorUp, MonitorOff, Image, Sparkles, TreePine, Building2, Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+
+const VIRTUAL_BACKGROUNDS: { id: VirtualBackground; label: string; icon: React.ReactNode; color: string }[] = [
+  { id: 'none', label: 'None', icon: <X className="w-4 h-4" />, color: 'bg-gray-500/20' },
+  { id: 'blur', label: 'Blur', icon: <Sparkles className="w-4 h-4" />, color: 'bg-blue-500/20' },
+  { id: 'office', label: 'Office', icon: <Building2 className="w-4 h-4" />, color: 'bg-amber-500/20' },
+  { id: 'nature', label: 'Nature', icon: <TreePine className="w-4 h-4" />, color: 'bg-green-500/20' },
+  { id: 'abstract', label: 'Abstract', icon: <Palette className="w-4 h-4" />, color: 'bg-purple-500/20' },
+];
 
 interface Employee {
   user_id: string;
@@ -56,12 +66,17 @@ export function TeamCommunication() {
     isConnecting,
     isMuted,
     isVideoOff,
+    isScreenSharing,
+    virtualBackground,
     startCall,
     answerCall,
     declineCall,
     endCall,
     toggleMute,
     toggleVideo,
+    startScreenShare,
+    stopScreenShare,
+    applyVirtualBackground,
     setLocalVideoRef,
     setRemoteVideoRef
   } = useWebRTC();
@@ -535,22 +550,31 @@ export function TeamCommunication() {
       
       {/* Active Call Dialog */}
       <Dialog open={!!currentCall} onOpenChange={() => currentCall && endCall()}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {currentCall?.call_type === 'video' && <Video className="w-5 h-5" />}
-              {currentCall?.call_type === 'voice' && <Phone className="w-5 h-5" />}
-              {currentCall?.call_type === 'screen_share' && <Monitor className="w-5 h-5" />}
-              {currentCall?.call_type === 'video' ? 'Video Call' : 
+              {isScreenSharing && <Monitor className="w-5 h-5 text-green-500" />}
+              {!isScreenSharing && currentCall?.call_type === 'video' && <Video className="w-5 h-5" />}
+              {!isScreenSharing && currentCall?.call_type === 'voice' && <Phone className="w-5 h-5" />}
+              {!isScreenSharing && currentCall?.call_type === 'screen_share' && <Monitor className="w-5 h-5" />}
+              {isScreenSharing ? 'Screen Sharing' :
+               currentCall?.call_type === 'video' ? 'Video Call' : 
                currentCall?.call_type === 'voice' ? 'Voice Call' : 'Screen Share'}
               {isConnecting && <Badge variant="outline">Connecting...</Badge>}
+              {isScreenSharing && <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Live</Badge>}
             </DialogTitle>
             <DialogDescription>
-              {isConnecting ? 'Establishing connection...' : 'Call in progress'}
+              {isConnecting ? 'Establishing connection...' : isScreenSharing ? 'Your screen is being shared' : 'Call in progress'}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+          <div className={cn(
+            "relative aspect-video bg-black rounded-lg overflow-hidden",
+            virtualBackground === 'blur' && "backdrop-blur-sm",
+            virtualBackground === 'office' && "bg-gradient-to-br from-amber-900/80 to-amber-700/60",
+            virtualBackground === 'nature' && "bg-gradient-to-br from-green-900/80 to-emerald-700/60",
+            virtualBackground === 'abstract' && "bg-gradient-to-br from-purple-900/80 to-pink-700/60"
+          )}>
             {/* Remote Video */}
             <video
               ref={(ref) => setRemoteVideoRef(ref)}
@@ -560,7 +584,10 @@ export function TeamCommunication() {
             />
             
             {/* Local Video (Picture-in-Picture) */}
-            <div className="absolute bottom-4 right-4 w-40 aspect-video bg-muted rounded-lg overflow-hidden shadow-lg">
+            <div className={cn(
+              "absolute bottom-4 right-4 w-48 aspect-video rounded-lg overflow-hidden shadow-lg border-2 border-white/20",
+              isScreenSharing && "w-56"
+            )}>
               <video
                 ref={(ref) => setLocalVideoRef(ref)}
                 autoPlay
@@ -568,6 +595,13 @@ export function TeamCommunication() {
                 muted
                 className="w-full h-full object-cover"
               />
+              {isScreenSharing && (
+                <div className="absolute top-1 left-1">
+                  <Badge variant="secondary" className="text-xs bg-green-500/90 text-white">
+                    Screen
+                  </Badge>
+                </div>
+              )}
             </div>
             
             {/* No Video Fallback */}
@@ -586,32 +620,98 @@ export function TeamCommunication() {
           </div>
           
           {/* Call Controls */}
-          <div className="flex justify-center gap-4 mt-4">
+          <div className="flex justify-center items-center gap-3 mt-4 flex-wrap">
+            {/* Mute */}
             <Button
               variant={isMuted ? "destructive" : "outline"}
               size="icon"
               className="h-12 w-12 rounded-full"
               onClick={toggleMute}
+              title={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </Button>
             
-            {currentCall?.call_type === 'video' && (
+            {/* Video Toggle */}
+            {(currentCall?.call_type === 'video' || currentCall?.call_type === 'screen_share') && !isScreenSharing && (
               <Button
                 variant={isVideoOff ? "destructive" : "outline"}
                 size="icon"
                 className="h-12 w-12 rounded-full"
                 onClick={toggleVideo}
+                title={isVideoOff ? 'Turn on camera' : 'Turn off camera'}
               >
                 {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Camera className="h-5 w-5" />}
               </Button>
             )}
             
+            {/* Screen Share Toggle */}
+            {currentCall?.call_type === 'video' && (
+              <Button
+                variant={isScreenSharing ? "default" : "outline"}
+                size="icon"
+                className={cn(
+                  "h-12 w-12 rounded-full",
+                  isScreenSharing && "bg-green-600 hover:bg-green-700"
+                )}
+                onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+                title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
+              >
+                {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
+              </Button>
+            )}
+            
+            {/* Virtual Background */}
+            {currentCall?.call_type === 'video' && !isScreenSharing && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12 rounded-full"
+                    title="Change background"
+                  >
+                    <Image className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="center">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-center mb-3">Virtual Background</p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {VIRTUAL_BACKGROUNDS.map((bg) => (
+                        <button
+                          key={bg.id}
+                          onClick={() => applyVirtualBackground(bg.id)}
+                          className={cn(
+                            "flex flex-col items-center gap-1 p-2 rounded-lg transition-all",
+                            bg.color,
+                            virtualBackground === bg.id 
+                              ? "ring-2 ring-primary ring-offset-2" 
+                              : "hover:opacity-80"
+                          )}
+                          title={bg.label}
+                        >
+                          {bg.icon}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      {virtualBackground === 'none' 
+                        ? 'No background effect' 
+                        : `${VIRTUAL_BACKGROUNDS.find(b => b.id === virtualBackground)?.label} effect active`}
+                    </p>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+            
+            {/* End Call */}
             <Button
               variant="destructive"
               size="icon"
               className="h-12 w-12 rounded-full"
               onClick={endCall}
+              title="End call"
             >
               <PhoneOff className="h-5 w-5" />
             </Button>
