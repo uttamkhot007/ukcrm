@@ -47,6 +47,7 @@ import { PublicRelationsModule } from "@/components/pr/PublicRelationsModule";
 import { TeamCommunication } from "@/components/employee/TeamCommunication";
 import { LearningHubModule } from "@/components/employee/LearningHubModule";
 import { RemoteSessionsModule } from "@/components/remote-sessions/RemoteSessionsModule";
+import { SkillMatrixModule } from "@/components/employee/SkillMatrixModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -224,6 +225,8 @@ const Index = () => {
         return <EmployeeBenefitsModule />;
       case "employee-profile":
         return <EmployeeProfileModule />;
+      case "employee-skill-matrix":
+        return <SkillMatrixModule viewMode="employee" />;
       case "employee-leave":
         return <RequestsModule />;
       case "employee-tickets":
@@ -266,6 +269,8 @@ const Index = () => {
         return <HRModule initialTab="onboarding" />;
       case "hr-documents":
         return <HRModule initialTab="documents" />;
+      case "hr-skill-matrix":
+        return <SkillMatrixModule viewMode="hr" />;
       
       // Accounts & Finance merged modules
       case "accounts-finance":
