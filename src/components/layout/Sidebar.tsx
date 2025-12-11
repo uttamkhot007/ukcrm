@@ -574,8 +574,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Employee Portal
-      // Employee Portal - Simplified 7-item structure
+      // Employee Portal - Full structure for admin mode
       items.push({
         id: "employee",
         label: "Employee Portal",
@@ -585,11 +584,15 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
+          { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-          { id: "employee-requests", label: "Requests & Expenses", icon: Calendar },
-          { id: "employee-resources", label: "Resources & Events", icon: BookOpen },
-          { id: "employee-tasks", label: "Tasks & Approvals", icon: FileCheck },
+          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
+          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
+          { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
+          { id: "employee-tickets", label: "Support Tickets", icon: Ticket },
+          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
+          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
         ],
       });
 
