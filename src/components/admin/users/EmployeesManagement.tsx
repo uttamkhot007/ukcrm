@@ -22,6 +22,10 @@ import {
   Building2,
   UserCheck,
   Eye,
+  Landmark,
+  Shield,
+  Wallet,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TeamType } from "@/hooks/useAuth";
@@ -108,6 +112,21 @@ interface Employee {
   employment_status: string | null;
   sales_sub_team: string | null;
   teams: TeamType[];
+  // Bank details
+  bank_name: string | null;
+  bank_account_number: string | null;
+  bank_ifsc_code: string | null;
+  bank_branch: string | null;
+  // ESI details
+  esi_number: string | null;
+  esi_dispensary: string | null;
+  // PF details
+  pf_number: string | null;
+  uan_number: string | null;
+  // Gratuity details
+  gratuity_nomination_name: string | null;
+  gratuity_nomination_relation: string | null;
+  gratuity_nomination_percentage: number | null;
 }
 
 interface SalesTeam {
@@ -212,6 +231,21 @@ export function EmployeesManagement() {
           employment_status: profile.employment_status || "active",
           sales_sub_team: profile.sales_sub_team,
           teams,
+          // Bank details
+          bank_name: profile.bank_name,
+          bank_account_number: profile.bank_account_number,
+          bank_ifsc_code: profile.bank_ifsc_code,
+          bank_branch: profile.bank_branch,
+          // ESI details
+          esi_number: profile.esi_number,
+          esi_dispensary: profile.esi_dispensary,
+          // PF details
+          pf_number: profile.pf_number,
+          uan_number: profile.uan_number,
+          // Gratuity details
+          gratuity_nomination_name: profile.gratuity_nomination_name,
+          gratuity_nomination_relation: profile.gratuity_nomination_relation,
+          gratuity_nomination_percentage: profile.gratuity_nomination_percentage,
         };
       });
 
@@ -290,6 +324,21 @@ export function EmployeesManagement() {
       employment_status: employee.employment_status || "active",
       sales_sub_team: employee.sales_sub_team || "",
       manager_id: employee.manager_id || "",
+      // Bank details
+      bank_name: employee.bank_name || "",
+      bank_account_number: employee.bank_account_number || "",
+      bank_ifsc_code: employee.bank_ifsc_code || "",
+      bank_branch: employee.bank_branch || "",
+      // ESI details
+      esi_number: employee.esi_number || "",
+      esi_dispensary: employee.esi_dispensary || "",
+      // PF details
+      pf_number: employee.pf_number || "",
+      uan_number: employee.uan_number || "",
+      // Gratuity details
+      gratuity_nomination_name: employee.gratuity_nomination_name || "",
+      gratuity_nomination_relation: employee.gratuity_nomination_relation || "",
+      gratuity_nomination_percentage: employee.gratuity_nomination_percentage || 100,
     });
   };
 
@@ -311,6 +360,21 @@ export function EmployeesManagement() {
         employment_status: (editForm.employment_status || "active") as any,
         sales_sub_team: (editForm.sales_sub_team || null) as any,
         manager_id: editForm.manager_id || null,
+        // Bank details
+        bank_name: editForm.bank_name || null,
+        bank_account_number: editForm.bank_account_number || null,
+        bank_ifsc_code: editForm.bank_ifsc_code || null,
+        bank_branch: editForm.bank_branch || null,
+        // ESI details
+        esi_number: editForm.esi_number || null,
+        esi_dispensary: editForm.esi_dispensary || null,
+        // PF details
+        pf_number: editForm.pf_number || null,
+        uan_number: editForm.uan_number || null,
+        // Gratuity details
+        gratuity_nomination_name: editForm.gratuity_nomination_name || null,
+        gratuity_nomination_relation: editForm.gratuity_nomination_relation || null,
+        gratuity_nomination_percentage: editForm.gratuity_nomination_percentage || null,
       })
       .eq("user_id", editingEmployee.user_id);
 
@@ -738,7 +802,129 @@ export function EmployeesManagement() {
                 </p>
               </div>
             )}
-            <div className="col-span-2">
+
+            {/* Bank Details Section */}
+            <div className="col-span-2 mt-4 pt-4 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <Landmark className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-semibold">Bank Details</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Bank Name</Label>
+                  <Input
+                    value={editForm.bank_name || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, bank_name: e.target.value }))}
+                    placeholder="e.g., HDFC Bank"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Branch</Label>
+                  <Input
+                    value={editForm.bank_branch || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, bank_branch: e.target.value }))}
+                    placeholder="Branch name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Number</Label>
+                  <Input
+                    value={editForm.bank_account_number || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, bank_account_number: e.target.value }))}
+                    placeholder="Account number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>IFSC Code</Label>
+                  <Input
+                    value={editForm.bank_ifsc_code || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, bank_ifsc_code: e.target.value.toUpperCase() }))}
+                    placeholder="e.g., HDFC0001234"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ESI & PF Section */}
+            <div className="col-span-2 mt-4 pt-4 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-semibold">ESI & PF Details</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>ESI Number</Label>
+                  <Input
+                    value={editForm.esi_number || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, esi_number: e.target.value }))}
+                    placeholder="ESI Insurance Number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>ESI Dispensary</Label>
+                  <Input
+                    value={editForm.esi_dispensary || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, esi_dispensary: e.target.value }))}
+                    placeholder="Dispensary name/location"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>PF Number</Label>
+                  <Input
+                    value={editForm.pf_number || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, pf_number: e.target.value }))}
+                    placeholder="PF Account Number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>UAN Number</Label>
+                  <Input
+                    value={editForm.uan_number || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, uan_number: e.target.value }))}
+                    placeholder="Universal Account Number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Gratuity Section */}
+            <div className="col-span-2 mt-4 pt-4 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <Award className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-semibold">Gratuity Nomination</Label>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Nominee Name</Label>
+                  <Input
+                    value={editForm.gratuity_nomination_name || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, gratuity_nomination_name: e.target.value }))}
+                    placeholder="Full name of nominee"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Relationship</Label>
+                  <Input
+                    value={editForm.gratuity_nomination_relation || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, gratuity_nomination_relation: e.target.value }))}
+                    placeholder="e.g., Spouse, Son"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Percentage (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editForm.gratuity_nomination_percentage || 100}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, gratuity_nomination_percentage: Number(e.target.value) }))}
+                    placeholder="100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-2 mt-4">
               <Button onClick={saveEmployee} disabled={savingEmployee} className="w-full">
                 {savingEmployee ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />

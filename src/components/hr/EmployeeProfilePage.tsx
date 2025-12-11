@@ -15,7 +15,8 @@ import {
   Loader2, Star, MapPin, Linkedin, Clock, BarChart3,
   Pencil, Brain, ArrowLeft, Award, GraduationCap, Trophy,
   Target, Users, Github, Twitter, Heart, Shield, FileText,
-  TrendingUp, CheckCircle, AlertCircle, ShieldCheck, UserCog
+  TrendingUp, CheckCircle, AlertCircle, ShieldCheck, UserCog,
+  Landmark, Wallet, Building2
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +50,21 @@ interface EmployeeProfile {
   emergency_contact_phone?: string | null;
   emergency_contact_relationship?: string | null;
   manager_id?: string | null;
+  // Bank details
+  bank_name?: string | null;
+  bank_account_number?: string | null;
+  bank_ifsc_code?: string | null;
+  bank_branch?: string | null;
+  // ESI details
+  esi_number?: string | null;
+  esi_dispensary?: string | null;
+  // PF details
+  pf_number?: string | null;
+  uan_number?: string | null;
+  // Gratuity details
+  gratuity_nomination_name?: string | null;
+  gratuity_nomination_relation?: string | null;
+  gratuity_nomination_percentage?: number | null;
 }
 
 interface EmployeeProfilePageProps {
@@ -384,9 +400,13 @@ export function EmployeeProfilePage({
       </Dialog>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start rounded-none border-b px-4 md:px-6 overflow-x-auto">
+        <TabsList className="w-full justify-start rounded-none border-b px-4 md:px-6 overflow-x-auto flex-wrap h-auto gap-1 py-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="career">Career</TabsTrigger>
+          <TabsTrigger value="statutory" className="gap-1">
+            <Landmark className="h-3 w-3" />
+            Bank & Statutory
+          </TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
           <TabsTrigger value="verifications" className="gap-1">
@@ -681,6 +701,113 @@ export function EmployeeProfilePage({
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-4">No certifications added yet</p>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Bank & Statutory Tab */}
+          <TabsContent value="statutory" className="p-4 md:p-6 space-y-6 mt-0">
+            {/* Bank Details */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Landmark className="h-4 w-4" />
+                  Bank Account Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Bank Name</p>
+                    <p className="font-medium">{(employee as any).bank_name || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Branch</p>
+                    <p className="font-medium">{(employee as any).bank_branch || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Account Number</p>
+                    <p className="font-medium">
+                      {(employee as any).bank_account_number 
+                        ? `****${(employee as any).bank_account_number.slice(-4)}` 
+                        : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">IFSC Code</p>
+                    <p className="font-medium">{(employee as any).bank_ifsc_code || '-'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ESI Details */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  ESI Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">ESI Number</p>
+                    <p className="font-medium">{(employee as any).esi_number || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">ESI Dispensary</p>
+                    <p className="font-medium">{(employee as any).esi_dispensary || '-'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* PF Details */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Provident Fund Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">PF Number</p>
+                    <p className="font-medium">{(employee as any).pf_number || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">UAN Number</p>
+                    <p className="font-medium">{(employee as any).uan_number || '-'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gratuity Details */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Award className="h-4 w-4" />
+                  Gratuity Nomination
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nominee Name</p>
+                    <p className="font-medium">{(employee as any).gratuity_nomination_name || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Relationship</p>
+                    <p className="font-medium">{(employee as any).gratuity_nomination_relation || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Percentage</p>
+                    <p className="font-medium">{(employee as any).gratuity_nomination_percentage || 100}%</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
