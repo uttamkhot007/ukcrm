@@ -1,44 +1,52 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Bot, User, Brain, TrendingUp, Shield, Building2, Ticket, Wrench } from "lucide-react";
+import { X, Send, Brain, Bot, User, Sparkles, TrendingUp, Shield, Building2, Ticket, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 
-interface AIAssistantProps {
+interface IntelligentAssistantProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 interface Message {
-  id: number;
+  id: string;
   role: "user" | "assistant";
   content: string;
+  timestamp: Date;
 }
 
 const QUICK_ACTIONS = [
-  { label: "Cyber Trends", query: "What are the latest ransomware trends?", icon: TrendingUp },
-  { label: "Objection Help", query: "Help me handle a price objection", icon: Shield },
-  { label: "Account Insights", query: "Give me insights about accounts", icon: Building2 },
-  { label: "Tickets Summary", query: "Summarize open tickets", icon: Ticket },
-  { label: "Technical Issues", query: "What are common technical issues?", icon: Wrench },
+  { label: "Cyber Trends", query: "What are the latest ransomware trends and how should we protect against them?", icon: TrendingUp },
+  { label: "Objection Handling", query: "Help me handle a price objection for our security solution", icon: Shield },
+  { label: "Account Insights", query: "Give me insights about", icon: Building2 },
+  { label: "Ticket Summary", query: "Summarize open tickets and common issues", icon: Ticket },
+  { label: "Technical Issues", query: "What are common technical issues and their resolutions?", icon: Wrench },
 ];
 
-const initialMessages: Message[] = [
-  {
-    id: 1,
-    role: "assistant",
-    content:
-      "Hello! I'm your Intelligent CRM Assistant. I can help you with:\n\n• **Cyber Security Trends** - Latest threats and protection strategies\n• **Objection Handling** - Sales objection strategies\n• **Account Intelligence** - Deep insights about accounts\n• **Ticket Analysis** - Summaries and patterns\n• **Technical Support** - Issue resolution guidance\n\nHow can I assist you today?",
-  },
+const EXAMPLE_PROMPTS = [
+  "What are the top cyber threats targeting BFSI sector?",
+  "How do I handle 'we already have a security solution' objection?",
+  "Show me ticket history for [account name]",
+  "What technical issues has [account] faced in the past?",
+  "Analyze account health for our top customers",
 ];
 
-export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+export function IntelligentAssistant({ isOpen, onClose }: IntelligentAssistantProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      role: "assistant",
+      content: "Hello! I'm your Intelligent CRM Assistant. I can help you with:\n\n• **Global Cyber Trends** - Latest threats, attack vectors, and security insights\n• **Objection Handling** - Strategies to overcome customer objections\n• **Account Intelligence** - Deep insights about any account\n• **Ticket Analysis** - Summaries, patterns, and common issues\n• **Technical Support** - Resolution guidance for technical problems\n\nHow can I assist you today?",
+      timestamp: new Date(),
+    },
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -55,9 +63,10 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: messages.length + 1,
+      id: Date.now().toString(),
       role: "user",
       content: input,
+      timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -84,14 +93,14 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         } else {
           throw error;
         }
-        setIsLoading(false);
         return;
       }
 
       const assistantMessage: Message = {
-        id: messages.length + 2,
+        id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.message || "I apologize, I couldn't process that request.",
+        content: data.message || "I apologize, I couldn't process that request. Please try again.",
+        timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -103,19 +112,23 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     }
   };
 
+  const handleQuickAction = (query: string) => {
+    setInput(query);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-96 bg-card border-l border-border z-50 flex flex-col animate-slide-in-right">
+    <div className="fixed right-0 top-0 h-screen w-[480px] bg-card border-l border-border z-50 flex flex-col animate-slide-in-right shadow-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
             <Brain className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold">AI Assistant</h3>
-            <p className="text-xs text-muted-foreground">Cyber • Sales • Support</p>
+            <h3 className="font-semibold">Intelligent Assistant</h3>
+            <p className="text-xs text-muted-foreground">Cyber Trends • Objection Handling • Account Intelligence</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose}>
@@ -169,14 +182,8 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               <div className="bg-muted rounded-xl p-3">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                  <span
-                    className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  />
+                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
                 </div>
               </div>
             </div>
@@ -185,13 +192,14 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       </ScrollArea>
 
       {/* Quick Actions */}
-      <div className="px-4 pb-2">
+      <div className="px-4 py-2 border-t border-border bg-muted/30">
+        <p className="text-xs text-muted-foreground mb-2">Quick Actions:</p>
         <div className="flex flex-wrap gap-2">
           {QUICK_ACTIONS.map((action) => (
             <button
               key={action.label}
-              onClick={() => setInput(action.query)}
-              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => handleQuickAction(action.query)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-background border border-border hover:bg-muted hover:border-primary/50 text-muted-foreground hover:text-foreground transition-all"
             >
               <action.icon className="w-3 h-3" />
               {action.label}
@@ -200,14 +208,32 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         </div>
       </div>
 
+      {/* Example Prompts (shown when few messages) */}
+      {messages.length <= 2 && (
+        <div className="px-4 py-2 border-t border-border">
+          <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+          <div className="space-y-1">
+            {EXAMPLE_PROMPTS.slice(0, 3).map((prompt, i) => (
+              <button
+                key={i}
+                onClick={() => handleQuickAction(prompt)}
+                className="w-full text-left text-xs p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors truncate"
+              >
+                "{prompt}"
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-4 border-t border-border">
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask about trends, accounts, tickets..."
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            placeholder="Ask about cyber trends, objections, accounts, tickets..."
             className="flex-1 bg-muted/50"
             disabled={isLoading}
           />
