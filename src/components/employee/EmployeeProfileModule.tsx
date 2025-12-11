@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   User, MapPin, Phone, Heart, FileText, Upload, 
-  Trash2, Check, X, Shield, Loader2 
+  Trash2, Check, X, Shield, Loader2, Building2, Landmark, Wallet, Award
 } from "lucide-react";
 
 interface ProfileData {
@@ -26,6 +26,21 @@ interface ProfileData {
   emergency_contact_relation?: string;
   hobbies?: string[];
   bio?: string;
+  // Bank details
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_ifsc_code?: string;
+  bank_branch?: string;
+  // ESI details
+  esi_number?: string;
+  esi_dispensary?: string;
+  // PF details
+  pf_number?: string;
+  uan_number?: string;
+  // Gratuity details
+  gratuity_nomination_name?: string;
+  gratuity_nomination_relation?: string;
+  gratuity_nomination_percentage?: number;
 }
 
 interface EmployeeDocument {
@@ -168,7 +183,18 @@ export function EmployeeProfileModule() {
       emergency_contact_phone: profile?.emergency_contact_phone || '',
       emergency_contact_relation: profile?.emergency_contact_relation || '',
       hobbies: profile?.hobbies || [],
-      bio: profile?.bio || ''
+      bio: profile?.bio || '',
+      bank_name: profile?.bank_name || '',
+      bank_account_number: profile?.bank_account_number || '',
+      bank_ifsc_code: profile?.bank_ifsc_code || '',
+      bank_branch: profile?.bank_branch || '',
+      esi_number: profile?.esi_number || '',
+      esi_dispensary: profile?.esi_dispensary || '',
+      pf_number: profile?.pf_number || '',
+      uan_number: profile?.uan_number || '',
+      gratuity_nomination_name: profile?.gratuity_nomination_name || '',
+      gratuity_nomination_relation: profile?.gratuity_nomination_relation || '',
+      gratuity_nomination_percentage: profile?.gratuity_nomination_percentage || 100
     });
     setIsEditing(true);
   };
@@ -228,7 +254,7 @@ export function EmployeeProfileModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="personal" className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             Address
@@ -237,12 +263,25 @@ export function EmployeeProfileModule() {
             <Phone className="w-4 h-4" />
             Emergency
           </TabsTrigger>
+          <TabsTrigger value="bank" className="flex items-center gap-2">
+            <Landmark className="w-4 h-4" />
+            Bank
+          </TabsTrigger>
+          <TabsTrigger value="statutory" className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            ESI & PF
+          </TabsTrigger>
+          <TabsTrigger value="gratuity" className="flex items-center gap-2">
+            <Award className="w-4 h-4" />
+            Gratuity
+          </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Documents
           </TabsTrigger>
         </TabsList>
 
+        {/* Address Tab */}
         <TabsContent value="personal" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -388,6 +427,7 @@ export function EmployeeProfileModule() {
           </Card>
         </TabsContent>
 
+        {/* Emergency Contact Tab */}
         <TabsContent value="emergency" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -454,6 +494,261 @@ export function EmployeeProfileModule() {
           </Card>
         </TabsContent>
 
+        {/* Bank Details Tab */}
+        <TabsContent value="bank" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Landmark className="w-5 h-5" />
+                Bank Account Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Bank Name</Label>
+                      <Input 
+                        value={editForm.bank_name || ''} 
+                        onChange={(e) => setEditForm(prev => ({...prev, bank_name: e.target.value}))}
+                        placeholder="e.g., HDFC Bank, ICICI Bank"
+                      />
+                    </div>
+                    <div>
+                      <Label>Branch</Label>
+                      <Input 
+                        value={editForm.bank_branch || ''} 
+                        onChange={(e) => setEditForm(prev => ({...prev, bank_branch: e.target.value}))}
+                        placeholder="Branch name"
+                      />
+                    </div>
+                    <div>
+                      <Label>Account Number</Label>
+                      <Input 
+                        value={editForm.bank_account_number || ''} 
+                        onChange={(e) => setEditForm(prev => ({...prev, bank_account_number: e.target.value}))}
+                        placeholder="Account number"
+                      />
+                    </div>
+                    <div>
+                      <Label>IFSC Code</Label>
+                      <Input 
+                        value={editForm.bank_ifsc_code || ''} 
+                        onChange={(e) => setEditForm(prev => ({...prev, bank_ifsc_code: e.target.value.toUpperCase()}))}
+                        placeholder="e.g., HDFC0001234"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => updateProfile.mutate(editForm)}>
+                      Save Changes
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Bank Name</p>
+                    <p className="font-medium">{profile?.bank_name || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Branch</p>
+                    <p className="font-medium">{profile?.bank_branch || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Account Number</p>
+                    <p className="font-medium">
+                      {profile?.bank_account_number 
+                        ? `****${profile.bank_account_number.slice(-4)}` 
+                        : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">IFSC Code</p>
+                    <p className="font-medium">{profile?.bank_ifsc_code || '-'}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ESI & PF Tab */}
+        <TabsContent value="statutory" className="space-y-4 mt-4">
+          <div className="grid gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  ESI Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isEditing ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>ESI Number</Label>
+                        <Input 
+                          value={editForm.esi_number || ''} 
+                          onChange={(e) => setEditForm(prev => ({...prev, esi_number: e.target.value}))}
+                          placeholder="ESI Insurance Number"
+                        />
+                      </div>
+                      <div>
+                        <Label>ESI Dispensary</Label>
+                        <Input 
+                          value={editForm.esi_dispensary || ''} 
+                          onChange={(e) => setEditForm(prev => ({...prev, esi_dispensary: e.target.value}))}
+                          placeholder="Dispensary name/location"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">ESI Number</p>
+                      <p className="font-medium">{profile?.esi_number || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">ESI Dispensary</p>
+                      <p className="font-medium">{profile?.esi_dispensary || '-'}</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Provident Fund Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isEditing ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>PF Number</Label>
+                        <Input 
+                          value={editForm.pf_number || ''} 
+                          onChange={(e) => setEditForm(prev => ({...prev, pf_number: e.target.value}))}
+                          placeholder="PF Account Number"
+                        />
+                      </div>
+                      <div>
+                        <Label>UAN Number</Label>
+                        <Input 
+                          value={editForm.uan_number || ''} 
+                          onChange={(e) => setEditForm(prev => ({...prev, uan_number: e.target.value}))}
+                          placeholder="Universal Account Number"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="outline" onClick={() => setIsEditing(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => updateProfile.mutate(editForm)}>
+                        Save Changes
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">PF Number</p>
+                      <p className="font-medium">{profile?.pf_number || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">UAN Number</p>
+                      <p className="font-medium">{profile?.uan_number || '-'}</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Gratuity Tab */}
+        <TabsContent value="gratuity" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                Gratuity Nomination Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label>Nominee Name</Label>
+                      <Input 
+                        value={editForm.gratuity_nomination_name || ''} 
+                        onChange={(e) => setEditForm(prev => ({...prev, gratuity_nomination_name: e.target.value}))}
+                        placeholder="Full name of nominee"
+                      />
+                    </div>
+                    <div>
+                      <Label>Relationship</Label>
+                      <Input 
+                        value={editForm.gratuity_nomination_relation || ''} 
+                        onChange={(e) => setEditForm(prev => ({...prev, gratuity_nomination_relation: e.target.value}))}
+                        placeholder="e.g., Spouse, Son, Daughter"
+                      />
+                    </div>
+                    <div>
+                      <Label>Percentage (%)</Label>
+                      <Input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editForm.gratuity_nomination_percentage || 100} 
+                        onChange={(e) => setEditForm(prev => ({...prev, gratuity_nomination_percentage: Number(e.target.value)}))}
+                        placeholder="100"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => updateProfile.mutate(editForm)}>
+                      Save Changes
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nominee Name</p>
+                    <p className="font-medium">{profile?.gratuity_nomination_name || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Relationship</p>
+                    <p className="font-medium">{profile?.gratuity_nomination_relation || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Percentage</p>
+                    <p className="font-medium">{profile?.gratuity_nomination_percentage || 100}%</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Documents Tab */}
         <TabsContent value="documents" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
