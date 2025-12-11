@@ -183,6 +183,13 @@ const customerPortalItems: NavItem[] = [
     color: "text-blue-500",
     portalMode: "customer",
   },
+  {
+    id: "learning-hub",
+    label: "Learning Hub",
+    icon: GraduationCap,
+    color: "text-green-500",
+    portalMode: "customer",
+  },
 ];
 
 // Admin-only Items
@@ -318,6 +325,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Team Communication",
         icon: Video,
         color: "text-blue-500",
+      });
+
+      // Learning Hub - always available for all users in admin mode
+      items.push({
+        id: "learning-hub",
+        label: "Learning Hub",
+        icon: GraduationCap,
+        color: "text-green-500",
       });
 
       // Sales modules
@@ -648,6 +663,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Team Communication",
         icon: Video,
         color: "text-blue-500",
+      });
+
+      // Learning Hub - always available for all users
+      items.push({
+        id: "learning-hub",
+        label: "Learning Hub",
+        icon: GraduationCap,
+        color: "text-green-500",
       });
 
       // If employee-only access, show ONLY employee portal and skip all other modules
