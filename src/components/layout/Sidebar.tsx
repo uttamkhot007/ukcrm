@@ -70,6 +70,7 @@ import {
   Globe,
   Star,
   Newspaper,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -583,6 +584,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-profile", label: "My Profile", icon: UserCircle },
+          { id: "employee-communication", label: "Team Communication", icon: Video },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
@@ -636,6 +638,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           children: [
             { id: "employee-organization", label: "My Organization", icon: Network },
             { id: "employee-profile", label: "My Profile", icon: UserCircle },
+            { id: "employee-communication", label: "Team Communication", icon: Video },
             { id: "employee-attendance", label: "Attendance", icon: Clock },
             { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
             { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
@@ -836,6 +839,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-profile", label: "My Profile", icon: UserCircle },
+          { id: "employee-communication", label: "Team Communication", icon: Video },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },

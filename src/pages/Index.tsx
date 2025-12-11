@@ -44,6 +44,7 @@ import { DealDeskModule } from "@/components/tenders/DealDeskModule";
 import { MarketingModule } from "@/components/marketing/MarketingModule";
 import { CommunicationsModule } from "@/components/communications/CommunicationsModule";
 import { PublicRelationsModule } from "@/components/pr/PublicRelationsModule";
+import { TeamCommunication } from "@/components/employee/TeamCommunication";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -223,6 +224,8 @@ const Index = () => {
         return <RequestsModule />;
       case "employee-tickets":
         return <EmployeeTicketSection />;
+      case "employee-communication":
+        return <TeamCommunication />;
       case "employee-travel":
       case "employee-expenses":
         return <ExpenseModule />;
