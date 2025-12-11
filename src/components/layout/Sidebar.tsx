@@ -176,6 +176,13 @@ const customerPortalItems: NavItem[] = [
     color: "text-primary",
     portalMode: "customer",
   },
+  {
+    id: "employee-communication",
+    label: "Communication",
+    icon: Video,
+    color: "text-blue-500",
+    portalMode: "customer",
+  },
 ];
 
 // Admin-only Items
@@ -303,6 +310,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Dashboard",
         icon: LayoutDashboard,
         color: "text-primary",
+      });
+
+      // Team Communication - always available for all users in admin mode
+      items.push({
+        id: "employee-communication",
+        label: "Team Communication",
+        icon: Video,
+        color: "text-blue-500",
       });
 
       // Sales modules
@@ -625,6 +640,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "My AI Assistant",
         icon: Sparkles,
         color: "text-primary",
+      });
+
+      // Team Communication - always available for all users
+      items.push({
+        id: "employee-communication",
+        label: "Team Communication",
+        icon: Video,
+        color: "text-blue-500",
       });
 
       // If employee-only access, show ONLY employee portal and skip all other modules
