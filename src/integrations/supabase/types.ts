@@ -7996,6 +7996,203 @@ export type Database = {
           },
         ]
       }
+      remote_session_participants: {
+        Row: {
+          created_at: string
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          participant_email: string | null
+          participant_name: string
+          role: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          participant_email?: string | null
+          participant_name: string
+          role?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          participant_email?: string | null
+          participant_name?: string
+          role?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remote_session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "remote_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remote_session_recordings: {
+        Row: {
+          created_at: string
+          created_by: string
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          format: string | null
+          id: string
+          is_public: boolean | null
+          recording_name: string
+          recording_url: string
+          session_id: string
+          thumbnail_url: string | null
+          transcript: string | null
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          format?: string | null
+          id?: string
+          is_public?: boolean | null
+          recording_name: string
+          recording_url: string
+          session_id: string
+          thumbnail_url?: string | null
+          transcript?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          format?: string | null
+          id?: string
+          is_public?: boolean | null
+          recording_name?: string
+          recording_url?: string
+          session_id?: string
+          thumbnail_url?: string | null
+          transcript?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remote_session_recordings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "remote_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remote_sessions: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          host_id: string
+          id: string
+          meeting_link: string | null
+          meeting_platform: string | null
+          notes: string | null
+          organization_id: string | null
+          recording_available: boolean | null
+          recording_url: string | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          session_code: string
+          session_type: string | null
+          status: string | null
+          tenant_id: string | null
+          ticket_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          host_id: string
+          id?: string
+          meeting_link?: string | null
+          meeting_platform?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          recording_available?: boolean | null
+          recording_url?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          session_code: string
+          session_type?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          ticket_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          host_id?: string
+          id?: string
+          meeting_link?: string | null
+          meeting_platform?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          recording_available?: boolean | null
+          recording_url?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          session_code?: string
+          session_type?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          ticket_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remote_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remote_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remote_sessions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       renewals: {
         Row: {
           assigned_to: string | null
