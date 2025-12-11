@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useBrowserNotifications } from '@/hooks/useBrowserNotifications';
 
 export interface Call {
   id: string;
@@ -28,6 +29,7 @@ const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
 
 export function useWebRTC() {
   const { user } = useAuth();
+  const { showNotification, requestPermission, permission } = useBrowserNotifications();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [currentCall, setCurrentCall] = useState<Call | null>(null);
@@ -45,10 +47,31 @@ export function useWebRTC() {
   const originalStreamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
+  // Request notification permission on mount
+  useEffect(() => {
+    if (permission === 'default') {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
+  
   // Keep ref in sync with state
   useEffect(() => {
     currentCallRef.current = currentCall;
   }, [currentCall]);
+  
+  // Ensure local video is attached when stream and ref are both available
+  useEffect(() => {
+    if (localStream && localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
+  
+  // Ensure remote video is attached when stream and ref are both available
+  useEffect(() => {
+    if (remoteStream && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
   
   // Initialize media stream
   const initializeMedia = useCallback(async (callType: 'video' | 'voice' | 'screen_share') => {
@@ -464,11 +487,21 @@ export function useWebRTC() {
           table: 'video_calls',
           filter: `callee_id=eq.${user.id}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Incoming call:', payload);
           if (payload.new.status === 'ringing') {
-            setIncomingCall(payload.new as Call);
+            const call = payload.new as Call;
+            setIncomingCall(call);
             toast.info('Incoming call...');
+            
+            // Show browser notification
+            const callTypeLabel = call.call_type === 'video' ? 'Video' : 
+                                  call.call_type === 'voice' ? 'Voice' : 'Screen Share';
+            showNotification(`Incoming ${callTypeLabel} Call`, {
+              body: 'Someone is calling you',
+              tag: `call-${call.id}`,
+              requireInteraction: true,
+            });
           }
         }
       )
