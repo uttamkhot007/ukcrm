@@ -262,6 +262,8 @@ const Index = () => {
       case "accounts-finance":
       case "accounts-finance-contracts":
         return <AccountsModule initialTab="contracts" />;
+      case "accounts-finance-analytics":
+        return <AccountsModule initialTab="analytics" />;
       case "accounts-finance-workflows":
         return <AccountsModule initialTab="workflows" />;
       case "accounts-finance-procurement":
