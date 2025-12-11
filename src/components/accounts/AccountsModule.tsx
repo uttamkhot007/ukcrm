@@ -4,6 +4,7 @@ import { AccountsARaging } from "./AccountsARAging";
 import { AccountsSLAReminders } from "./AccountsSLAReminders";
 import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
+import { SalesAnalyticsModule } from "./SalesAnalyticsModule";
 
 interface AccountsModuleProps {
   initialTab?: string;
@@ -29,6 +30,8 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
         return <AccountsARaging />;
       case "sla-reminders":
         return <AccountsSLAReminders />;
+      case "analytics":
+        return <SalesAnalyticsModule />;
       default:
         return <AccountsContractWorkflow filterStage="all" />;
     }

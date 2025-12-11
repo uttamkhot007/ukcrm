@@ -358,6 +358,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: Calculator,
         color: "text-finance",
         children: [
+          { id: "accounts-finance-analytics", label: "Sales Analytics", icon: BarChart3 },
           { id: "accounts-finance-contracts", label: "Contracts", icon: FileText },
           { id: "accounts-finance-workflows", label: "Workflows", icon: RefreshCw },
           { id: "accounts-finance-procurement", label: "Procurement", icon: Package },
