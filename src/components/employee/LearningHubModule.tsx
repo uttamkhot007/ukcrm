@@ -37,6 +37,8 @@ import {
   Loader2,
   Trash2,
   Edit,
+  Phone,
+  Megaphone,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -408,6 +410,8 @@ export function LearningHubModule() {
 
   const salesCourses = filterCourses('sales');
   const presalesCourses = filterCourses('presales');
+  const insideSalesCourses = filterCourses('inside_sales');
+  const marketingCourses = filterCourses('marketing');
 
   const totalCoursesCompleted = userProgress.filter(p => p.progress_percent === 100).length;
   const averageProgress = userProgress.length > 0 
@@ -435,7 +439,7 @@ export function LearningHubModule() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -444,7 +448,7 @@ export function LearningHubModule() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{courses.filter(c => c.team_type === 'sales').length}</p>
-                <p className="text-sm text-muted-foreground">Sales Courses</p>
+                <p className="text-sm text-muted-foreground">Sales</p>
               </div>
             </div>
           </CardContent>
@@ -457,7 +461,33 @@ export function LearningHubModule() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{courses.filter(c => c.team_type === 'presales').length}</p>
-                <p className="text-sm text-muted-foreground">Presales Courses</p>
+                <p className="text-sm text-muted-foreground">Presales</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-500/10 rounded-lg">
+                <Phone className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{courses.filter(c => c.team_type === 'inside_sales').length}</p>
+                <p className="text-sm text-muted-foreground">Inside Sales</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-pink-500/10 rounded-lg">
+                <Megaphone className="h-5 w-5 text-pink-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{courses.filter(c => c.team_type === 'marketing').length}</p>
+                <p className="text-sm text-muted-foreground">Marketing</p>
               </div>
             </div>
           </CardContent>
@@ -470,7 +500,7 @@ export function LearningHubModule() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{averageProgress}%</p>
-                <p className="text-sm text-muted-foreground">Avg Progress</p>
+                <p className="text-sm text-muted-foreground">Progress</p>
               </div>
             </div>
           </CardContent>
@@ -483,7 +513,7 @@ export function LearningHubModule() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{news.length}</p>
-                <p className="text-sm text-muted-foreground">Security Updates</p>
+                <p className="text-sm text-muted-foreground">Security News</p>
               </div>
             </div>
           </CardContent>
@@ -491,25 +521,33 @@ export function LearningHubModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList className="grid w-auto grid-cols-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <TabsList className="grid w-full lg:w-auto grid-cols-3 lg:grid-cols-5">
             <TabsTrigger value="sales" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Sales Training
+              <span className="hidden sm:inline">Sales</span>
             </TabsTrigger>
             <TabsTrigger value="presales" className="flex items-center gap-2">
               <Presentation className="h-4 w-4" />
-              Presales Training
+              <span className="hidden sm:inline">Presales</span>
+            </TabsTrigger>
+            <TabsTrigger value="inside_sales" className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              <span className="hidden sm:inline">Inside Sales</span>
+            </TabsTrigger>
+            <TabsTrigger value="marketing" className="flex items-center gap-2">
+              <Megaphone className="h-4 w-4" />
+              <span className="hidden sm:inline">Marketing</span>
             </TabsTrigger>
             <TabsTrigger value="cybersecurity" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Cybersecurity News
+              <span className="hidden sm:inline">Security News</span>
             </TabsTrigger>
           </TabsList>
           
           {isAdmin && (
             <div className="flex gap-2">
-              {(activeTab === 'sales' || activeTab === 'presales') && (
+              {['sales', 'presales', 'inside_sales', 'marketing'].includes(activeTab) && (
                 <Dialog open={isAddCourseOpen} onOpenChange={setIsAddCourseOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm">
@@ -555,7 +593,7 @@ export function LearningHubModule() {
         </div>
 
         {/* Search and Filter - for training tabs */}
-        {(activeTab === 'sales' || activeTab === 'presales') && (
+        {['sales', 'presales', 'inside_sales', 'marketing'].includes(activeTab) && (
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -639,6 +677,50 @@ export function LearningHubModule() {
               <p className="text-lg font-medium">No Presales Courses Available</p>
               <p className="text-muted-foreground">
                 {isAdmin ? 'Click "Add Course" to create the first presales training course.' : 'Check back later for new courses.'}
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="inside_sales" className="space-y-4">
+          {coursesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : insideSalesCourses.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {insideSalesCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Phone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg font-medium">No Inside Sales Courses Available</p>
+              <p className="text-muted-foreground">
+                {isAdmin ? 'Click "Add Course" to create the first inside sales training course.' : 'Check back later for new courses.'}
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="marketing" className="space-y-4">
+          {coursesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : marketingCourses.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {marketingCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Megaphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg font-medium">No Marketing Courses Available</p>
+              <p className="text-muted-foreground">
+                {isAdmin ? 'Click "Add Course" to create the first marketing training course.' : 'Check back later for new courses.'}
               </p>
             </div>
           )}
@@ -873,6 +955,8 @@ function AddCourseForm({
             <SelectContent>
               <SelectItem value="sales">Sales</SelectItem>
               <SelectItem value="presales">Presales</SelectItem>
+              <SelectItem value="inside_sales">Inside Sales</SelectItem>
+              <SelectItem value="marketing">Marketing</SelectItem>
               <SelectItem value="all">All Teams</SelectItem>
             </SelectContent>
           </Select>
