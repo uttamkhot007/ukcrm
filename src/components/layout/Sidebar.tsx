@@ -430,6 +430,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
           { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
           { id: "tech-implementation-plan", label: "Implementation Plan", icon: FileText },
+          { id: "tech-remote-sessions", label: "Remote Sessions", icon: Video },
         ],
       });
 
@@ -443,6 +444,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "helpdesk-tickets", label: "Tickets", icon: Ticket },
           { id: "helpdesk-open", label: "Open", icon: Clock },
           { id: "helpdesk-escalated", label: "Escalated", icon: Bell },
+          { id: "helpdesk-remote-sessions", label: "Remote Sessions", icon: Video },
           { id: "helpdesk-templates", label: "Templates", icon: FileText },
           { id: "helpdesk-analytics", label: "Analytics", icon: BarChart3 },
           { id: "helpdesk-automation", label: "Automation", icon: Sparkles },
