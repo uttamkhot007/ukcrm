@@ -25,9 +25,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import {
   Search,
@@ -41,6 +43,9 @@ import {
   Star,
   Target,
   Zap,
+  Trash2,
+  Database,
+  AlertTriangle,
 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv-export";
 
@@ -60,47 +65,153 @@ interface TeamMember {
   department: string;
   skills: Skill[];
   overallScore: number;
+  isDemoData?: boolean;
 }
 
-// Sample data - in production this would come from Supabase
-const sampleTeamMembers: TeamMember[] = [
+// Comprehensive demo data with realistic Indian names and cybersecurity roles
+const generateDemoTeamMembers = (): TeamMember[] => [
   {
-    id: "1",
-    name: "John Smith",
-    role: "Senior Developer",
-    department: "Engineering",
-    overallScore: 85,
+    id: "demo-1",
+    name: "Rajesh Kumar",
+    role: "Senior Security Engineer",
+    department: "Technical",
+    overallScore: 92,
+    isDemoData: true,
     skills: [
-      { id: "s1", name: "React", category: "Frontend", level: 5, lastAssessed: "2024-01-15", certifications: ["Meta React Certificate"] },
-      { id: "s2", name: "TypeScript", category: "Languages", level: 4, lastAssessed: "2024-01-15" },
-      { id: "s3", name: "Node.js", category: "Backend", level: 4, lastAssessed: "2024-01-10" },
-      { id: "s4", name: "AWS", category: "Cloud", level: 3, lastAssessed: "2024-01-05" },
+      { id: "s1", name: "SIEM Administration", category: "Security", level: 5, lastAssessed: "2024-11-15", certifications: ["Splunk Certified Admin"] },
+      { id: "s2", name: "Threat Intelligence", category: "Security", level: 5, lastAssessed: "2024-11-10" },
+      { id: "s3", name: "Python", category: "Languages", level: 4, lastAssessed: "2024-10-20", certifications: ["PCAP"] },
+      { id: "s4", name: "AWS Security", category: "Cloud", level: 4, lastAssessed: "2024-10-05", certifications: ["AWS Security Specialty"] },
+      { id: "s5", name: "Incident Response", category: "Security", level: 5, lastAssessed: "2024-11-12", certifications: ["GCIH"] },
     ],
   },
   {
-    id: "2",
-    name: "Sarah Johnson",
-    role: "DevOps Engineer",
-    department: "Infrastructure",
+    id: "demo-2",
+    name: "Priya Sharma",
+    role: "SOC Analyst L2",
+    department: "Technical",
     overallScore: 78,
+    isDemoData: true,
     skills: [
-      { id: "s5", name: "Kubernetes", category: "DevOps", level: 5, lastAssessed: "2024-01-12", certifications: ["CKA"] },
-      { id: "s6", name: "Docker", category: "DevOps", level: 5, lastAssessed: "2024-01-12" },
-      { id: "s7", name: "Terraform", category: "IaC", level: 4, lastAssessed: "2024-01-08" },
-      { id: "s8", name: "Python", category: "Languages", level: 3, lastAssessed: "2024-01-05" },
+      { id: "s6", name: "SIEM Monitoring", category: "Security", level: 4, lastAssessed: "2024-11-18" },
+      { id: "s7", name: "Malware Analysis", category: "Security", level: 3, lastAssessed: "2024-11-05" },
+      { id: "s8", name: "Log Analysis", category: "Security", level: 4, lastAssessed: "2024-11-15" },
+      { id: "s9", name: "PowerShell", category: "Languages", level: 3, lastAssessed: "2024-10-25" },
     ],
   },
   {
-    id: "3",
-    name: "Mike Chen",
-    role: "Security Analyst",
-    department: "Security",
-    overallScore: 82,
+    id: "demo-3",
+    name: "Amit Patel",
+    role: "Cloud Security Specialist",
+    department: "Technical",
+    overallScore: 85,
+    isDemoData: true,
     skills: [
-      { id: "s9", name: "Penetration Testing", category: "Security", level: 4, lastAssessed: "2024-01-14", certifications: ["CEH", "OSCP"] },
-      { id: "s10", name: "SIEM", category: "Security", level: 4, lastAssessed: "2024-01-14" },
-      { id: "s11", name: "Incident Response", category: "Security", level: 5, lastAssessed: "2024-01-10" },
-      { id: "s12", name: "Python", category: "Languages", level: 3, lastAssessed: "2024-01-05" },
+      { id: "s10", name: "Azure Security", category: "Cloud", level: 5, lastAssessed: "2024-11-10", certifications: ["AZ-500", "AZ-104"] },
+      { id: "s11", name: "Kubernetes Security", category: "Cloud", level: 4, lastAssessed: "2024-11-08" },
+      { id: "s12", name: "Terraform", category: "IaC", level: 4, lastAssessed: "2024-10-20" },
+      { id: "s13", name: "Docker Security", category: "DevOps", level: 4, lastAssessed: "2024-10-15" },
+      { id: "s14", name: "GCP Security", category: "Cloud", level: 3, lastAssessed: "2024-09-28" },
+    ],
+  },
+  {
+    id: "demo-4",
+    name: "Sneha Reddy",
+    role: "Solution Architect",
+    department: "Presales",
+    overallScore: 88,
+    isDemoData: true,
+    skills: [
+      { id: "s15", name: "Security Architecture", category: "Security", level: 5, lastAssessed: "2024-11-12", certifications: ["CISSP", "TOGAF"] },
+      { id: "s16", name: "Risk Assessment", category: "Compliance", level: 4, lastAssessed: "2024-11-05" },
+      { id: "s17", name: "AWS Security", category: "Cloud", level: 4, lastAssessed: "2024-10-28" },
+      { id: "s18", name: "Technical Presentations", category: "Other", level: 5, lastAssessed: "2024-11-15" },
+    ],
+  },
+  {
+    id: "demo-5",
+    name: "Vikram Singh",
+    role: "Penetration Tester",
+    department: "Technical",
+    overallScore: 90,
+    isDemoData: true,
+    skills: [
+      { id: "s19", name: "Penetration Testing", category: "Security", level: 5, lastAssessed: "2024-11-18", certifications: ["OSCP", "CEH", "GPEN"] },
+      { id: "s20", name: "Web App Security", category: "Security", level: 5, lastAssessed: "2024-11-15" },
+      { id: "s21", name: "Network Security", category: "Security", level: 4, lastAssessed: "2024-11-10" },
+      { id: "s22", name: "Python", category: "Languages", level: 4, lastAssessed: "2024-10-20" },
+      { id: "s23", name: "Bash Scripting", category: "Languages", level: 4, lastAssessed: "2024-10-15" },
+    ],
+  },
+  {
+    id: "demo-6",
+    name: "Ananya Gupta",
+    role: "Technical Support Lead",
+    department: "Support",
+    overallScore: 82,
+    isDemoData: true,
+    skills: [
+      { id: "s24", name: "Cynet Administration", category: "Security", level: 5, lastAssessed: "2024-11-15", certifications: ["Cynet Certified Expert"] },
+      { id: "s25", name: "Customer Communication", category: "Other", level: 5, lastAssessed: "2024-11-12" },
+      { id: "s26", name: "Incident Management", category: "Security", level: 4, lastAssessed: "2024-11-08" },
+      { id: "s27", name: "Troubleshooting", category: "Other", level: 4, lastAssessed: "2024-11-05" },
+    ],
+  },
+  {
+    id: "demo-7",
+    name: "Karthik Menon",
+    role: "DevSecOps Engineer",
+    department: "Technical",
+    overallScore: 86,
+    isDemoData: true,
+    skills: [
+      { id: "s28", name: "CI/CD Security", category: "DevOps", level: 5, lastAssessed: "2024-11-15" },
+      { id: "s29", name: "Kubernetes", category: "DevOps", level: 4, lastAssessed: "2024-11-10", certifications: ["CKA", "CKS"] },
+      { id: "s30", name: "SAST/DAST Tools", category: "Security", level: 4, lastAssessed: "2024-11-08" },
+      { id: "s31", name: "GitOps", category: "DevOps", level: 4, lastAssessed: "2024-10-28" },
+      { id: "s32", name: "Python", category: "Languages", level: 3, lastAssessed: "2024-10-20" },
+    ],
+  },
+  {
+    id: "demo-8",
+    name: "Deepika Nair",
+    role: "Pre-sales Consultant",
+    department: "Presales",
+    overallScore: 80,
+    isDemoData: true,
+    skills: [
+      { id: "s33", name: "Solution Design", category: "Other", level: 4, lastAssessed: "2024-11-12" },
+      { id: "s34", name: "Product Demos", category: "Other", level: 5, lastAssessed: "2024-11-18" },
+      { id: "s35", name: "Competitive Analysis", category: "Other", level: 4, lastAssessed: "2024-11-05" },
+      { id: "s36", name: "SIEM Concepts", category: "Security", level: 3, lastAssessed: "2024-10-25" },
+    ],
+  },
+  {
+    id: "demo-9",
+    name: "Rahul Verma",
+    role: "Incident Response Analyst",
+    department: "Technical",
+    overallScore: 84,
+    isDemoData: true,
+    skills: [
+      { id: "s37", name: "Incident Response", category: "Security", level: 5, lastAssessed: "2024-11-18", certifications: ["GCIH", "GCIA"] },
+      { id: "s38", name: "Forensics", category: "Security", level: 4, lastAssessed: "2024-11-12" },
+      { id: "s39", name: "Malware Analysis", category: "Security", level: 4, lastAssessed: "2024-11-08" },
+      { id: "s40", name: "SIEM", category: "Security", level: 4, lastAssessed: "2024-11-05" },
+    ],
+  },
+  {
+    id: "demo-10",
+    name: "Meera Iyer",
+    role: "Customer Success Manager",
+    department: "Support",
+    overallScore: 75,
+    isDemoData: true,
+    skills: [
+      { id: "s41", name: "Customer Relationship", category: "Other", level: 5, lastAssessed: "2024-11-15" },
+      { id: "s42", name: "Security Awareness", category: "Security", level: 3, lastAssessed: "2024-11-10" },
+      { id: "s43", name: "Product Knowledge", category: "Other", level: 4, lastAssessed: "2024-11-05" },
+      { id: "s44", name: "Reporting & Analytics", category: "Other", level: 4, lastAssessed: "2024-10-28" },
     ],
   },
 ];
@@ -147,14 +258,19 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(sampleTeamMembers);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(generateDemoTeamMembers());
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+
+  // Check if demo data exists
+  const hasDemoData = teamMembers.some(m => m.isDemoData);
+  const demoDataCount = teamMembers.filter(m => m.isDemoData).length;
 
   // New skill form state
   const [newSkill, setNewSkill] = useState({
     name: "",
-    category: "Frontend",
+    category: "Security",
     level: 3,
   });
 
@@ -259,9 +375,15 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     });
 
     setTeamMembers(updatedMembers);
-    setNewSkill({ name: "", category: "Frontend", level: 3 });
+    setNewSkill({ name: "", category: "Security", level: 3 });
     setIsAddDialogOpen(false);
     toast.success("Skill added successfully");
+  };
+
+  const handleClearDemoData = () => {
+    setTeamMembers(teamMembers.filter(m => !m.isDemoData));
+    setIsClearDialogOpen(false);
+    toast.success("Demo data cleared successfully. You can now add real employee data.");
   };
 
   return (
@@ -274,7 +396,39 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
             {viewMode === "hr" ? "Manage and track team skills across departments" : "View your team's skill profiles"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {hasDemoData && (
+            <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear Demo Data
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    Clear Demo Data
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-muted-foreground">
+                    This will remove all {demoDataCount} demo employee entries and their skills. 
+                    Real data entries will be preserved. This action cannot be undone.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsClearDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleClearDemoData}>
+                    Clear Demo Data
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           <Button variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Export CSV
@@ -287,6 +441,18 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
           )}
         </div>
       </div>
+
+      {/* Demo Data Notice */}
+      {hasDemoData && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <Database className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-600">Demo Data Active</AlertTitle>
+          <AlertDescription className="text-amber-600/80">
+            This module contains {demoDataCount} sample employees for demonstration purposes. 
+            Click "Clear Demo Data" when you're ready to add real employee skills.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -388,7 +554,14 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
       {/* Skill Matrix Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Team Skills Overview</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Team Skills Overview</span>
+            {hasDemoData && (
+              <Badge variant="outline" className="text-amber-600 border-amber-500">
+                Contains Demo Data
+              </Badge>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -404,8 +577,17 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
             </TableHeader>
             <TableBody>
               {filteredMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.name}</TableCell>
+                <TableRow key={member.id} className={member.isDemoData ? "bg-amber-500/5" : ""}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {member.name}
+                      {member.isDemoData && (
+                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-400">
+                          Demo
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{member.role}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{member.department}</Badge>
