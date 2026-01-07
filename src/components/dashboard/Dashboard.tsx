@@ -17,8 +17,8 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MetricCard } from "./MetricCard";
-import { ModuleCard } from "./ModuleCard";
+import { PremiumMetricCard } from "./PremiumMetricCard";
+import { PremiumModuleCard } from "./PremiumModuleCard";
 import { ActivityFeed } from "./ActivityFeed";
 import { SalesFunnel } from "./SalesFunnel";
 import { RevenueChart } from "./RevenueChart";
@@ -304,9 +304,9 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
 
       {/* Metrics Grid - Only for Admin/Manager */}
       {metrics.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {metrics.map((metric, index) => (
-            <MetricCard 
+            <PremiumMetricCard 
               key={metric.title} 
               {...metric} 
               delay={index * 100} 
@@ -397,12 +397,12 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
 
       {/* Modules Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">
-          {isAdmin || isManager ? "Modules" : "Your Tools"}
+        <h2 className="text-xl font-semibold mb-5">
+          {isAdmin || isManager ? "Role-Based Dashboards" : "Your Tools"}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {modules.map((module, index) => (
-            <ModuleCard
+            <PremiumModuleCard
               key={module.id}
               {...module}
               onClick={() => onModuleChange(module.id)}
