@@ -267,34 +267,61 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
       </div>
 
       {/* Premium 3D Navigation Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {/* AI Workspace Card */}
+        <button
+          onClick={() => setActiveTab('ai-workspace')}
+          className={cn(
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'ai-workspace' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'ai-workspace' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
+          </div>
+          <h3 className="text-base font-semibold mb-1">AI Workspace</h3>
+          <p className="text-xs text-muted-foreground mb-3">AI-powered RFP analysis</p>
+          <Badge variant="secondary" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+            Smart
+          </Badge>
+        </button>
+
         {/* Deal Registration Card */}
         <button
           onClick={() => setActiveTab('deal-registration')}
           className={cn(
-            "premium-card group text-left p-6 rounded-2xl transition-all duration-300",
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
             "hover:-translate-y-1 hover:shadow-xl",
             activeTab === 'deal-registration' 
               ? "ring-2 ring-primary shadow-lg bg-primary/5" 
               : "hover:bg-accent/30"
           )}
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-              <FileCheck className="h-7 w-7 text-white" />
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <FileCheck className="h-6 w-6 text-white" />
             </div>
             <ChevronRight className={cn(
               "h-5 w-5 text-muted-foreground transition-all duration-300",
               activeTab === 'deal-registration' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
             )} />
           </div>
-          <h3 className="text-lg font-semibold mb-1">Deal Registration</h3>
-          <p className="text-sm text-muted-foreground mb-4">OEM deal registrations & approvals</p>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
-              {drStats.total} Total
+          <h3 className="text-base font-semibold mb-1">Deal Registration</h3>
+          <p className="text-xs text-muted-foreground mb-3">OEM registrations</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-xs">
+              {drStats.total}
             </Badge>
-            <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs">
               {drStats.pending} Pending
             </Badge>
           </div>
@@ -304,29 +331,135 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
         <button
           onClick={() => setActiveTab('document-workspace')}
           className={cn(
-            "premium-card group text-left p-6 rounded-2xl transition-all duration-300",
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
             "hover:-translate-y-1 hover:shadow-xl",
             activeTab === 'document-workspace' 
               ? "ring-2 ring-primary shadow-lg bg-primary/5" 
               : "hover:bg-accent/30"
           )}
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-              <Brain className="h-7 w-7 text-white" />
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <FileText className="h-6 w-6 text-white" />
             </div>
             <ChevronRight className={cn(
               "h-5 w-5 text-muted-foreground transition-all duration-300",
               activeTab === 'document-workspace' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
             )} />
           </div>
-          <h3 className="text-lg font-semibold mb-1">Tender Documents</h3>
-          <p className="text-sm text-muted-foreground mb-4">AI-powered RFP specs & responses</p>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-              AI Workspace
-            </Badge>
+          <h3 className="text-base font-semibold mb-1">Tender Docs</h3>
+          <p className="text-xs text-muted-foreground mb-3">RFP specs & responses</p>
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+            Documents
+          </Badge>
+        </button>
+
+        {/* OEM Funnel Card */}
+        <button
+          onClick={() => setActiveTab('oem-funnel')}
+          className={cn(
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'oem-funnel' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'oem-funnel' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
           </div>
+          <h3 className="text-base font-semibold mb-1">OEM Funnel</h3>
+          <p className="text-xs text-muted-foreground mb-3">Vendor pipelines</p>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            {uniqueOEMs.length} OEMs
+          </Badge>
+        </button>
+
+        {/* Opportunities Card */}
+        <button
+          onClick={() => setActiveTab('opportunities')}
+          className={cn(
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'opportunities' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <Target className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'opportunities' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
+          </div>
+          <h3 className="text-base font-semibold mb-1">Opportunities</h3>
+          <p className="text-xs text-muted-foreground mb-3">Tender tracking</p>
+          <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            {tenderStats.identified}
+          </Badge>
+        </button>
+
+        {/* Bid Preparation Card */}
+        <button
+          onClick={() => setActiveTab('bid-preparation')}
+          className={cn(
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'bid-preparation' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <Gavel className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'bid-preparation' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
+          </div>
+          <h3 className="text-base font-semibold mb-1">Bid Preparation</h3>
+          <p className="text-xs text-muted-foreground mb-3">Prepare submissions</p>
+          <Badge variant="secondary" className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+            {tenderStats.inProgress}
+          </Badge>
+        </button>
+
+        {/* Awards/Evaluation Card */}
+        <button
+          onClick={() => setActiveTab('evaluation')}
+          className={cn(
+            "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'evaluation' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <CheckCircle className="h-6 w-6 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'evaluation' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
+          </div>
+          <h3 className="text-base font-semibold mb-1">Awards</h3>
+          <p className="text-xs text-muted-foreground mb-3">Won & evaluation</p>
+          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            {tenderStats.won} Won
+          </Badge>
         </button>
       </div>
 
@@ -344,6 +477,12 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
       )}
 
       {/* Content based on active tab */}
+      {activeTab === 'ai-workspace' && (
+        <div className="animate-fade-in">
+          <TenderDocumentWorkspace />
+        </div>
+      )}
+
       {activeTab === 'deal-registration' && (
         <div className="animate-fade-in">
           <DealRegistrationTab 
@@ -358,6 +497,49 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
       {activeTab === 'document-workspace' && (
         <div className="animate-fade-in">
           <TenderDocumentWorkspace />
+        </div>
+      )}
+
+      {activeTab === 'oem-funnel' && (
+        <div className="animate-fade-in">
+          <OEMFunnelTab 
+            dealRegistrations={dealRegistrations}
+            deals={deals}
+            loading={loading}
+          />
+        </div>
+      )}
+
+      {activeTab === 'opportunities' && (
+        <div className="animate-fade-in">
+          <TenderOpportunitiesTab 
+            tenders={filteredTenders}
+            loading={loading}
+            onViewDetails={handleViewTenderDetails}
+            onRefresh={fetchData}
+          />
+        </div>
+      )}
+
+      {activeTab === 'bid-preparation' && (
+        <div className="animate-fade-in">
+          <TenderBidPreparationTab 
+            tenders={tenders.filter(t => ['evaluating', 'bid_preparation'].includes(t.status))}
+            loading={loading}
+            onViewDetails={handleViewTenderDetails}
+            onRefresh={fetchData}
+          />
+        </div>
+      )}
+
+      {activeTab === 'evaluation' && (
+        <div className="animate-fade-in">
+          <TenderEvaluationTab 
+            tenders={tenders.filter(t => ['submitted', 'under_evaluation', 'won', 'lost'].includes(t.status))}
+            loading={loading}
+            onViewDetails={handleViewTenderDetails}
+            onRefresh={fetchData}
+          />
         </div>
       )}
 
