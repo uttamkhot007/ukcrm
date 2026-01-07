@@ -10124,6 +10124,7 @@ export type Database = {
           progress_percent: number | null
           requirements_text: string | null
           selected_ai_model: string | null
+          solution_description: string | null
           solution_name: string | null
           source_file_name: string | null
           status: string
@@ -10149,6 +10150,7 @@ export type Database = {
           progress_percent?: number | null
           requirements_text?: string | null
           selected_ai_model?: string | null
+          solution_description?: string | null
           solution_name?: string | null
           source_file_name?: string | null
           status?: string
@@ -10174,6 +10176,7 @@ export type Database = {
           progress_percent?: number | null
           requirements_text?: string | null
           selected_ai_model?: string | null
+          solution_description?: string | null
           solution_name?: string | null
           source_file_name?: string | null
           status?: string
