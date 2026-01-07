@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Plus, Search, FileText, Users, Activity, Calendar, 
   TrendingUp, AlertTriangle, CheckCircle, Clock, XCircle,
-  Gavel, FileCheck, Target, BarChart3, Building2, Brain
+  Gavel, FileCheck, Target, BarChart3, Building2, Brain,
+  ArrowRight, ChevronRight
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -265,100 +266,100 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search tenders, DRs, OEMs..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Premium 3D Navigation Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Deal Registration Card */}
+        <button
+          onClick={() => setActiveTab('deal-registration')}
+          className={cn(
+            "premium-card group text-left p-6 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'deal-registration' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <FileCheck className="h-7 w-7 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'deal-registration' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Deal Registration</h3>
+          <p className="text-sm text-muted-foreground mb-4">OEM deal registrations & approvals</p>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+              {drStats.total} Total
+            </Badge>
+            <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              {drStats.pending} Pending
+            </Badge>
+          </div>
+        </button>
+
+        {/* Tender Documents Card */}
+        <button
+          onClick={() => setActiveTab('document-workspace')}
+          className={cn(
+            "premium-card group text-left p-6 rounded-2xl transition-all duration-300",
+            "hover:-translate-y-1 hover:shadow-xl",
+            activeTab === 'document-workspace' 
+              ? "ring-2 ring-primary shadow-lg bg-primary/5" 
+              : "hover:bg-accent/30"
+          )}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <Brain className="h-7 w-7 text-white" />
+            </div>
+            <ChevronRight className={cn(
+              "h-5 w-5 text-muted-foreground transition-all duration-300",
+              activeTab === 'document-workspace' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+            )} />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Tender Documents</h3>
+          <p className="text-sm text-muted-foreground mb-4">AI-powered RFP specs & responses</p>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              AI Workspace
+            </Badge>
+          </div>
+        </button>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 w-full max-w-4xl">
-          <TabsTrigger value="deal-registration" className="gap-2">
-            <FileCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Deal Reg</span>
-            <span className="sm:hidden">DR</span>
-          </TabsTrigger>
-          <TabsTrigger value="document-workspace" className="gap-2">
-            <Brain className="h-4 w-4" />
-            <span className="hidden sm:inline">AI Workspace</span>
-            <span className="sm:hidden">AI</span>
-          </TabsTrigger>
-          <TabsTrigger value="oem-funnel" className="gap-2">
-            <Target className="h-4 w-4" />
-            <span className="hidden sm:inline">OEM Funnel</span>
-            <span className="sm:hidden">Funnel</span>
-          </TabsTrigger>
-          <TabsTrigger value="opportunities" className="gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Opportunities</span>
-            <span className="sm:hidden">Opps</span>
-          </TabsTrigger>
-          <TabsTrigger value="bid-preparation" className="gap-2">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Bid Prep</span>
-            <span className="sm:hidden">Bids</span>
-          </TabsTrigger>
-          <TabsTrigger value="evaluation" className="gap-2">
-            <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Awards</span>
-            <span className="sm:hidden">Won</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Search */}
+      {activeTab && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search tenders, DRs, OEMs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
 
-        <TabsContent value="deal-registration" className="mt-4">
+      {/* Content based on active tab */}
+      {activeTab === 'deal-registration' && (
+        <div className="animate-fade-in">
           <DealRegistrationTab 
             dealRegistrations={filteredDRs}
             loading={loading}
             onViewDetails={handleViewDRDetails}
             onRefresh={fetchData}
           />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="document-workspace" className="mt-4">
+      {activeTab === 'document-workspace' && (
+        <div className="animate-fade-in">
           <TenderDocumentWorkspace />
-        </TabsContent>
-
-        <TabsContent value="oem-funnel" className="mt-4">
-          <OEMFunnelTab 
-            dealRegistrations={dealRegistrations}
-            deals={deals}
-            loading={loading}
-          />
-        </TabsContent>
-
-        <TabsContent value="opportunities" className="mt-4">
-          <TenderOpportunitiesTab 
-            tenders={filteredTenders.filter(t => ['identified', 'evaluating'].includes(t.status))}
-            loading={loading}
-            onViewDetails={handleViewTenderDetails}
-            onRefresh={fetchData}
-          />
-        </TabsContent>
-
-        <TabsContent value="bid-preparation" className="mt-4">
-          <TenderBidPreparationTab 
-            tenders={filteredTenders.filter(t => ['bid_preparation', 'submitted'].includes(t.status))}
-            loading={loading}
-            onViewDetails={handleViewTenderDetails}
-            onRefresh={fetchData}
-          />
-        </TabsContent>
-
-        <TabsContent value="evaluation" className="mt-4">
-          <TenderEvaluationTab 
-            tenders={filteredTenders.filter(t => ['under_evaluation', 'won', 'lost', 'cancelled'].includes(t.status))}
-            loading={loading}
-            onViewDetails={handleViewTenderDetails}
-            onRefresh={fetchData}
-          />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       {/* Dialogs */}
       <NewTenderDialog 
