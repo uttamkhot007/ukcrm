@@ -1060,7 +1060,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
         {filteredNavItems.map((item) => (
-          <div key={item.id} className="mb-1">
+          <div key={item.id} className="mb-2">
             <button
               onClick={() => {
                 if (item.isLink && item.linkPath) {
@@ -1073,22 +1073,33 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                 onModuleChange(item.id);
               }}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group/parent",
+                "hover:shadow-md",
                 activeModule === item.id || activeModule.startsWith(item.id + "-")
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50"
               )}
             >
-              <item.icon className={cn("w-5 h-5 flex-shrink-0", item.color)} />
+              <div
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
+                  "transition-all duration-300 group-hover/parent:scale-110 group-hover/parent:rotate-3",
+                  activeModule === item.id || activeModule.startsWith(item.id + "-")
+                    ? "bg-primary/20"
+                    : "bg-sidebar-accent group-hover/parent:bg-sidebar-accent"
+                )}
+              >
+                <item.icon className={cn("w-5 h-5", item.color)} />
+              </div>
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left text-sm font-medium">
+                  <span className="flex-1 text-left text-sm font-semibold">
                     {item.label}
                   </span>
                   {item.children && (
                     <ChevronRight
                       className={cn(
-                        "w-4 h-4 transition-transform",
+                        "w-4 h-4 transition-transform duration-300",
                         expandedItems.includes(item.id) && "rotate-90"
                       )}
                     />
@@ -1097,10 +1108,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               )}
             </button>
 
-            {/* Children */}
+            {/* Premium 3D Card Children */}
             {!collapsed && item.children && expandedItems.includes(item.id) && (
-              <div className="ml-4 mt-1 space-y-1 animate-fade-in">
-                {item.children.map((child) => (
+              <div className="ml-2 mt-2 space-y-1.5 animate-fade-in">
+                {item.children.map((child, index) => (
                   <button
                     key={child.id}
                     onClick={() => {
@@ -1112,14 +1123,28 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                       onModuleChange(child.id);
                     }}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
+                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 text-sm group/child",
+                      "bg-sidebar-accent/30 hover:bg-sidebar-accent/60",
+                      "border border-transparent hover:border-sidebar-border/50",
+                      "hover:shadow-md hover:-translate-y-0.5",
                       activeModule === child.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                        ? "bg-primary/15 border-primary/30 text-primary shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
+                    style={{ animationDelay: `${index * 30}ms` }}
                   >
-                    <child.icon className="w-4 h-4" />
-                    <span>{child.label}</span>
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                        "transition-all duration-300 group-hover/child:scale-110 group-hover/child:rotate-3",
+                        activeModule === child.id
+                          ? "bg-primary/20 text-primary"
+                          : "bg-sidebar-accent text-muted-foreground group-hover/child:bg-primary/10 group-hover/child:text-primary"
+                      )}
+                    >
+                      <child.icon className="w-4 h-4" />
+                    </div>
+                    <span className="flex-1 text-left font-medium">{child.label}</span>
                   </button>
                 ))}
               </div>
