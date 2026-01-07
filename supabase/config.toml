@@ -80,3 +80,6 @@ verify_jwt = true
 
 [functions.executive-insights]
 verify_jwt = true
+
+[functions.tender-ai-assistant]
+verify_jwt = true

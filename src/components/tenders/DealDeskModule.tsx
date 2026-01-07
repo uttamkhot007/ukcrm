@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Plus, Search, FileText, Users, Activity, Calendar, 
   TrendingUp, AlertTriangle, CheckCircle, Clock, XCircle,
-  Gavel, FileCheck, Target, BarChart3, Building2
+  Gavel, FileCheck, Target, BarChart3, Building2, Brain
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
@@ -23,6 +23,7 @@ import { DealRegistrationTab } from './DealRegistrationTab';
 import { OEMFunnelTab } from './OEMFunnelTab';
 import { NewDealRegistrationDialog } from '@/components/sales/NewDealRegistrationDialog';
 import { DealRegistrationDetailsSheet } from '@/components/sales/DealRegistrationDetailsSheet';
+import { TenderDocumentWorkspace } from './TenderDocumentWorkspace';
 
 interface DealDeskModuleProps {
   initialTab?: string;
@@ -277,14 +278,16 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-4xl">
           <TabsTrigger value="deal-registration" className="gap-2">
             <FileCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Deal Registration</span>
+            <span className="hidden sm:inline">Deal Reg</span>
             <span className="sm:hidden">DR</span>
-            {drStats.pending > 0 && (
-              <Badge variant="secondary" className="ml-1">{drStats.pending}</Badge>
-            )}
+          </TabsTrigger>
+          <TabsTrigger value="document-workspace" className="gap-2">
+            <Brain className="h-4 w-4" />
+            <span className="hidden sm:inline">AI Workspace</span>
+            <span className="sm:hidden">AI</span>
           </TabsTrigger>
           <TabsTrigger value="oem-funnel" className="gap-2">
             <Target className="h-4 w-4" />
@@ -315,6 +318,10 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
             onViewDetails={handleViewDRDetails}
             onRefresh={fetchData}
           />
+        </TabsContent>
+
+        <TabsContent value="document-workspace" className="mt-4">
+          <TenderDocumentWorkspace />
         </TabsContent>
 
         <TabsContent value="oem-funnel" className="mt-4">

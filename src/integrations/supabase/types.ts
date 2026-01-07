@@ -10052,6 +10052,155 @@ export type Database = {
           },
         ]
       }
+      tender_workspace_sections: {
+        Row: {
+          ai_response: string | null
+          compliance_status: string | null
+          created_at: string
+          edited_content: string | null
+          id: string
+          is_ai_generated: boolean | null
+          requirement_text: string | null
+          section_order: number
+          section_title: string
+          section_type: string
+          status: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          ai_response?: string | null
+          compliance_status?: string | null
+          created_at?: string
+          edited_content?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          requirement_text?: string | null
+          section_order?: number
+          section_title: string
+          section_type: string
+          status?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          ai_response?: string | null
+          compliance_status?: string | null
+          created_at?: string
+          edited_content?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          requirement_text?: string | null
+          section_order?: number
+          section_title?: string
+          section_type?: string
+          status?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_workspace_sections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tender_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tender_workspaces: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          customer_name: string | null
+          exported_format: string | null
+          final_content: string | null
+          generated_content: Json | null
+          id: string
+          include_branding: boolean | null
+          notes: string | null
+          oem_name: string | null
+          progress_percent: number | null
+          requirements_text: string | null
+          selected_ai_model: string | null
+          solution_name: string | null
+          source_file_name: string | null
+          status: string
+          tenant_id: string | null
+          tender_id: string | null
+          title: string
+          updated_at: string
+          workspace_number: string | null
+          workspace_type: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          customer_name?: string | null
+          exported_format?: string | null
+          final_content?: string | null
+          generated_content?: Json | null
+          id?: string
+          include_branding?: boolean | null
+          notes?: string | null
+          oem_name?: string | null
+          progress_percent?: number | null
+          requirements_text?: string | null
+          selected_ai_model?: string | null
+          solution_name?: string | null
+          source_file_name?: string | null
+          status?: string
+          tenant_id?: string | null
+          tender_id?: string | null
+          title: string
+          updated_at?: string
+          workspace_number?: string | null
+          workspace_type?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          customer_name?: string | null
+          exported_format?: string | null
+          final_content?: string | null
+          generated_content?: Json | null
+          id?: string
+          include_branding?: boolean | null
+          notes?: string | null
+          oem_name?: string | null
+          progress_percent?: number | null
+          requirements_text?: string | null
+          selected_ai_model?: string | null
+          solution_name?: string | null
+          source_file_name?: string | null
+          status?: string
+          tenant_id?: string | null
+          tender_id?: string | null
+          title?: string
+          updated_at?: string
+          workspace_number?: string | null
+          workspace_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_workspaces_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tender_workspaces_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenders: {
         Row: {
           assigned_to: string | null
