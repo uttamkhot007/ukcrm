@@ -88,6 +88,10 @@ export default {
         renewals: {
           DEFAULT: "hsl(var(--renewals))",
         },
+        glass: {
+          bg: "hsl(var(--glass-bg))",
+          border: "hsl(var(--glass-border))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -103,6 +107,24 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+        "3xl": "calc(var(--radius) + 12px)",
+      },
+      boxShadow: {
+        "elevation-low": "var(--shadow-elevation-low)",
+        "elevation-medium": "var(--shadow-elevation-medium)",
+        "elevation-high": "var(--shadow-elevation-high)",
+        "glass": "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+        "glass-lg": "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+        "inner-light": "inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.1)",
+        "3d": "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
+        "3d-hover": "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.3)",
+      },
+      backdropBlur: {
+        xs: "2px",
+        glass: "20px",
+        "glass-lg": "30px",
       },
       keyframes: {
         "accordion-down": {
@@ -125,6 +147,28 @@ export default {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "float-3d": {
+          "0%, 100%": { transform: "translateY(0px) rotateX(0deg) rotateY(0deg)" },
+          "25%": { transform: "translateY(-10px) rotateX(2deg) rotateY(-2deg)" },
+          "50%": { transform: "translateY(-5px) rotateX(0deg) rotateY(2deg)" },
+          "75%": { transform: "translateY(-15px) rotateX(-2deg) rotateY(0deg)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(99, 102, 241, 0.3)" },
+          "50%": { boxShadow: "0 0 40px rgba(99, 102, 241, 0.5), 0 0 60px rgba(99, 102, 241, 0.3)" },
+        },
+        "shimmer": {
+          "0%": { left: "-100%" },
+          "100%": { left: "100%" },
+        },
+        "holographic": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -132,6 +176,15 @@ export default {
         "fade-in": "fade-in 0.4s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-in-right": "slide-in-right 0.4s ease-out forwards",
+        "float": "float 3s ease-in-out infinite",
+        "float-3d": "float-3d 6s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "shimmer": "shimmer 3s linear infinite",
+        "holographic": "holographic 8s ease infinite",
+      },
+      transitionTimingFunction: {
+        "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "smooth": "cubic-bezier(0.4, 0, 0.2, 1)",
       },
     },
   },
