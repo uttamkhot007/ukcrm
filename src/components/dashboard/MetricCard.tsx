@@ -49,16 +49,25 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "glass rounded-xl p-5 border hover:border-opacity-40 transition-all duration-300 group cursor-pointer hover:scale-[1.02]",
+        "glass glass-hover card-3d rounded-2xl p-5 cursor-pointer group relative overflow-hidden",
+        "hover:shadow-elevation-high transition-all duration-500",
         colorClasses[color]
       )}
       style={{ animationDelay: `${delay}ms` }}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-4">
+      {/* Holographic overlay */}
+      <div className="absolute inset-0 holographic opacity-30 pointer-events-none" />
+      
+      {/* Inner highlight */}
+      <div className="absolute inset-0 inner-light pointer-events-none rounded-2xl" />
+
+      <div className="flex items-start justify-between mb-4 relative z-10">
         <div
           className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+            "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300",
+            "group-hover:scale-110 group-hover:rotate-3",
+            "shadow-elevation-low",
             bgClasses[color]
           )}
         >
@@ -66,10 +75,11 @@ export function MetricCard({
         </div>
         <div
           className={cn(
-            "flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full",
+            "flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-full",
+            "glass-subtle backdrop-blur-sm",
             isPositive
-              ? "text-primary bg-primary/10"
-              : "text-destructive bg-destructive/10"
+              ? "text-primary"
+              : "text-destructive"
           )}
         >
           {isPositive ? (
@@ -81,10 +91,10 @@ export function MetricCard({
         </div>
       </div>
 
-      <div>
-        <h3 className="text-2xl font-bold text-foreground mb-1">{value}</h3>
+      <div className="relative z-10">
+        <h3 className="text-2xl font-bold text-foreground mb-1 tracking-tight">{value}</h3>
         <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground mt-1">{changeLabel}</p>
+        <p className="text-xs text-muted-foreground mt-1 opacity-70">{changeLabel}</p>
       </div>
     </div>
   );
