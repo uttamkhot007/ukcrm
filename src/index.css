@@ -293,7 +293,7 @@
 }
 
 @layer components {
-  /* 3D Glass Card Effect */
+  /* Premium 3D Glass Card Effect */
   .glass {
     background: hsl(var(--glass-bg) / 0.85);
     backdrop-filter: blur(var(--glass-blur));
@@ -411,6 +411,108 @@
       transparent 100%
     );
     animation: shimmer 3s infinite;
+  }
+
+  /* Premium Card - Clean modern look */
+  .premium-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.5);
+    border-radius: 1rem;
+    box-shadow: 
+      0 1px 2px hsl(var(--foreground) / 0.03),
+      0 4px 8px hsl(var(--foreground) / 0.04),
+      0 8px 16px hsl(var(--foreground) / 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .premium-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.02) 0%,
+      transparent 50%
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 4px 8px hsl(var(--foreground) / 0.04),
+      0 8px 16px hsl(var(--foreground) / 0.06),
+      0 16px 32px hsl(var(--foreground) / 0.08);
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  /* Gradient Icon Container */
+  .icon-gradient-sales {
+    background: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(160 84% 50%) 100%);
+    box-shadow: 0 4px 12px hsl(160 84% 39% / 0.3);
+  }
+
+  .icon-gradient-finance {
+    background: linear-gradient(135deg, hsl(217 91% 55%) 0%, hsl(217 91% 70%) 100%);
+    box-shadow: 0 4px 12px hsl(217 91% 60% / 0.3);
+  }
+
+  .icon-gradient-hr {
+    background: linear-gradient(135deg, hsl(263 70% 50%) 0%, hsl(280 70% 60%) 100%);
+    box-shadow: 0 4px 12px hsl(263 70% 50% / 0.3);
+  }
+
+  .icon-gradient-tech {
+    background: linear-gradient(135deg, hsl(187 92% 45%) 0%, hsl(187 92% 55%) 100%);
+    box-shadow: 0 4px 12px hsl(187 92% 45% / 0.3);
+  }
+
+  .icon-gradient-support {
+    background: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(38 92% 60%) 100%);
+    box-shadow: 0 4px 12px hsl(38 92% 50% / 0.3);
+  }
+
+  .icon-gradient-marketing {
+    background: linear-gradient(135deg, hsl(330 81% 55%) 0%, hsl(330 81% 65%) 100%);
+    box-shadow: 0 4px 12px hsl(330 81% 60% / 0.3);
+  }
+
+  .icon-gradient-management {
+    background: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(45 93% 57%) 100%);
+    box-shadow: 0 4px 12px hsl(45 93% 47% / 0.3);
+  }
+
+  .icon-gradient-employee {
+    background: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(199 89% 58%) 100%);
+    box-shadow: 0 4px 12px hsl(199 89% 48% / 0.3);
+  }
+
+  /* Premium Metric Badge */
+  .metric-badge {
+    background: hsl(var(--muted) / 0.6);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Action Link */
+  .action-link {
+    color: hsl(var(--primary));
+    font-weight: 500;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .action-link:hover {
+    gap: 0.5rem;
   }
 }
 
