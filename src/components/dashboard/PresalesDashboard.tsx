@@ -20,6 +20,7 @@ import {
 import { format, startOfMonth, endOfMonth, isAfter, isBefore, addDays } from "date-fns";
 import { TeamCalendarWidget } from "./TeamCalendarWidget";
 import { TeamRemindersWidget } from "./TeamRemindersWidget";
+import { TargetProgressWidget } from "./TargetProgressWidget";
 
 interface PresalesDashboardProps {
   onNavigate: (module: string) => void;
@@ -220,6 +221,9 @@ export function PresalesDashboard({ onNavigate, isManager = false }: PresalesDas
           </CardContent>
         </Card>
       </div>
+
+      {/* Target Progress */}
+      <TargetProgressWidget teamType="presales" showFullBreakdown />
 
       {/* Involvement Breakdown */}
       <Card>
