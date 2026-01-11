@@ -36,6 +36,9 @@ import { CurrencyConverterWidget } from "./CurrencyConverterWidget";
 import { SalesRepDashboard } from "./SalesRepDashboard";
 import { SalesManagerDashboard } from "./SalesManagerDashboard";
 import { PresalesDashboard } from "./PresalesDashboard";
+import { InsideSalesDashboard } from "./InsideSalesDashboard";
+import { AccountsDashboard } from "./AccountsDashboard";
+import { RenewalDashboard } from "./RenewalDashboard";
 import { MotivationalQuoteWidget } from "./MotivationalQuoteWidget";
 import { SecurityCenterWidget } from "./SecurityCenterWidget";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
@@ -130,6 +133,36 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
         <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
         <MotivationalQuoteWidget />
         <PresalesDashboard onNavigate={onModuleChange} isManager={true} />
+      </div>
+    );
+  }
+
+  if (dashboardType === "inside_sales") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
+        <InsideSalesDashboard onNavigate={onModuleChange} />
+      </div>
+    );
+  }
+
+  if (dashboardType === "accounts") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
+        <AccountsDashboard onNavigate={onModuleChange} />
+      </div>
+    );
+  }
+
+  if (dashboardType === "renewal") {
+    return (
+      <div className="space-y-6 p-6">
+        <DashboardHeader profile={profile} isAdmin={isAdmin} isManager={isManager} />
+        <MotivationalQuoteWidget />
+        <RenewalDashboard onNavigate={onModuleChange} />
       </div>
     );
   }
