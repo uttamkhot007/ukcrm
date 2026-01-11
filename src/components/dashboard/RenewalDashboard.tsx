@@ -257,7 +257,6 @@ export function RenewalDashboard({ onNavigate }: RenewalDashboardProps) {
                   </div>
                 );
               })}
-              })}
               {expiringContracts.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   No contracts expiring soon
