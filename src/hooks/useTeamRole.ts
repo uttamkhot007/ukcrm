@@ -7,6 +7,7 @@ export type TeamDashboardType =
   | "sales_rep" 
   | "presales_manager" 
   | "presales_rep" 
+  | "inside_sales"
   | "accounts"
   | "renewal"
   | "employee";
@@ -19,7 +20,8 @@ export function useTeamRole() {
     if (isAdmin) return "admin";
 
     // Check team memberships
-    const isSalesTeam = teams.includes("sales") || teams.includes("inside_sales");
+    const isSalesTeam = teams.includes("sales");
+    const isInsideSalesTeam = teams.includes("inside_sales");
     const isPresalesTeam = teams.includes("presales");
     const isAccountsTeam = teams.includes("accounts") || teams.includes("finance");
     const isRenewalTeam = teams.includes("renewals");
@@ -34,6 +36,7 @@ export function useTeamRole() {
 
     // Regular team members
     if (isSalesTeam) return "sales_rep";
+    if (isInsideSalesTeam) return "inside_sales";
     if (isPresalesTeam) return "presales_rep";
     if (isAccountsTeam) return "accounts";
     if (isRenewalTeam) return "renewal";
