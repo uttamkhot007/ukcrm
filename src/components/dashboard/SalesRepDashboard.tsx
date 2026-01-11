@@ -20,6 +20,7 @@ import {
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
 import { TeamCalendarWidget } from "./TeamCalendarWidget";
 import { TeamRemindersWidget } from "./TeamRemindersWidget";
+import { TargetProgressWidget } from "./TargetProgressWidget";
 
 interface SalesRepDashboardProps {
   onNavigate: (module: string) => void;
@@ -184,32 +185,8 @@ export function SalesRepDashboard({ onNavigate }: SalesRepDashboardProps) {
         </Card>
       </div>
 
-      {/* Monthly Target Progress */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Monthly Target Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {formatCurrency(monthlyPerformance?.revenueWon || 0)} of {formatCurrency(monthlyPerformance?.target || 0)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {targetProgress.toFixed(1)}% achieved
-              </span>
-            </div>
-            <Progress value={targetProgress} className="h-3" />
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                {monthlyPerformance?.dealsWon || 0} deals closed
-              </span>
-              <span>{format(new Date(), "MMMM yyyy")}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Target Progress Widget - fetches from sales_targets table */}
+      <TargetProgressWidget teamType="sales" showFullBreakdown />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Activity Summary */}
