@@ -129,6 +129,8 @@ const Index = () => {
       case "sales":
       case "sales-funnel":
         return <SalesModule initialTab="deals" />;
+      case "sales-funnel-workflow":
+        return <SalesModule initialTab="funnel-workflow" />;
       case "sales-ai-assistant":
         return <SalesAIAssistant />;
       case "sales-quotations":
