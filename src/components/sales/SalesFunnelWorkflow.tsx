@@ -25,6 +25,7 @@ import {
   Sparkles, Play, Pause, RefreshCw, Info, History, Save
 } from "lucide-react";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
+import { MEDDICWizard } from "@/components/sales/MEDDICWizard";
 
 // MEDDIC Framework Definition
 const MEDDIC_CRITERIA = [
@@ -172,7 +173,8 @@ export function SalesFunnelWorkflow() {
   const [pendingSaves, setPendingSaves] = useState<Set<string>>(new Set());
   // State for workflow initiator when deal moves to closed_won
   const [workflowDeal, setWorkflowDeal] = useState<Deal | null>(null);
-
+  // State for MEDDIC wizard
+  const [wizardDeal, setWizardDeal] = useState<Deal | null>(null);
   // Sync form values when deal changes
   useEffect(() => {
     if (selectedDeal) {
@@ -632,6 +634,18 @@ export function SalesFunnelWorkflow() {
                         </div>
                       </div>
                       <Progress value={selectedDeal.meddic_score || 0} className="h-3" />
+                      
+                      {/* Launch MEDDIC Wizard Button */}
+                      <Button 
+                        className="w-full mt-4"
+                        onClick={() => {
+                          setWizardDeal(selectedDeal);
+                          setSelectedDeal(null);
+                        }}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Open Detailed MEDDIC Wizard
+                      </Button>
                     </CardContent>
                   </Card>
 
@@ -870,6 +884,27 @@ export function SalesFunnelWorkflow() {
             queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
             queryClient.invalidateQueries({ queryKey: ['deals'] });
             queryClient.invalidateQueries({ queryKey: ['post-sale-workflows'] });
+          }}
+        />
+      )}
+
+      {/* MEDDIC Wizard */}
+      {wizardDeal && (
+        <MEDDICWizard
+          deal={{
+            id: wizardDeal.id,
+            title: wizardDeal.title,
+            organization_name: wizardDeal.organization_name,
+            problem_requirement: (wizardDeal as any).problem_requirement,
+            meddic_details: (wizardDeal as any).meddic_details,
+            customer_environment: (wizardDeal as any).customer_environment,
+            meddic_current_stage: (wizardDeal as any).meddic_current_stage,
+          }}
+          open={!!wizardDeal}
+          onOpenChange={(open) => !open && setWizardDeal(null)}
+          onComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+            queryClient.invalidateQueries({ queryKey: ['deals'] });
           }}
         />
       )}
