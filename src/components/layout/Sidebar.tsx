@@ -669,6 +669,14 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-primary",
       });
 
+      // MEDDIC Workflow - always available for workspace users
+      items.push({
+        id: "sales-funnel-workflow",
+        label: "MEDDIC Workflow",
+        icon: Sparkles,
+        color: "text-amber-500",
+      });
+
       // Team Communication - always available for all users
       items.push({
         id: "employee-communication",
