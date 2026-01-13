@@ -120,18 +120,19 @@ const MEDDIC_CRITERIA = [
 ];
 
 // Stage progression rules based on MEDDIC score
+// NOTE: Stage values must match the backend enum `deal_stage`.
 const STAGE_PROGRESSION_RULES = [
-  { fromStage: 'pipeline', toStage: 'qualified', minScore: 30, label: 'Pipeline → Qualified' },
-  { fromStage: 'qualified', toStage: 'proposal', minScore: 50, label: 'Qualified → Proposal' },
-  { fromStage: 'proposal', toStage: 'negotiation', minScore: 70, label: 'Proposal → Negotiation' },
-  { fromStage: 'negotiation', toStage: 'closed_won', minScore: 85, label: 'Negotiation → Closed Won' },
+  { fromStage: 'pipeline', toStage: 'upside', minScore: 30, label: 'Pipeline → Upside' },
+  { fromStage: 'upside', toStage: 'strong_upside', minScore: 50, label: 'Upside → Strong Upside' },
+  { fromStage: 'strong_upside', toStage: 'commit', minScore: 70, label: 'Strong Upside → Commit' },
+  { fromStage: 'commit', toStage: 'closed_won', minScore: 85, label: 'Commit → Closed Won' },
 ];
 
 const STAGE_LABELS: Record<string, string> = {
   pipeline: 'Pipeline',
-  qualified: 'Qualified',
-  proposal: 'Proposal',
-  negotiation: 'Negotiation',
+  upside: 'Upside',
+  strong_upside: 'Strong Upside',
+  commit: 'Commit',
   closed_won: 'Closed Won',
   closed_lost: 'Closed Lost',
 };
@@ -450,7 +451,7 @@ export function SalesFunnelWorkflow() {
 
       {/* Funnel Stages */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {['pipeline', 'qualified', 'proposal', 'negotiation', 'closed_won'].map((stage, idx) => {
+        {['pipeline', 'upside', 'strong_upside', 'commit', 'closed_won'].map((stage, idx) => {
           const stageDeals = dealsByStage[stage] || [];
           const totalValue = stageDeals.reduce((sum, d) => sum + Number(d.value), 0);
           const avgScore = stageDeals.length > 0 
