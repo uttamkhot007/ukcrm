@@ -377,11 +377,14 @@ async function handleInvoiceOverdue(supabase: any, resend: any, invoiceId: strin
 async function handleDealStageChanged(supabase: any, resend: any, dealId: string, data: any) {
   const { data: deal } = await supabase
     .from("deals")
-    .select("*, contact:contacts(name)")
+    .select("*, contact:contacts(name), owner:profiles!deals_user_id_fkey(full_name)")
     .eq("id", dealId)
     .single();
 
   if (!deal) return { success: false, error: "Deal not found" };
+
+  const salesRepName = deal.owner?.full_name || "Sales Team";
+  const organizationName = deal.organization_name || deal.contact?.name || "Customer";
 
   // Notify deal owner
   await createNotification(
@@ -395,20 +398,50 @@ async function handleDealStageChanged(supabase: any, resend: any, dealId: string
     "deals"
   );
 
-  // If closed won, notify managers
+  // If closed won, notify EVERYONE about the win!
   if (deal.stage === "closed_won") {
-    const managers = await getManagers(supabase);
-    for (const managerId of managers) {
+    // Get ALL users in the system
+    const { data: allUsers } = await supabase
+      .from("profiles")
+      .select("user_id, email, full_name")
+      .not("user_id", "is", null);
+
+    const dealValue = Number(deal.value).toLocaleString();
+
+    // Create notifications for ALL users
+    for (const user of allUsers || []) {
       await createNotification(
         supabase,
-        managerId,
-        "🎉 Deal Won!",
-        `Deal "${deal.title}" worth ₹${deal.value.toLocaleString()} has been won!`,
+        user.user_id,
+        "🎉🏆 New Deal Won! 🎊✨",
+        `Congratulations! ${salesRepName} closed "${deal.title}" with ${organizationName} worth ₹${dealValue}!`,
         "success",
-        "deal",
+        "deal_won",
         dealId,
         "deals"
       );
+
+      // Send celebration email to everyone
+      if (user.email && resend) {
+        await sendEmail(
+          resend,
+          user.email,
+          `🎉 Deal Won: ${deal.title} - ₹${dealValue}!`,
+          `<div style="text-align: center; padding: 20px;">
+            <h1 style="color: #22c55e;">🎉🏆 CONGRATULATIONS! 🏆🎉</h1>
+            <h2>We Won a New Deal!</h2>
+            <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 20px; border-radius: 12px; color: white; margin: 20px 0;">
+              <p style="font-size: 24px; margin: 0;"><strong>${deal.title}</strong></p>
+              <p style="font-size: 32px; margin: 10px 0;"><strong>₹${dealValue}</strong></p>
+            </div>
+            <table style="width: 100%; max-width: 400px; margin: 0 auto; text-align: left;">
+              <tr><td style="padding: 8px 0;"><strong>Customer/Partner:</strong></td><td>${organizationName}</td></tr>
+              <tr><td style="padding: 8px 0;"><strong>Sales Rep:</strong></td><td>${salesRepName}</td></tr>
+            </table>
+            <p style="margin-top: 20px; font-size: 18px;">🥳🎊 Let's celebrate this win together! 🎈✨</p>
+          </div>`
+        );
+      }
     }
   }
 
