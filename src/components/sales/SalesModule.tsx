@@ -13,6 +13,7 @@ import { DealInsights } from "./DealInsights";
 import { SalesForecasting } from "./SalesForecasting";
 import { EmailSequences } from "./EmailSequences";
 import { SalesAutomations } from "./SalesAutomations";
+import { SalesFunnelWorkflow } from "./SalesFunnelWorkflow";
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -60,6 +61,8 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
         return <EmailSequences />;
       case "automations":
         return <SalesAutomations />;
+      case "funnel-workflow":
+        return <SalesFunnelWorkflow />;
       default:
         return <DealsView />;
     }

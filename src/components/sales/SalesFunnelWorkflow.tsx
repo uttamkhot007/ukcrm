@@ -1,0 +1,754 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { format } from "date-fns";
+import { 
+  Target, TrendingUp, Users, DollarSign, FileText, 
+  CheckCircle2, Circle, ArrowRight, Zap, AlertTriangle,
+  ChevronRight, Clock, Award, BarChart3, Settings,
+  Sparkles, Play, Pause, RefreshCw, Info, History
+} from "lucide-react";
+
+// MEDDIC Framework Definition
+const MEDDIC_CRITERIA = [
+  {
+    key: 'metrics',
+    label: 'Metrics',
+    shortLabel: 'M',
+    description: 'Quantifiable measures of value the customer expects',
+    placeholder: 'e.g., 30% cost reduction, 2x productivity increase, ROI within 6 months',
+    icon: BarChart3,
+    color: 'bg-blue-500',
+    weight: 20,
+    questions: [
+      'What metrics does the customer use to measure success?',
+      'How will they quantify the value of this solution?',
+      'What is the expected ROI timeline?'
+    ]
+  },
+  {
+    key: 'economic_buyer',
+    label: 'Economic Buyer',
+    shortLabel: 'E',
+    description: 'The person with budget authority and final decision power',
+    placeholder: 'e.g., CFO John Smith - Controls IT budget, final approval authority',
+    icon: DollarSign,
+    color: 'bg-green-500',
+    weight: 20,
+    questions: [
+      'Who has the authority to approve this budget?',
+      'Have you met with the economic buyer directly?',
+      'What are their priorities and concerns?'
+    ]
+  },
+  {
+    key: 'decision_criteria',
+    label: 'Decision Criteria',
+    shortLabel: 'D',
+    description: 'The formal criteria used to evaluate and select a vendor',
+    placeholder: 'e.g., Must have SOC2 certification, integrate with Salesforce, 99.9% uptime SLA',
+    icon: FileText,
+    color: 'bg-purple-500',
+    weight: 15,
+    questions: [
+      'What are the must-have requirements?',
+      'What are the nice-to-have features?',
+      'How does our solution meet each criterion?'
+    ]
+  },
+  {
+    key: 'decision_process',
+    label: 'Decision Process',
+    shortLabel: 'D',
+    description: 'The steps and timeline for making a purchase decision',
+    placeholder: 'e.g., Tech eval → Security review → Legal → Procurement → Board approval by Q2',
+    icon: Target,
+    color: 'bg-orange-500',
+    weight: 15,
+    questions: [
+      'What is the approval process?',
+      'Who are all the stakeholders involved?',
+      'What is the expected timeline for each step?'
+    ]
+  },
+  {
+    key: 'identify_pain',
+    label: 'Identify Pain',
+    shortLabel: 'I',
+    description: 'The business pain points driving the purchase decision',
+    placeholder: 'e.g., Current system causing 20hrs/week in manual work, compliance risk exposure',
+    icon: AlertTriangle,
+    color: 'bg-red-500',
+    weight: 15,
+    questions: [
+      'What is the primary business pain?',
+      'What happens if they do nothing?',
+      'How urgent is solving this problem?'
+    ]
+  },
+  {
+    key: 'champion',
+    label: 'Champion',
+    shortLabel: 'C',
+    description: 'An internal advocate who supports and sells your solution internally',
+    placeholder: 'e.g., Sarah Lee (IT Director) - Strong advocate, presenting to leadership next week',
+    icon: Award,
+    color: 'bg-yellow-500',
+    weight: 15,
+    questions: [
+      'Who is actively selling your solution internally?',
+      'Do they have influence with the economic buyer?',
+      'What can you do to support their efforts?'
+    ]
+  }
+];
+
+// Stage progression rules based on MEDDIC score
+const STAGE_PROGRESSION_RULES = [
+  { fromStage: 'pipeline', toStage: 'qualified', minScore: 30, label: 'Pipeline → Qualified' },
+  { fromStage: 'qualified', toStage: 'proposal', minScore: 50, label: 'Qualified → Proposal' },
+  { fromStage: 'proposal', toStage: 'negotiation', minScore: 70, label: 'Proposal → Negotiation' },
+  { fromStage: 'negotiation', toStage: 'closed_won', minScore: 85, label: 'Negotiation → Closed Won' },
+];
+
+const STAGE_LABELS: Record<string, string> = {
+  pipeline: 'Pipeline',
+  qualified: 'Qualified',
+  proposal: 'Proposal',
+  negotiation: 'Negotiation',
+  closed_won: 'Closed Won',
+  closed_lost: 'Closed Lost',
+};
+
+interface Deal {
+  id: string;
+  title: string;
+  value: number;
+  stage: string;
+  meddic_metrics?: string;
+  meddic_economic_buyer?: string;
+  meddic_decision_criteria?: string;
+  meddic_decision_process?: string;
+  meddic_identify_pain?: string;
+  meddic_champion?: string;
+  meddic_score?: number;
+  auto_progression_enabled?: boolean;
+  organization_name?: string;
+  expected_close_date?: string;
+  user_id: string;
+  assigned_to?: string;
+}
+
+export function SalesFunnelWorkflow() {
+  const { user } = useAuth();
+  const { currentTenant } = useTenant();
+  const { formatCurrency } = useOrganizationSettings();
+  const queryClient = useQueryClient();
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch deals with MEDDIC data
+  const { data: deals, isLoading } = useQuery({
+    queryKey: ['deals-meddic'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('deals')
+        .select('*')
+        .not('stage', 'in', '("closed_lost")')
+        .order('meddic_score', { ascending: false, nullsFirst: false });
+      
+      if (error) throw error;
+      return data as Deal[];
+    }
+  });
+
+  // Fetch progression history
+  const { data: progressionHistory } = useQuery({
+    queryKey: ['progression-history', selectedDeal?.id],
+    queryFn: async () => {
+      if (!selectedDeal) return [];
+      const { data, error } = await supabase
+        .from('deal_stage_progression_log')
+        .select('*')
+        .eq('deal_id', selectedDeal.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedDeal
+  });
+
+  // Update MEDDIC fields
+  const updateMeddic = useMutation({
+    mutationFn: async ({ dealId, field, value }: { dealId: string; field: string; value: string }) => {
+      const fieldName = `meddic_${field}`;
+      const updateData: Record<string, any> = { [fieldName]: value };
+      
+      // Recalculate MEDDIC score
+      const deal = deals?.find(d => d.id === dealId);
+      if (deal) {
+        let score = 0;
+        MEDDIC_CRITERIA.forEach(c => {
+          const key = `meddic_${c.key}` as keyof Deal;
+          const fieldValue = c.key === field ? value : deal[key];
+          if (fieldValue && String(fieldValue).trim().length > 10) {
+            score += c.weight;
+          }
+        });
+        updateData.meddic_score = score;
+      }
+
+      const { error } = await supabase
+        .from('deals')
+        .update(updateData)
+        .eq('id', dealId);
+      
+      if (error) throw error;
+      return updateData.meddic_score;
+    },
+    onSuccess: (newScore) => {
+      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+      if (selectedDeal) {
+        setSelectedDeal(prev => prev ? { ...prev, meddic_score: newScore } : null);
+      }
+      toast.success('MEDDIC updated');
+      checkAutoProgression();
+    }
+  });
+
+  // Auto-progress deal
+  const progressDeal = useMutation({
+    mutationFn: async ({ dealId, fromStage, toStage }: { dealId: string; fromStage: string; toStage: string }) => {
+      // Update deal stage
+      const { error: dealError } = await supabase
+        .from('deals')
+        .update({ 
+          stage: toStage as any,
+          last_stage_change_at: new Date().toISOString()
+        })
+        .eq('id', dealId);
+      
+      if (dealError) throw dealError;
+
+      // Log progression
+      const { error: logError } = await supabase
+        .from('deal_stage_progression_log')
+        .insert({
+          deal_id: dealId,
+          from_stage: fromStage,
+          to_stage: toStage,
+          progression_type: 'auto',
+          meddic_score_at_change: selectedDeal?.meddic_score || 0,
+          triggered_by: user?.id,
+          trigger_reason: 'MEDDIC score threshold reached'
+        });
+
+      if (logError) throw logError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      queryClient.invalidateQueries({ queryKey: ['funnel-stats'] });
+      toast.success('Deal progressed to next stage!');
+    }
+  });
+
+  // Toggle auto progression
+  const toggleAutoProgression = useMutation({
+    mutationFn: async ({ dealId, enabled }: { dealId: string; enabled: boolean }) => {
+      const { error } = await supabase
+        .from('deals')
+        .update({ auto_progression_enabled: enabled })
+        .eq('id', dealId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+      toast.success('Auto-progression setting updated');
+    }
+  });
+
+  const checkAutoProgression = () => {
+    if (!selectedDeal || !selectedDeal.auto_progression_enabled) return;
+    
+    const score = selectedDeal.meddic_score || 0;
+    const rule = STAGE_PROGRESSION_RULES.find(
+      r => r.fromStage === selectedDeal.stage && score >= r.minScore
+    );
+
+    if (rule) {
+      toast.info(
+        `Ready to progress: ${STAGE_LABELS[rule.fromStage]} → ${STAGE_LABELS[rule.toStage]}`,
+        {
+          action: {
+            label: 'Progress Now',
+            onClick: () => progressDeal.mutate({
+              dealId: selectedDeal.id,
+              fromStage: rule.fromStage,
+              toStage: rule.toStage
+            })
+          }
+        }
+      );
+    }
+  };
+
+  const getMeddicValue = (deal: Deal, key: string): string => {
+    const fieldKey = `meddic_${key}` as keyof Deal;
+    return (deal[fieldKey] as string) || '';
+  };
+
+  const calculateMeddicScore = (deal: Deal): number => {
+    let score = 0;
+    MEDDIC_CRITERIA.forEach(c => {
+      const value = getMeddicValue(deal, c.key);
+      if (value && value.trim().length > 10) {
+        score += c.weight;
+      }
+    });
+    return score;
+  };
+
+  const getNextStageInfo = (deal: Deal) => {
+    const score = deal.meddic_score || calculateMeddicScore(deal);
+    const rule = STAGE_PROGRESSION_RULES.find(r => r.fromStage === deal.stage);
+    if (!rule) return null;
+    
+    const progress = Math.min((score / rule.minScore) * 100, 100);
+    const canProgress = score >= rule.minScore;
+    
+    return { rule, progress, canProgress, currentScore: score };
+  };
+
+  // Group deals by stage
+  const dealsByStage = deals?.reduce((acc, deal) => {
+    if (!acc[deal.stage]) acc[deal.stage] = [];
+    acc[deal.stage].push(deal);
+    return acc;
+  }, {} as Record<string, Deal[]>) || {};
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-48 w-full" />
+        <div className="grid grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-64" />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            MEDDIC Sales Funnel Workflow
+          </h2>
+          <p className="text-muted-foreground">
+            Qualify deals using MEDDIC methodology with automatic stage progression
+          </p>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Info className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-sm">
+              <p className="font-semibold mb-1">MEDDIC Methodology</p>
+              <p className="text-sm">
+                MEDDIC is a sales qualification framework: Metrics, Economic Buyer, 
+                Decision Criteria, Decision Process, Identify Pain, Champion. 
+                Complete each criterion to auto-progress deals.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      {/* MEDDIC Score Legend */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-medium text-muted-foreground">MEDDIC Components:</span>
+            {MEDDIC_CRITERIA.map(c => (
+              <div key={c.key} className="flex items-center gap-1.5">
+                <div className={`w-6 h-6 rounded-full ${c.color} flex items-center justify-center`}>
+                  <span className="text-white text-xs font-bold">{c.shortLabel}</span>
+                </div>
+                <span className="text-sm">{c.label}</span>
+                <Badge variant="outline" className="text-xs">{c.weight}%</Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Funnel Stages */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {['pipeline', 'qualified', 'proposal', 'negotiation', 'closed_won'].map((stage, idx) => {
+          const stageDeals = dealsByStage[stage] || [];
+          const totalValue = stageDeals.reduce((sum, d) => sum + Number(d.value), 0);
+          const avgScore = stageDeals.length > 0 
+            ? Math.round(stageDeals.reduce((sum, d) => sum + (d.meddic_score || 0), 0) / stageDeals.length)
+            : 0;
+          const rule = STAGE_PROGRESSION_RULES.find(r => r.fromStage === stage);
+
+          return (
+            <Card key={stage} className="relative overflow-hidden">
+              {/* Stage Progress Indicator */}
+              <div 
+                className="absolute top-0 left-0 right-0 h-1 bg-primary/20"
+              >
+                <div 
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${(idx + 1) * 20}%` }}
+                />
+              </div>
+
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">{STAGE_LABELS[stage]}</CardTitle>
+                  <Badge variant="secondary" className="text-xs">
+                    {stageDeals.length}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{formatCurrency(totalValue)}</span>
+                  <span className="flex items-center gap-1">
+                    <Target className="h-3 w-3" />
+                    Avg: {avgScore}%
+                  </span>
+                </div>
+                {rule && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Need {rule.minScore}% to progress
+                  </p>
+                )}
+              </CardHeader>
+
+              <CardContent className="space-y-2 max-h-80 overflow-y-auto">
+                {stageDeals.map(deal => {
+                  const nextStage = getNextStageInfo(deal);
+                  const score = deal.meddic_score || calculateMeddicScore(deal);
+
+                  return (
+                    <div
+                      key={deal.id}
+                      className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => setSelectedDeal(deal)}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm truncate max-w-[120px]">
+                          {deal.title}
+                        </span>
+                        {nextStage?.canProgress && (
+                          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {deal.organization_name || 'No organization'}
+                      </p>
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span>MEDDIC: {score}%</span>
+                          <span className="text-muted-foreground">{formatCurrency(deal.value)}</span>
+                        </div>
+                        <Progress 
+                          value={score} 
+                          className="h-1.5"
+                        />
+                      </div>
+                      {/* MEDDIC Mini Indicators */}
+                      <div className="flex gap-1 mt-2">
+                        {MEDDIC_CRITERIA.map(c => {
+                          const hasValue = getMeddicValue(deal, c.key).length > 10;
+                          return (
+                            <div
+                              key={c.key}
+                              className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${
+                                hasValue ? c.color + ' text-white' : 'bg-muted-foreground/20 text-muted-foreground'
+                              }`}
+                            >
+                              {c.shortLabel}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {stageDeals.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    No deals in this stage
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Deal Detail Sheet */}
+      <Sheet open={!!selectedDeal} onOpenChange={(open) => !open && setSelectedDeal(null)}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          {selectedDeal && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  {selectedDeal.title}
+                  <Badge>{STAGE_LABELS[selectedDeal.stage]}</Badge>
+                </SheetTitle>
+                <SheetDescription>
+                  {selectedDeal.organization_name} • {formatCurrency(selectedDeal.value)}
+                </SheetDescription>
+              </SheetHeader>
+
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="meddic">MEDDIC</TabsTrigger>
+                  <TabsTrigger value="history">History</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-4 mt-4">
+                  {/* Score Summary */}
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">MEDDIC Score</p>
+                          <p className="text-3xl font-bold">{selectedDeal.meddic_score || 0}%</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="auto-progress">Auto-Progress</Label>
+                            <Switch
+                              id="auto-progress"
+                              checked={selectedDeal.auto_progression_enabled !== false}
+                              onCheckedChange={(checked) => 
+                                toggleAutoProgression.mutate({ 
+                                  dealId: selectedDeal.id, 
+                                  enabled: checked 
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <Progress value={selectedDeal.meddic_score || 0} className="h-3" />
+                    </CardContent>
+                  </Card>
+
+                  {/* Next Stage Readiness */}
+                  {(() => {
+                    const nextStage = getNextStageInfo(selectedDeal);
+                    if (!nextStage) return null;
+
+                    return (
+                      <Card className={nextStage.canProgress ? 'border-primary' : ''}>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <ArrowRight className="h-4 w-4" />
+                            Next Stage: {STAGE_LABELS[nextStage.rule.toStage]}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm">
+                              {nextStage.currentScore}% / {nextStage.rule.minScore}% required
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {Math.round(nextStage.progress)}% ready
+                            </span>
+                          </div>
+                          <Progress value={nextStage.progress} className="h-2 mb-4" />
+                          
+                          {nextStage.canProgress ? (
+                            <Button 
+                              className="w-full"
+                              onClick={() => progressDeal.mutate({
+                                dealId: selectedDeal.id,
+                                fromStage: selectedDeal.stage,
+                                toStage: nextStage.rule.toStage
+                              })}
+                              disabled={progressDeal.isPending}
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              Progress to {STAGE_LABELS[nextStage.rule.toStage]}
+                            </Button>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center">
+                              Complete more MEDDIC criteria to unlock progression
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })()}
+
+                  {/* MEDDIC Completion Summary */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">MEDDIC Completion</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-3">
+                        {MEDDIC_CRITERIA.map(c => {
+                          const value = getMeddicValue(selectedDeal, c.key);
+                          const isComplete = value.length > 10;
+                          const Icon = c.icon;
+
+                          return (
+                            <div
+                              key={c.key}
+                              className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                                isComplete ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 hover:bg-muted/50'
+                              }`}
+                              onClick={() => setActiveTab('meddic')}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-full ${isComplete ? c.color : 'bg-muted'}`}>
+                                  <Icon className={`h-3 w-3 ${isComplete ? 'text-white' : 'text-muted-foreground'}`} />
+                                </div>
+                                <span className={`text-sm font-medium ${isComplete ? '' : 'text-muted-foreground'}`}>
+                                  {c.label}
+                                </span>
+                                {isComplete && <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="meddic" className="space-y-4 mt-4">
+                  <ScrollArea className="h-[calc(100vh-280px)]">
+                    <div className="space-y-4 pr-4">
+                      {MEDDIC_CRITERIA.map(c => {
+                        const value = getMeddicValue(selectedDeal, c.key);
+                        const isComplete = value.length > 10;
+                        const Icon = c.icon;
+
+                        return (
+                          <Card key={c.key} className={isComplete ? 'border-primary/30' : ''}>
+                            <CardHeader className="pb-2">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base flex items-center gap-2">
+                                  <div className={`p-1.5 rounded-full ${c.color}`}>
+                                    <Icon className="h-4 w-4 text-white" />
+                                  </div>
+                                  {c.label}
+                                  <Badge variant="outline" className="text-xs">{c.weight}%</Badge>
+                                </CardTitle>
+                                {isComplete && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                              </div>
+                              <CardDescription>{c.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <Textarea
+                                placeholder={c.placeholder}
+                                value={value}
+                                onChange={(e) => updateMeddic.mutate({
+                                  dealId: selectedDeal.id,
+                                  field: c.key,
+                                  value: e.target.value
+                                })}
+                                className="min-h-[80px]"
+                              />
+                              <div className="mt-2">
+                                <p className="text-xs text-muted-foreground mb-1">Key questions to answer:</p>
+                                <ul className="text-xs text-muted-foreground list-disc list-inside space-y-0.5">
+                                  {c.questions.map((q, i) => (
+                                    <li key={i}>{q}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="history" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <History className="h-4 w-4" />
+                        Stage Progression History
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {progressionHistory && progressionHistory.length > 0 ? (
+                        <div className="space-y-4">
+                          {progressionHistory.map((log: any) => (
+                            <div key={log.id} className="flex items-start gap-3 pb-4 border-b last:border-0">
+                              <div className={`p-2 rounded-full ${
+                                log.progression_type === 'auto' ? 'bg-primary/10' : 'bg-muted'
+                              }`}>
+                                {log.progression_type === 'auto' ? (
+                                  <Zap className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">{STAGE_LABELS[log.from_stage]}</Badge>
+                                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                  <Badge>{STAGE_LABELS[log.to_stage]}</Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {log.trigger_reason || 'Manual progression'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  MEDDIC Score: {log.meddic_score_at_change}% • {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No progression history yet</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}

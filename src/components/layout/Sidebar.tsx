@@ -111,6 +111,7 @@ const salesPortalItems: NavItem[] = [
     portalMode: "workspace",
     children: [
       { id: "sales-funnel", label: "Funnel Management", icon: Target },
+      { id: "sales-funnel-workflow", label: "MEDDIC Workflow", icon: Sparkles },
       { id: "sales-quotations", label: "Quotations", icon: FileText },
       { id: "sales-leads", label: "Lead Tracking", icon: Activity },
     ],

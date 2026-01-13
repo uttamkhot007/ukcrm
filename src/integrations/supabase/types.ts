@@ -2285,12 +2285,57 @@ export type Database = {
           },
         ]
       }
+      deal_stage_progression_log: {
+        Row: {
+          created_at: string
+          deal_id: string | null
+          from_stage: string
+          id: string
+          meddic_score_at_change: number | null
+          progression_type: string
+          to_stage: string
+          trigger_reason: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          deal_id?: string | null
+          from_stage: string
+          id?: string
+          meddic_score_at_change?: number | null
+          progression_type?: string
+          to_stage: string
+          trigger_reason?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string | null
+          from_stage?: string
+          id?: string
+          meddic_score_at_change?: number | null
+          progression_type?: string
+          to_stage?: string
+          trigger_reason?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stage_progression_log_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           actual_close_date: string | null
           ai_recommendations: string[] | null
           alliance_organization_id: string | null
           assigned_to: string | null
+          auto_progression_enabled: boolean | null
           buying_timeline: string | null
           closed_won_substage:
             | Database["public"]["Enums"]["closed_won_substage"]
@@ -2305,13 +2350,22 @@ export type Database = {
           id: string
           is_budgeted: boolean | null
           last_analyzed_at: string | null
+          last_stage_change_at: string | null
           lead_id: string | null
           loss_reason: string | null
+          meddic_champion: string | null
+          meddic_decision_criteria: string | null
+          meddic_decision_process: string | null
+          meddic_economic_buyer: string | null
+          meddic_identify_pain: string | null
+          meddic_metrics: string | null
+          meddic_score: number | null
           next_best_actions: string[] | null
           next_steps: string | null
           organization_name: string | null
           probability: number | null
           problem_requirement: string | null
+          qualification_completed_at: string | null
           quantity: number | null
           requirement_category: string | null
           risk_factors: string[] | null
@@ -2332,6 +2386,7 @@ export type Database = {
           ai_recommendations?: string[] | null
           alliance_organization_id?: string | null
           assigned_to?: string | null
+          auto_progression_enabled?: boolean | null
           buying_timeline?: string | null
           closed_won_substage?:
             | Database["public"]["Enums"]["closed_won_substage"]
@@ -2346,13 +2401,22 @@ export type Database = {
           id?: string
           is_budgeted?: boolean | null
           last_analyzed_at?: string | null
+          last_stage_change_at?: string | null
           lead_id?: string | null
           loss_reason?: string | null
+          meddic_champion?: string | null
+          meddic_decision_criteria?: string | null
+          meddic_decision_process?: string | null
+          meddic_economic_buyer?: string | null
+          meddic_identify_pain?: string | null
+          meddic_metrics?: string | null
+          meddic_score?: number | null
           next_best_actions?: string[] | null
           next_steps?: string | null
           organization_name?: string | null
           probability?: number | null
           problem_requirement?: string | null
+          qualification_completed_at?: string | null
           quantity?: number | null
           requirement_category?: string | null
           risk_factors?: string[] | null
@@ -2373,6 +2437,7 @@ export type Database = {
           ai_recommendations?: string[] | null
           alliance_organization_id?: string | null
           assigned_to?: string | null
+          auto_progression_enabled?: boolean | null
           buying_timeline?: string | null
           closed_won_substage?:
             | Database["public"]["Enums"]["closed_won_substage"]
@@ -2387,13 +2452,22 @@ export type Database = {
           id?: string
           is_budgeted?: boolean | null
           last_analyzed_at?: string | null
+          last_stage_change_at?: string | null
           lead_id?: string | null
           loss_reason?: string | null
+          meddic_champion?: string | null
+          meddic_decision_criteria?: string | null
+          meddic_decision_process?: string | null
+          meddic_economic_buyer?: string | null
+          meddic_identify_pain?: string | null
+          meddic_metrics?: string | null
+          meddic_score?: number | null
           next_best_actions?: string[] | null
           next_steps?: string | null
           organization_name?: string | null
           probability?: number | null
           problem_requirement?: string | null
+          qualification_completed_at?: string | null
           quantity?: number | null
           requirement_category?: string | null
           risk_factors?: string[] | null
@@ -8629,6 +8703,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sales_forecasts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_funnel_workflows: {
+        Row: {
+          auto_progress: boolean | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notify_on_progress: boolean | null
+          required_fields: Json | null
+          required_meddic_score: number | null
+          stage_from: string
+          stage_to: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_progress?: boolean | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notify_on_progress?: boolean | null
+          required_fields?: Json | null
+          required_meddic_score?: number | null
+          stage_from: string
+          stage_to: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_progress?: boolean | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notify_on_progress?: boolean | null
+          required_fields?: Json | null
+          required_meddic_score?: number | null
+          stage_from?: string
+          stage_to?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_funnel_workflows_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
