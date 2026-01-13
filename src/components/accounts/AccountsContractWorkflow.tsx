@@ -22,6 +22,7 @@ import {
   Calendar,
   DollarSign,
   Loader2,
+  Play,
 } from "lucide-react";
 import {
   Table,
@@ -38,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClosedWonWorkflowInitiator } from "./ClosedWonWorkflowInitiator";
 
 type ClosedWonSubstage = 
   | "odf_created" 
@@ -54,9 +56,14 @@ interface Contract {
   id: string;
   title: string;
   value: number;
+  organization_name: string | null;
   closed_won_substage: ClosedWonSubstage | null;
   actual_close_date: string | null;
   contact_id: string | null;
+  order_type: string | null;
+  includes_support: boolean | null;
+  includes_managed_service: boolean | null;
+  includes_renewal: boolean | null;
   contact?: {
     name: string;
     company: string | null;
@@ -88,6 +95,7 @@ interface AccountsContractWorkflowProps {
 
 export function AccountsContractWorkflow({ filterStage = "all" }: AccountsContractWorkflowProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [workflowDeal, setWorkflowDeal] = useState<Contract | null>(null);
   const { formatCurrency } = useOrganizationSettings();
   const queryClient = useQueryClient();
 
@@ -100,9 +108,14 @@ export function AccountsContractWorkflow({ filterStage = "all" }: AccountsContra
           id,
           title,
           value,
+          organization_name,
           closed_won_substage,
           actual_close_date,
           contact_id,
+          order_type,
+          includes_support,
+          includes_managed_service,
+          includes_renewal,
           contacts:contact_id (
             name,
             company
@@ -113,6 +126,20 @@ export function AccountsContractWorkflow({ filterStage = "all" }: AccountsContra
 
       if (error) throw error;
       return data as Contract[];
+    },
+  });
+
+  // Check which deals have active workflows
+  const { data: workflowDeals = [] } = useQuery({
+    queryKey: ["deals-with-workflows"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("post_sale_workflows")
+        .select("deal_id")
+        .eq("workflow_type", "odf_approval");
+
+      if (error) throw error;
+      return data.map(d => d.deal_id);
     },
   });
 
@@ -310,36 +337,49 @@ export function AccountsContractWorkflow({ filterStage = "all" }: AccountsContra
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Select
-                          value={contract.closed_won_substage || ""}
-                          onValueChange={(value) => 
-                            updateSubstageMutation.mutate({ 
-                              dealId: contract.id, 
-                              substage: value as ClosedWonSubstage 
-                            })
-                          }
-                        >
-                          <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Set stage" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {WORKFLOW_STAGES.map(stage => (
-                              <SelectItem key={stage.id} value={stage.id}>
-                                {stage.label}
-                              </SelectItem>
-                            ))}
-                            <SelectItem value="payment_received">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {contract.closed_won_substage !== "payment_received" && (
+                        {!workflowDeals.includes(contract.id) ? (
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => moveToNextStage(contract)}
-                            disabled={updateSubstageMutation.isPending}
+                            onClick={() => setWorkflowDeal(contract)}
+                            className="gap-1"
                           >
-                            <ArrowRight className="w-4 h-4" />
+                            <Play className="w-3 h-3" />
+                            Start Workflow
                           </Button>
+                        ) : (
+                          <>
+                            <Select
+                              value={contract.closed_won_substage || ""}
+                              onValueChange={(value) => 
+                                updateSubstageMutation.mutate({ 
+                                  dealId: contract.id, 
+                                  substage: value as ClosedWonSubstage 
+                                })
+                              }
+                            >
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue placeholder="Set stage" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {WORKFLOW_STAGES.map(stage => (
+                                  <SelectItem key={stage.id} value={stage.id}>
+                                    {stage.label}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="payment_received">Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {contract.closed_won_substage !== "payment_received" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => moveToNextStage(contract)}
+                                disabled={updateSubstageMutation.isPending}
+                              >
+                                <ArrowRight className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>
@@ -350,6 +390,29 @@ export function AccountsContractWorkflow({ filterStage = "all" }: AccountsContra
           )}
         </CardContent>
       </Card>
+
+      {/* Workflow Initiator Dialog */}
+      {workflowDeal && (
+        <ClosedWonWorkflowInitiator
+          deal={{
+            id: workflowDeal.id,
+            title: workflowDeal.title,
+            value: workflowDeal.value,
+            organization_name: workflowDeal.organization_name,
+            order_type: workflowDeal.order_type,
+            includes_support: workflowDeal.includes_support || false,
+            includes_managed_service: workflowDeal.includes_managed_service || false,
+            includes_renewal: workflowDeal.includes_renewal || false,
+            contacts: workflowDeal.contact,
+          }}
+          open={!!workflowDeal}
+          onOpenChange={(open) => !open && setWorkflowDeal(null)}
+          onWorkflowCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["deals-with-workflows"] });
+            queryClient.invalidateQueries({ queryKey: ["post-sale-workflows"] });
+          }}
+        />
+      )}
     </div>
   );
 }

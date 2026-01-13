@@ -396,7 +396,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         children: [
           { id: "accounts-finance-analytics", label: "Sales Analytics", icon: BarChart3 },
           { id: "accounts-finance-contracts", label: "Contracts", icon: FileText },
-          { id: "accounts-finance-workflows", label: "Workflows", icon: RefreshCw },
+          { id: "accounts-finance-post-sale", label: "Post-Sale Workflows", icon: FolderKanban },
+          { id: "accounts-finance-workflows", label: "Legacy Workflows", icon: RefreshCw },
           { id: "accounts-finance-procurement", label: "Procurement", icon: Package },
           { id: "accounts-finance-stocking", label: "Stocking", icon: Package },
           { id: "accounts-finance-ar-aging", label: "AR Aging", icon: Clock },
@@ -432,6 +433,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: Code,
         color: "text-tech",
         children: [
+          { id: "tech-customers", label: "Support Customers", icon: Users },
           { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
           { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
           { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
@@ -498,6 +500,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         icon: RefreshCw,
         color: "text-renewals",
         children: [
+          { id: "renewals-customers", label: "Renewal Customers", icon: Users },
+          { id: "renewals-tracker", label: "Renewal Tracker", icon: RefreshCw },
           { id: "renewals-contracts", label: "Contracts", icon: FileText },
           { id: "renewals-licenses", label: "Licenses", icon: Key },
           { id: "renewals-subscriptions", label: "Subscriptions", icon: RefreshCw },

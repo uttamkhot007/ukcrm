@@ -5,6 +5,7 @@ import { ProductRecommendationSteps } from "@/components/shared/ProductRecommend
 import { SolutionDocumentationPage } from "@/components/shared/SolutionDocumentationPage";
 import { RemoteSessionsModule } from "@/components/remote-sessions/RemoteSessionsModule";
 import { TechnicalCustomersView } from "./TechnicalCustomersView";
+import { ManagedServiceCustomersView } from "./ManagedServiceCustomersView";
 
 interface TechnicalModuleProps {
   initialTab?: string;
@@ -17,6 +18,8 @@ export function TechnicalModule({ initialTab = "contracts" }: TechnicalModulePro
         return <CustomerContractsView />;
       case "customers":
         return <TechnicalCustomersView />;
+      case "managed-services":
+        return <ManagedServiceCustomersView />;
       case "contacts":
         return <CustomerContactsView />;
       case "recommendations":
