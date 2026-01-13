@@ -170,9 +170,13 @@ export function SalesFunnel({ onNavigate }: SalesFunnelProps) {
     <div className="glass rounded-xl p-6 border border-border animate-fade-in">
       <div 
         className="flex items-center justify-between mb-6 cursor-pointer hover:opacity-80"
-        onClick={() => onNavigate?.("sales")}
+        // Clicking this widget should take users to the MEDDIC workflow (new flow)
+        onClick={() => onNavigate?.("sales-funnel-workflow")}
       >
-        <h3 className="text-lg font-semibold">Sales Funnel</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold">Sales Funnel</h3>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Legacy</span>
+        </div>
         <select className="text-sm bg-muted border border-border rounded-lg px-3 py-1.5 text-muted-foreground">
           <option>All Time</option>
           <option>This Quarter</option>
