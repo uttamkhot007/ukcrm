@@ -5,7 +5,7 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { SalesModule } from "@/components/sales/SalesModule";
 import { SalesAIAssistant } from "@/components/sales/SalesAIAssistant";
 import { LegalModule } from "@/components/legal/LegalModule";
-import { RenewalsModule } from "@/components/renewals/RenewalsModule";
+import { RenewalsWrapper } from "@/components/renewals/RenewalsWrapper";
 import { InsideSalesModule } from "@/components/sales/InsideSalesModule";
 import { RequestsModule } from "@/components/employee/RequestsModule";
 import { EmployeeAIAssistant } from "@/components/employee/EmployeeAIAssistant";
@@ -195,10 +195,16 @@ const Index = () => {
       
       // Renewals module
       case "renewals":
+      case "renewals-tracker":
+        return <RenewalsWrapper initialTab="tracker" />;
+      case "renewals-customers":
+        return <RenewalsWrapper initialTab="customers" />;
       case "renewals-contracts":
+        return <RenewalsWrapper initialTab="contracts" />;
       case "renewals-licenses":
+        return <RenewalsWrapper initialTab="licenses" />;
       case "renewals-subscriptions":
-        return <RenewalsModule />;
+        return <RenewalsWrapper initialTab="subscriptions" />;
       
       // Employee Portal modules - Simplified structure
       case "employee-ai-assistant":
@@ -280,6 +286,8 @@ const Index = () => {
         return <AccountsModule initialTab="contracts" />;
       case "accounts-finance-analytics":
         return <AccountsModule initialTab="analytics" />;
+      case "accounts-finance-post-sale":
+        return <AccountsModule initialTab="post-sale" />;
       case "accounts-finance-workflows":
         return <AccountsModule initialTab="workflows" />;
       case "accounts-finance-procurement":
@@ -325,6 +333,8 @@ const Index = () => {
       case "tech":
       case "tech-contracts":
         return <TechnicalModule initialTab="contracts" />;
+      case "tech-customers":
+        return <TechnicalModule initialTab="customers" />;
       case "tech-contacts":
         return <TechnicalModule initialTab="contacts" />;
       case "tech-recommendations":
