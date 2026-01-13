@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
 import { ContactsView } from "./ContactsView";
@@ -23,6 +23,10 @@ interface SalesModuleProps {
 
 export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const handleNavigate = (tab: string) => {
     setActiveTab(tab);
