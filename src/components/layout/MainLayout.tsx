@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
+import { DealWonCelebration } from "@/components/dashboard/DealWonCelebration";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,9 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
       </div>
 
       <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
+      
+      {/* Deal Won Celebration - Shows on all pages */}
+      <DealWonCelebration />
     </div>
   );
 }
