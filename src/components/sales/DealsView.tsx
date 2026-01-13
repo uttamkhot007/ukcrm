@@ -58,6 +58,9 @@ type DealWithContact = Deal & { contacts: Pick<Contact, "id" | "name" | "company
 
 const stageColors: Record<DealStage, string> = {
   pipeline: "bg-muted text-muted-foreground",
+  qualified: "bg-cyan-500/20 text-cyan-400",
+  proposal: "bg-indigo-500/20 text-indigo-400",
+  negotiation: "bg-pink-500/20 text-pink-400",
   upside: "bg-blue-500/20 text-blue-400",
   strong_upside: "bg-amber-500/20 text-amber-400",
   commit: "bg-purple-500/20 text-purple-400",
@@ -67,6 +70,9 @@ const stageColors: Record<DealStage, string> = {
 
 const stageLabels: Record<DealStage, string> = {
   pipeline: "Pipeline",
+  qualified: "Qualified",
+  proposal: "Proposal",
+  negotiation: "Negotiation",
   upside: "Upside",
   strong_upside: "Strong Upside",
   commit: "Commit",

@@ -12,6 +12,9 @@ type DealStage = Database["public"]["Enums"]["deal_stage"];
 
 const stageLabels: Record<DealStage, string> = {
   pipeline: "Pipeline",
+  qualified: "Qualified",
+  proposal: "Proposal",
+  negotiation: "Negotiation",
   upside: "Upside",
   strong_upside: "Strong Upside",
   commit: "Commit",
