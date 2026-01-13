@@ -5,6 +5,7 @@ import { AccountsSLAReminders } from "./AccountsSLAReminders";
 import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
 import { SalesAnalyticsModule } from "./SalesAnalyticsModule";
+import { PostSaleWorkflowView } from "./PostSaleWorkflowView";
 
 interface AccountsModuleProps {
   initialTab?: string;
@@ -20,6 +21,8 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
     switch (initialTab) {
       case "contracts":
         return <AccountsContractWorkflow filterStage="all" />;
+      case "post-sale":
+        return <PostSaleWorkflowView />;
       case "workflows":
         return <AccountsWorkflows />;
       case "procurement":

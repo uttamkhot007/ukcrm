@@ -1477,6 +1477,114 @@ export type Database = {
           },
         ]
       }
+      customer_deliveries: {
+        Row: {
+          alliance_organization_id: string | null
+          contact_id: string | null
+          created_at: string
+          deal_id: string
+          delivered_at: string | null
+          delivered_by: string | null
+          delivery_type: string
+          id: string
+          license_keys: Json | null
+          managed_service_end: string | null
+          managed_service_start: string | null
+          notes: string | null
+          renewal_date: string | null
+          status: string | null
+          support_contract_end: string | null
+          support_contract_start: string | null
+          support_portal_access: boolean | null
+          support_portal_user_created: boolean | null
+          tenant_id: string | null
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          alliance_organization_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id: string
+          delivered_at?: string | null
+          delivered_by?: string | null
+          delivery_type: string
+          id?: string
+          license_keys?: Json | null
+          managed_service_end?: string | null
+          managed_service_start?: string | null
+          notes?: string | null
+          renewal_date?: string | null
+          status?: string | null
+          support_contract_end?: string | null
+          support_contract_start?: string | null
+          support_portal_access?: boolean | null
+          support_portal_user_created?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          alliance_organization_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string
+          delivered_at?: string | null
+          delivered_by?: string | null
+          delivery_type?: string
+          id?: string
+          license_keys?: Json | null
+          managed_service_end?: string | null
+          managed_service_start?: string | null
+          notes?: string | null
+          renewal_date?: string | null
+          status?: string | null
+          support_contract_end?: string | null
+          support_contract_start?: string | null
+          support_portal_access?: boolean | null
+          support_portal_user_created?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_deliveries_alliance_organization_id_fkey"
+            columns: ["alliance_organization_id"]
+            isOneToOne: false
+            referencedRelation: "alliance_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_deliveries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_deliveries_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_deliveries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_deliveries_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "post_sale_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_organization_access: {
         Row: {
           created_at: string
@@ -2348,6 +2456,9 @@ export type Database = {
           existing_solution: string | null
           expected_close_date: string | null
           id: string
+          includes_managed_service: boolean | null
+          includes_renewal: boolean | null
+          includes_support: boolean | null
           is_budgeted: boolean | null
           last_analyzed_at: string | null
           last_stage_change_at: string | null
@@ -2362,6 +2473,7 @@ export type Database = {
           meddic_score: number | null
           next_best_actions: string[] | null
           next_steps: string | null
+          order_type: string | null
           organization_name: string | null
           probability: number | null
           problem_requirement: string | null
@@ -2399,6 +2511,9 @@ export type Database = {
           existing_solution?: string | null
           expected_close_date?: string | null
           id?: string
+          includes_managed_service?: boolean | null
+          includes_renewal?: boolean | null
+          includes_support?: boolean | null
           is_budgeted?: boolean | null
           last_analyzed_at?: string | null
           last_stage_change_at?: string | null
@@ -2413,6 +2528,7 @@ export type Database = {
           meddic_score?: number | null
           next_best_actions?: string[] | null
           next_steps?: string | null
+          order_type?: string | null
           organization_name?: string | null
           probability?: number | null
           problem_requirement?: string | null
@@ -2450,6 +2566,9 @@ export type Database = {
           existing_solution?: string | null
           expected_close_date?: string | null
           id?: string
+          includes_managed_service?: boolean | null
+          includes_renewal?: boolean | null
+          includes_support?: boolean | null
           is_budgeted?: boolean | null
           last_analyzed_at?: string | null
           last_stage_change_at?: string | null
@@ -2464,6 +2583,7 @@ export type Database = {
           meddic_score?: number | null
           next_best_actions?: string[] | null
           next_steps?: string | null
+          order_type?: string | null
           organization_name?: string | null
           probability?: number | null
           problem_requirement?: string | null
@@ -7126,6 +7246,143 @@ export type Database = {
           },
           {
             foreignKeyName: "poc_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_sale_workflow_stages: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          notes: string | null
+          stage_id: string
+          stage_name: string
+          stage_order: number
+          status: string | null
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          stage_id: string
+          stage_name: string
+          stage_order: number
+          status?: string | null
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          stage_id?: string
+          stage_name?: string
+          stage_order?: number
+          status?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_sale_workflow_stages_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "post_sale_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_sale_workflows: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          current_stage: string | null
+          deal_id: string
+          id: string
+          includes_managed_service: boolean | null
+          includes_renewal: boolean | null
+          includes_support: boolean | null
+          metadata: Json | null
+          order_type: string | null
+          payment_received: number | null
+          payment_status: string | null
+          stage_progress: number | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["post_sale_workflow_status"]
+          tenant_id: string | null
+          total_amount: number | null
+          updated_at: string
+          workflow_type: Database["public"]["Enums"]["post_sale_workflow_type"]
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          current_stage?: string | null
+          deal_id: string
+          id?: string
+          includes_managed_service?: boolean | null
+          includes_renewal?: boolean | null
+          includes_support?: boolean | null
+          metadata?: Json | null
+          order_type?: string | null
+          payment_received?: number | null
+          payment_status?: string | null
+          stage_progress?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["post_sale_workflow_status"]
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          workflow_type: Database["public"]["Enums"]["post_sale_workflow_type"]
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          current_stage?: string | null
+          deal_id?: string
+          id?: string
+          includes_managed_service?: boolean | null
+          includes_renewal?: boolean | null
+          includes_support?: boolean | null
+          metadata?: Json | null
+          order_type?: string | null
+          payment_received?: number | null
+          payment_status?: string | null
+          stage_progress?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["post_sale_workflow_status"]
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          workflow_type?: Database["public"]["Enums"]["post_sale_workflow_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_sale_workflows_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_sale_workflows_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -11984,6 +12241,20 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "converted"
+      post_sale_workflow_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "skipped"
+        | "on_hold"
+      post_sale_workflow_type:
+        | "odf_approval"
+        | "order_processing"
+        | "invoicing"
+        | "payment_collection"
+        | "support_onboarding"
+        | "managed_service_onboarding"
+        | "renewal_setup"
       quotation_status: "draft" | "sent" | "accepted" | "rejected" | "expired"
       renewal_status:
         | "active"
@@ -12342,6 +12613,22 @@ export const Constants = {
         "completed",
         "cancelled",
         "converted",
+      ],
+      post_sale_workflow_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "skipped",
+        "on_hold",
+      ],
+      post_sale_workflow_type: [
+        "odf_approval",
+        "order_processing",
+        "invoicing",
+        "payment_collection",
+        "support_onboarding",
+        "managed_service_onboarding",
+        "renewal_setup",
       ],
       quotation_status: ["draft", "sent", "accepted", "rejected", "expired"],
       renewal_status: [
