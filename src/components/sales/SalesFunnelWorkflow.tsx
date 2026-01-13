@@ -850,6 +850,8 @@ export function SalesFunnelWorkflow() {
             includes_support: (workflowDeal as any).includes_support || false,
             includes_managed_service: (workflowDeal as any).includes_managed_service || false,
             includes_renewal: (workflowDeal as any).includes_renewal || false,
+            meddic_identify_pain: workflowDeal.meddic_identify_pain || '',
+            meddic_decision_criteria: workflowDeal.meddic_decision_criteria || '',
           }}
           open={!!workflowDeal}
           onOpenChange={(open) => !open && setWorkflowDeal(null)}
