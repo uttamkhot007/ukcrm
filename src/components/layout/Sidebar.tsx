@@ -110,7 +110,6 @@ const salesPortalItems: NavItem[] = [
     color: "text-sales",
     portalMode: "workspace",
     children: [
-      { id: "sales-funnel", label: "Funnel Management", icon: Target },
       { id: "sales-funnel-workflow", label: "MEDDIC Workflow", icon: Sparkles },
       { id: "sales-quotations", label: "Quotations", icon: FileText },
       { id: "sales-leads", label: "Lead Tracking", icon: Activity },
@@ -347,7 +346,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-sales",
         children: [
           { id: "sales-ai-assistant", label: "Sales AI", icon: Sparkles },
-          { id: "sales-funnel", label: "Funnel Management", icon: Target },
           { id: "sales-funnel-workflow", label: "MEDDIC Workflow", icon: Sparkles },
           { id: "sales-deal-registration", label: "Deal Registration", icon: FileCheck },
           { id: "sales-quotations", label: "Quotations", icon: FileText },
@@ -669,14 +667,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-primary",
       });
 
-      // MEDDIC Workflow - always available for workspace users
-      items.push({
-        id: "sales-funnel-workflow",
-        label: "MEDDIC Workflow",
-        icon: Sparkles,
-        color: "text-amber-500",
-      });
-
       // Team Communication - always available for all users
       items.push({
         id: "employee-communication",
@@ -720,7 +710,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       // Sales Portal - for sales, presales, inside_sales teams
       if (hasTeamAccess(["sales", "presales", "inside_sales", "management"], "sales")) {
         const salesChildren = [
-          { id: "sales-funnel", label: "Funnel Management", icon: Target },
           { id: "sales-funnel-workflow", label: "MEDDIC Workflow", icon: Sparkles },
           { id: "sales-quotations", label: "Quotations", icon: FileText },
           { id: "sales-leads", label: "Lead Tracking", icon: Activity },
