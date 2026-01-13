@@ -2451,6 +2451,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           created_by: string | null
+          customer_environment: Json | null
           deal_type: string | null
           description: string | null
           existing_solution: string | null
@@ -2465,8 +2466,10 @@ export type Database = {
           lead_id: string | null
           loss_reason: string | null
           meddic_champion: string | null
+          meddic_current_stage: string | null
           meddic_decision_criteria: string | null
           meddic_decision_process: string | null
+          meddic_details: Json | null
           meddic_economic_buyer: string | null
           meddic_identify_pain: string | null
           meddic_metrics: string | null
@@ -2506,6 +2509,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          customer_environment?: Json | null
           deal_type?: string | null
           description?: string | null
           existing_solution?: string | null
@@ -2520,8 +2524,10 @@ export type Database = {
           lead_id?: string | null
           loss_reason?: string | null
           meddic_champion?: string | null
+          meddic_current_stage?: string | null
           meddic_decision_criteria?: string | null
           meddic_decision_process?: string | null
+          meddic_details?: Json | null
           meddic_economic_buyer?: string | null
           meddic_identify_pain?: string | null
           meddic_metrics?: string | null
@@ -2561,6 +2567,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          customer_environment?: Json | null
           deal_type?: string | null
           description?: string | null
           existing_solution?: string | null
@@ -2575,8 +2582,10 @@ export type Database = {
           lead_id?: string | null
           loss_reason?: string | null
           meddic_champion?: string | null
+          meddic_current_stage?: string | null
           meddic_decision_criteria?: string | null
           meddic_decision_process?: string | null
+          meddic_details?: Json | null
           meddic_economic_buyer?: string | null
           meddic_identify_pain?: string | null
           meddic_metrics?: string | null
