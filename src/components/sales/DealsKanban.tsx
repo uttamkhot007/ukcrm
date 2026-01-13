@@ -244,6 +244,8 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
             includes_support: workflowDeal.includes_support || false,
             includes_managed_service: workflowDeal.includes_managed_service || false,
             includes_renewal: workflowDeal.includes_renewal || false,
+            meddic_identify_pain: workflowDeal.meddic_identify_pain || '',
+            meddic_decision_criteria: workflowDeal.meddic_decision_criteria || '',
             contacts: workflowDeal.contacts,
           }}
           open={!!workflowDeal}
