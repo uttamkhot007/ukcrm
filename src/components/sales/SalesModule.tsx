@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DealsView } from "./DealsView";
 import { LeadsView } from "./LeadsView";
 import { ContactsView } from "./ContactsView";
@@ -14,14 +15,23 @@ import { SalesForecasting } from "./SalesForecasting";
 import { EmailSequences } from "./EmailSequences";
 import { SalesAutomations } from "./SalesAutomations";
 import { SalesFunnelWorkflow } from "./SalesFunnelWorkflow";
+import { SalesModuleDashboard } from "./SalesModuleDashboard";
 
 interface SalesModuleProps {
   initialTab?: string;
 }
 
-export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
+export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleNavigate = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   const renderContent = () => {
-    switch (initialTab) {
+    switch (activeTab) {
+      case "dashboard":
+        return <SalesModuleDashboard onNavigate={handleNavigate} />;
       case "deals":
         return <DealsView />;
       case "leads":
@@ -64,12 +74,12 @@ export function SalesModule({ initialTab = "deals" }: SalesModuleProps) {
       case "funnel-workflow":
         return <SalesFunnelWorkflow />;
       default:
-        return <DealsView />;
+        return <SalesModuleDashboard onNavigate={handleNavigate} />;
     }
   };
 
-  // Show Quick Add only on funnel management (deals) tab
-  const showQuickActions = initialTab === "deals";
+  // Show Quick Add only on deals tab
+  const showQuickActions = activeTab === "deals";
 
   return (
     <div className="p-6 space-y-6">
