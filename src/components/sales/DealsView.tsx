@@ -49,6 +49,8 @@ import { DealWizard } from "./DealWizard";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
+import { workflows } from "@/lib/workflows";
+import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -86,6 +88,7 @@ export function DealsView() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<DealWithContact | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DealWithContact | null>(null);
+  const [closedWonDeal, setClosedWonDeal] = useState<DealWithContact | null>(null);
   const [filters, setFilters] = useState<DealFilters>(initialDealFilters);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -131,6 +134,8 @@ export function DealsView() {
 
   const createDeal = useMutation({
     mutationFn: async (data: DealFormInput) => {
+      const nowIso = new Date().toISOString();
+
       const insertData = {
         title: data.title.trim(),
         value: parseFloat(data.value) || 0,
@@ -153,14 +158,29 @@ export function DealsView() {
         solution_id: data.solution_id || null,
         alliance_organization_id: data.alliance_organization_id || null,
         requirement_category: data.requirement_category || null,
+        last_stage_change_at: nowIso,
+        ...(data.stage === "closed_won" ? { actual_close_date: nowIso } : {}),
       };
-      const { error } = await supabase.from("deals").insert(insertData as any);
+
+      const { data: created, error } = await supabase
+        .from("deals")
+        .insert(insertData as any)
+        .select("*, contacts:contact_id(id, name, company)")
+        .single();
+
       if (error) throw error;
+      return created as DealWithContact;
     },
-    onSuccess: () => {
+    onSuccess: async (createdDeal) => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
       closeDialog();
       toast({ title: "Deal created successfully" });
+
+      if (createdDeal.stage === "closed_won") {
+        // Trigger "deal won" notifications + celebration for everyone
+        await workflows.dealStageChanged(createdDeal.id, "pipeline", "closed_won");
+        setClosedWonDeal(createdDeal);
+      }
     },
     onError: (error) => {
       toast({ title: "Error creating deal", description: error.message, variant: "destructive" });
@@ -168,37 +188,74 @@ export function DealsView() {
   });
 
   const updateDeal = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: DealFormInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+      prevStage,
+      dealSnapshot,
+    }: {
+      id: string;
+      data: DealFormInput;
+      prevStage: DealStage;
+      dealSnapshot: DealWithContact;
+    }) => {
+      const nowIso = new Date().toISOString();
+      const stageChanged = data.stage !== prevStage;
+
       const { error } = await supabase
         .from("deals")
-        .update({
-          title: data.title.trim(),
-          value: parseFloat(data.value) || 0,
-          stage: data.stage,
-          description: data.description.trim() || null,
-          expected_close_date: data.expected_close_date || null,
-          probability: parseInt(data.probability) || 10,
-          contact_id: data.contact_id || null,
-          organization_name: data.organization_name.trim(),
-          problem_requirement: data.problem_requirement.trim(),
-          deal_type: data.deal_type,
-          existing_solution: data.deal_type === "replacement" ? data.existing_solution.trim() : null,
-          quantity: parseInt(data.quantity) || 1,
-          buying_timeline: data.buying_timeline,
-          is_budgeted: data.is_budgeted,
-          tentative_budget: parseFloat(data.tentative_budget) || 0,
-          next_steps: data.next_steps.trim(),
-          solution_id: data.solution_id || null,
-          alliance_organization_id: data.alliance_organization_id || null,
-          requirement_category: data.requirement_category || null,
-        } as any)
+        .update(
+          {
+            title: data.title.trim(),
+            value: parseFloat(data.value) || 0,
+            stage: data.stage,
+            description: data.description.trim() || null,
+            expected_close_date: data.expected_close_date || null,
+            probability: parseInt(data.probability) || 10,
+            contact_id: data.contact_id || null,
+            organization_name: data.organization_name.trim(),
+            problem_requirement: data.problem_requirement.trim(),
+            deal_type: data.deal_type,
+            existing_solution: data.deal_type === "replacement" ? data.existing_solution.trim() : null,
+            quantity: parseInt(data.quantity) || 1,
+            buying_timeline: data.buying_timeline,
+            is_budgeted: data.is_budgeted,
+            tentative_budget: parseFloat(data.tentative_budget) || 0,
+            next_steps: data.next_steps.trim(),
+            solution_id: data.solution_id || null,
+            alliance_organization_id: data.alliance_organization_id || null,
+            requirement_category: data.requirement_category || null,
+            ...(stageChanged ? { last_stage_change_at: nowIso } : {}),
+            ...(stageChanged && data.stage === "closed_won" ? { actual_close_date: nowIso } : {}),
+          } as any
+        )
         .eq("id", id);
       if (error) throw error;
+
+      return { id, prevStage, newStage: data.stage, dealSnapshot, formData: data };
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
       closeDialog();
       toast({ title: "Deal updated successfully" });
+
+      // If moved to Closed Won, trigger "deal won" notifications + post-sale workflow starter
+      if (result.newStage === "closed_won" && result.prevStage !== "closed_won") {
+        await workflows.dealStageChanged(result.id, result.prevStage, result.newStage);
+
+        const valueNum = parseFloat(result.formData.value) || 0;
+        setClosedWonDeal({
+          ...result.dealSnapshot,
+          title: result.formData.title.trim(),
+          value: valueNum as any,
+          stage: "closed_won" as any,
+          organization_name: result.formData.organization_name.trim(),
+          contact_id: result.formData.contact_id || null,
+          probability: parseInt(result.formData.probability) || 10,
+          expected_close_date: result.formData.expected_close_date || null,
+          description: result.formData.description.trim() || null,
+        });
+      }
     },
     onError: (error) => {
       toast({ title: "Error updating deal", description: error.message, variant: "destructive" });
@@ -403,7 +460,7 @@ export function DealsView() {
                   contact_id: data.contact_id,
                   organization_name: data.organization_name,
                   problem_requirement: data.problem_requirement,
-                  deal_type: data.deal_type === "cross_sale" ? "replacement" : "new" as "new" | "replacement",
+                  deal_type: data.deal_type === "cross_sale" ? "replacement" : ("new" as "new" | "replacement"),
                   existing_solution: data.existing_solution,
                   quantity: data.quantity,
                   buying_timeline: data.buying_timeline,
@@ -414,8 +471,14 @@ export function DealsView() {
                   alliance_organization_id: data.alliance_organization_id,
                   requirement_category: data.requirement_category,
                 };
+
                 if (editingDeal) {
-                  updateDeal.mutate({ id: editingDeal.id, data: submitData });
+                  updateDeal.mutate({
+                    id: editingDeal.id,
+                    data: submitData,
+                    prevStage: editingDeal.stage,
+                    dealSnapshot: editingDeal,
+                  });
                 } else {
                   createDeal.mutate(submitData);
                 }
@@ -533,6 +596,31 @@ export function DealsView() {
         description={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
         isDeleting={deleteDeal.isPending}
       />
+
+      {/* Closed Won Workflow Initiator */}
+      {closedWonDeal && (
+        <ClosedWonWorkflowInitiator
+          deal={{
+            id: closedWonDeal.id,
+            title: closedWonDeal.title,
+            value: Number(closedWonDeal.value),
+            organization_name: (closedWonDeal as any).organization_name,
+            order_type: (closedWonDeal as any).order_type,
+            includes_support: (closedWonDeal as any).includes_support || false,
+            includes_managed_service: (closedWonDeal as any).includes_managed_service || false,
+            includes_renewal: (closedWonDeal as any).includes_renewal || false,
+            meddic_identify_pain: (closedWonDeal as any).meddic_identify_pain || "",
+            meddic_decision_criteria: (closedWonDeal as any).meddic_decision_criteria || "",
+            contacts: (closedWonDeal as any).contacts,
+          }}
+          open={!!closedWonDeal}
+          onOpenChange={(open) => !open && setClosedWonDeal(null)}
+          onWorkflowCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["deals"] });
+            queryClient.invalidateQueries({ queryKey: ["post-sale-workflows"] });
+          }}
+        />
+      )}
     </div>
   );
 }
