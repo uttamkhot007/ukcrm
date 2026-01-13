@@ -24,6 +24,7 @@ import {
   ChevronRight, Clock, Award, BarChart3, Settings,
   Sparkles, Play, Pause, RefreshCw, Info, History, Save
 } from "lucide-react";
+import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 
 // MEDDIC Framework Definition
 const MEDDIC_CRITERIA = [
@@ -169,6 +170,8 @@ export function SalesFunnelWorkflow() {
   // Local state for MEDDIC form values (to enable typing without triggering mutations)
   const [meddicFormValues, setMeddicFormValues] = useState<Record<string, string>>({});
   const [pendingSaves, setPendingSaves] = useState<Set<string>>(new Set());
+  // State for workflow initiator when deal moves to closed_won
+  const [workflowDeal, setWorkflowDeal] = useState<Deal | null>(null);
 
   // Sync form values when deal changes
   useEffect(() => {
@@ -286,7 +289,8 @@ export function SalesFunnelWorkflow() {
         .from('deals')
         .update({ 
           stage: toStage as any,
-          last_stage_change_at: new Date().toISOString()
+          last_stage_change_at: new Date().toISOString(),
+          ...(toStage === 'closed_won' ? { actual_close_date: new Date().toISOString() } : {})
         })
         .eq('id', dealId);
       
@@ -306,12 +310,23 @@ export function SalesFunnelWorkflow() {
         });
 
       if (logError) throw logError;
+      
+      return { dealId, toStage };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
       queryClient.invalidateQueries({ queryKey: ['funnel-stats'] });
       toast.success('Deal progressed to next stage!');
+      
+      // If progressed to closed_won, show workflow initiator
+      if (result.toStage === 'closed_won') {
+        const deal = deals?.find(d => d.id === result.dealId);
+        if (deal) {
+          setWorkflowDeal(deal);
+          setSelectedDeal(null); // Close the deal sheet
+        }
+      }
     }
   });
 
@@ -822,6 +837,29 @@ export function SalesFunnelWorkflow() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Workflow Initiator Dialog - shows when deal is progressed to closed_won */}
+      {workflowDeal && (
+        <ClosedWonWorkflowInitiator
+          deal={{
+            id: workflowDeal.id,
+            title: workflowDeal.title,
+            value: Number(workflowDeal.value),
+            organization_name: workflowDeal.organization_name,
+            order_type: (workflowDeal as any).order_type,
+            includes_support: (workflowDeal as any).includes_support || false,
+            includes_managed_service: (workflowDeal as any).includes_managed_service || false,
+            includes_renewal: (workflowDeal as any).includes_renewal || false,
+          }}
+          open={!!workflowDeal}
+          onOpenChange={(open) => !open && setWorkflowDeal(null)}
+          onWorkflowCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+            queryClient.invalidateQueries({ queryKey: ['deals'] });
+            queryClient.invalidateQueries({ queryKey: ['post-sale-workflows'] });
+          }}
+        />
+      )}
     </div>
   );
 }

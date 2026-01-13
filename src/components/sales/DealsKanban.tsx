@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { cn } from "@/lib/utils";
-import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User, RefreshCw } from "lucide-react";
+import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User, RefreshCw, Play } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -25,9 +26,9 @@ interface DealsKanbanProps {
 
 const stages: { id: DealStage; label: string; color: string; bgColor: string }[] = [
   { id: "pipeline", label: "Pipeline", color: "text-muted-foreground", bgColor: "bg-muted/50" },
-  { id: "upside", label: "Upside", color: "text-blue-400", bgColor: "bg-blue-500/10" },
-  { id: "strong_upside", label: "Strong Upside", color: "text-amber-400", bgColor: "bg-amber-500/10" },
-  { id: "commit", label: "Commit", color: "text-purple-400", bgColor: "bg-purple-500/10" },
+  { id: "qualified", label: "Qualified", color: "text-blue-400", bgColor: "bg-blue-500/10" },
+  { id: "proposal", label: "Proposal", color: "text-amber-400", bgColor: "bg-amber-500/10" },
+  { id: "negotiation", label: "Negotiation", color: "text-purple-400", bgColor: "bg-purple-500/10" },
   { id: "closed_won", label: "Closed Won", color: "text-emerald-400", bgColor: "bg-emerald-500/10" },
   { id: "closed_lost", label: "Closed Lost", color: "text-red-400", bgColor: "bg-red-500/10" },
 ];
@@ -35,6 +36,7 @@ const stages: { id: DealStage; label: string; color: string; bgColor: string }[]
 export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
   const [draggedDeal, setDraggedDeal] = useState<Deal | null>(null);
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null);
+  const [workflowDeal, setWorkflowDeal] = useState<DealWithContact | null>(null);
   const { toast } = useToast();
   const { formatCurrency, currency: orgCurrency } = useOrganizationSettings();
   const { formatConvertedAmount } = useExchangeRates();
@@ -44,13 +46,25 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
     mutationFn: async ({ id, stage }: { id: string; stage: DealStage }) => {
       const { error } = await supabase
         .from("deals")
-        .update({ stage })
+        .update({ 
+          stage,
+          ...(stage === "closed_won" ? { actual_close_date: new Date().toISOString() } : {})
+        })
         .eq("id", id);
       if (error) throw error;
+      return { id, stage };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
       toast({ title: "Deal stage updated" });
+      
+      // If moved to closed_won, trigger workflow initiator
+      if (result.stage === "closed_won") {
+        const deal = deals.find(d => d.id === result.id);
+        if (deal) {
+          setWorkflowDeal(deal);
+        }
+      }
     },
     onError: (error) => {
       toast({ title: "Error updating deal", description: error.message, variant: "destructive" });
@@ -217,6 +231,29 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
           </div>
         );
       })}
+
+      {/* Workflow Initiator Dialog - shows when deal is moved to closed_won */}
+      {workflowDeal && (
+        <ClosedWonWorkflowInitiator
+          deal={{
+            id: workflowDeal.id,
+            title: workflowDeal.title,
+            value: Number(workflowDeal.value),
+            organization_name: workflowDeal.organization_name,
+            order_type: workflowDeal.order_type,
+            includes_support: workflowDeal.includes_support || false,
+            includes_managed_service: workflowDeal.includes_managed_service || false,
+            includes_renewal: workflowDeal.includes_renewal || false,
+            contacts: workflowDeal.contacts,
+          }}
+          open={!!workflowDeal}
+          onOpenChange={(open) => !open && setWorkflowDeal(null)}
+          onWorkflowCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["deals"] });
+            queryClient.invalidateQueries({ queryKey: ["post-sale-workflows"] });
+          }}
+        />
+      )}
     </div>
   );
 }
