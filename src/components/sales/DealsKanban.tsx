@@ -12,6 +12,7 @@ import { GripVertical, DollarSign, Calendar, Pencil, Trash2, User, RefreshCw, Pl
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
+import { workflows } from "@/lib/workflows";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -43,33 +44,60 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
   const queryClient = useQueryClient();
 
   const updateDealStage = useMutation({
-    mutationFn: async ({ id, stage }: { id: string; stage: DealStage }) => {
+    mutationFn: async ({
+      id,
+      fromStage,
+      stage,
+    }: {
+      id: string;
+      fromStage: DealStage;
+      stage: DealStage;
+    }) => {
+      const nowIso = new Date().toISOString();
+
       const { error } = await supabase
         .from("deals")
-        .update({ 
-          stage,
-          ...(stage === "closed_won" ? { actual_close_date: new Date().toISOString() } : {})
-        })
+        .update(
+          {
+            stage,
+            last_stage_change_at: nowIso,
+            ...(stage === "closed_won" ? { actual_close_date: nowIso } : {}),
+          } as any
+        )
         .eq("id", id);
       if (error) throw error;
+
+      // If closed won, notify everyone (handled server-side)
+      if (stage === "closed_won") {
+        await workflows.dealStageChanged(id, fromStage, stage);
+      }
+
       return { id, stage };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
-      toast({ title: "Deal stage updated" });
-      
-      // If moved to closed_won, trigger workflow initiator
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
       if (result.stage === "closed_won") {
-        const deal = deals.find(d => d.id === result.id);
+        toast({
+          title: "🎉 Congratulations! 🏆",
+          description: "Deal moved to Closed Won 🎊✨",
+        });
+
+        // If moved to closed_won, trigger workflow initiator
+        const deal = deals.find((d) => d.id === result.id);
         if (deal) {
           setWorkflowDeal(deal);
         }
+      } else {
+        toast({ title: "Deal stage updated" });
       }
     },
     onError: (error) => {
       toast({ title: "Error updating deal", description: error.message, variant: "destructive" });
     },
   });
+
 
   const handleDragStart = (e: React.DragEvent, deal: Deal) => {
     setDraggedDeal(deal);
@@ -95,9 +123,13 @@ export function DealsKanban({ deals, onEdit, onDelete }: DealsKanbanProps) {
   const handleDrop = (e: React.DragEvent, stage: DealStage) => {
     e.preventDefault();
     setDragOverStage(null);
-    
+
     if (draggedDeal && draggedDeal.stage !== stage) {
-      updateDealStage.mutate({ id: draggedDeal.id, stage });
+      updateDealStage.mutate({
+        id: draggedDeal.id,
+        fromStage: draggedDeal.stage as DealStage,
+        stage,
+      });
     }
     setDraggedDeal(null);
   };

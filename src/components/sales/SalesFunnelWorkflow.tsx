@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 import { MEDDICWizard } from "@/components/sales/MEDDICWizard";
+import { workflows } from "@/lib/workflows";
 
 // MEDDIC Framework Definition
 const MEDDIC_CRITERIA = [
@@ -286,108 +287,66 @@ export function SalesFunnelWorkflow() {
   // Auto-progress deal
   const progressDeal = useMutation({
     mutationFn: async ({ dealId, fromStage, toStage }: { dealId: string; fromStage: string; toStage: string }) => {
-      // Get the deal details first
-      const { data: dealData } = await supabase
-        .from('deals')
-        .select('*, profiles:user_id(full_name)')
-        .eq('id', dealId)
-        .single();
+      const nowIso = new Date().toISOString();
 
       // Update deal stage
       const { error: dealError } = await supabase
-        .from('deals')
-        .update({ 
+        .from("deals")
+        .update({
           stage: toStage as any,
-          last_stage_change_at: new Date().toISOString(),
-          ...(toStage === 'closed_won' ? { actual_close_date: new Date().toISOString() } : {})
+          last_stage_change_at: nowIso,
+          ...(toStage === "closed_won" ? { actual_close_date: nowIso } : {}),
         })
-        .eq('id', dealId);
-      
+        .eq("id", dealId);
+
       if (dealError) throw dealError;
 
       // Log progression
-      const { error: logError } = await supabase
-        .from('deal_stage_progression_log')
-        .insert({
-          deal_id: dealId,
-          from_stage: fromStage,
-          to_stage: toStage,
-          progression_type: 'auto',
-          meddic_score_at_change: selectedDeal?.meddic_score || 0,
-          triggered_by: user?.id,
-          trigger_reason: 'MEDDIC score threshold reached'
-        });
+      const { error: logError } = await supabase.from("deal_stage_progression_log").insert({
+        deal_id: dealId,
+        from_stage: fromStage,
+        to_stage: toStage,
+        progression_type: "auto",
+        meddic_score_at_change: selectedDeal?.meddic_score || 0,
+        triggered_by: user?.id,
+        trigger_reason: "MEDDIC score threshold reached",
+      });
 
       if (logError) throw logError;
-      
-      // If closed won, notify EVERYONE about the win
-      if (toStage === 'closed_won' && dealData) {
-        // Get all users to notify
-        const { data: allUsers } = await supabase
-          .from('profiles')
-          .select('user_id, full_name')
-          .not('user_id', 'is', null);
 
-        const salesRepName = (dealData as any).profiles?.full_name || 'Sales Team';
-        const organizationName = dealData.organization_name || 'Customer';
-        const dealTitle = dealData.title;
-        const dealValue = Number(dealData.value).toLocaleString();
-
-        // Create notifications for all users
-        if (allUsers && allUsers.length > 0) {
-          const notifications = allUsers.map((u: any) => ({
-            user_id: u.user_id,
-            title: '🎉🏆 New Deal Won! 🎊✨',
-            message: `Congratulations! ${salesRepName} closed "${dealTitle}" with ${organizationName} worth ₹${dealValue}!`,
-            type: 'success',
-            category: 'deal_won',
-            reference_id: dealId,
-            reference_type: 'deals'
-          }));
-
-          await supabase.from('notifications').insert(notifications);
-        }
-
-        // Also trigger workflow notification for email
-        await supabase.functions.invoke('workflow-trigger', {
-          body: {
-            type: 'deal_stage_changed',
-            entity_type: 'deals',
-            entity_id: dealId,
-            data: { oldStage: fromStage, newStage: toStage }
-          }
-        });
+      // If closed won, notify everyone (handled server-side)
+      if (toStage === "closed_won") {
+        await workflows.dealStageChanged(dealId, fromStage, toStage);
       }
-      
-      return { dealId, toStage, dealData };
+
+      return { dealId, toStage };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-      queryClient.invalidateQueries({ queryKey: ['funnel-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
+      queryClient.invalidateQueries({ queryKey: ["deals-meddic"] });
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["funnel-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
       // If progressed to closed_won, show celebration and workflow initiator
-      if (result.toStage === 'closed_won') {
+      if (result.toStage === "closed_won") {
+        const wonDeal = deals?.find((d) => d.id === result.dealId);
+
         // Show big celebration toast
-        toast.success(
-          '🎉🏆🎊 CONGRATULATIONS! 🎊🏆🎉',
-          {
-            description: `Deal "${result.dealData?.title}" has been WON! 🥳✨🎈`,
-            duration: 8000,
-          }
-        );
-        
-        const deal = deals?.find(d => d.id === result.dealId);
-        if (deal) {
-          setWorkflowDeal(deal);
+        toast.success("🎉🏆🎊 CONGRATULATIONS! 🎊🏆🎉", {
+          description: `Deal "${wonDeal?.title || "Deal"}" has been WON! 🥳✨🎈`,
+          duration: 8000,
+        });
+
+        if (wonDeal) {
+          setWorkflowDeal(wonDeal);
           setSelectedDeal(null); // Close the deal sheet
         }
       } else {
-        toast.success('Deal progressed to next stage!');
+        toast.success("Deal progressed to next stage!");
       }
-    }
+    },
   });
+
 
   // Toggle auto progression
   const toggleAutoProgression = useMutation({
