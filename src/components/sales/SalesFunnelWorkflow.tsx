@@ -519,7 +519,18 @@ export function SalesFunnelWorkflow() {
                     <div
                       key={deal.id}
                       className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                      onClick={() => setSelectedDeal(deal)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDeal(deal);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedDeal(deal);
+                        }
+                      }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium text-sm truncate max-w-[120px]">
@@ -543,7 +554,7 @@ export function SalesFunnelWorkflow() {
                         />
                       </div>
                       {/* MEDDIC Mini Indicators */}
-                      <div className="flex gap-1 mt-2">
+                      <div className="flex gap-1 mt-2 pointer-events-none">
                         {MEDDIC_CRITERIA.map(c => {
                           const hasValue = getMeddicValue(deal, c.key).length >= 3;
                           return (
