@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,7 +22,7 @@ import {
   Target, TrendingUp, Users, DollarSign, FileText, 
   CheckCircle2, Circle, ArrowRight, Zap, AlertTriangle,
   ChevronRight, Clock, Award, BarChart3, Settings,
-  Sparkles, Play, Pause, RefreshCw, Info, History
+  Sparkles, Play, Pause, RefreshCw, Info, History, Save
 } from "lucide-react";
 
 // MEDDIC Framework Definition
@@ -162,6 +162,22 @@ export function SalesFunnelWorkflow() {
   const queryClient = useQueryClient();
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  // Local state for MEDDIC form values (to enable typing without triggering mutations)
+  const [meddicFormValues, setMeddicFormValues] = useState<Record<string, string>>({});
+  const [pendingSaves, setPendingSaves] = useState<Set<string>>(new Set());
+
+  // Sync form values when deal changes
+  useEffect(() => {
+    if (selectedDeal) {
+      const values: Record<string, string> = {};
+      MEDDIC_CRITERIA.forEach(c => {
+        const key = `meddic_${c.key}` as keyof Deal;
+        values[c.key] = (selectedDeal[key] as string) || '';
+      });
+      setMeddicFormValues(values);
+      setPendingSaves(new Set());
+    }
+  }, [selectedDeal?.id]);
 
   // Fetch deals with MEDDIC data
   const { data: deals, isLoading } = useQuery({
@@ -201,14 +217,17 @@ export function SalesFunnelWorkflow() {
       const fieldName = `meddic_${field}`;
       const updateData: Record<string, any> = { [fieldName]: value };
       
-      // Recalculate MEDDIC score
+      // Recalculate MEDDIC score - any non-empty value counts
       const deal = deals?.find(d => d.id === dealId);
+      let score = 0;
+      let currentStage = deal?.stage || 'pipeline';
+      
       if (deal) {
-        let score = 0;
         MEDDIC_CRITERIA.forEach(c => {
           const key = `meddic_${c.key}` as keyof Deal;
           const fieldValue = c.key === field ? value : deal[key];
-          if (fieldValue && String(fieldValue).trim().length > 10) {
+          // Count as complete if has meaningful content (at least 3 chars)
+          if (fieldValue && String(fieldValue).trim().length >= 3) {
             score += c.weight;
           }
         });
@@ -221,15 +240,37 @@ export function SalesFunnelWorkflow() {
         .eq('id', dealId);
       
       if (error) throw error;
-      return updateData.meddic_score;
+      return { newScore: score, dealId, currentStage, autoProgressEnabled: deal?.auto_progression_enabled !== false };
     },
-    onSuccess: (newScore) => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
-      if (selectedDeal) {
-        setSelectedDeal(prev => prev ? { ...prev, meddic_score: newScore } : null);
+      
+      if (selectedDeal && result.dealId === selectedDeal.id) {
+        setSelectedDeal(prev => prev ? { ...prev, meddic_score: result.newScore } : null);
       }
-      toast.success('MEDDIC updated');
-      checkAutoProgression();
+      
+      toast.success(`MEDDIC updated - Score: ${result.newScore}%`);
+      
+      // Check for auto-progression with the NEW score
+      if (result.autoProgressEnabled) {
+        const rule = STAGE_PROGRESSION_RULES.find(
+          r => r.fromStage === result.currentStage && result.newScore >= r.minScore
+        );
+
+        if (rule) {
+          // Auto-progress immediately
+          toast.info(`🚀 Threshold reached! Progressing to ${STAGE_LABELS[rule.toStage]}...`);
+          
+          // Slight delay for UX
+          setTimeout(() => {
+            progressDeal.mutate({
+              dealId: result.dealId,
+              fromStage: rule.fromStage,
+              toStage: rule.toStage
+            });
+          }, 500);
+        }
+      }
     }
   });
 
@@ -320,7 +361,8 @@ export function SalesFunnelWorkflow() {
     let score = 0;
     MEDDIC_CRITERIA.forEach(c => {
       const value = getMeddicValue(deal, c.key);
-      if (value && value.trim().length > 10) {
+      // Count as complete if has meaningful content (at least 3 chars)
+      if (value && value.trim().length >= 3) {
         score += c.weight;
       }
     });
@@ -484,7 +526,7 @@ export function SalesFunnelWorkflow() {
                       {/* MEDDIC Mini Indicators */}
                       <div className="flex gap-1 mt-2">
                         {MEDDIC_CRITERIA.map(c => {
-                          const hasValue = getMeddicValue(deal, c.key).length > 10;
+                          const hasValue = getMeddicValue(deal, c.key).length >= 3;
                           return (
                             <div
                               key={c.key}
@@ -619,7 +661,7 @@ export function SalesFunnelWorkflow() {
                       <div className="grid grid-cols-2 gap-3">
                         {MEDDIC_CRITERIA.map(c => {
                           const value = getMeddicValue(selectedDeal, c.key);
-                          const isComplete = value.length > 10;
+                          const isComplete = value.length >= 3;
                           const Icon = c.icon;
 
                           return (
@@ -651,8 +693,10 @@ export function SalesFunnelWorkflow() {
                   <ScrollArea className="h-[calc(100vh-280px)]">
                     <div className="space-y-4 pr-4">
                       {MEDDIC_CRITERIA.map(c => {
-                        const value = getMeddicValue(selectedDeal, c.key);
-                        const isComplete = value.length > 10;
+                        const savedValue = getMeddicValue(selectedDeal, c.key);
+                        const currentValue = meddicFormValues[c.key] ?? savedValue;
+                        const isComplete = currentValue.length >= 3;
+                        const hasChanges = currentValue !== savedValue;
                         const Icon = c.icon;
 
                         return (
@@ -665,29 +709,54 @@ export function SalesFunnelWorkflow() {
                                   </div>
                                   {c.label}
                                   <Badge variant="outline" className="text-xs">{c.weight}%</Badge>
+                                  {hasChanges && (
+                                    <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-600">
+                                      Unsaved
+                                    </Badge>
+                                  )}
                                 </CardTitle>
-                                {isComplete && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                                {isComplete && !hasChanges && <CheckCircle2 className="h-5 w-5 text-primary" />}
                               </div>
                               <CardDescription>{c.description}</CardDescription>
                             </CardHeader>
                             <CardContent>
                               <Textarea
                                 placeholder={c.placeholder}
-                                value={value}
-                                onChange={(e) => updateMeddic.mutate({
-                                  dealId: selectedDeal.id,
-                                  field: c.key,
-                                  value: e.target.value
-                                })}
+                                value={currentValue}
+                                onChange={(e) => {
+                                  setMeddicFormValues(prev => ({
+                                    ...prev,
+                                    [c.key]: e.target.value
+                                  }));
+                                }}
                                 className="min-h-[80px]"
                               />
-                              <div className="mt-2">
-                                <p className="text-xs text-muted-foreground mb-1">Key questions to answer:</p>
-                                <ul className="text-xs text-muted-foreground list-disc list-inside space-y-0.5">
-                                  {c.questions.map((q, i) => (
-                                    <li key={i}>{q}</li>
-                                  ))}
-                                </ul>
+                              <div className="flex items-center justify-between mt-2">
+                                <div className="flex-1">
+                                  <p className="text-xs text-muted-foreground mb-1">Key questions to answer:</p>
+                                  <ul className="text-xs text-muted-foreground list-disc list-inside space-y-0.5">
+                                    {c.questions.map((q, i) => (
+                                      <li key={i}>{q}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                {hasChanges && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      updateMeddic.mutate({
+                                        dealId: selectedDeal.id,
+                                        field: c.key,
+                                        value: currentValue
+                                      });
+                                    }}
+                                    disabled={updateMeddic.isPending}
+                                    className="ml-2"
+                                  >
+                                    <Save className="h-4 w-4 mr-1" />
+                                    Save
+                                  </Button>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
