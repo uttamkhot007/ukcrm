@@ -272,7 +272,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
     {
       id: "sales",
       title: "Sales",
-      description: "Funnel management, quotations & lead tracking",
+      description: "MEDDIC workflow, quotations & lead tracking",
       icon: TrendingUp,
       color: "sales" as const,
       stats: [
