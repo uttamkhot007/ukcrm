@@ -11892,6 +11892,9 @@ export type Database = {
         | "ap-southeast"
       deal_stage:
         | "pipeline"
+        | "qualified"
+        | "proposal"
+        | "negotiation"
         | "upside"
         | "strong_upside"
         | "commit"
@@ -12236,6 +12239,9 @@ export const Constants = {
       ],
       deal_stage: [
         "pipeline",
+        "qualified",
+        "proposal",
+        "negotiation",
         "upside",
         "strong_upside",
         "commit",

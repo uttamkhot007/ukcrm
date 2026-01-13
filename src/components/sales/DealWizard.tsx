@@ -128,7 +128,7 @@ interface DealFormData {
   next_steps: string;
   description: string;
   motivational_message: string;
-  stage: "pipeline" | "upside" | "strong_upside" | "commit" | "closed_won" | "closed_lost";
+  stage: "pipeline" | "qualified" | "proposal" | "negotiation" | "upside" | "strong_upside" | "commit" | "closed_won" | "closed_lost";
   existing_solution: string;
 }
 
