@@ -128,8 +128,7 @@ const Index = () => {
       // Sales modules
       case "sales":
         return <SalesModule initialTab="dashboard" />;
-      // Backward-compat: legacy "Funnel Management" routes here
-      // We map it to the MEDDIC workflow view.
+      // Legacy route - redirects to MEDDIC workflow
       case "sales-funnel":
         return <SalesModule initialTab="funnel-workflow" />;
       case "sales-funnel-workflow":
