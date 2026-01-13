@@ -127,6 +127,7 @@ const Index = () => {
     switch (activeModule) {
       // Sales modules
       case "sales":
+        return <SalesModule initialTab="dashboard" />;
       case "sales-funnel":
         return <SalesModule initialTab="deals" />;
       case "sales-funnel-workflow":
