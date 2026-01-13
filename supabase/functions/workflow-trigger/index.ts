@@ -375,23 +375,47 @@ async function handleInvoiceOverdue(supabase: any, resend: any, invoiceId: strin
 
 // Deal Workflows
 async function handleDealStageChanged(supabase: any, resend: any, dealId: string, data: any) {
-  const { data: deal } = await supabase
+  // NOTE: don't rely on FK-based selects here; many projects don't have a declared relationship
+  // between deals.user_id and profiles.user_id.
+  const { data: deal, error: dealError } = await supabase
     .from("deals")
-    .select("*, contact:contacts(name), owner:profiles!deals_user_id_fkey(full_name)")
+    .select("*, contact:contacts(name)")
     .eq("id", dealId)
     .single();
 
+  if (dealError) {
+    console.error("Deal stage changed: failed to fetch deal", dealError);
+    return { success: false, error: dealError.message || "Failed to fetch deal" };
+  }
+
   if (!deal) return { success: false, error: "Deal not found" };
 
-  const salesRepName = deal.owner?.full_name || "Sales Team";
+  const newStage = data?.newStage ?? data?.new_stage ?? deal.stage;
+  const oldStage = data?.oldStage ?? data?.old_stage;
+
+  // Fetch sales rep name (optional)
+  let salesRepName = "Sales Team";
+  try {
+    if (deal.user_id) {
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", deal.user_id)
+        .maybeSingle();
+      salesRepName = ownerProfile?.full_name || salesRepName;
+    }
+  } catch (e) {
+    console.warn("Deal stage changed: could not fetch owner profile", e);
+  }
+
   const organizationName = deal.organization_name || deal.contact?.name || "Customer";
 
-  // Notify deal owner
+  // Notify deal owner about the stage change
   await createNotification(
     supabase,
     deal.user_id,
     "📊 Deal Stage Updated",
-    `Deal "${deal.title}" moved to ${deal.stage.replace("_", " ")}`,
+    `Deal "${deal.title}" moved from ${String(oldStage || "").replaceAll("_", " ") || "previous stage"} to ${String(newStage).replaceAll("_", " ")}`,
     "info",
     "deal",
     dealId,
@@ -399,16 +423,20 @@ async function handleDealStageChanged(supabase: any, resend: any, dealId: string
   );
 
   // If closed won, notify EVERYONE about the win!
-  if (deal.stage === "closed_won") {
-    // Get ALL users in the system
-    const { data: allUsers } = await supabase
+  const isClosedWon = newStage === "closed_won" || deal.stage === "closed_won";
+  if (isClosedWon) {
+    const { data: allUsers, error: usersError } = await supabase
       .from("profiles")
       .select("user_id, email, full_name")
       .not("user_id", "is", null);
 
+    if (usersError) {
+      console.error("Deal stage changed: failed to fetch users", usersError);
+      return { success: false, error: usersError.message || "Failed to fetch users" };
+    }
+
     const dealValue = Number(deal.value).toLocaleString();
 
-    // Create notifications for ALL users
     for (const user of allUsers || []) {
       await createNotification(
         supabase,
@@ -421,7 +449,7 @@ async function handleDealStageChanged(supabase: any, resend: any, dealId: string
         "deals"
       );
 
-      // Send celebration email to everyone
+      // Send celebration email to everyone (only if email provider configured)
       if (user.email && resend) {
         await sendEmail(
           resend,
