@@ -5,11 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
+import { Sparkles, Mail, Lock, User, ArrowRight, Loader2, Shield, Zap, BarChart3, Users } from "lucide-react";
 import { z } from "zod";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { FloatingParticles } from "@/components/ui/FloatingParticles";
+import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+
+const stats = [
+  { label: "Active Users", value: "10K+", icon: Users },
+  { label: "Modules", value: "8+", icon: BarChart3 },
+  { label: "AI-Powered", value: "Yes", icon: Zap },
+  { label: "Uptime", value: "99.9%", icon: Shield },
+];
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -122,85 +132,111 @@ export default function Auth() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+          <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/20 via-background to-background p-12 flex-col justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
+    <div className="min-h-screen bg-background flex overflow-hidden">
+      {/* Left Side - Premium Branding */}
+      <div className="hidden lg:flex lg:w-1/2 relative p-12 flex-col justify-between">
+        {/* Animated gradient background */}
+        <AnimatedBackground />
+        <FloatingParticles count={15} />
+        
+        {/* Content overlay */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 group">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary to-emerald-400 flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform duration-300">
+              <Sparkles className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <span className="font-display text-3xl font-bold tracking-tight">NexusCRM</span>
           </div>
-          <span className="font-bold text-2xl">NexusCRM</span>
         </div>
         
-        <div className="space-y-6">
-          <h1 className="text-4xl font-bold leading-tight">
-            Manage your entire business
-            <span className="text-gradient block">in one place</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-md">
-            AI-powered CRM with Sales, Finance, HR, Technical, Marketing, and Employee Management modules.
-          </p>
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-5xl font-display font-bold leading-tight tracking-tight">
+              Manage your entire
+              <span className="block mt-2">
+                <span className="text-gradient bg-gradient-to-r from-primary via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  business ecosystem
+                </span>
+              </span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-md leading-relaxed">
+              AI-powered enterprise platform with intelligent automation, 
+              real-time analytics, and seamless collaboration.
+            </p>
+          </div>
           
-          <div className="grid grid-cols-2 gap-4 mt-8">
-            {[
-              { label: "Active Users", value: "10K+" },
-              { label: "Modules", value: "8+" },
-              { label: "AI-Powered", value: "Yes" },
-              { label: "Uptime", value: "99.9%" },
-            ].map((stat) => (
-              <div key={stat.label} className="glass rounded-xl p-4">
-                <p className="text-2xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
+          <div className="grid grid-cols-2 gap-4">
+            {stats.map((stat, index) => (
+              <div 
+                key={stat.label} 
+                className="group glass rounded-2xl p-5 border border-primary/10 hover:border-primary/30 transition-all duration-300 hover:scale-105"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <stat.icon className="w-4 h-4 text-primary" />
+                  </div>
+                </div>
+                <p className="text-3xl font-display font-bold text-primary">
+                  <AnimatedCounter value={stat.value} />
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
         
-        <p className="text-sm text-muted-foreground">
-          © 2024 NexusCRM. All rights reserved.
+        <p className="relative z-10 text-sm text-muted-foreground/60">
+          © 2024 NexusCRM. Enterprise-grade security.
         </p>
       </div>
 
-      {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:text-left">
+      {/* Right Side - Premium Form */}
+      <div className="flex-1 flex items-center justify-center p-8 relative">
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+        
+        <div className="w-full max-w-md space-y-8 relative z-10">
+          <div className="text-center lg:text-left animate-fade-in">
             <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-primary-foreground" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary to-emerald-400 flex items-center justify-center shadow-lg shadow-primary/30">
+                <Sparkles className="w-7 h-7 text-primary-foreground" />
               </div>
-              <span className="font-bold text-2xl">NexusCRM</span>
+              <span className="font-display text-3xl font-bold tracking-tight">NexusCRM</span>
             </div>
             
-            <h2 className="text-2xl font-bold">
-              {isLogin ? "Welcome back" : "Create an account"}
+            <h2 className="text-3xl font-display font-bold tracking-tight">
+              {isLogin ? "Welcome back" : "Get started"}
             </h2>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-lg">
               {isLogin
-                ? "Enter your credentials to access your account"
-                : "Fill in your details to get started"}
+                ? "Sign in to continue to your dashboard"
+                : "Create your account in seconds"}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <div className="space-y-2 animate-fade-in" style={{ animationDelay: "50ms" }}>
+                <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+                <div className="relative group">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                   <Input
                     id="fullName"
                     type="text"
                     placeholder="John Doe"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="pl-11"
+                    className="pl-11 h-12 text-base border-2 focus:border-primary transition-colors"
                   />
                 </div>
                 {errors.fullName && (
@@ -209,17 +245,17 @@ export default function Auth() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <div className="space-y-2 animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <div className="relative group">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-11"
+                  className="pl-11 h-12 text-base border-2 focus:border-primary transition-colors"
                 />
               </div>
               {errors.email && (
@@ -227,17 +263,17 @@ export default function Auth() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <div className="space-y-2 animate-fade-in" style={{ animationDelay: "150ms" }}>
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <div className="relative group">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-11"
+                  className="pl-11 h-12 text-base border-2 focus:border-primary transition-colors"
                 />
               </div>
               {errors.password && (
@@ -247,8 +283,8 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full"
-              size="lg"
+              className="w-full h-12 text-base font-semibold animate-fade-in group"
+              style={{ animationDelay: "200ms" }}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -256,13 +292,13 @@ export default function Auth() {
               ) : (
                 <>
                   {isLogin ? "Sign In" : "Create Account"}
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                 </>
               )}
             </Button>
           </form>
 
-          <div className="text-center">
+          <div className="text-center animate-fade-in" style={{ animationDelay: "250ms" }}>
             <p className="text-muted-foreground">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
               <button
@@ -271,16 +307,16 @@ export default function Auth() {
                   setIsLogin(!isLogin);
                   setErrors({});
                 }}
-                className="ml-2 text-primary hover:underline font-medium"
+                className="ml-2 text-primary hover:underline font-semibold"
               >
                 {isLogin ? "Sign up" : "Sign in"}
               </button>
             </p>
           </div>
 
-          <div className="text-center text-xs text-muted-foreground">
-            <p>New users are assigned the <span className="text-primary font-medium">Employee</span> role by default.</p>
-            <p className="mt-1">Contact an admin to upgrade to Manager or Admin.</p>
+          <div className="text-center text-xs text-muted-foreground/70 animate-fade-in" style={{ animationDelay: "300ms" }}>
+            <p>New users are assigned the <span className="text-primary font-semibold">Employee</span> role by default.</p>
+            <p className="mt-1">Contact an admin for role upgrades.</p>
           </div>
         </div>
       </div>
