@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { LucideIcon, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 
 interface PremiumMetricCardProps {
   title: string;
@@ -34,6 +35,17 @@ const hoverBorderClasses = {
   employee: "hover:border-employee/40",
 };
 
+const glowOnHoverClasses = {
+  sales: "hover:shadow-[0_0_30px_-5px_hsl(var(--sales)/0.3)]",
+  finance: "hover:shadow-[0_0_30px_-5px_hsl(var(--finance)/0.3)]",
+  hr: "hover:shadow-[0_0_30px_-5px_hsl(var(--hr)/0.3)]",
+  tech: "hover:shadow-[0_0_30px_-5px_hsl(var(--tech)/0.3)]",
+  support: "hover:shadow-[0_0_30px_-5px_hsl(var(--support)/0.3)]",
+  marketing: "hover:shadow-[0_0_30px_-5px_hsl(var(--marketing)/0.3)]",
+  management: "hover:shadow-[0_0_30px_-5px_hsl(var(--management)/0.3)]",
+  employee: "hover:shadow-[0_0_30px_-5px_hsl(var(--employee)/0.3)]",
+};
+
 export function PremiumMetricCard({
   title,
   value,
@@ -49,18 +61,20 @@ export function PremiumMetricCard({
   return (
     <div
       className={cn(
-        "premium-card p-5 cursor-pointer group animate-fade-in",
-        hoverBorderClasses[color]
+        "premium-card p-5 cursor-pointer group",
+        "opacity-0 animate-fade-in",
+        hoverBorderClasses[color],
+        glowOnHoverClasses[color]
       )}
-      style={{ animationDelay: `${delay}ms` }}
+      style={{ animationDelay: `${delay}ms`, animationFillMode: "forwards" }}
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-4">
-        {/* Icon */}
+        {/* Icon with enhanced glow */}
         <div
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center",
-            "transition-all duration-300 group-hover:scale-110 group-hover:rotate-2",
+            "transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
             iconGradientClasses[color]
           )}
         >
@@ -71,9 +85,11 @@ export function PremiumMetricCard({
         {change !== undefined && (
           <div
             className={cn(
-              "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
-              "bg-muted/60",
-              isPositive ? "text-primary" : "text-destructive"
+              "flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full",
+              "transition-all duration-300",
+              isPositive 
+                ? "bg-primary/10 text-primary" 
+                : "bg-destructive/10 text-destructive"
             )}
           >
             {isPositive ? (
@@ -86,18 +102,25 @@ export function PremiumMetricCard({
         )}
       </div>
 
-      {/* Value & Title */}
+      {/* Value with animated counter */}
       <div>
-        <h3 className="text-2xl font-bold text-foreground mb-1 tracking-tight">{value}</h3>
-        <p className="text-sm text-muted-foreground">{title}</p>
+        <h3 className="text-2xl font-display font-bold text-foreground mb-1 tracking-tight">
+          <AnimatedCounter value={value} duration={1200} />
+        </h3>
+        <p className="text-sm text-muted-foreground font-medium">{title}</p>
         {changeLabel && (
-          <p className="text-xs text-muted-foreground mt-1 opacity-70">{changeLabel}</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">{changeLabel}</p>
         )}
       </div>
 
-      {/* Hover Arrow */}
-      <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Hover Arrow with animation */}
+      <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-1">
         <ArrowRight className="w-4 h-4 text-muted-foreground" />
+      </div>
+      
+      {/* Subtle shine effect on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
       </div>
     </div>
   );
