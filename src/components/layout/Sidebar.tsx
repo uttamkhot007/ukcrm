@@ -420,6 +420,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "hr-skill-matrix", label: "Skill Matrix", icon: Target },
           { id: "hr-people", label: "People Management", icon: UserPlus },
           { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
+          { id: "hr-compliance", label: "Legal & Compliance", icon: Scale },
           { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
         ],
       });
@@ -767,6 +768,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "hr-skill-matrix", label: "Skill Matrix", icon: Target },
             { id: "hr-people", label: "People Management", icon: UserPlus },
             { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
+            { id: "hr-compliance", label: "Legal & Compliance", icon: Scale },
             { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
           ],
         });

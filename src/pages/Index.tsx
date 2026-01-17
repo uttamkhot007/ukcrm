@@ -277,6 +277,8 @@ const Index = () => {
         return <HRModule initialTab="salary" />;
       case "hr-onboarding":
         return <HRModule initialTab="onboarding" />;
+      case "hr-compliance":
+        return <HRModule initialTab="compliance" />;
       case "hr-documents":
         return <HRModule initialTab="documents" />;
       case "hr-skill-matrix":
