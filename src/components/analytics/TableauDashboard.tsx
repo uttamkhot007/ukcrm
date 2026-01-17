@@ -94,7 +94,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
       const overdueInvoices = invoices?.filter(i => i.status === 'overdue').reduce((sum, i) => sum + ((i.subtotal || 0) + (i.tax_amount || 0)), 0) || 0;
 
       const totalEmployees = profiles?.length || 0;
-      const activeEmployees = profiles?.filter(p => p.status !== 'inactive').length || 0;
+      const activeEmployees = profiles?.filter(p => p.employment_status !== 'inactive' && p.employment_status !== 'terminated').length || 0;
       
       const totalTickets = tickets?.length || 0;
       const resolvedTickets = tickets?.filter(t => t.status === 'resolved' || t.status === 'closed').length || 0;
