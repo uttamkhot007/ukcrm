@@ -261,7 +261,11 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(generateDemoTeamMembers());
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<TeamMember[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
 
   // Check if demo data exists
   const hasDemoData = teamMembers.some(m => m.isDemoData);
@@ -386,6 +390,135 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     toast.success("Demo data cleared successfully. You can now add real employee data.");
   };
 
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.csv')) {
+      toast.error("Please upload a CSV file");
+      return;
+    }
+    
+    setImportFile(file);
+    
+    // Parse CSV file
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split('\n').filter(line => line.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        
+        // Expected headers: name, role, department, skill_name, category, level
+        const nameIdx = headers.findIndex(h => h.includes('name') && !h.includes('skill'));
+        const roleIdx = headers.findIndex(h => h.includes('role'));
+        const deptIdx = headers.findIndex(h => h.includes('department') || h.includes('dept'));
+        const skillNameIdx = headers.findIndex(h => h.includes('skill'));
+        const categoryIdx = headers.findIndex(h => h.includes('category'));
+        const levelIdx = headers.findIndex(h => h.includes('level'));
+        
+        if (nameIdx === -1) {
+          toast.error("CSV must contain a 'name' column");
+          setImportFile(null);
+          return;
+        }
+        
+        const membersMap = new Map<string, TeamMember>();
+        
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+          const name = values[nameIdx];
+          if (!name) continue;
+          
+          const role = roleIdx >= 0 ? values[roleIdx] || "Team Member" : "Team Member";
+          const department = deptIdx >= 0 ? values[deptIdx] || "General" : "General";
+          const skillName = skillNameIdx >= 0 ? values[skillNameIdx] : "";
+          const category = categoryIdx >= 0 ? values[categoryIdx] || "Other" : "Other";
+          const level = levelIdx >= 0 ? Math.min(5, Math.max(1, parseInt(values[levelIdx]) || 3)) : 3;
+          
+          if (!membersMap.has(name)) {
+            membersMap.set(name, {
+              id: `import-${Date.now()}-${i}`,
+              name,
+              role,
+              department,
+              skills: [],
+              overallScore: 0,
+              isDemoData: false,
+            });
+          }
+          
+          const member = membersMap.get(name)!;
+          if (skillName) {
+            member.skills.push({
+              id: `skill-${Date.now()}-${i}`,
+              name: skillName,
+              category,
+              level,
+              lastAssessed: new Date().toISOString().split('T')[0],
+            });
+          }
+        }
+        
+        // Calculate overall scores
+        const previewMembers = Array.from(membersMap.values()).map(member => ({
+          ...member,
+          overallScore: member.skills.length > 0
+            ? Math.round((member.skills.reduce((sum, s) => sum + s.level, 0) / (member.skills.length * 5)) * 100)
+            : 50,
+        }));
+        
+        setImportPreview(previewMembers);
+        toast.success(`Found ${previewMembers.length} employees to import`);
+      } catch (error) {
+        toast.error("Failed to parse CSV file");
+        setImportFile(null);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportConfirm = () => {
+    if (importPreview.length === 0) {
+      toast.error("No data to import");
+      return;
+    }
+    
+    setIsImporting(true);
+    
+    // Add imported members to the team
+    setTeamMembers(prev => [...prev, ...importPreview]);
+    
+    setIsImporting(false);
+    setIsImportDialogOpen(false);
+    setImportFile(null);
+    setImportPreview([]);
+    toast.success(`Successfully imported ${importPreview.length} employees`);
+  };
+
+  const handleImportCancel = () => {
+    setIsImportDialogOpen(false);
+    setImportFile(null);
+    setImportPreview([]);
+  };
+
+  const downloadImportTemplate = () => {
+    const template = `Name,Role,Department,Skill Name,Category,Level
+John Doe,Security Engineer,Technical,SIEM Administration,Security,4
+John Doe,Security Engineer,Technical,Python,Languages,3
+Jane Smith,SOC Analyst,Technical,Log Analysis,Security,5
+Jane Smith,SOC Analyst,Technical,Threat Intelligence,Security,4`;
+    
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'skill-matrix-import-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -434,10 +567,95 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
             Export CSV
           </Button>
           {viewMode === "hr" && (
-            <Button variant="outline">
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Import
-            </Button>
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Import
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Import Skill Matrix Data</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadImportTemplate}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Template
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Use this template to format your data
+                    </span>
+                  </div>
+                  
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                    <Input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleImportFileChange}
+                      className="hidden"
+                      id="skill-import-file"
+                    />
+                    <label htmlFor="skill-import-file" className="cursor-pointer">
+                      <FileSpreadsheet className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
+                      <p className="font-medium">
+                        {importFile ? importFile.name : "Click to upload CSV file"}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        CSV format with columns: Name, Role, Department, Skill Name, Category, Level
+                      </p>
+                    </label>
+                  </div>
+                  
+                  {importPreview.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Preview ({importPreview.length} employees)</h4>
+                      <div className="max-h-48 overflow-auto border rounded-lg">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Role</TableHead>
+                              <TableHead>Department</TableHead>
+                              <TableHead>Skills</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {importPreview.slice(0, 5).map((member) => (
+                              <TableRow key={member.id}>
+                                <TableCell className="font-medium">{member.name}</TableCell>
+                                <TableCell>{member.role}</TableCell>
+                                <TableCell>{member.department}</TableCell>
+                                <TableCell>{member.skills.length} skills</TableCell>
+                              </TableRow>
+                            ))}
+                            {importPreview.length > 5 && (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                  ...and {importPreview.length - 5} more
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={handleImportCancel}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleImportConfirm} 
+                    disabled={importPreview.length === 0 || isImporting}
+                  >
+                    {isImporting ? "Importing..." : `Import ${importPreview.length} Employees`}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
