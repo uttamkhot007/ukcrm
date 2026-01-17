@@ -261,22 +261,36 @@ export function SalesFunnelWorkflow() {
       
       toast.success(`MEDDIC updated - Score: ${result.newScore}%`);
       
-      // Check for auto-progression with the NEW score
+      // Check for auto-progression with the NEW score - chain through all eligible stages
       if (result.autoProgressEnabled) {
-        const rule = STAGE_PROGRESSION_RULES.find(
-          r => r.fromStage === result.currentStage && result.newScore >= r.minScore
-        );
+        // Find the final stage this score qualifies for by chaining through rules
+        let currentStage = result.currentStage;
+        let finalStage = currentStage;
+        
+        // Keep progressing through stages as long as score meets thresholds
+        let iterations = 0;
+        while (iterations < 10) { // Safety limit
+          const nextRule = STAGE_PROGRESSION_RULES.find(
+            r => r.fromStage === finalStage && result.newScore >= r.minScore
+          );
+          if (nextRule) {
+            finalStage = nextRule.toStage;
+            iterations++;
+          } else {
+            break;
+          }
+        }
 
-        if (rule) {
-          // Auto-progress immediately
-          toast.info(`🚀 Threshold reached! Progressing to ${STAGE_LABELS[rule.toStage]}...`);
+        // If we can progress to a higher stage, do it
+        if (finalStage !== currentStage) {
+          toast.info(`🚀 Score ${result.newScore}% reached! Progressing to ${STAGE_LABELS[finalStage]}...`);
           
           // Slight delay for UX
           setTimeout(() => {
             progressDeal.mutate({
               dealId: result.dealId,
-              fromStage: rule.fromStage,
-              toStage: rule.toStage
+              fromStage: currentStage,
+              toStage: finalStage
             });
           }, 500);
         }
