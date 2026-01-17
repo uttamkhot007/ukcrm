@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -254,11 +254,29 @@ interface SkillMatrixModuleProps {
   viewMode?: "employee" | "hr";
 }
 
+const STORAGE_KEY = "skill_matrix_data";
+const DEMO_CLEARED_KEY = "skill_matrix_demo_cleared";
+
 export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModuleProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(generateDemoTeamMembers());
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
+    // Check if we have stored data
+    const storedData = localStorage.getItem(STORAGE_KEY);
+    if (storedData) {
+      try {
+        return JSON.parse(storedData);
+      } catch {
+        // If parsing fails, check if demo was cleared
+        const demoCleared = localStorage.getItem(DEMO_CLEARED_KEY);
+        return demoCleared === "true" ? [] : generateDemoTeamMembers();
+      }
+    }
+    // Check if demo data was previously cleared
+    const demoCleared = localStorage.getItem(DEMO_CLEARED_KEY);
+    return demoCleared === "true" ? [] : generateDemoTeamMembers();
+  });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -266,6 +284,11 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<TeamMember[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Persist team members to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(teamMembers));
+  }, [teamMembers]);
 
   // Check if demo data exists
   const hasDemoData = teamMembers.some(m => m.isDemoData);
@@ -385,7 +408,10 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
   };
 
   const handleClearDemoData = () => {
-    setTeamMembers(teamMembers.filter(m => !m.isDemoData));
+    const realData = teamMembers.filter(m => !m.isDemoData);
+    setTeamMembers(realData);
+    localStorage.setItem(DEMO_CLEARED_KEY, "true");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(realData));
     setIsClearDialogOpen(false);
     toast.success("Demo data cleared successfully. You can now add real employee data.");
   };
