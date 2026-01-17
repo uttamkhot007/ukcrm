@@ -21,11 +21,13 @@ import {
   DollarSign,
   MapPin,
   Mail,
+  Scale,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
 import { EmployeeDocumentsView } from "./EmployeeDocumentsView";
 import { EmployeeProfilePage } from "./EmployeeProfilePage";
+import { HRComplianceModule } from "./compliance/HRComplianceModule";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
 
@@ -284,6 +286,8 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
             </CardContent>
           </Card>
         );
+      case "compliance":
+        return <HRComplianceModule />;
       case "onboarding":
         return (
           <Card>
