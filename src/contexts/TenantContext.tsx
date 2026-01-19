@@ -54,7 +54,7 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [tenantMemberships, setTenantMemberships] = useState<TenantMembership[]>([]);
   const [currentRole, setCurrentRole] = useState<TenantMemberRole | null>(null);
@@ -74,12 +74,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Wait for profile to be loaded before fetching - this ensures isSuperAdmin is accurate
-    if (profile === null) {
-      // Profile not yet loaded, keep loading state
+    // Wait for auth to finish loading before fetching tenants
+    // If auth is done and profile is null, we still proceed (user may not have profile yet)
+    if (authLoading) {
       return;
     }
-
+    
+    // If profile is null after auth loading is done, proceed anyway but with limited access
+    if (profile === null) {
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
@@ -246,7 +251,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchTenantMemberships();
-  }, [user, profile, isSuperAdmin]);
+  }, [user, profile, isSuperAdmin, authLoading]);
 
   const value: TenantContextType = {
     currentTenant,
