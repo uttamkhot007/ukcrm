@@ -24,6 +24,7 @@ const moodOptions: { value: ThemeMood; label: string; description: string }[] = 
   { value: 'forest', label: 'Forest', description: 'Natural greens' },
   { value: 'sunset', label: 'Sunset', description: 'Warm gradients' },
   { value: 'midnight', label: 'Midnight', description: 'Ultra dark' },
+  { value: 'cyber', label: 'Cyber', description: 'Neon dashboard' },
 ];
 
 export function ThemeSwitcher() {

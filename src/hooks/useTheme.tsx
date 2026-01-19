@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 
 export type ThemeMode = 'light' | 'dark';
 export type ThemeBrand = 'emerald' | 'blue' | 'purple' | 'orange';
-export type ThemeMood = 'default' | 'ocean' | 'forest' | 'sunset' | 'midnight';
+export type ThemeMood = 'default' | 'ocean' | 'forest' | 'sunset' | 'midnight' | 'cyber';
 
 interface ThemeConfig {
   mode: ThemeMode;
