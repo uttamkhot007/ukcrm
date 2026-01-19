@@ -15,13 +15,13 @@ import {
 } from "@/components/ui/table";
 import { Plus, Search, FolderKanban } from "lucide-react";
 import { format } from "date-fns";
-import { NewProjectDialog } from "./NewProjectDialog";
-import { ProjectDetailsSheet } from "./ProjectDetailsSheet";
+import { ProjectCreationWizard } from "./ProjectCreationWizard";
+import { ProjectDetailView } from "./ProjectDetailView";
 
 export function ProjectsList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["projects", searchQuery],
@@ -74,6 +74,16 @@ export function ProjectsList() {
     }).format(amount);
   };
 
+  // Show detail view if a project is selected
+  if (selectedProjectId) {
+    return (
+      <ProjectDetailView 
+        projectId={selectedProjectId} 
+        onBack={() => setSelectedProjectId(null)} 
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -124,7 +134,7 @@ export function ProjectsList() {
                 <TableRow
                   key={project.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedProject(project)}
+                  onClick={() => setSelectedProjectId(project.id)}
                 >
                   <TableCell>
                     <div>
@@ -167,15 +177,7 @@ export function ProjectsList() {
         </Table>
       </div>
 
-      <NewProjectDialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen} />
-
-      {selectedProject && (
-        <ProjectDetailsSheet
-          project={selectedProject}
-          open={!!selectedProject}
-          onOpenChange={(open) => !open && setSelectedProject(null)}
-        />
-      )}
+      <ProjectCreationWizard open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen} />
     </div>
   );
 }
