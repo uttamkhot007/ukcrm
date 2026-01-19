@@ -1028,19 +1028,19 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       {/* Logo - Shows tenant branding if available */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {currentTenant?.logo_url ? (
               <img 
                 src={currentTenant.logo_url} 
                 alt={currentTenant.branding?.display_name || currentTenant.name} 
-                className="h-10 max-w-[160px] object-contain"
+                className="h-12 max-w-[180px] object-contain"
               />
             ) : (
               <>
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-lg text-foreground truncate max-w-[140px]">
+                <span className="ml-2 font-bold text-lg text-foreground truncate max-w-[140px]">
                   {currentTenant?.branding?.display_name || currentTenant?.name || "NexusCRM"}
                 </span>
               </>
