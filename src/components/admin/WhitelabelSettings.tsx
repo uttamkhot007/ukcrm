@@ -232,15 +232,17 @@ export function WhitelabelSettings() {
               <div className="flex flex-col gap-3">
                 {formData.logo_url ? (
                   <div className="relative w-full">
-                    <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-                      <img 
-                        src={formData.logo_url} 
-                        alt="Tenant logo" 
-                        className="h-12 w-12 object-contain rounded"
-                      />
+                    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30">
+                      <div className="bg-background p-2 rounded-lg border">
+                        <img 
+                          src={formData.logo_url} 
+                          alt="Tenant logo" 
+                          className="h-16 max-w-[200px] object-contain"
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">Logo uploaded</p>
-                        <p className="text-xs text-muted-foreground truncate">{formData.logo_url}</p>
+                        <p className="text-sm font-medium">Logo uploaded</p>
+                        <p className="text-xs text-muted-foreground truncate mt-1">{formData.logo_url}</p>
                       </div>
                       {isAdmin && (
                         <Button
@@ -309,19 +311,28 @@ export function WhitelabelSettings() {
 
             {/* Preview */}
             <div className="pt-4 border-t">
-              <Label className="mb-3 block">Preview</Label>
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={formData.logo_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(displayName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">Your workspace</p>
-                </div>
+              <Label className="mb-3 block">Sidebar Preview</Label>
+              <div className="flex items-center gap-3 p-4 bg-sidebar rounded-lg border">
+                {formData.logo_url ? (
+                  <img 
+                    src={formData.logo_url} 
+                    alt="Logo preview" 
+                    className="h-10 max-w-[160px] object-contain"
+                  />
+                ) : (
+                  <>
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getInitials(displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="font-semibold">{displayName}</p>
+                  </>
+                )}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                When a logo is uploaded, only the logo appears at the top of the sidebar.
+              </p>
             </div>
           </CardContent>
         </Card>
