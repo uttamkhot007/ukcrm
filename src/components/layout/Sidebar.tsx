@@ -1033,16 +1033,18 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               <img 
                 src={currentTenant.logo_url} 
                 alt={currentTenant.branding?.display_name || currentTenant.name} 
-                className="w-8 h-8 rounded-lg object-contain"
+                className="h-10 max-w-[160px] object-contain"
               />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <span className="font-bold text-lg text-foreground truncate max-w-[140px]">
+                  {currentTenant?.branding?.display_name || currentTenant?.name || "NexusCRM"}
+                </span>
+              </>
             )}
-            <span className="font-bold text-lg text-foreground truncate max-w-[140px]">
-              {currentTenant?.branding?.display_name || currentTenant?.name || "NexusCRM"}
-            </span>
           </div>
         )}
         <Button
