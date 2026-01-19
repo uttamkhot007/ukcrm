@@ -26,6 +26,10 @@ import {
   Briefcase,
   Calendar,
   FolderKanban,
+  Kanban,
+  ListTodo,
+  Milestone,
+  Timer,
   BookOpen,
   Bell,
   Ticket,
@@ -601,6 +605,22 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "offensive-remediation", label: "Remediation Tracking", icon: CheckSquare },
         ],
       });
+
+      // Project Management Module - for technical, presales, mss, offensive teams
+      if (hasTeamAccess(["technical", "presales", "managed_services", "mss", "offensive", "management"], "projects")) {
+        items.push({
+          id: "projects",
+          label: "Project Management",
+          icon: FolderKanban,
+          color: "text-purple-600",
+          children: [
+            { id: "projects-list", label: "All Projects", icon: Kanban },
+            { id: "projects-tasks", label: "Tasks", icon: ListTodo },
+            { id: "projects-milestones", label: "Milestones", icon: Milestone },
+            { id: "projects-timesheet", label: "Timesheets", icon: Timer },
+          ],
+        });
+      }
 
       // Admin Module
       items.push({

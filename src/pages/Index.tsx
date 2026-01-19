@@ -368,6 +368,17 @@ const Index = () => {
       case "presales-poc-plans":
         return <SolutionEngineeringModule initialTab="poc-plans" />;
       
+      // Project Management Module
+      case "projects":
+      case "projects-list":
+        return <ProjectsModule defaultTab="projects" />;
+      case "projects-tasks":
+        return <ProjectsModule defaultTab="tasks" />;
+      case "projects-milestones":
+        return <ProjectsModule defaultTab="milestones" />;
+      case "projects-timesheet":
+        return <ProjectsModule defaultTab="timesheet" />;
+      
       // Admin modules
       case "admin":
       case "admin-facilities":
