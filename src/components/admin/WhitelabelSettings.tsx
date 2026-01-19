@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Palette, Save, Image, Type, RotateCcw } from "lucide-react";
+import { Palette, Save, Image, Type, RotateCcw, Upload, Loader2, X } from "lucide-react";
 import { useTenant, TenantBranding } from "@/contexts/TenantContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Json } from "@/integrations/supabase/types";
@@ -14,6 +14,8 @@ import type { Json } from "@/integrations/supabase/types";
 export function WhitelabelSettings() {
   const { currentTenant, isAdmin, refetchTenants } = useTenant();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [formData, setFormData] = useState<{
     logo_url: string;
@@ -41,6 +43,77 @@ export function WhitelabelSettings() {
       });
     }
   }, [currentTenant]);
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentTenant?.id) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please upload a JPG or PNG image");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const fileName = `${currentTenant.id}/logo-${Date.now()}.${fileExt}`;
+
+      // Delete old logo if exists
+      if (formData.logo_url && formData.logo_url.includes('tenant-logos')) {
+        const oldPath = formData.logo_url.split('/tenant-logos/')[1];
+        if (oldPath) {
+          await supabase.storage.from('tenant-logos').remove([oldPath]);
+        }
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('tenant-logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tenant-logos')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, logo_url: publicUrl }));
+      toast.success("Logo uploaded successfully");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast.error("Failed to upload logo: " + message);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!currentTenant?.id) return;
+
+    try {
+      if (formData.logo_url && formData.logo_url.includes('tenant-logos')) {
+        const oldPath = formData.logo_url.split('/tenant-logos/')[1];
+        if (oldPath) {
+          await supabase.storage.from('tenant-logos').remove([oldPath]);
+        }
+      }
+      setFormData(prev => ({ ...prev, logo_url: '' }));
+      toast.success("Logo removed");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast.error("Failed to remove logo: " + message);
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (data: { logo_url: string; branding: TenantBranding }) => {
@@ -155,14 +228,68 @@ export function WhitelabelSettings() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="logo_url">Logo URL</Label>
-              <Input
-                id="logo_url"
-                value={formData.logo_url || ""}
-                onChange={(e) => setFormData((prev) => ({ ...prev, logo_url: e.target.value }))}
-                placeholder="https://example.com/logo.png"
-                disabled={!isAdmin}
-              />
+              <Label>Logo Upload</Label>
+              <div className="flex flex-col gap-3">
+                {formData.logo_url ? (
+                  <div className="relative w-full">
+                    <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                      <img 
+                        src={formData.logo_url} 
+                        alt="Tenant logo" 
+                        className="h-12 w-12 object-contain rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">Logo uploaded</p>
+                        <p className="text-xs text-muted-foreground truncate">{formData.logo_url}</p>
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleRemoveLogo}
+                          className="shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+                
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {formData.logo_url ? 'Change Logo' : 'Upload Logo'}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Accepts JPG or PNG format. Max 5MB.
+                </p>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="favicon_url">Favicon URL</Label>
