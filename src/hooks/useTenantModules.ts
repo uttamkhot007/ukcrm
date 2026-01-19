@@ -13,7 +13,10 @@ export type ModuleKey =
   | 'legal'
   | 'renewals'
   | 'tenders'
-  | 'ai_assistant';
+  | 'ai_assistant'
+  | 'projects'
+  | 'mss'
+  | 'offensive';
 
 interface ModuleConfig {
   key: ModuleKey;
@@ -119,6 +122,30 @@ export const MODULE_DEFINITIONS: ModuleConfig[] = [
     description: 'AI-powered assistance for employees',
     category: 'ai',
     icon: 'Bot',
+    tierRequired: 'professional',
+  },
+  {
+    key: 'projects',
+    name: 'Project Management',
+    description: 'Manage projects, tasks, milestones, and time tracking',
+    category: 'operations',
+    icon: 'FolderKanban',
+    tierRequired: 'starter',
+  },
+  {
+    key: 'mss',
+    name: 'Managed Security Services',
+    description: 'SOC operations, threat monitoring, and incident response',
+    category: 'operations',
+    icon: 'ShieldAlert',
+    tierRequired: 'professional',
+  },
+  {
+    key: 'offensive',
+    name: 'Offensive Security',
+    description: 'Penetration testing, VAPT, and security audits',
+    category: 'operations',
+    icon: 'Crosshair',
     tierRequired: 'professional',
   },
 ];

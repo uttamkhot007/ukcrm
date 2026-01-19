@@ -12324,6 +12324,8 @@ export type Database = {
         | "renewals"
         | "accounts"
         | "admin"
+        | "mss"
+        | "offensive"
       tenant_status: "pending" | "active" | "suspended" | "cancelled"
       tenant_tier: "starter" | "professional" | "enterprise"
       tender_source:
@@ -12706,6 +12708,8 @@ export const Constants = {
         "renewals",
         "accounts",
         "admin",
+        "mss",
+        "offensive",
       ],
       tenant_status: ["pending", "active", "suspended", "cancelled"],
       tenant_tier: ["starter", "professional", "enterprise"],
