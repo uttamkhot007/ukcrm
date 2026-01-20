@@ -174,8 +174,7 @@ export function SalesFunnel({ onNavigate }: SalesFunnelProps) {
         onClick={() => onNavigate?.("sales-funnel-workflow")}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">Sales Funnel</h3>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Legacy</span>
+          <h3 className="text-lg font-semibold">MEDDIC Pipeline</h3>
         </div>
         <select className="text-sm bg-muted border border-border rounded-lg px-3 py-1.5 text-muted-foreground">
           <option>All Time</option>

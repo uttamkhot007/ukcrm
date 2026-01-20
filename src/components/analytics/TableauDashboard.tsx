@@ -390,14 +390,14 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Deal Funnel */}
+        {/* MEDDIC Pipeline */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <GitBranch className="h-5 w-5 text-primary" />
-              Sales Funnel
+              MEDDIC Pipeline
             </CardTitle>
-            <CardDescription>Deal progression through stages</CardDescription>
+            <CardDescription>Deal progression through MEDDIC stages</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
