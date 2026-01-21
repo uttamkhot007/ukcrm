@@ -246,6 +246,30 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   };
 
   const refetchTenants = async () => {
+    // Directly fetch fresh tenant data for current tenant to ensure immediate update
+    if (currentTenant?.id) {
+      const { data: freshTenant } = await supabase
+        .from('tenants')
+        .select('id, name, slug, tier, logo_url, branding, settings, created_at')
+        .eq('id', currentTenant.id)
+        .single() as { data: any | null; error: any };
+      
+      if (freshTenant) {
+        setCurrentTenant({
+          id: freshTenant.id,
+          name: freshTenant.name,
+          slug: freshTenant.slug,
+          tier: freshTenant.tier as TenantTier,
+          logo_url: freshTenant.logo_url,
+          branding: freshTenant.branding as TenantBranding | null,
+          settings: freshTenant.settings || {},
+          is_active: true,
+          created_at: freshTenant.created_at,
+        });
+      }
+    }
+    
+    // Also refetch all memberships to keep them in sync
     await fetchTenantMemberships();
   };
 
