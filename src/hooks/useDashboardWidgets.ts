@@ -8,7 +8,7 @@ export interface WidgetConfig {
 
 const DEFAULT_WIDGET_ORDER: WidgetConfig[] = [
   { id: "revenue-chart", visible: true, order: 0 },
-  { id: "sales-funnel", visible: true, order: 1 },
+  { id: "meddic-pipeline", visible: true, order: 1 },
   { id: "cyber-news", visible: true, order: 2 },
   { id: "notifications", visible: true, order: 3 },
   { id: "currency-converter", visible: true, order: 4 },

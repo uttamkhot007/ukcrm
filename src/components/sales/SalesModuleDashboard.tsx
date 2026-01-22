@@ -104,7 +104,7 @@ export function SalesModuleDashboard({ onNavigate }: SalesModuleDashboardProps) 
               Welcome back! Here's your sales overview for {format(now, 'MMMM yyyy')}
             </p>
           </div>
-          <Button onClick={() => onNavigate('funnel-workflow')} className="bg-sales hover:bg-sales/90">
+          <Button onClick={() => onNavigate('meddic-workflow')} className="bg-sales hover:bg-sales/90">
             <Sparkles className="h-4 w-4 mr-2" />
             MEDDIC Workflow
           </Button>
@@ -164,7 +164,7 @@ export function SalesModuleDashboard({ onNavigate }: SalesModuleDashboardProps) 
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onNavigate('funnel-workflow')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onNavigate('meddic-workflow')}>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
@@ -239,7 +239,7 @@ export function SalesModuleDashboard({ onNavigate }: SalesModuleDashboardProps) 
                 <ArrowRight className="h-4 w-4 ml-auto" />
               )}
             </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => onNavigate('funnel-workflow')}>
+            <Button variant="outline" className="w-full justify-start" onClick={() => onNavigate('meddic-workflow')}>
               <Sparkles className="h-4 w-4 mr-2" />
               MEDDIC Workflow
               <ArrowRight className="h-4 w-4 ml-auto" />

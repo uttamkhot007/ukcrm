@@ -103,7 +103,7 @@ Vinca ERP is a comprehensive enterprise resource planning system built with mode
 ### 1. Dashboard Module (`src/components/dashboard/`)
 - **MetricCard.tsx** - KPI display cards
 - **RevenueChart.tsx** - Revenue visualization
-- **SalesFunnel.tsx** - Sales pipeline funnel
+- **MEDDICPipeline.tsx** - MEDDIC sales pipeline widget
 - **TeamPerformance.tsx** - Team metrics
 - **ActivityFeed.tsx** - Recent activities
 - **QuickActions.tsx** - Shortcut actions
