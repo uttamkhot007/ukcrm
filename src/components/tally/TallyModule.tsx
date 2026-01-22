@@ -13,7 +13,13 @@ import {
   PiggyBank,
   TrendingUp,
   Banknote,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Wallet,
+  QrCode,
+  Truck,
+  Percent,
+  Target,
+  PieChart
 } from "lucide-react";
 import { ChartOfAccounts } from "./ChartOfAccounts";
 import { VoucherEntry } from "./VoucherEntry";
@@ -26,6 +32,13 @@ import { BalanceSheet } from "./BalanceSheet";
 import { GSTModule } from "./GSTModule";
 import { InventoryModule } from "./InventoryModule";
 import { BankReconciliation } from "./BankReconciliation";
+import { CashFlowStatement } from "./CashFlowStatement";
+import { EInvoicingModule } from "./EInvoicingModule";
+import { EWayBillModule } from "./EWayBillModule";
+import { TDSTCSModule } from "./TDSTCSModule";
+import { EstimatesModule } from "./EstimatesModule";
+import { BudgetManagement } from "./BudgetManagement";
+import { RatioAnalysis } from "./RatioAnalysis";
 
 interface TallyModuleProps {
   initialTab?: string;
@@ -37,21 +50,33 @@ export function TallyModule({ initialTab = "dashboard" }: TallyModuleProps) {
   const quickActions = [
     { id: "voucher", label: "New Voucher", icon: FileText, color: "bg-blue-500" },
     { id: "ledger", label: "Create Ledger", icon: BookOpen, color: "bg-green-500" },
-    { id: "stock", label: "Stock Entry", icon: Warehouse, color: "bg-purple-500" },
+    { id: "estimate", label: "New Estimate", icon: FileText, color: "bg-purple-500" },
     { id: "gst", label: "GST Returns", icon: Receipt, color: "bg-orange-500" },
   ];
 
   const modules = [
+    // Core Accounting
     { id: "chart-of-accounts", label: "Chart of Accounts", icon: BookOpen },
     { id: "voucher-entry", label: "Voucher Entry", icon: FileText },
+    { id: "estimates", label: "Estimates", icon: FileText },
+    // Books & Registers
     { id: "day-book", label: "Day Book", icon: FileSpreadsheet },
     { id: "cash-book", label: "Cash Book", icon: Banknote },
     { id: "bank-book", label: "Bank Book", icon: Building2 },
     { id: "bank-reconciliation", label: "Bank Reconciliation", icon: CreditCard },
+    // Financial Reports
     { id: "trial-balance", label: "Trial Balance", icon: Calculator },
     { id: "profit-loss", label: "Profit & Loss", icon: TrendingUp },
     { id: "balance-sheet", label: "Balance Sheet", icon: PiggyBank },
+    { id: "cash-flow", label: "Cash Flow", icon: Wallet },
+    { id: "ratio-analysis", label: "Ratio Analysis", icon: PieChart },
+    // Tax & Compliance
     { id: "gst", label: "GST Module", icon: Receipt },
+    { id: "e-invoicing", label: "E-Invoicing", icon: QrCode },
+    { id: "eway-bill", label: "E-Way Bill", icon: Truck },
+    { id: "tds-tcs", label: "TDS/TCS", icon: Percent },
+    // Planning
+    { id: "budgets", label: "Budgets", icon: Target },
     { id: "inventory", label: "Inventory", icon: Warehouse },
   ];
 
@@ -202,6 +227,34 @@ export function TallyModule({ initialTab = "dashboard" }: TallyModuleProps) {
 
         <TabsContent value="inventory">
           <InventoryModule />
+        </TabsContent>
+
+        <TabsContent value="cash-flow">
+          <CashFlowStatement />
+        </TabsContent>
+
+        <TabsContent value="e-invoicing">
+          <EInvoicingModule />
+        </TabsContent>
+
+        <TabsContent value="eway-bill">
+          <EWayBillModule />
+        </TabsContent>
+
+        <TabsContent value="tds-tcs">
+          <TDSTCSModule />
+        </TabsContent>
+
+        <TabsContent value="estimates">
+          <EstimatesModule />
+        </TabsContent>
+
+        <TabsContent value="budgets">
+          <BudgetManagement />
+        </TabsContent>
+
+        <TabsContent value="ratio-analysis">
+          <RatioAnalysis />
         </TabsContent>
       </Tabs>
     </div>
