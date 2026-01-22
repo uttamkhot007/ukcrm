@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_groups: {
+        Row: {
+          affects_gross_profit: boolean | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_primary: boolean | null
+          name: string
+          nature: string
+          parent_group_id: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          affects_gross_profit?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          nature: string
+          parent_group_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          affects_gross_profit?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          nature?: string
+          parent_group_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_groups_parent_group_id_fkey"
+            columns: ["parent_group_id"]
+            isOneToOne: false
+            referencedRelation: "account_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       accounts_workflow_stage_completions: {
         Row: {
           completed_at: string | null
@@ -781,6 +838,76 @@ export type Database = {
           },
         ]
       }
+      bank_reconciliation: {
+        Row: {
+          amount: number
+          bank_date: string | null
+          cheque_number: string | null
+          created_at: string | null
+          id: string
+          is_reconciled: boolean | null
+          ledger_id: string | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          tenant_id: string | null
+          transaction_date: string
+          transaction_type: string | null
+          voucher_id: string | null
+        }
+        Insert: {
+          amount: number
+          bank_date?: string | null
+          cheque_number?: string | null
+          created_at?: string | null
+          id?: string
+          is_reconciled?: boolean | null
+          ledger_id?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          tenant_id?: string | null
+          transaction_date: string
+          transaction_type?: string | null
+          voucher_id?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_date?: string | null
+          cheque_number?: string | null
+          created_at?: string | null
+          id?: string
+          is_reconciled?: boolean | null
+          ledger_id?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          tenant_id?: string | null
+          transaction_date?: string
+          transaction_type?: string | null
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_reconciliation_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_reconciliation_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_reconciliation_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           all_day: boolean | null
@@ -1477,6 +1604,51 @@ export type Database = {
           },
         ]
       }
+      cost_centers: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_center_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_center_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_center_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_parent_center_id_fkey"
+            columns: ["parent_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_centers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_deliveries: {
         Row: {
           alliance_organization_id: string | null
@@ -2114,6 +2286,60 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      day_book_entries: {
+        Row: {
+          created_at: string | null
+          credit_amount: number | null
+          debit_amount: number | null
+          entry_date: string
+          id: string
+          party_name: string | null
+          tenant_id: string | null
+          voucher_id: string | null
+          voucher_number: string
+          voucher_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          entry_date: string
+          id?: string
+          party_name?: string | null
+          tenant_id?: string | null
+          voucher_id?: string | null
+          voucher_number: string
+          voucher_type: string
+        }
+        Update: {
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          entry_date?: string
+          id?: string
+          party_name?: string | null
+          tenant_id?: string | null
+          voucher_id?: string | null
+          voucher_number?: string
+          voucher_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_book_entries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "day_book_entries_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
             referencedColumns: ["id"]
           },
         ]
@@ -3964,6 +4190,254 @@ export type Database = {
           },
         ]
       }
+      fiscal_years: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          is_closed: boolean | null
+          name: string
+          start_date: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          is_closed?: boolean | null
+          name: string
+          start_date: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          is_closed?: boolean | null
+          name?: string
+          start_date?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_years_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      godowns: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_godown_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_godown_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_godown_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "godowns_parent_godown_id_fkey"
+            columns: ["parent_godown_id"]
+            isOneToOne: false
+            referencedRelation: "godowns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "godowns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gst_returns: {
+        Row: {
+          arn_number: string | null
+          created_at: string | null
+          due_date: string | null
+          filed_by: string | null
+          filing_date: string | null
+          id: string
+          return_period: string
+          return_type: string
+          status: string | null
+          tenant_id: string | null
+          total_cess: number | null
+          total_cgst: number | null
+          total_igst: number | null
+          total_sgst: number | null
+          total_taxable_value: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          arn_number?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          filed_by?: string | null
+          filing_date?: string | null
+          id?: string
+          return_period: string
+          return_type: string
+          status?: string | null
+          tenant_id?: string | null
+          total_cess?: number | null
+          total_cgst?: number | null
+          total_igst?: number | null
+          total_sgst?: number | null
+          total_taxable_value?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          arn_number?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          filed_by?: string | null
+          filing_date?: string | null
+          id?: string
+          return_period?: string
+          return_type?: string
+          status?: string | null
+          tenant_id?: string | null
+          total_cess?: number | null
+          total_cgst?: number | null
+          total_igst?: number | null
+          total_sgst?: number | null
+          total_taxable_value?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gst_returns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gst_transactions: {
+        Row: {
+          cess_amount: number | null
+          cgst_amount: number | null
+          cgst_rate: number | null
+          created_at: string | null
+          gstin: string | null
+          hsn_code: string | null
+          id: string
+          igst_amount: number | null
+          igst_rate: number | null
+          invoice_date: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          invoice_value: number | null
+          party_name: string | null
+          place_of_supply: string | null
+          reverse_charge: boolean | null
+          sgst_amount: number | null
+          sgst_rate: number | null
+          taxable_value: number | null
+          tenant_id: string | null
+          transaction_type: string
+          voucher_id: string | null
+        }
+        Insert: {
+          cess_amount?: number | null
+          cgst_amount?: number | null
+          cgst_rate?: number | null
+          created_at?: string | null
+          gstin?: string | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
+          invoice_date?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          invoice_value?: number | null
+          party_name?: string | null
+          place_of_supply?: string | null
+          reverse_charge?: boolean | null
+          sgst_amount?: number | null
+          sgst_rate?: number | null
+          taxable_value?: number | null
+          tenant_id?: string | null
+          transaction_type: string
+          voucher_id?: string | null
+        }
+        Update: {
+          cess_amount?: number | null
+          cgst_amount?: number | null
+          cgst_rate?: number | null
+          created_at?: string | null
+          gstin?: string | null
+          hsn_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
+          invoice_date?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          invoice_value?: number | null
+          party_name?: string | null
+          place_of_supply?: string | null
+          reverse_charge?: boolean | null
+          sgst_amount?: number | null
+          sgst_rate?: number | null
+          taxable_value?: number | null
+          tenant_id?: string | null
+          transaction_type?: string
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gst_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gst_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gst_transactions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hr_checklists: {
         Row: {
           created_at: string
@@ -4078,6 +4552,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "hr_workflows_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hsn_sac_master: {
+        Row: {
+          cess_rate: number | null
+          cgst_rate: number | null
+          code: string
+          created_at: string | null
+          description: string | null
+          gst_rate: number
+          hsn_type: string | null
+          id: string
+          igst_rate: number | null
+          is_active: boolean | null
+          sgst_rate: number | null
+          tenant_id: string | null
+        }
+        Insert: {
+          cess_rate?: number | null
+          cgst_rate?: number | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          gst_rate: number
+          hsn_type?: string | null
+          id?: string
+          igst_rate?: number | null
+          is_active?: boolean | null
+          sgst_rate?: number | null
+          tenant_id?: string | null
+        }
+        Update: {
+          cess_rate?: number | null
+          cgst_rate?: number | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          gst_rate?: number
+          hsn_type?: string | null
+          id?: string
+          igst_rate?: number | null
+          is_active?: boolean | null
+          sgst_rate?: number | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hsn_sac_master_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -5256,6 +5783,106 @@ export type Database = {
           },
           {
             foreignKeyName: "leave_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_accounts: {
+        Row: {
+          account_code: string | null
+          balance_type: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          contact_id: string | null
+          created_at: string | null
+          created_by: string | null
+          credit_days: number | null
+          credit_limit: number | null
+          current_balance: number | null
+          group_id: string | null
+          gst_registration_type: string | null
+          gstin: string | null
+          id: string
+          ifsc_code: string | null
+          is_active: boolean | null
+          is_bank_account: boolean | null
+          name: string
+          opening_balance: number | null
+          opening_balance_type: string | null
+          pan_number: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_code?: string | null
+          balance_type?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_days?: number | null
+          credit_limit?: number | null
+          current_balance?: number | null
+          group_id?: string | null
+          gst_registration_type?: string | null
+          gstin?: string | null
+          id?: string
+          ifsc_code?: string | null
+          is_active?: boolean | null
+          is_bank_account?: boolean | null
+          name: string
+          opening_balance?: number | null
+          opening_balance_type?: string | null
+          pan_number?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_code?: string | null
+          balance_type?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_days?: number | null
+          credit_limit?: number | null
+          current_balance?: number | null
+          group_id?: string | null
+          gst_registration_type?: string | null
+          gstin?: string | null
+          id?: string
+          ifsc_code?: string | null
+          is_active?: boolean | null
+          is_bank_account?: boolean | null
+          name?: string
+          opening_balance?: number | null
+          opening_balance_type?: string | null
+          pan_number?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_accounts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_accounts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "account_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_accounts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -9962,6 +10589,247 @@ export type Database = {
           },
         ]
       }
+      stock_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_group_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_group_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_group_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_groups_parent_group_id_fkey"
+            columns: ["parent_group_id"]
+            isOneToOne: false
+            referencedRelation: "stock_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_items: {
+        Row: {
+          alias: string | null
+          created_at: string | null
+          created_by: string | null
+          current_quantity: number | null
+          current_rate: number | null
+          current_value: number | null
+          hsn_sac_id: string | null
+          id: string
+          is_active: boolean | null
+          item_code: string | null
+          maximum_quantity: number | null
+          minimum_quantity: number | null
+          name: string
+          opening_quantity: number | null
+          opening_rate: number | null
+          opening_value: number | null
+          primary_unit_id: string | null
+          reorder_level: number | null
+          standard_cost: number | null
+          standard_selling_price: number | null
+          stock_group_id: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          valuation_method: string | null
+        }
+        Insert: {
+          alias?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_quantity?: number | null
+          current_rate?: number | null
+          current_value?: number | null
+          hsn_sac_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string | null
+          maximum_quantity?: number | null
+          minimum_quantity?: number | null
+          name: string
+          opening_quantity?: number | null
+          opening_rate?: number | null
+          opening_value?: number | null
+          primary_unit_id?: string | null
+          reorder_level?: number | null
+          standard_cost?: number | null
+          standard_selling_price?: number | null
+          stock_group_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          valuation_method?: string | null
+        }
+        Update: {
+          alias?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_quantity?: number | null
+          current_rate?: number | null
+          current_value?: number | null
+          hsn_sac_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string | null
+          maximum_quantity?: number | null
+          minimum_quantity?: number | null
+          name?: string
+          opening_quantity?: number | null
+          opening_rate?: number | null
+          opening_value?: number | null
+          primary_unit_id?: string | null
+          reorder_level?: number | null
+          standard_cost?: number | null
+          standard_selling_price?: number | null
+          stock_group_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          valuation_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_hsn_sac_id_fkey"
+            columns: ["hsn_sac_id"]
+            isOneToOne: false
+            referencedRelation: "hsn_sac_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_items_primary_unit_id_fkey"
+            columns: ["primary_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units_of_measure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_items_stock_group_id_fkey"
+            columns: ["stock_group_id"]
+            isOneToOne: false
+            referencedRelation: "stock_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_ledger: {
+        Row: {
+          batch_number: string | null
+          created_at: string | null
+          expiry_date: string | null
+          godown_id: string | null
+          id: string
+          narration: string | null
+          quantity_in: number | null
+          quantity_out: number | null
+          rate: number | null
+          running_quantity: number | null
+          running_value: number | null
+          stock_item_id: string | null
+          tenant_id: string | null
+          transaction_date: string
+          transaction_type: string
+          value: number | null
+          voucher_id: string | null
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          godown_id?: string | null
+          id?: string
+          narration?: string | null
+          quantity_in?: number | null
+          quantity_out?: number | null
+          rate?: number | null
+          running_quantity?: number | null
+          running_value?: number | null
+          stock_item_id?: string | null
+          tenant_id?: string | null
+          transaction_date: string
+          transaction_type: string
+          value?: number | null
+          voucher_id?: string | null
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          godown_id?: string | null
+          id?: string
+          narration?: string | null
+          quantity_in?: number | null
+          quantity_out?: number | null
+          rate?: number | null
+          running_quantity?: number | null
+          running_value?: number | null
+          stock_item_id?: string | null
+          tenant_id?: string | null
+          transaction_date?: string
+          transaction_type?: string
+          value?: number | null
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_ledger_godown_id_fkey"
+            columns: ["godown_id"]
+            isOneToOne: false
+            referencedRelation: "godowns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_escalation_matrix: {
         Row: {
           created_at: string
@@ -11577,6 +12445,44 @@ export type Database = {
           },
         ]
       }
+      units_of_measure: {
+        Row: {
+          created_at: string | null
+          decimal_places: number | null
+          formal_name: string | null
+          id: string
+          is_active: boolean | null
+          symbol: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          decimal_places?: number | null
+          formal_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          symbol: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          decimal_places?: number | null
+          formal_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          symbol?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_of_measure_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_console_access: {
         Row: {
           additional_modules: string[] | null
@@ -11829,6 +12735,195 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_entries: {
+        Row: {
+          cost_center_id: string | null
+          created_at: string | null
+          credit_amount: number | null
+          debit_amount: number | null
+          entry_order: number | null
+          id: string
+          ledger_id: string | null
+          narration: string | null
+          voucher_id: string | null
+        }
+        Insert: {
+          cost_center_id?: string | null
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          entry_order?: number | null
+          id?: string
+          ledger_id?: string | null
+          narration?: string | null
+          voucher_id?: string | null
+        }
+        Update: {
+          cost_center_id?: string | null
+          created_at?: string | null
+          credit_amount?: number | null
+          debit_amount?: number | null
+          entry_order?: number | null
+          id?: string
+          ledger_id?: string | null
+          narration?: string | null
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_entries_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_entries_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_types: {
+        Row: {
+          abbreviation: string
+          created_at: string | null
+          current_number: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          numbering_method: string | null
+          prefix: string | null
+          starting_number: number | null
+          tenant_id: string | null
+          voucher_class: string
+        }
+        Insert: {
+          abbreviation: string
+          created_at?: string | null
+          current_number?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          numbering_method?: string | null
+          prefix?: string | null
+          starting_number?: number | null
+          tenant_id?: string | null
+          voucher_class: string
+        }
+        Update: {
+          abbreviation?: string
+          created_at?: string | null
+          current_number?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          numbering_method?: string | null
+          prefix?: string | null
+          starting_number?: number | null
+          tenant_id?: string | null
+          voucher_class?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_types_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          cancelled_reason: string | null
+          created_at: string | null
+          created_by: string | null
+          fiscal_year: string | null
+          id: string
+          is_cancelled: boolean | null
+          is_posted: boolean | null
+          narration: string | null
+          party_ledger_id: string | null
+          reference_date: string | null
+          reference_number: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          voucher_date: string
+          voucher_number: string
+          voucher_type_id: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          cancelled_reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fiscal_year?: string | null
+          id?: string
+          is_cancelled?: boolean | null
+          is_posted?: boolean | null
+          narration?: string | null
+          party_ledger_id?: string | null
+          reference_date?: string | null
+          reference_number?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          voucher_date: string
+          voucher_number: string
+          voucher_type_id?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          cancelled_reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fiscal_year?: string | null
+          id?: string
+          is_cancelled?: boolean | null
+          is_posted?: boolean | null
+          narration?: string | null
+          party_ledger_id?: string | null
+          reference_date?: string | null
+          reference_number?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          voucher_date?: string
+          voucher_number?: string
+          voucher_type_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_party_ledger_id_fkey"
+            columns: ["party_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_voucher_type_id_fkey"
+            columns: ["voucher_type_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_types"
             referencedColumns: ["id"]
           },
         ]
