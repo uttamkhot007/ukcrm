@@ -301,7 +301,9 @@ const Index = () => {
       case "finance-billing":
         return <BillingModule />;
       
-      // Books & Registers
+      // Bookkeeping (Consolidated Module)
+      case "finance-bookkeeping":
+        return <TallyModule initialTab="bookkeeping" />;
       case "finance-day-book":
         return <TallyModule initialTab="day-book" />;
       case "finance-cash-book":
@@ -325,7 +327,9 @@ const Index = () => {
       case "finance-dso":
         return <AccountsModule initialTab="analytics" />;
       
-      // Tax & Compliance
+      // Taxation & Compliance (Consolidated Module)
+      case "finance-taxation":
+        return <TallyModule initialTab="taxation" />;
       case "finance-gst":
         return <TallyModule initialTab="gst" />;
       case "finance-e-invoicing":
