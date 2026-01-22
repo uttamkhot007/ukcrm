@@ -111,7 +111,7 @@ export function InsideSalesDashboard({ onNavigate }: InsideSalesDashboardProps) 
       {/* MEDDIC Workflow Quick Access */}
       <Card 
         className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 cursor-pointer hover:shadow-md transition-all group"
-        onClick={() => onNavigate("sales-funnel-workflow")}
+        onClick={() => onNavigate("sales-meddic-workflow")}
       >
         <CardContent className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">

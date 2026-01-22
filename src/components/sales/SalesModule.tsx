@@ -14,7 +14,7 @@ import { DealInsights } from "./DealInsights";
 import { SalesForecasting } from "./SalesForecasting";
 import { EmailSequences } from "./EmailSequences";
 import { SalesAutomations } from "./SalesAutomations";
-import { SalesFunnelWorkflow } from "./SalesFunnelWorkflow";
+import { MEDDICWorkflow } from "./MEDDICWorkflow";
 import { SalesModuleDashboard } from "./SalesModuleDashboard";
 
 interface SalesModuleProps {
@@ -75,8 +75,8 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         return <EmailSequences />;
       case "automations":
         return <SalesAutomations />;
-      case "funnel-workflow":
-        return <SalesFunnelWorkflow />;
+      case "meddic-workflow":
+        return <MEDDICWorkflow />;
       default:
         return <SalesModuleDashboard onNavigate={handleNavigate} />;
     }

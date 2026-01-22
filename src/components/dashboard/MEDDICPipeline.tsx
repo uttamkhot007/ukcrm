@@ -46,16 +46,16 @@ const SUBSTAGE_COLORS: Record<string, string> = {
   payment_received: "bg-emerald-500",
 };
 
-interface SalesFunnelProps {
+interface MEDDICPipelineProps {
   onNavigate?: (module: string) => void;
 }
 
-export function SalesFunnel({ onNavigate }: SalesFunnelProps) {
+export function MEDDICPipeline({ onNavigate }: MEDDICPipelineProps) {
   const { formatCurrency } = useOrganizationSettings();
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
 
   const { data: dealStats, isLoading } = useQuery({
-    queryKey: ["funnel-stats"],
+    queryKey: ["meddic-pipeline-stats"],
     queryFn: async () => {
       const { data: deals, error } = await supabase
         .from("deals")
@@ -171,7 +171,7 @@ export function SalesFunnel({ onNavigate }: SalesFunnelProps) {
       <div 
         className="flex items-center justify-between mb-6 cursor-pointer hover:opacity-80"
         // Clicking this widget should take users to the MEDDIC workflow (new flow)
-        onClick={() => onNavigate?.("sales-funnel-workflow")}
+        onClick={() => onNavigate?.("sales-meddic-workflow")}
       >
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold">MEDDIC Pipeline</h3>

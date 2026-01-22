@@ -128,11 +128,11 @@ const Index = () => {
       // Sales modules
       case "sales":
         return <SalesModule initialTab="dashboard" />;
-      // Legacy route - redirects to MEDDIC workflow
+      // Legacy routes - all redirect to MEDDIC workflow
       case "sales-funnel":
-        return <SalesModule initialTab="funnel-workflow" />;
       case "sales-funnel-workflow":
-        return <SalesModule initialTab="funnel-workflow" />;
+      case "sales-meddic-workflow":
+        return <SalesModule initialTab="meddic-workflow" />;
       case "sales-ai-assistant":
         return <SalesAIAssistant />;
       case "sales-quotations":

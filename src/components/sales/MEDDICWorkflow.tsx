@@ -162,7 +162,7 @@ interface Deal {
   assigned_to?: string;
 }
 
-export function SalesFunnelWorkflow() {
+export function MEDDICWorkflow() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const { formatCurrency } = useOrganizationSettings();
@@ -338,7 +338,7 @@ export function SalesFunnelWorkflow() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["deals-meddic"] });
       queryClient.invalidateQueries({ queryKey: ["deals"] });
-      queryClient.invalidateQueries({ queryKey: ["funnel-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["meddic-pipeline-stats"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
 
       // If progressed to closed_won, show celebration and workflow initiator
@@ -454,9 +454,9 @@ export function SalesFunnelWorkflow() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
-            MEDDIC Sales Funnel Workflow
+            MEDDIC Workflow
           </h2>
           <p className="text-muted-foreground">
             Qualify deals using MEDDIC methodology with automatic stage progression
@@ -499,7 +499,7 @@ export function SalesFunnelWorkflow() {
         </CardContent>
       </Card>
 
-      {/* Funnel Stages */}
+      {/* Pipeline Stages */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {['pipeline', 'qualified', 'proposal', 'negotiation', 'closed_won'].map((stage, idx) => {
           const stageDeals = dealsByStage[stage] || [];

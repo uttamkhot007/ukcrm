@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PremiumMetricCard } from "./PremiumMetricCard";
 import { PremiumModuleCard } from "./PremiumModuleCard";
 import { ActivityFeed } from "./ActivityFeed";
-import { SalesFunnel } from "./SalesFunnel";
+import { MEDDICPipeline } from "./MEDDICPipeline";
 import { RevenueChart } from "./RevenueChart";
 import { TeamPerformance } from "./TeamPerformance";
 import { QuickActions } from "./QuickActions";
@@ -343,7 +343,7 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
       {(isAdmin || isManager) && (
         <Card 
           className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 cursor-pointer hover:shadow-md transition-all group"
-          onClick={() => onModuleChange("sales-funnel-workflow")}
+          onClick={() => onModuleChange("sales-meddic-workflow")}
         >
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -384,9 +384,9 @@ export function Dashboard({ onModuleChange }: DashboardProps) {
             <DraggableWidgetContainer
               widgets={[
                 { id: "revenue-chart", component: <RevenueChart onNavigate={onModuleChange} /> },
-                { id: "sales-funnel", component: <SalesFunnel onNavigate={onModuleChange} /> },
+                { id: "meddic-pipeline", component: <MEDDICPipeline onNavigate={onModuleChange} /> },
               ]}
-              widgetConfigs={getWidgetsByIds(["revenue-chart", "sales-funnel"])}
+              widgetConfigs={getWidgetsByIds(["revenue-chart", "meddic-pipeline"])}
               onReorder={reorderWidgets}
               className="space-y-6"
               strategy="vertical"
