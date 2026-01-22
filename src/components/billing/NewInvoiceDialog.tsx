@@ -11,16 +11,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, FileText, Settings, Palette } from "lucide-react";
+import { Plus, Trash2, FileText, Settings, Palette, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { addDays, format } from "date-fns";
 import { workflows } from "@/lib/workflows";
 import { TemplateSelector, DocumentTemplate } from "@/components/templates/TemplateSelector";
 import { SolutionServiceSelector, PREDEFINED_SOLUTIONS, PREDEFINED_SERVICES, PAYMENT_TERMS } from "@/components/templates/SolutionServiceSelector";
+import { DocumentCreationWizard } from "@/components/documents/DocumentCreationWizard";
 
 interface NewInvoiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  useWizard?: boolean;
 }
 
 interface LineItem {
@@ -29,7 +31,17 @@ interface LineItem {
   unit_price: number;
 }
 
-export function NewInvoiceDialog({ open, onOpenChange }: NewInvoiceDialogProps) {
+export function NewInvoiceDialog({ open, onOpenChange, useWizard = false }: NewInvoiceDialogProps) {
+  // If wizard mode is enabled, use the new workflow
+  if (useWizard) {
+    return (
+      <DocumentCreationWizard
+        open={open}
+        onOpenChange={onOpenChange}
+        documentType="invoice"
+      />
+    );
+  }
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const { formatCurrency } = useOrganizationSettings();
