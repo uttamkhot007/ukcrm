@@ -129,7 +129,7 @@ const salesPortalItems: NavItem[] = [
     linkPath: "/tenders",
     children: [
       { id: "deal-desk-registration", label: "Deal Registration", icon: FileCheck },
-      { id: "deal-desk-oem-funnel", label: "OEM Funnel", icon: Target },
+      { id: "deal-desk-oem-pipeline", label: "OEM Pipeline", icon: Target },
       { id: "deal-desk-opportunities", label: "Tender Opportunities", icon: FileText },
       { id: "deal-desk-bid-preparation", label: "Bid Preparation", icon: Users },
       { id: "deal-desk-evaluation", label: "Awards", icon: Award },
@@ -382,7 +382,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-amber-600",
         children: [
           { id: "deal-desk-registration", label: "Deal Registration", icon: FileCheck },
-          { id: "deal-desk-oem-funnel", label: "OEM Funnel", icon: Target },
+          { id: "deal-desk-oem-pipeline", label: "OEM Pipeline", icon: Target },
           { id: "deal-desk-opportunities", label: "Tender Opportunities", icon: FileText },
           { id: "deal-desk-bid-preparation", label: "Bid Preparation", icon: Users },
           { id: "deal-desk-evaluation", label: "Awards", icon: Award },

@@ -21,7 +21,7 @@ import { TenderEvaluationTab } from './TenderEvaluationTab';
 import { NewTenderDialog } from './NewTenderDialog';
 import { TenderDetailsSheet } from './TenderDetailsSheet';
 import { DealRegistrationTab } from './DealRegistrationTab';
-import { OEMFunnelTab } from './OEMFunnelTab';
+import { OEMPipelineTab } from './OEMPipelineTab';
 import { NewDealRegistrationDialog } from '@/components/sales/NewDealRegistrationDialog';
 import { DealRegistrationDetailsSheet } from '@/components/sales/DealRegistrationDetailsSheet';
 import { TenderDocumentWorkspace } from './TenderDocumentWorkspace';
@@ -173,7 +173,7 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tenders & Deal Desk</h1>
           <p className="text-muted-foreground">
-            Manage tenders, deal registrations, and track OEM funnels
+            Manage tenders, deal registrations, and track OEM pipelines
           </p>
         </div>
         <div className="flex gap-2">
@@ -354,13 +354,13 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
           </Badge>
         </button>
 
-        {/* OEM Funnel Card */}
+        {/* OEM Pipeline Card */}
         <button
-          onClick={() => setActiveTab('oem-funnel')}
+          onClick={() => setActiveTab('oem-pipeline')}
           className={cn(
             "premium-card group text-left p-5 rounded-2xl transition-all duration-300",
             "hover:-translate-y-1 hover:shadow-xl",
-            activeTab === 'oem-funnel' 
+            activeTab === 'oem-pipeline' 
               ? "ring-2 ring-primary shadow-lg bg-primary/5" 
               : "hover:bg-accent/30"
           )}
@@ -371,10 +371,10 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
             </div>
             <ChevronRight className={cn(
               "h-5 w-5 text-muted-foreground transition-all duration-300",
-              activeTab === 'oem-funnel' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
+              activeTab === 'oem-pipeline' ? "text-primary" : "group-hover:text-primary group-hover:translate-x-1"
             )} />
           </div>
-          <h3 className="text-base font-semibold mb-1">OEM Funnel</h3>
+          <h3 className="text-base font-semibold mb-1">OEM Pipeline</h3>
           <p className="text-xs text-muted-foreground mb-3">Vendor pipelines</p>
           <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
             {uniqueOEMs.length} OEMs
@@ -500,9 +500,9 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
         </div>
       )}
 
-      {activeTab === 'oem-funnel' && (
+      {activeTab === 'oem-pipeline' && (
         <div className="animate-fade-in">
-          <OEMFunnelTab 
+          <OEMPipelineTab 
             dealRegistrations={dealRegistrations}
             deals={deals}
             loading={loading}

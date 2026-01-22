@@ -33,7 +33,7 @@ interface Deal {
   solution_id: string | null;
 }
 
-interface OEMFunnelTabProps {
+interface OEMPipelineTabProps {
   dealRegistrations: DealRegistration[];
   deals?: Deal[];
   loading: boolean;
@@ -60,7 +60,7 @@ const statusColors = {
   closed: 'bg-purple-500',
 };
 
-export function OEMFunnelTab({ dealRegistrations, deals = [], loading }: OEMFunnelTabProps) {
+export function OEMPipelineTab({ dealRegistrations, deals = [], loading }: OEMPipelineTabProps) {
   const [selectedOEM, setSelectedOEM] = useState<string>('all');
   const [expandedOEM, setExpandedOEM] = useState<string | null>(null);
 
@@ -191,7 +191,7 @@ export function OEMFunnelTab({ dealRegistrations, deals = [], loading }: OEMFunn
         </Card>
       </div>
 
-      {/* OEM Funnel Cards */}
+      {/* OEM Pipeline Cards */}
       <div className="space-y-4">
         {filteredOEMs.map(oem => {
           const isExpanded = expandedOEM === oem.name;
@@ -234,7 +234,7 @@ export function OEMFunnelTab({ dealRegistrations, deals = [], loading }: OEMFunn
               </CardHeader>
               
               <CardContent className="pt-0">
-                {/* Funnel Visualization */}
+                {/* Pipeline Visualization */}
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex items-center gap-2 flex-1">
                     <div className={cn(
