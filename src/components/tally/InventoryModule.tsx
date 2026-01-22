@@ -361,7 +361,7 @@ export function InventoryModule() {
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell>{item.stock_group_id ? "Group" : "-"}</TableCell>
                         <TableCell className="text-right">{item.current_quantity}</TableCell>
-                        <TableCell>{item.uom || "pcs"}</TableCell>
+                        <TableCell>pcs</TableCell>
                         <TableCell className="text-right">{formatCurrency(item.current_value || 0)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="capitalize">
@@ -557,7 +557,7 @@ export function InventoryModule() {
                               {item.valuation_method?.replace("_", " ")}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">{item.current_quantity} {item.uom || "pcs"}</TableCell>
+                          <TableCell className="text-right">{item.current_quantity} pcs</TableCell>
                           <TableCell className="text-right">{formatCurrency(avgRate)}</TableCell>
                           <TableCell className="text-right font-medium">{formatCurrency(item.current_value || 0)}</TableCell>
                         </TableRow>

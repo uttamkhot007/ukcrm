@@ -286,7 +286,65 @@ const Index = () => {
       case "hr-skill-matrix":
         return <SkillMatrixModule viewMode="hr" />;
       
-      // Accounts & Finance merged modules
+      // Finance & Accounting - Unified Module
+      // Dashboard
+      case "finance":
+      case "finance-dashboard":
+        return <TallyModule initialTab="dashboard" />;
+      
+      // Accounting Core
+      case "finance-chart-of-accounts":
+        return <TallyModule initialTab="chart-of-accounts" />;
+      case "finance-voucher-entry":
+        return <TallyModule initialTab="voucher-entry" />;
+      case "finance-billing":
+        return <BillingModule />;
+      
+      // Books & Registers
+      case "finance-day-book":
+        return <TallyModule initialTab="day-book" />;
+      case "finance-cash-book":
+        return <TallyModule initialTab="cash-book" />;
+      case "finance-bank-book":
+        return <TallyModule initialTab="bank-book" />;
+      case "finance-bank-reconciliation":
+        return <TallyModule initialTab="bank-reconciliation" />;
+      
+      // Reports & Analytics
+      case "finance-trial-balance":
+        return <TallyModule initialTab="trial-balance" />;
+      case "finance-profit-loss":
+        return <TallyModule initialTab="profit-loss" />;
+      case "finance-balance-sheet":
+        return <TallyModule initialTab="balance-sheet" />;
+      case "finance-analytics":
+        return <AccountsModule initialTab="analytics" />;
+      case "finance-ar-aging":
+        return <AccountsModule initialTab="ar-aging" />;
+      case "finance-dso":
+        return <AccountsModule initialTab="analytics" />;
+      
+      // Tax & Compliance
+      case "finance-gst":
+        return <TallyModule initialTab="gst" />;
+      
+      // Operations
+      case "finance-contracts":
+        return <AccountsModule initialTab="contracts" />;
+      case "finance-post-sale":
+        return <AccountsModule initialTab="post-sale" />;
+      case "finance-workflows":
+        return <AccountsModule initialTab="workflows" />;
+      case "finance-procurement":
+        return <AccountsModule initialTab="procurement" />;
+      case "finance-stocking":
+        return <AccountsModule initialTab="stocking" />;
+      case "finance-inventory":
+        return <TallyModule initialTab="inventory" />;
+      case "finance-sla-reminders":
+        return <AccountsModule initialTab="sla-reminders" />;
+      
+      // Legacy accounts-finance routes (backward compatibility)
       case "accounts-finance":
       case "accounts-finance-contracts":
         return <AccountsModule initialTab="contracts" />;
@@ -304,15 +362,10 @@ const Index = () => {
         return <AccountsModule initialTab="ar-aging" />;
       case "accounts-finance-sla-reminders":
         return <AccountsModule initialTab="sla-reminders" />;
-      case "accounts-finance-payments":
-      case "accounts-finance-dso":
-      case "accounts-finance-pnl":
-      case "accounts-finance-tax":
-        return <AccountsModule initialTab="contracts" />;
       case "accounts-finance-billing":
         return <BillingModule />;
       
-      // Tally Accounting Module
+      // Legacy accounting routes (backward compatibility)
       case "accounting":
       case "accounting-dashboard":
         return <TallyModule initialTab="dashboard" />;
@@ -320,24 +373,10 @@ const Index = () => {
         return <TallyModule initialTab="chart-of-accounts" />;
       case "accounting-voucher-entry":
         return <TallyModule initialTab="voucher-entry" />;
-      case "accounting-day-book":
-        return <TallyModule initialTab="day-book" />;
-      case "accounting-cash-book":
-        return <TallyModule initialTab="cash-book" />;
-      case "accounting-bank-book":
-        return <TallyModule initialTab="bank-book" />;
-      case "accounting-trial-balance":
-        return <TallyModule initialTab="trial-balance" />;
-      case "accounting-profit-loss":
-        return <TallyModule initialTab="profit-loss" />;
-      case "accounting-balance-sheet":
-        return <TallyModule initialTab="balance-sheet" />;
       case "accounting-gst":
         return <TallyModule initialTab="gst" />;
       case "accounting-inventory":
         return <TallyModule initialTab="inventory" />;
-      case "accounting-bank-reconciliation":
-        return <TallyModule initialTab="bank-reconciliation" />;
       
       // Legacy accounts modules (backward compatibility)
       case "accounts":
@@ -350,15 +389,7 @@ const Index = () => {
       case "accounts-sla-reminders":
         return <AccountsModule initialTab="sla-reminders" />;
       
-      // Legacy finance modules (backward compatibility)
-      case "finance":
-      case "finance-payments":
-      case "finance-dso":
-      case "finance-pnl":
-      case "finance-tax":
-        return <AccountsModule initialTab="contracts" />;
-      
-      // Billing
+      // Billing standalone
       case "billing":
         return <BillingModule />;
       
