@@ -25,6 +25,7 @@ import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
 import { HRModule } from "@/components/hr/HRModule";
 import { AccountsModule } from "@/components/accounts/AccountsModule";
+import { ProcurementInventoryModule } from "@/components/accounts/ProcurementInventoryModule";
 import { TallyModule } from "@/components/tally/TallyModule";
 import { SolutionEngineeringModule } from "@/components/presales/SolutionEngineeringModule";
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
@@ -336,11 +337,11 @@ const Index = () => {
       case "finance-workflows":
         return <AccountsModule initialTab="workflows" />;
       case "finance-procurement":
-        return <AccountsModule initialTab="procurement" />;
+        return <ProcurementInventoryModule initialTab="procurement" />;
       case "finance-stocking":
-        return <AccountsModule initialTab="stocking" />;
+        return <ProcurementInventoryModule initialTab="stocking" />;
       case "finance-inventory":
-        return <TallyModule initialTab="inventory" />;
+        return <ProcurementInventoryModule initialTab="inventory" />;
       case "finance-sla-reminders":
         return <AccountsModule initialTab="sla-reminders" />;
       
@@ -355,9 +356,9 @@ const Index = () => {
       case "accounts-finance-workflows":
         return <AccountsModule initialTab="workflows" />;
       case "accounts-finance-procurement":
-        return <AccountsModule initialTab="procurement" />;
+        return <ProcurementInventoryModule initialTab="procurement" />;
       case "accounts-finance-stocking":
-        return <AccountsModule initialTab="stocking" />;
+        return <ProcurementInventoryModule initialTab="stocking" />;
       case "accounts-finance-ar-aging":
         return <AccountsModule initialTab="ar-aging" />;
       case "accounts-finance-sla-reminders":

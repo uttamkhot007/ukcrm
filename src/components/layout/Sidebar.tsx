@@ -425,9 +425,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "finance-contracts", label: "Contracts", icon: FileText },
           { id: "finance-post-sale", label: "Post-Sale Workflows", icon: FolderKanban },
           { id: "finance-workflows", label: "Workflows", icon: RefreshCw },
-          { id: "finance-procurement", label: "Procurement", icon: Package },
-          { id: "finance-stocking", label: "Stocking", icon: Package },
-          { id: "finance-inventory", label: "Inventory", icon: Package },
+          { id: "finance-procurement", label: "Procurement & Inventory", icon: Package },
           { id: "finance-sla-reminders", label: "SLA & Reminders", icon: Bell },
         ],
       });
@@ -833,7 +831,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "finance-gst", label: "GST Module", icon: Receipt },
             { id: "finance-contracts", label: "Contracts", icon: FileText },
             { id: "finance-ar-aging", label: "AR Aging", icon: Clock },
-            { id: "finance-inventory", label: "Inventory", icon: Package },
+            { id: "finance-procurement", label: "Procurement & Inventory", icon: Package },
           ],
         });
       }
