@@ -335,21 +335,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-primary",
       });
 
-      // Team Communication - always available for all users in admin mode
-      items.push({
-        id: "employee-communication",
-        label: "Team Communication",
-        icon: Video,
-        color: "text-blue-500",
-      });
-
-      // Learning Hub - always available for all users in admin mode
-      items.push({
-        id: "learning-hub",
-        label: "Learning Hub",
-        icon: GraduationCap,
-        color: "text-green-500",
-      });
+      // NOTE: Team Communication and Learning Hub are embedded inside Employee Portal only
+      // They should NOT appear as standalone items
 
       // Sales modules
       items.push({
@@ -673,6 +660,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-communication", label: "Team Communication", icon: Video },
+          { id: "learning-hub", label: "Learning Hub", icon: GraduationCap },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
@@ -715,21 +703,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-primary",
       });
 
-      // Team Communication - always available for all users
-      items.push({
-        id: "employee-communication",
-        label: "Team Communication",
-        icon: Video,
-        color: "text-blue-500",
-      });
-
-      // Learning Hub - always available for all users
-      items.push({
-        id: "learning-hub",
-        label: "Learning Hub",
-        icon: GraduationCap,
-        color: "text-green-500",
-      });
+      // NOTE: Team Communication and Learning Hub are embedded inside Employee Portal only
+      // They should NOT appear as standalone items
 
       // If employee-only access, show ONLY employee portal and skip all other modules
       if (isEmployeeOnlyAccess) {
@@ -925,6 +900,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "employee-organization", label: "My Organization", icon: Network },
           { id: "employee-profile", label: "My Profile", icon: UserCircle },
           { id: "employee-communication", label: "Team Communication", icon: Video },
+          { id: "learning-hub", label: "Learning Hub", icon: GraduationCap },
           { id: "employee-attendance", label: "Attendance", icon: Clock },
           { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
           { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
