@@ -389,48 +389,46 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
-      // Accounts & Finance (merged module)
+      // Finance & Accounting (Unified Module)
       items.push({
-        id: "accounts-finance",
-        label: "Accounts & Finance",
+        id: "finance",
+        label: "Finance & Accounting",
         icon: Calculator,
         color: "text-finance",
         children: [
-          { id: "accounts-finance-analytics", label: "Sales Analytics", icon: BarChart3 },
-          { id: "accounts-finance-contracts", label: "Contracts", icon: FileText },
-          { id: "accounts-finance-post-sale", label: "Post-Sale Workflows", icon: FolderKanban },
-          { id: "accounts-finance-workflows", label: "Legacy Workflows", icon: RefreshCw },
-          { id: "accounts-finance-procurement", label: "Procurement", icon: Package },
-          { id: "accounts-finance-stocking", label: "Stocking", icon: Package },
-          { id: "accounts-finance-ar-aging", label: "AR Aging", icon: Clock },
-          { id: "accounts-finance-sla-reminders", label: "SLA & Reminders", icon: Bell },
-          { id: "accounts-finance-payments", label: "Payment Tracking", icon: CreditCard },
-          { id: "accounts-finance-dso", label: "DSO Trends", icon: PieChart },
-          { id: "accounts-finance-pnl", label: "Profit & Loss", icon: BarChart3 },
-          { id: "accounts-finance-tax", label: "GST Reports", icon: Receipt },
-          { id: "accounts-finance-billing", label: "Billing", icon: CreditCard },
-        ],
-      });
-
-      // Accounting (Tally-style) Module
-      items.push({
-        id: "accounting",
-        label: "Accounting",
-        icon: BookOpen,
-        color: "text-emerald-600",
-        children: [
-          { id: "accounting-dashboard", label: "Dashboard", icon: LayoutDashboard },
-          { id: "accounting-chart-of-accounts", label: "Chart of Accounts", icon: BookOpen },
-          { id: "accounting-voucher-entry", label: "Voucher Entry", icon: FileText },
-          { id: "accounting-day-book", label: "Day Book", icon: Calendar },
-          { id: "accounting-cash-book", label: "Cash Book", icon: DollarSign },
-          { id: "accounting-bank-book", label: "Bank Book", icon: CreditCard },
-          { id: "accounting-trial-balance", label: "Trial Balance", icon: Scale },
-          { id: "accounting-profit-loss", label: "Profit & Loss", icon: BarChart3 },
-          { id: "accounting-balance-sheet", label: "Balance Sheet", icon: PieChart },
-          { id: "accounting-gst", label: "GST Module", icon: Receipt },
-          { id: "accounting-inventory", label: "Inventory", icon: Package },
-          { id: "accounting-bank-reconciliation", label: "Bank Reconciliation", icon: CheckSquare },
+          // Dashboard & Overview
+          { id: "finance-dashboard", label: "Dashboard", icon: LayoutDashboard },
+          
+          // Accounting Core
+          { id: "finance-chart-of-accounts", label: "Chart of Accounts", icon: BookOpen },
+          { id: "finance-voucher-entry", label: "Voucher Entry", icon: FileText },
+          { id: "finance-billing", label: "Billing & Invoicing", icon: CreditCard },
+          
+          // Books & Registers
+          { id: "finance-day-book", label: "Day Book", icon: Calendar },
+          { id: "finance-cash-book", label: "Cash Book", icon: DollarSign },
+          { id: "finance-bank-book", label: "Bank Book", icon: CreditCard },
+          { id: "finance-bank-reconciliation", label: "Bank Reconciliation", icon: CheckSquare },
+          
+          // Reports & Analytics
+          { id: "finance-trial-balance", label: "Trial Balance", icon: Scale },
+          { id: "finance-profit-loss", label: "Profit & Loss", icon: BarChart3 },
+          { id: "finance-balance-sheet", label: "Balance Sheet", icon: PieChart },
+          { id: "finance-analytics", label: "Sales Analytics", icon: BarChart3 },
+          { id: "finance-ar-aging", label: "AR Aging", icon: Clock },
+          { id: "finance-dso", label: "DSO Trends", icon: PieChart },
+          
+          // Tax & Compliance
+          { id: "finance-gst", label: "GST Module", icon: Receipt },
+          
+          // Operations
+          { id: "finance-contracts", label: "Contracts", icon: FileText },
+          { id: "finance-post-sale", label: "Post-Sale Workflows", icon: FolderKanban },
+          { id: "finance-workflows", label: "Workflows", icon: RefreshCw },
+          { id: "finance-procurement", label: "Procurement", icon: Package },
+          { id: "finance-stocking", label: "Stocking", icon: Package },
+          { id: "finance-inventory", label: "Inventory", icon: Package },
+          { id: "finance-sla-reminders", label: "SLA & Reminders", icon: Bell },
         ],
       });
 
@@ -816,50 +814,26 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         });
       }
 
-      // Finance Module - for finance team
-      if (hasTeamAccess(["finance", "management"], "finance")) {
+      // Finance & Accounting Module - for finance/accounts team
+      if (hasTeamAccess(["finance", "accounts", "management"], "finance")) {
         items.push({
           id: "finance",
-          label: "Finance",
-          icon: DollarSign,
+          label: "Finance & Accounting",
+          icon: Calculator,
           color: "text-finance",
           children: [
-            { id: "finance-payments", label: "Payment Tracking", icon: CreditCard },
-            { id: "finance-dso", label: "DSO Trends", icon: PieChart },
-            { id: "finance-pnl", label: "Profit & Loss", icon: BarChart3 },
-            { id: "finance-tax", label: "GST Reports", icon: Receipt },
-          ],
-        });
-      }
-
-      // Technical Team Module - for technical team
-      if (hasTeamAccess(["technical", "managed_services"], "technical")) {
-        items.push({
-          id: "tech",
-          label: "Technical Team",
-          icon: Code,
-          color: "text-tech",
-          children: [
-            { id: "tech-contracts", label: "Customer Contracts", icon: FileText },
-            { id: "tech-contacts", label: "Customer Contacts", icon: Phone },
-            { id: "tech-recommendations", label: "Recommendations", icon: BookOpen },
-            { id: "tech-remote-sessions", label: "Remote Sessions", icon: Video },
-          ],
-        });
-      }
-
-      // Accounts Module - for accounts team
-      if (hasTeamAccess(["accounts", "finance", "management"], "accounts")) {
-        items.push({
-          id: "accounts",
-          label: "Accounts",
-          icon: Calculator,
-          color: "text-emerald-500",
-          children: [
-            { id: "accounts-contracts", label: "Contracts", icon: FileText },
-            { id: "accounts-workflows", label: "Workflows", icon: RefreshCw },
-            { id: "accounts-ar-aging", label: "AR Aging", icon: Clock },
-            { id: "accounts-sla-reminders", label: "SLA & Reminders", icon: Bell },
+            { id: "finance-dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { id: "finance-chart-of-accounts", label: "Chart of Accounts", icon: BookOpen },
+            { id: "finance-voucher-entry", label: "Voucher Entry", icon: FileText },
+            { id: "finance-billing", label: "Billing", icon: CreditCard },
+            { id: "finance-day-book", label: "Day Book", icon: Calendar },
+            { id: "finance-trial-balance", label: "Trial Balance", icon: Scale },
+            { id: "finance-profit-loss", label: "Profit & Loss", icon: BarChart3 },
+            { id: "finance-balance-sheet", label: "Balance Sheet", icon: PieChart },
+            { id: "finance-gst", label: "GST Module", icon: Receipt },
+            { id: "finance-contracts", label: "Contracts", icon: FileText },
+            { id: "finance-ar-aging", label: "AR Aging", icon: Clock },
+            { id: "finance-inventory", label: "Inventory", icon: Package },
           ],
         });
       }
