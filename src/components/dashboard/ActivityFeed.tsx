@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface ActivityItem {
   id: string;
@@ -36,17 +37,25 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ onNavigate }: ActivityFeedProps) {
+  const { currentTenant } = useTenant();
+  
   const { data: activities, isLoading } = useQuery({
-    queryKey: ["activity-feed"],
+    queryKey: ["activity-feed", currentTenant?.id],
     queryFn: async () => {
       const result: ActivityItem[] = [];
 
       // Get recent deal activities
-      const { data: dealActivities } = await supabase
+      let dealQuery = supabase
         .from("deal_activities")
-        .select("id, activity_type, description, created_at, user_id")
+        .select("id, activity_type, description, created_at, user_id, tenant_id")
         .order("created_at", { ascending: false })
         .limit(10);
+      
+      if (currentTenant?.id) {
+        dealQuery = dealQuery.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data: dealActivities } = await dealQuery;
 
       dealActivities?.forEach(activity => {
         result.push({
@@ -59,11 +68,17 @@ export function ActivityFeed({ onNavigate }: ActivityFeedProps) {
       });
 
       // Get recent tickets
-      const { data: tickets } = await supabase
+      let ticketQuery = supabase
         .from("tickets")
-        .select("id, title, status, created_at")
+        .select("id, title, status, created_at, tenant_id")
         .order("created_at", { ascending: false })
         .limit(5);
+      
+      if (currentTenant?.id) {
+        ticketQuery = ticketQuery.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data: tickets } = await ticketQuery;
 
       tickets?.forEach(ticket => {
         result.push({

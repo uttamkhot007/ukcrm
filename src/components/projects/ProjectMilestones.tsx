@@ -11,22 +11,23 @@ import {
 } from "@/components/ui/table";
 import { Milestone } from "lucide-react";
 import { format, isPast } from "date-fns";
+import { useTenant } from "@/contexts/TenantContext";
 
 export function ProjectMilestones() {
+  const { currentTenant } = useTenant();
+  
   const { data: milestones, isLoading } = useQuery({
-    queryKey: ["project-milestones"],
-    queryFn: async () => {
+    queryKey: ["project-milestones", currentTenant?.id],
+    queryFn: async (): Promise<any[]> => {
       const { data, error } = await supabase
         .from("project_milestones")
-        .select(`
-          *,
-          project:projects(name, project_number)
-        `)
+        .select("id, name, description, due_date, status, completed_at, project:projects(name, project_number)")
+        .eq("tenant_id", currentTenant!.id)
         .order("due_date", { ascending: true });
-
       if (error) throw error;
-      return data;
+      return data || [];
     },
+    enabled: !!currentTenant?.id,
   });
 
   const getStatusBadge = (status: string, dueDate: string) => {
