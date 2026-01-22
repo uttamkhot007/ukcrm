@@ -1,22 +1,16 @@
 import { ChartOfAccounts } from "./ChartOfAccounts";
 import { VoucherEntry } from "./VoucherEntry";
-import { DayBook } from "./DayBook";
-import { CashBook } from "./CashBook";
-import { BankBook } from "./BankBook";
 import { TrialBalance } from "./TrialBalance";
 import { ProfitAndLoss } from "./ProfitAndLoss";
 import { BalanceSheet } from "./BalanceSheet";
-import { GSTModule } from "./GSTModule";
 import { InventoryModule } from "./InventoryModule";
-import { BankReconciliation } from "./BankReconciliation";
 import { CashFlowStatement } from "./CashFlowStatement";
-import { EInvoicingModule } from "./EInvoicingModule";
-import { EWayBillModule } from "./EWayBillModule";
-import { TDSTCSModule } from "./TDSTCSModule";
 import { EstimatesModule } from "./EstimatesModule";
 import { BudgetManagement } from "./BudgetManagement";
 import { RatioAnalysis } from "./RatioAnalysis";
 import { TallyDashboard } from "./TallyDashboard";
+import { BookkeepingModule } from "./BookkeepingModule";
+import { TaxationModule } from "./TaxationModule";
 
 interface TallyModuleProps {
   initialTab?: string;
@@ -34,14 +28,20 @@ export function TallyModule({ initialTab = "dashboard" }: TallyModuleProps) {
         return <VoucherEntry />;
       case "estimates":
         return <EstimatesModule />;
+      
+      // Bookkeeping Module (consolidated)
+      case "bookkeeping":
+        return <BookkeepingModule initialTab="day-book" />;
       case "day-book":
-        return <DayBook />;
+        return <BookkeepingModule initialTab="day-book" />;
       case "cash-book":
-        return <CashBook />;
+        return <BookkeepingModule initialTab="cash-book" />;
       case "bank-book":
-        return <BankBook />;
+        return <BookkeepingModule initialTab="bank-book" />;
       case "bank-reconciliation":
-        return <BankReconciliation />;
+        return <BookkeepingModule initialTab="bank-reconciliation" />;
+      
+      // Financial Reports
       case "trial-balance":
         return <TrialBalance />;
       case "profit-loss":
@@ -52,18 +52,25 @@ export function TallyModule({ initialTab = "dashboard" }: TallyModuleProps) {
         return <CashFlowStatement />;
       case "ratio-analysis":
         return <RatioAnalysis />;
+      
+      // Taxation Module (consolidated)
+      case "taxation":
+        return <TaxationModule initialTab="gst" />;
       case "gst":
-        return <GSTModule />;
-      case "e-invoicing":
-        return <EInvoicingModule />;
-      case "eway-bill":
-        return <EWayBillModule />;
+        return <TaxationModule initialTab="gst" />;
       case "tds-tcs":
-        return <TDSTCSModule />;
+        return <TaxationModule initialTab="tds-tcs" />;
+      case "e-invoicing":
+        return <TaxationModule initialTab="e-invoicing" />;
+      case "eway-bill":
+        return <TaxationModule initialTab="eway-bill" />;
+      
+      // Others
       case "budgets":
         return <BudgetManagement />;
       case "inventory":
         return <InventoryModule />;
+      
       default:
         return <TallyDashboard />;
     }

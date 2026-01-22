@@ -406,13 +406,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "finance-estimates", label: "Estimates & Quotations", icon: FileText },
           { id: "finance-billing", label: "Billing & Invoicing", icon: CreditCard },
           
-          // Books & Registers
-          { id: "finance-day-book", label: "Day Book", icon: Calendar },
-          { id: "finance-cash-book", label: "Cash Book", icon: DollarSign },
-          { id: "finance-bank-book", label: "Bank Book", icon: CreditCard },
-          { id: "finance-bank-reconciliation", label: "Bank Reconciliation", icon: CheckSquare },
+          // Bookkeeping (Consolidated)
+          { id: "finance-bookkeeping", label: "Bookkeeping", icon: BookOpen },
           
-          // Reports & Analytics
+          // Financial Reports
           { id: "finance-trial-balance", label: "Trial Balance", icon: Scale },
           { id: "finance-profit-loss", label: "Profit & Loss", icon: BarChart3 },
           { id: "finance-balance-sheet", label: "Balance Sheet", icon: PieChart },
@@ -422,11 +419,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "finance-analytics", label: "Sales Analytics", icon: BarChart3 },
           { id: "finance-ar-aging", label: "AR Aging", icon: Clock },
           
-          // Tax & Compliance
-          { id: "finance-gst", label: "GST Module", icon: Receipt },
-          { id: "finance-e-invoicing", label: "E-Invoicing (IRN)", icon: FileCheck },
-          { id: "finance-eway-bill", label: "E-Way Bill", icon: Package },
-          { id: "finance-tds-tcs", label: "TDS / TCS", icon: Calculator },
+          // Taxation & Compliance (Consolidated)
+          { id: "finance-taxation", label: "Taxation & Compliance", icon: Receipt },
           
           // Operations
           { id: "finance-contracts", label: "Contracts", icon: FileText },
