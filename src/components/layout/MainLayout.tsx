@@ -6,6 +6,9 @@ import { AIAssistant } from "@/components/ai/AIAssistant";
 import { DealWonCelebration } from "@/components/dashboard/DealWonCelebration";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
+import { Loader2 } from "lucide-react";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -16,6 +19,18 @@ interface MainLayoutProps {
 export function MainLayout({ children, activeModule, onModuleChange }: MainLayoutProps) {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const { isLoading: authLoading } = useAuth();
+  const { isLoading: tenantLoading } = useTenant();
+
+  // Prevent sidebar/module flicker/disappearing by not rendering layout until
+  // auth + tenant context are fully ready.
+  if (authLoading || tenantLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background perspective-container overflow-hidden">
