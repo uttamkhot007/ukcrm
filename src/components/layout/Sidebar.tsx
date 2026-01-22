@@ -412,6 +412,28 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
+      // Accounting (Tally-style) Module
+      items.push({
+        id: "accounting",
+        label: "Accounting",
+        icon: BookOpen,
+        color: "text-emerald-600",
+        children: [
+          { id: "accounting-dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { id: "accounting-chart-of-accounts", label: "Chart of Accounts", icon: BookOpen },
+          { id: "accounting-voucher-entry", label: "Voucher Entry", icon: FileText },
+          { id: "accounting-day-book", label: "Day Book", icon: Calendar },
+          { id: "accounting-cash-book", label: "Cash Book", icon: DollarSign },
+          { id: "accounting-bank-book", label: "Bank Book", icon: CreditCard },
+          { id: "accounting-trial-balance", label: "Trial Balance", icon: Scale },
+          { id: "accounting-profit-loss", label: "Profit & Loss", icon: BarChart3 },
+          { id: "accounting-balance-sheet", label: "Balance Sheet", icon: PieChart },
+          { id: "accounting-gst", label: "GST Module", icon: Receipt },
+          { id: "accounting-inventory", label: "Inventory", icon: Package },
+          { id: "accounting-bank-reconciliation", label: "Bank Reconciliation", icon: CheckSquare },
+        ],
+      });
+
       // HR
       items.push({
         id: "hr",

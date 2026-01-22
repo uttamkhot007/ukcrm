@@ -25,6 +25,7 @@ import { BillingModule } from "@/components/billing/BillingModule";
 import { ComplianceModule } from "@/components/compliance/ComplianceModule";
 import { HRModule } from "@/components/hr/HRModule";
 import { AccountsModule } from "@/components/accounts/AccountsModule";
+import { TallyModule } from "@/components/tally/TallyModule";
 import { SolutionEngineeringModule } from "@/components/presales/SolutionEngineeringModule";
 import { CustomerPortal } from "@/components/customer/CustomerPortal";
 import { AllianceModule } from "@/components/admin/AllianceModule";
@@ -310,6 +311,33 @@ const Index = () => {
         return <AccountsModule initialTab="contracts" />;
       case "accounts-finance-billing":
         return <BillingModule />;
+      
+      // Tally Accounting Module
+      case "accounting":
+      case "accounting-dashboard":
+        return <TallyModule initialTab="dashboard" />;
+      case "accounting-chart-of-accounts":
+        return <TallyModule initialTab="chart-of-accounts" />;
+      case "accounting-voucher-entry":
+        return <TallyModule initialTab="voucher-entry" />;
+      case "accounting-day-book":
+        return <TallyModule initialTab="day-book" />;
+      case "accounting-cash-book":
+        return <TallyModule initialTab="cash-book" />;
+      case "accounting-bank-book":
+        return <TallyModule initialTab="bank-book" />;
+      case "accounting-trial-balance":
+        return <TallyModule initialTab="trial-balance" />;
+      case "accounting-profit-loss":
+        return <TallyModule initialTab="profit-loss" />;
+      case "accounting-balance-sheet":
+        return <TallyModule initialTab="balance-sheet" />;
+      case "accounting-gst":
+        return <TallyModule initialTab="gst" />;
+      case "accounting-inventory":
+        return <TallyModule initialTab="inventory" />;
+      case "accounting-bank-reconciliation":
+        return <TallyModule initialTab="bank-reconciliation" />;
       
       // Legacy accounts modules (backward compatibility)
       case "accounts":
