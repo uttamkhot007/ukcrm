@@ -12,10 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Json } from "@/integrations/supabase/types";
 
 export function WhitelabelSettings() {
-  const { currentTenant, isAdmin, refetchTenants } = useTenant();
+  const { currentTenant, isAdmin, refetchTenants, isLoading: tenantLoading } = useTenant();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const [formData, setFormData] = useState<{
     logo_url: string;
@@ -30,8 +31,9 @@ export function WhitelabelSettings() {
     },
   });
 
+  // Initialize form data from currentTenant - only on first load or tenant change
   useEffect(() => {
-    if (currentTenant) {
+    if (currentTenant && !tenantLoading) {
       setFormData({
         logo_url: currentTenant.logo_url || "",
         branding: {
@@ -41,8 +43,9 @@ export function WhitelabelSettings() {
           favicon_url: currentTenant.branding?.favicon_url || "",
         },
       });
+      setIsInitialized(true);
     }
-  }, [currentTenant]);
+  }, [currentTenant?.id, tenantLoading]);
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -128,11 +131,24 @@ export function WhitelabelSettings() {
         .eq("id", currentTenant.id);
 
       if (error) throw error;
+      
+      // Return the saved data so we can use it in onSuccess
+      return data;
     },
-    onSuccess: async () => {
+    onSuccess: async (savedData) => {
+      // First refetch to update the context with fresh DB data
       await refetchTenants();
+      // Invalidate any tenant-related queries
       queryClient.invalidateQueries({ queryKey: ["tenant"] });
-      toast.success("Whitelabel settings updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      
+      // Ensure form data stays in sync with what was saved
+      setFormData({
+        logo_url: savedData.logo_url,
+        branding: savedData.branding,
+      });
+      
+      toast.success("Whitelabel settings saved and applied!");
     },
     onError: (error) => {
       toast.error("Failed to update settings: " + error.message);
@@ -167,6 +183,18 @@ export function WhitelabelSettings() {
   };
 
   const displayName = formData.branding.display_name || currentTenant?.name || "Workspace";
+
+  // Show loading state while tenant data is being fetched
+  if (tenantLoading || !isInitialized) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Loading whitelabel settings...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentTenant) {
     return <div className="flex items-center justify-center p-8">No workspace selected</div>;
