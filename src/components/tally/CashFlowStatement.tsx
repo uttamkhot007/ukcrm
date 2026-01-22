@@ -2,13 +2,25 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Download, 
+  TrendingUp, 
+  TrendingDown, 
+  Wallet,
+  Sparkles,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  Lightbulb,
+  Target
+} from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
 interface CashFlowItem {
@@ -17,10 +29,19 @@ interface CashFlowItem {
   amount: number;
 }
 
+interface FinanceInsights {
+  predictions: string[];
+  recommendations: string[];
+  risks: string[];
+}
+
 export function CashFlowStatement() {
   const { currentTenant } = useTenant();
   const [fromDate, setFromDate] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
   const [toDate, setToDate] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
+  const [insights, setInsights] = useState<FinanceInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
   // Fetch voucher data to calculate cash flows
   const { data: voucherData = [], isLoading } = useQuery({
@@ -54,8 +75,6 @@ export function CashFlowStatement() {
     let financingTotal = 0;
 
     voucherData.forEach((voucher: any) => {
-      const voucherType = voucher.voucher_type?.voucher_class;
-      
       voucher.entries?.forEach((entry: any) => {
         const groupNature = entry.ledger?.account_group?.nature;
         const groupName = entry.ledger?.account_group?.name?.toLowerCase() || "";
@@ -106,6 +125,38 @@ export function CashFlowStatement() {
     const absAmount = Math.abs(amount);
     const formatted = `₹${absAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
     return amount < 0 ? `(${formatted})` : formatted;
+  };
+
+  // Fetch AI insights
+  const fetchInsights = async () => {
+    setInsightsLoading(true);
+    setInsightsError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("finance-ai-insights", {
+        body: {
+          analysisType: "cash-flow",
+          metrics: {
+            operatingCashFlow: cashFlows.operating.total,
+            investingCashFlow: cashFlows.investing.total,
+            financingCashFlow: cashFlows.financing.total,
+            netCashChange: cashFlows.netChange,
+            openingCash: 0,
+            closingCash: cashFlows.netChange
+          }
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) {
+        setInsightsError(data.error);
+        return;
+      }
+      setInsights(data);
+    } catch (err) {
+      setInsightsError(err instanceof Error ? err.message : "Failed to fetch insights");
+    } finally {
+      setInsightsLoading(false);
+    }
   };
 
   const renderSection = (title: string, items: CashFlowItem[], total: number, icon: React.ReactNode) => (
@@ -161,7 +212,7 @@ export function CashFlowStatement() {
             <Wallet className="h-6 w-6" />
             Cash Flow Statement
           </h2>
-          <p className="text-muted-foreground">Indirect method cash flow analysis</p>
+          <p className="text-muted-foreground">Indirect method cash flow analysis with AI insights</p>
         </div>
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
@@ -234,6 +285,90 @@ export function CashFlowStatement() {
               </CardContent>
             </Card>
           </div>
+
+          {/* AI Insights Panel */}
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI Cash Flow Insights
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchInsights}
+                  disabled={insightsLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${insightsLoading ? 'animate-spin' : ''}`} />
+                  {insights ? 'Refresh' : 'Generate'}
+                </Button>
+              </div>
+              <CardDescription>AI-powered analysis of your cash flow patterns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {insightsLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ) : insightsError ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-yellow-500" />
+                  <p className="text-sm">{insightsError}</p>
+                </div>
+              ) : insights ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400">
+                      <Target className="h-4 w-4" />
+                      Predictions
+                    </div>
+                    <ul className="space-y-1">
+                      {insights.predictions.map((p, i) => (
+                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                          <span className="text-blue-500">•</span>{p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                      <Lightbulb className="h-4 w-4" />
+                      Recommendations
+                    </div>
+                    <ul className="space-y-1">
+                      {insights.recommendations.map((r, i) => (
+                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                          <CheckCircle className="h-3 w-3 mt-1 text-green-500 flex-shrink-0" />{r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-orange-600 dark:text-orange-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      Risk Alerts
+                    </div>
+                    <ul className="space-y-1">
+                      {insights.risks.map((r, i) => (
+                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                          <AlertTriangle className="h-3 w-3 mt-1 text-orange-500 flex-shrink-0" />{r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Button onClick={fetchInsights} variant="ghost" size="sm">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate AI Insights
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Cash Flow Sections */}
           {renderSection(
