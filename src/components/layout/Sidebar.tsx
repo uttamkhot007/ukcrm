@@ -304,8 +304,16 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     return teams.some(t => requiredTeams.includes(t));
   };
 
-  // Check if user has employee-only access (no console_access configured or no full_access)
-  const isEmployeeOnlyAccess = consoleAccess && !consoleAccess.has_full_access;
+  // Check if user has employee-only access (explicitly configured with no full_access)
+  // IMPORTANT: Only restrict if consoleAccess is explicitly set AND has_full_access is false
+  // If consoleAccess is null (still loading), don't restrict - wait for proper data
+  // Super admins and admins are never employee-only
+  const isEmployeeOnlyAccess = 
+    consoleAccess !== null && 
+    consoleAccess.has_full_access === false && 
+    !isSuperAdmin && 
+    role !== 'admin' && 
+    role !== 'manager';
 
   // Build navigation based on portal mode and access level
   const getNavItems = (): NavItem[] => {

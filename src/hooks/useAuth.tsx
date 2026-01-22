@@ -161,10 +161,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPortalMode(accessSettings.portal_modes[0] as PortalMode);
         }
       } else {
-        // No console access configured - DEFAULT TO EMPLOYEE PORTAL ONLY
-        // Exception: Super admins and admins retain their full access
+        // No console access configured - determine access based on role
+        // Super admins, admins, and managers retain full access to their team modules
         if (isSuperAdminUser || roleData?.role === 'admin') {
           // Admins and super admins keep full access even without console_access record
+          setConsoleAccess({
+            portal_modes: ['admin', 'workspace'],
+            additional_modules: [],
+            has_full_access: true,
+          });
+          setPortalMode('admin');
+        } else if (roleData?.role === 'manager') {
+          // Managers get full access to modules based on their team assignments
           setConsoleAccess({
             portal_modes: ['admin', 'workspace'],
             additional_modules: [],
@@ -180,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           setPortalMode('customer');
         } else {
-          // Regular users without console_access get EMPLOYEE PORTAL ONLY
+          // Regular employees without console_access get EMPLOYEE PORTAL ONLY
           setConsoleAccess({
             portal_modes: ['workspace'],
             additional_modules: ['employee'], // Only employee module access
