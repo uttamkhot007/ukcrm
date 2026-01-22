@@ -5,6 +5,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Phone, 
   Mail, 
@@ -13,7 +14,9 @@ import {
   Users, 
   CheckCircle2,
   AlertCircle,
-  Clock
+  Clock,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { TeamCalendarWidget } from "./TeamCalendarWidget";
@@ -105,6 +108,27 @@ export function InsideSalesDashboard({ onNavigate }: InsideSalesDashboardProps) 
 
   return (
     <div className="space-y-6">
+      {/* MEDDIC Workflow Quick Access */}
+      <Card 
+        className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 cursor-pointer hover:shadow-md transition-all group"
+        onClick={() => onNavigate("sales-funnel-workflow")}
+      >
+        <CardContent className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">MEDDIC Workflow</h3>
+              <p className="text-sm text-muted-foreground">Qualify deals with MEDDIC methodology</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="gap-2">
+            Open <ArrowRight className="h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200 dark:border-blue-800">
