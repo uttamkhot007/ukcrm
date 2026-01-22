@@ -18,14 +18,33 @@ export function ProjectMilestones() {
   
   const { data: milestones, isLoading } = useQuery({
     queryKey: ["project-milestones", currentTenant?.id],
-    queryFn: async (): Promise<any[]> => {
-      const { data, error } = await supabase
-        .from("project_milestones")
-        .select("id, name, description, due_date, status, completed_at, project:projects(name, project_number)")
-        .eq("tenant_id", currentTenant!.id)
+    queryFn: async () => {
+      if (!currentTenant?.id) return [];
+      
+      // Fetch milestones with tenant filter
+      const milestonesResult = await (supabase
+        .from("project_milestones") as any)
+        .select("id, name, description, due_date, status, completed_at, project_id")
+        .eq("tenant_id", currentTenant.id)
         .order("due_date", { ascending: true });
-      if (error) throw error;
-      return data || [];
+      
+      if (milestonesResult.error) throw milestonesResult.error;
+      const milestonesData = milestonesResult.data || [];
+      if (milestonesData.length === 0) return [];
+
+      // Fetch related projects
+      const projectIds = [...new Set(milestonesData.map((m: any) => m.project_id).filter(Boolean))];
+      const projectsResult = await (supabase
+        .from("projects") as any)
+        .select("id, name, project_number")
+        .in("id", projectIds);
+
+      const projectsMap = new Map((projectsResult.data || []).map((p: any) => [p.id, p]));
+
+      return milestonesData.map((m: any) => ({
+        ...m,
+        project: m.project_id ? projectsMap.get(m.project_id) || null : null,
+      }));
     },
     enabled: !!currentTenant?.id,
   });
