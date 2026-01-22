@@ -169,8 +169,9 @@ const Index = () => {
       case "deal-desk":
       case "deal-desk-registration":
         return <DealDeskModule initialTab="deal-registration" />;
-      case "deal-desk-oem-funnel":
-        return <DealDeskModule initialTab="oem-funnel" />;
+      case "deal-desk-oem-funnel": // Legacy route alias
+      case "deal-desk-oem-pipeline":
+        return <DealDeskModule initialTab="oem-pipeline" />;
       case "deal-desk-opportunities":
         return <DealDeskModule initialTab="opportunities" />;
       case "deal-desk-bid-preparation":

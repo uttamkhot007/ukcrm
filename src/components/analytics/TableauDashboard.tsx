@@ -131,7 +131,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
         };
       });
 
-      // Deal stages funnel
+      // MEDDIC Pipeline stages
       const dealStages = [
         { name: 'Pipeline', value: deals?.filter(d => d.stage === 'pipeline').length || 0, fill: CHART_COLORS[0] },
         { name: 'Qualified', value: deals?.filter(d => d.stage === 'qualified').length || 0, fill: CHART_COLORS[1] },
