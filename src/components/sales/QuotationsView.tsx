@@ -32,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +41,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2, Download, RefreshCw } from "lucide-react";
+import { NewQuotationDialog } from "./NewQuotationDialog";
+import { QuickDocumentActions } from "@/components/documents/QuickDocumentActions";
+import { Plus, Search, FileText, DollarSign, CheckCircle, Loader2, MoreHorizontal, Pencil, Trash2, Download, RefreshCw, Wand2, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { exportToCSV } from "@/lib/csv-export";
@@ -79,6 +82,7 @@ const initialFormData = {
 export function QuotationsView() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Quotation | null>(null);
   const [formData, setFormData] = useState(initialFormData);
@@ -294,13 +298,33 @@ export function QuotationsView() {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsDialogOpen(true)}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 New Quotation
+                <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
-            </DialogTrigger>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsWizardOpen(true)}>
+                <Wand2 className="w-4 h-4 mr-2" />
+                <div>
+                  <p className="font-medium">Use Wizard</p>
+                  <p className="text-xs text-muted-foreground">Step-by-step guided workflow</p>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
+                <FileText className="w-4 h-4 mr-2" />
+                <div>
+                  <p className="font-medium">Quick Create</p>
+                  <p className="text-xs text-muted-foreground">Simple form for fast entry</p>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <QuickDocumentActions showLabel={false} variant="outline" />
+          <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingQuotation ? "Edit Quotation" : "Create New Quotation"}</DialogTitle>
@@ -512,6 +536,13 @@ export function QuotationsView() {
         title="Delete Quotation"
         description={`Are you sure you want to delete quotation "${deleteTarget?.quotation_number}"? This action cannot be undone.`}
         isDeleting={deleteQuotation.isPending}
+      />
+      
+      <NewQuotationDialog 
+        open={isWizardOpen} 
+        onOpenChange={setIsWizardOpen} 
+        useWizard={true}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["quotations"] })}
       />
     </div>
   );
