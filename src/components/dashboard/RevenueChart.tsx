@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface RevenueChartProps {
   onNavigate?: (module: string) => void;
@@ -19,9 +20,10 @@ interface RevenueChartProps {
 
 export function RevenueChart({ onNavigate }: RevenueChartProps) {
   const { formatCurrency, getCurrencySymbol } = useOrganizationSettings();
+  const { currentTenant } = useTenant();
 
   const { data: chartData, isLoading } = useQuery({
-    queryKey: ["revenue-chart-data"],
+    queryKey: ["revenue-chart-data", currentTenant?.id],
     queryFn: async () => {
       // Get invoices from last 12 months
       const now = new Date();
@@ -39,11 +41,17 @@ export function RevenueChart({ onNavigate }: RevenueChartProps) {
         });
       }
 
-      const { data: invoices } = await supabase
+      let query = supabase
         .from("invoices")
         .select("total, status, issue_date")
         .gte("issue_date", format(months[0].start, "yyyy-MM-dd"))
         .lte("issue_date", format(months[11].end, "yyyy-MM-dd"));
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data: invoices } = await query;
 
       return months.map(({ month, start, end }) => {
         const monthInvoices = invoices?.filter(inv => {

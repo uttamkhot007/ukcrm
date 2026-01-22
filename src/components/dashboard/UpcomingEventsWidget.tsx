@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO, isToday, isTomorrow, differenceInDays, addYears, isBefore, startOfToday } from "date-fns";
 import { Cake, CalendarHeart, PartyPopper, Trophy, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/contexts/TenantContext";
 
 const EVENT_CONFIG = {
   birthday: { icon: Cake, color: "text-pink-500", bgColor: "bg-pink-500/10" },
@@ -27,14 +28,22 @@ interface UpcomingEventsWidgetProps {
 }
 
 export function UpcomingEventsWidget({ onNavigate }: UpcomingEventsWidgetProps) {
+  const { currentTenant } = useTenant();
+  
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["upcoming-events-widget"],
+    queryKey: ["upcoming-events-widget", currentTenant?.id],
     queryFn: async () => {
       const today = startOfToday();
-      const { data, error } = await supabase
+      let query = supabase
         .from("employee_events")
         .select("*")
         .order("event_date", { ascending: true });
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

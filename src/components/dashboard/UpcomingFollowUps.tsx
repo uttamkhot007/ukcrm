@@ -17,6 +17,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface RenewalItem {
   id: string;
@@ -49,6 +50,7 @@ interface FollowUpItem {
 }
 
 export function UpcomingFollowUps({ onNavigate }: { onNavigate?: (module: string) => void }) {
+  const { currentTenant } = useTenant();
   const [renewals, setRenewals] = useState<RenewalItem[]>([]);
   const [prospects, setProspects] = useState<ProspectItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +60,7 @@ export function UpcomingFollowUps({ onNavigate }: { onNavigate?: (module: string
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentTenant?.id]);
 
   const fetchData = async () => {
     try {
@@ -68,24 +70,30 @@ export function UpcomingFollowUps({ onNavigate }: { onNavigate?: (module: string
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       
-      const [renewalsRes, prospectsRes] = await Promise.all([
-        supabase
-          .from("renewals")
-          .select("id, name, type, expiry_date, vendor, cost")
-          .lte("expiry_date", thirtyDaysFromNow.toISOString().split("T")[0])
-          .neq("status", "renewed")
-          .neq("status", "cancelled")
-          .order("expiry_date", { ascending: true })
-          .limit(10),
-        supabase
-          .from("inside_sales_prospects")
-          .select("id, company_name, contact_name, original_deal_title, follow_up_date, status, priority")
-          .not("status", "in", '("converted","archived","not_interested")')
-          .not("follow_up_date", "is", null)
-          .lte("follow_up_date", thirtyDaysFromNow.toISOString().split("T")[0])
-          .order("follow_up_date", { ascending: true })
-          .limit(10),
-      ]);
+      let renewalsQuery = supabase
+        .from("renewals")
+        .select("id, name, type, expiry_date, vendor, cost")
+        .lte("expiry_date", thirtyDaysFromNow.toISOString().split("T")[0])
+        .neq("status", "renewed")
+        .neq("status", "cancelled")
+        .order("expiry_date", { ascending: true })
+        .limit(10);
+
+      let prospectsQuery = supabase
+        .from("inside_sales_prospects")
+        .select("id, company_name, contact_name, original_deal_title, follow_up_date, status, priority")
+        .not("status", "in", '("converted","archived","not_interested")')
+        .not("follow_up_date", "is", null)
+        .lte("follow_up_date", thirtyDaysFromNow.toISOString().split("T")[0])
+        .order("follow_up_date", { ascending: true })
+        .limit(10);
+
+      if (currentTenant?.id) {
+        renewalsQuery = renewalsQuery.eq("tenant_id", currentTenant.id);
+        prospectsQuery = prospectsQuery.eq("tenant_id", currentTenant.id);
+      }
+
+      const [renewalsRes, prospectsRes] = await Promise.all([renewalsQuery, prospectsQuery]);
 
       if (renewalsRes.error) throw renewalsRes.error;
       if (prospectsRes.error) throw prospectsRes.error;

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
 import { useState } from "react";
 
 interface FunnelStage {
@@ -52,14 +53,21 @@ interface MEDDICPipelineProps {
 
 export function MEDDICPipeline({ onNavigate }: MEDDICPipelineProps) {
   const { formatCurrency } = useOrganizationSettings();
+  const { currentTenant } = useTenant();
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
 
   const { data: dealStats, isLoading } = useQuery({
-    queryKey: ["meddic-pipeline-stats"],
+    queryKey: ["meddic-pipeline-stats", currentTenant?.id],
     queryFn: async () => {
-      const { data: deals, error } = await supabase
+      let query = supabase
         .from("deals")
         .select("stage, value, closed_won_substage");
+      
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data: deals, error } = await query;
 
       if (error) throw error;
 
