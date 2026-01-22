@@ -908,6 +908,132 @@ export type Database = {
           },
         ]
       }
+      budget_items: {
+        Row: {
+          actual_amount: number | null
+          budget_id: string
+          budgeted_amount: number
+          cost_center_id: string | null
+          created_at: string
+          id: string
+          ledger_id: string | null
+          notes: string | null
+          period_month: number | null
+          updated_at: string
+          variance_amount: number | null
+        }
+        Insert: {
+          actual_amount?: number | null
+          budget_id: string
+          budgeted_amount?: number
+          cost_center_id?: string | null
+          created_at?: string
+          id?: string
+          ledger_id?: string | null
+          notes?: string | null
+          period_month?: number | null
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Update: {
+          actual_amount?: number | null
+          budget_id?: string
+          budgeted_amount?: number
+          cost_center_id?: string | null
+          created_at?: string
+          id?: string
+          ledger_id?: string | null
+          notes?: string | null
+          period_month?: number | null
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          budget_type: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string
+          fiscal_year: string
+          id: string
+          name: string
+          notes: string | null
+          start_date: string
+          status: string | null
+          tenant_id: string | null
+          total_budget: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          budget_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          fiscal_year: string
+          id?: string
+          name: string
+          notes?: string | null
+          start_date: string
+          status?: string | null
+          tenant_id?: string | null
+          total_budget?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          budget_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          fiscal_year?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string
+          status?: string | null
+          tenant_id?: string | null
+          total_budget?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           all_day: boolean | null
@@ -1642,6 +1768,56 @@ export type Database = {
           },
           {
             foreignKeyName: "cost_centers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      currencies: {
+        Row: {
+          code: string
+          created_at: string
+          decimal_places: number | null
+          exchange_rate: number | null
+          id: string
+          is_active: boolean | null
+          is_base_currency: boolean | null
+          last_updated: string | null
+          name: string
+          symbol: string
+          tenant_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          decimal_places?: number | null
+          exchange_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_base_currency?: boolean | null
+          last_updated?: string | null
+          name: string
+          symbol: string
+          tenant_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          decimal_places?: number | null
+          exchange_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_base_currency?: boolean | null
+          last_updated?: string | null
+          name?: string
+          symbol?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "currencies_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -3119,6 +3295,75 @@ export type Database = {
           },
         ]
       }
+      e_invoices: {
+        Row: {
+          ack_date: string | null
+          ack_number: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          invoice_id: string | null
+          irn: string | null
+          qr_code: string | null
+          signed_invoice: string | null
+          signed_qr_code: string | null
+          status: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ack_date?: string | null
+          ack_number?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          irn?: string | null
+          qr_code?: string | null
+          signed_invoice?: string | null
+          signed_qr_code?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ack_date?: string | null
+          ack_number?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          irn?: string | null
+          qr_code?: string | null
+          signed_invoice?: string | null
+          signed_qr_code?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "e_invoices_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "e_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_sequence_enrollments: {
         Row: {
           completed_at: string | null
@@ -3929,6 +4174,178 @@ export type Database = {
           },
         ]
       }
+      estimate_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          discount_percent: number | null
+          display_order: number | null
+          estimate_id: string
+          hsn_code: string | null
+          id: string
+          item_name: string
+          quantity: number | null
+          tax_amount: number | null
+          tax_rate: number | null
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          discount_percent?: number | null
+          display_order?: number | null
+          estimate_id: string
+          hsn_code?: string | null
+          id?: string
+          item_name: string
+          quantity?: number | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          unit?: string | null
+          unit_price: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          discount_percent?: number | null
+          display_order?: number | null
+          estimate_id?: string
+          hsn_code?: string | null
+          id?: string
+          item_name?: string
+          quantity?: number | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estimates: {
+        Row: {
+          accepted_at: string | null
+          contact_id: string | null
+          converted_to_invoice_id: string | null
+          created_at: string
+          created_by: string | null
+          currency_code: string | null
+          deal_id: string | null
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
+          estimate_date: string
+          estimate_number: string
+          exchange_rate: number | null
+          id: string
+          notes: string | null
+          reference_number: string | null
+          sent_at: string | null
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          tenant_id: string | null
+          terms_and_conditions: string | null
+          total_amount: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          contact_id?: string | null
+          converted_to_invoice_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string | null
+          deal_id?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          estimate_date?: string
+          estimate_number: string
+          exchange_rate?: number | null
+          id?: string
+          notes?: string | null
+          reference_number?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          tenant_id?: string | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          contact_id?: string | null
+          converted_to_invoice_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string | null
+          deal_id?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          estimate_date?: string
+          estimate_number?: string
+          exchange_rate?: number | null
+          id?: string
+          notes?: string | null
+          reference_number?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          tenant_id?: string | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimates_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_converted_to_invoice_id_fkey"
+            columns: ["converted_to_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_wishes: {
         Row: {
           created_at: string
@@ -3966,6 +4383,138 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "employee_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eway_bills: {
+        Row: {
+          cess_amount: number | null
+          cgst_amount: number | null
+          created_at: string
+          distance_km: number | null
+          doc_date: string | null
+          doc_number: string | null
+          doc_type: string | null
+          eway_bill_date: string | null
+          eway_bill_number: string | null
+          extended_times: number | null
+          from_address: string | null
+          from_gstin: string | null
+          from_name: string | null
+          from_pincode: string | null
+          from_place: string | null
+          from_state_code: string | null
+          id: string
+          igst_amount: number | null
+          invoice_id: string | null
+          sgst_amount: number | null
+          status: string | null
+          tenant_id: string | null
+          to_address: string | null
+          to_gstin: string | null
+          to_name: string | null
+          to_pincode: string | null
+          to_place: string | null
+          to_state_code: string | null
+          total_value: number | null
+          trans_mode: string | null
+          transporter_id: string | null
+          transporter_name: string | null
+          updated_at: string
+          valid_until: string | null
+          vehicle_number: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          cess_amount?: number | null
+          cgst_amount?: number | null
+          created_at?: string
+          distance_km?: number | null
+          doc_date?: string | null
+          doc_number?: string | null
+          doc_type?: string | null
+          eway_bill_date?: string | null
+          eway_bill_number?: string | null
+          extended_times?: number | null
+          from_address?: string | null
+          from_gstin?: string | null
+          from_name?: string | null
+          from_pincode?: string | null
+          from_place?: string | null
+          from_state_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          invoice_id?: string | null
+          sgst_amount?: number | null
+          status?: string | null
+          tenant_id?: string | null
+          to_address?: string | null
+          to_gstin?: string | null
+          to_name?: string | null
+          to_pincode?: string | null
+          to_place?: string | null
+          to_state_code?: string | null
+          total_value?: number | null
+          trans_mode?: string | null
+          transporter_id?: string | null
+          transporter_name?: string | null
+          updated_at?: string
+          valid_until?: string | null
+          vehicle_number?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          cess_amount?: number | null
+          cgst_amount?: number | null
+          created_at?: string
+          distance_km?: number | null
+          doc_date?: string | null
+          doc_number?: string | null
+          doc_type?: string | null
+          eway_bill_date?: string | null
+          eway_bill_number?: string | null
+          extended_times?: number | null
+          from_address?: string | null
+          from_gstin?: string | null
+          from_name?: string | null
+          from_pincode?: string | null
+          from_place?: string | null
+          from_state_code?: string | null
+          id?: string
+          igst_amount?: number | null
+          invoice_id?: string | null
+          sgst_amount?: number | null
+          status?: string | null
+          tenant_id?: string | null
+          to_address?: string | null
+          to_gstin?: string | null
+          to_name?: string | null
+          to_pincode?: string | null
+          to_place?: string | null
+          to_state_code?: string | null
+          total_value?: number | null
+          trans_mode?: string | null
+          transporter_id?: string | null
+          transporter_name?: string | null
+          updated_at?: string
+          valid_until?: string | null
+          vehicle_number?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eway_bills_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eway_bills_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -11004,6 +11553,174 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tds_tcs_rates: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          is_active: boolean | null
+          rate_company: number
+          rate_individual: number
+          rate_no_pan: number
+          section_code: string
+          section_description: string
+          tenant_id: string | null
+          threshold_amount: number | null
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          rate_company: number
+          rate_individual: number
+          rate_no_pan: number
+          section_code: string
+          section_description: string
+          tenant_id?: string | null
+          threshold_amount?: number | null
+          transaction_type: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          rate_company?: number
+          rate_individual?: number
+          rate_no_pan?: number
+          section_code?: string
+          section_description?: string
+          tenant_id?: string | null
+          threshold_amount?: number | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tds_tcs_rates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tds_tcs_transactions: {
+        Row: {
+          certificate_number: string | null
+          cess_amount: number | null
+          cess_rate: number | null
+          challan_date: string | null
+          challan_number: string | null
+          created_at: string
+          deductee_name: string | null
+          deductee_pan: string | null
+          deductee_type: string | null
+          gross_amount: number
+          id: string
+          ledger_id: string | null
+          notes: string | null
+          payment_date: string | null
+          section_code: string
+          section_description: string | null
+          status: string | null
+          surcharge_amount: number | null
+          surcharge_rate: number | null
+          tax_amount: number
+          tax_rate: number
+          tenant_id: string | null
+          total_tax: number
+          transaction_date: string
+          transaction_type: string
+          updated_at: string
+          voucher_id: string | null
+        }
+        Insert: {
+          certificate_number?: string | null
+          cess_amount?: number | null
+          cess_rate?: number | null
+          challan_date?: string | null
+          challan_number?: string | null
+          created_at?: string
+          deductee_name?: string | null
+          deductee_pan?: string | null
+          deductee_type?: string | null
+          gross_amount: number
+          id?: string
+          ledger_id?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          section_code: string
+          section_description?: string | null
+          status?: string | null
+          surcharge_amount?: number | null
+          surcharge_rate?: number | null
+          tax_amount: number
+          tax_rate: number
+          tenant_id?: string | null
+          total_tax: number
+          transaction_date: string
+          transaction_type: string
+          updated_at?: string
+          voucher_id?: string | null
+        }
+        Update: {
+          certificate_number?: string | null
+          cess_amount?: number | null
+          cess_rate?: number | null
+          challan_date?: string | null
+          challan_number?: string | null
+          created_at?: string
+          deductee_name?: string | null
+          deductee_pan?: string | null
+          deductee_type?: string | null
+          gross_amount?: number
+          id?: string
+          ledger_id?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          section_code?: string
+          section_description?: string | null
+          status?: string | null
+          surcharge_amount?: number | null
+          surcharge_rate?: number | null
+          tax_amount?: number
+          tax_rate?: number
+          tenant_id?: string | null
+          total_tax?: number
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tds_tcs_transactions_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tds_tcs_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tds_tcs_transactions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
             referencedColumns: ["id"]
           },
         ]
