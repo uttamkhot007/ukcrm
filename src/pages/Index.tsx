@@ -328,6 +328,22 @@ const Index = () => {
       // Tax & Compliance
       case "finance-gst":
         return <TallyModule initialTab="gst" />;
+      case "finance-e-invoicing":
+        return <TallyModule initialTab="e-invoicing" />;
+      case "finance-eway-bill":
+        return <TallyModule initialTab="eway-bill" />;
+      case "finance-tds-tcs":
+        return <TallyModule initialTab="tds-tcs" />;
+      
+      // New Reports & Planning
+      case "finance-cash-flow":
+        return <TallyModule initialTab="cash-flow" />;
+      case "finance-ratio-analysis":
+        return <TallyModule initialTab="ratio-analysis" />;
+      case "finance-budgets":
+        return <TallyModule initialTab="budgets" />;
+      case "finance-estimates":
+        return <TallyModule initialTab="estimates" />;
       
       // Operations
       case "finance-contracts":
