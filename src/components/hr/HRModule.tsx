@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { DeleteConfirmDialog } from "@/components/sales/DeleteConfirmDialog";
 import {
   Users,
   UserPlus,
@@ -15,6 +17,7 @@ import {
   Clock,
   MapPin,
   Mail,
+  Trash2,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
@@ -44,7 +47,25 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const { currentTenant } = useTenant();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const deleteEmployee = useMutation({
+    mutationFn: async (profileId: string) => {
+      const { error } = await supabase.from("profiles").delete().eq("id", profileId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hr-employees"] });
+      setDeleteTarget(null);
+      toast({ title: "Employee removed successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error removing employee", description: error.message, variant: "destructive" });
+    },
+  });
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -198,11 +219,33 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
                           </div>
                         )}
                       </div>
+                      <div className="mt-3 flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(employee);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
               )}
             </div>
+
+            <DeleteConfirmDialog
+              open={!!deleteTarget}
+              onOpenChange={(open) => !open && setDeleteTarget(null)}
+              onConfirm={() => deleteTarget && deleteEmployee.mutate(deleteTarget.id)}
+              title="Remove Employee"
+              description={`Are you sure you want to remove "${deleteTarget?.full_name}"? This action cannot be undone.`}
+              isDeleting={deleteEmployee.isPending}
+            />
           </div>
         );
       case "documents":

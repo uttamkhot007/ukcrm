@@ -88,7 +88,7 @@ export function ITSupportTickets() {
         category,
         assigned_to,
         created_at,
-        requester_id
+        created_by
       `)
       .eq("tenant_id", currentTenant.id)
       .order("created_at", { ascending: false });
@@ -110,7 +110,7 @@ export function ITSupportTickets() {
         category: t.category,
         assigned_to: t.assigned_to,
         created_at: t.created_at,
-        user_id: t.requester_id,
+        user_id: t.created_by,
       }));
       setTickets(mappedTickets);
     }

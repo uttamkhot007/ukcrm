@@ -264,6 +264,28 @@ export function DealsView() {
 
   const deleteDeal = useMutation({
     mutationFn: async (id: string) => {
+      // Delete related records first to avoid FK constraint violations
+      const relatedTables = [
+        "deal_activities", "deal_products", "deal_stage_progression_log",
+        "quotations", "invoices", "estimates", "renewals",
+        "inside_sales_prospects", "order_processing_requests",
+        "accounts_workflows", "poc_requests", "demo_schedules",
+        "technical_assessments", "rfp_responses", "customer_deliveries",
+        "post_sale_workflows", "deal_registrations", "presales_opportunities",
+        "email_sequence_enrollments", "customer_support_contracts"
+      ];
+      
+      for (const table of relatedTables) {
+        await supabase.from(table as any).delete().eq("deal_id", id);
+      }
+      
+      // Nullify optional FK references
+      await supabase.from("calendar_events").update({ related_deal_id: null }).eq("related_deal_id", id);
+      await supabase.from("travel_requests").update({ deal_id: null }).eq("deal_id", id);
+      await supabase.from("daily_activities").update({ related_deal_id: null }).eq("related_deal_id", id);
+      await supabase.from("projects").update({ deal_id: null }).eq("deal_id", id);
+      await supabase.from("tenders").update({ deal_id: null }).eq("deal_id", id);
+      
       const { error } = await supabase.from("deals").delete().eq("id", id);
       if (error) throw error;
     },
