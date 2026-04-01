@@ -233,6 +233,35 @@ export function DailyActivityTracker() {
               <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} min="1" />
             </div>
           </div>
+          {/* Meeting Purpose Capsules */}
+          {(activityType.includes("meeting") || activityType.includes("customer_meeting") || activityType === "demo" || activityType === "consultation" || activityType === "poc") && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">Meeting Purpose</label>
+              <div className="flex flex-wrap gap-2">
+                {MEETING_PURPOSES.map((purpose) => {
+                  const isSelected = selectedPurposes.includes(purpose);
+                  return (
+                    <button
+                      key={purpose}
+                      type="button"
+                      onClick={() =>
+                        setSelectedPurposes((prev) =>
+                          isSelected ? prev.filter((p) => p !== purpose) : [...prev, purpose]
+                        )
+                      }
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:border-primary/40"
+                      }`}
+                    >
+                      {purpose}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <label className="text-sm font-medium">Description (Optional)</label>
             <Textarea placeholder="Brief description..." value={description} onChange={(e) => setDescription(e.target.value)} />
