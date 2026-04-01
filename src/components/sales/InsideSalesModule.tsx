@@ -278,6 +278,23 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
     }
   };
 
+  const handleDeleteProspect = async (prospectId: string) => {
+    try {
+      const { error } = await supabase
+        .from("inside_sales_prospects")
+        .delete()
+        .eq("id", prospectId);
+      if (error) throw error;
+      toast.success("Prospect deleted");
+      setProspectToDelete(null);
+      setIsDetailSheetOpen(false);
+      fetchProspects();
+    } catch (error: any) {
+      console.error("Error deleting prospect:", error);
+      toast.error("Failed to delete prospect: " + error.message);
+    }
+  };
+
   const openProspectDetails = (prospect: Prospect) => {
     setSelectedProspect(prospect);
     setEditNotes(prospect.notes || "");
