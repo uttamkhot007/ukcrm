@@ -219,6 +219,19 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
                           </div>
                         )}
                       </div>
+                      <div className="mt-3 flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(employee);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
