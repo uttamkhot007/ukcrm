@@ -48,7 +48,26 @@ import {
   UserPlus,
   Building,
   Target,
+  Trash2,
+  Pencil,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -135,6 +154,7 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [prospectToDelete, setProspectToDelete] = useState<Prospect | null>(null);
 
   const today = new Date();
 
@@ -255,6 +275,23 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
     } catch (error: any) {
       console.error("Error updating:", error);
       toast.error("Failed to update");
+    }
+  };
+
+  const handleDeleteProspect = async (prospectId: string) => {
+    try {
+      const { error } = await supabase
+        .from("inside_sales_prospects")
+        .delete()
+        .eq("id", prospectId);
+      if (error) throw error;
+      toast.success("Prospect deleted");
+      setProspectToDelete(null);
+      setIsDetailSheetOpen(false);
+      fetchProspects();
+    } catch (error: any) {
+      console.error("Error deleting prospect:", error);
+      toast.error("Failed to delete prospect: " + error.message);
     }
   };
 
@@ -532,6 +569,24 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
                                 </Button>
                               </>
                             )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openProspectDetails(prospect)}>
+                                  <Pencil className="h-4 w-4 mr-2" /> Edit / Enrich
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => setProspectToDelete(prospect)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -549,7 +604,17 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
             {selectedProspect && (
               <>
                 <SheetHeader>
-                  <SheetTitle>{selectedProspect.company_name || "Unknown Company"}</SheetTitle>
+                  <div className="flex items-center justify-between">
+                    <SheetTitle>{selectedProspect.company_name || "Unknown Company"}</SheetTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setProspectToDelete(selectedProspect)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <SheetDescription>
                     {getStatusBadge(selectedProspect.status)}
                     <span className="ml-2">{getPriorityBadge(selectedProspect.priority)}</span>
@@ -716,6 +781,27 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
           <OfferingsModule />
         </TabsContent>
       </Tabs>
+
+      {/* Delete Prospect Confirmation Dialog */}
+      <AlertDialog open={!!prospectToDelete} onOpenChange={(open) => !open && setProspectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Prospect</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the prospect "{prospectToDelete?.company_name || prospectToDelete?.contact_name || 'Unknown'}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => prospectToDelete && handleDeleteProspect(prospectToDelete.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

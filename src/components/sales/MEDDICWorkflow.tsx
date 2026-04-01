@@ -22,8 +22,25 @@ import {
   Target, TrendingUp, Users, DollarSign, FileText, 
   CheckCircle2, Circle, ArrowRight, Zap, AlertTriangle,
   ChevronRight, Clock, Award, BarChart3, Settings,
-  Sparkles, Play, Pause, RefreshCw, Info, History, Save
+  Sparkles, Play, Pause, RefreshCw, Info, History, Save,
+  Trash2, Pencil, MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 import { MEDDICWizard } from "@/components/sales/MEDDICWizard";
 import { workflows } from "@/lib/workflows";
@@ -176,6 +193,38 @@ export function MEDDICWorkflow() {
   const [workflowDeal, setWorkflowDeal] = useState<Deal | null>(null);
   // State for MEDDIC wizard
   const [wizardDeal, setWizardDeal] = useState<Deal | null>(null);
+  const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
+
+  // Delete deal mutation with cascade
+  const deleteDeal = useMutation({
+    mutationFn: async (dealId: string) => {
+      const relatedTables = [
+        "deal_activities", "deal_products", "deal_stage_progression_log",
+        "quotations", "invoices", "estimates", "renewals",
+        "inside_sales_prospects", "order_processing_requests",
+        "accounts_workflows", "poc_requests", "demo_schedules",
+        "technical_assessments", "rfp_responses", "customer_deliveries",
+        "deal_registrations", "deal_contact_roles"
+      ];
+      for (const table of relatedTables) {
+        await supabase.from(table as any).delete().eq("deal_id", dealId);
+      }
+      await supabase.from("projects").update({ deal_id: null } as any).eq("deal_id", dealId);
+      await supabase.from("tenders").update({ deal_id: null } as any).eq("deal_id", dealId);
+      const { error } = await supabase.from("deals").delete().eq("id", dealId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      setSelectedDeal(null);
+      setDealToDelete(null);
+      toast.success("Deal deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to delete deal: " + error.message);
+    },
+  });
   // Sync form values when deal changes
   useEffect(() => {
     if (selectedDeal) {
@@ -565,12 +614,32 @@ export function MEDDICWorkflow() {
                       }}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-sm truncate max-w-[120px]">
+                        <span className="font-medium text-sm truncate max-w-[100px]">
                           {deal.title}
                         </span>
-                        {nextStage?.canProgress && (
-                          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                        )}
+                        <div className="flex items-center gap-1">
+                          {nextStage?.canProgress && (
+                            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedDeal(deal); }}>
+                                <Pencil className="h-4 w-4 mr-2" /> Edit / Enrich
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={(e) => { e.stopPropagation(); setDealToDelete(deal); }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {deal.organization_name || 'No organization'}
@@ -622,10 +691,20 @@ export function MEDDICWorkflow() {
           {selectedDeal && (
             <>
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  {selectedDeal.title}
-                  <Badge>{STAGE_LABELS[selectedDeal.stage]}</Badge>
-                </SheetTitle>
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="flex items-center gap-2">
+                    {selectedDeal.title}
+                    <Badge>{STAGE_LABELS[selectedDeal.stage]}</Badge>
+                  </SheetTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDealToDelete(selectedDeal)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
                 <SheetDescription>
                   {selectedDeal.organization_name} • {formatCurrency(selectedDeal.value)}
                 </SheetDescription>
@@ -938,6 +1017,27 @@ export function MEDDICWorkflow() {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!dealToDelete} onOpenChange={(open) => !open && setDealToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Deal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{dealToDelete?.title}"? This will also remove all related activities, quotations, invoices, and other associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => dealToDelete && deleteDeal.mutate(dealToDelete.id)}
+            >
+              {deleteDeal.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
