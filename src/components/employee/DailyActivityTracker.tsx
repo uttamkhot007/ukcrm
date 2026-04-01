@@ -33,6 +33,19 @@ const INTERNAL_ACTIVITIES = [
   { value: "learning", label: "Learning / Research" },
 ];
 
+const MEETING_PURPOSES = [
+  "Info Gathering",
+  "Technical Presentation",
+  "Understanding Requirements",
+  "Understanding Pain Areas",
+  "Vinca's Approach Presentation",
+  "Product Demo",
+  "Commercial Discussion",
+  "Relationship Building",
+  "Follow-up",
+  "Escalation Handling",
+];
+
 const EXTERNAL_ACTIVITIES = [
   { value: "customer_meeting_online", label: "Customer Meeting (Online)" },
   { value: "customer_meeting_onsite", label: "Customer Meeting (Onsite)" },
