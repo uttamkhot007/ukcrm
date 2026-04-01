@@ -62,7 +62,7 @@ export function QuotationApprovals() {
 
       // For accounts, show sent & accepted quotations primarily
       if (statusFilter && statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+        query = query.eq("status", statusFilter as "draft" | "sent" | "accepted" | "rejected" | "expired");
       }
 
       const { data, error } = await query;

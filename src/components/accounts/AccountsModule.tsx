@@ -6,6 +6,7 @@ import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
 import { SalesAnalyticsModule } from "./SalesAnalyticsModule";
 import { PostSaleWorkflowView } from "./PostSaleWorkflowView";
+import { QuotationApprovals } from "./QuotationApprovals";
 
 interface AccountsModuleProps {
   initialTab?: string;
