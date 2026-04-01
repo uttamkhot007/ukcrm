@@ -47,7 +47,25 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const { currentTenant } = useTenant();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const deleteEmployee = useMutation({
+    mutationFn: async (profileId: string) => {
+      const { error } = await supabase.from("profiles").delete().eq("id", profileId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hr-employees"] });
+      setDeleteTarget(null);
+      toast({ title: "Employee removed successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error removing employee", description: error.message, variant: "destructive" });
+    },
+  });
 
   useEffect(() => {
     setActiveTab(initialTab);
