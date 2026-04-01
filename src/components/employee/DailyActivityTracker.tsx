@@ -125,7 +125,7 @@ export function DailyActivityTracker() {
       setDuration("30");
       setDescription("");
       setOrganizationId("");
-      toast.success("Activity logged");
+      setSelectedPurposes([]);
     },
     onError: (error) => toast.error("Failed: " + error.message),
   });
