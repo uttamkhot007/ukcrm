@@ -1,8 +1,13 @@
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, AlertTriangle, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { EditTaskDialog } from "../EditTaskDialog";
 
 interface ProjectPlanOverviewProps {
   project: any;
@@ -12,6 +17,30 @@ interface ProjectPlanOverviewProps {
 }
 
 export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: ProjectPlanOverviewProps) {
+  const queryClient = useQueryClient();
+  const [editingTask, setEditingTask] = useState<any>(null);
+
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ taskId, currentStatus }: { taskId: string; currentStatus: string }) => {
+      const newStatus = currentStatus === "completed" ? "todo" : "completed";
+      const { error } = await supabase
+        .from("project_tasks")
+        .update({
+          status: newStatus,
+          completed_at: newStatus === "completed" ? new Date().toISOString() : null,
+        })
+        .eq("id", taskId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects-stats"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update task: " + error.message);
+    },
+  });
+
   const getPhaseProgress = (phaseId: string) => {
     const phaseTasks = tasks.filter(t => t.phase_id === phaseId);
     if (phaseTasks.length === 0) return 0;
@@ -45,6 +74,34 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
       default: return "text-muted-foreground";
     }
   };
+
+  const handleToggleTask = (taskId: string, currentStatus: string) => {
+    toggleTaskMutation.mutate({ taskId, currentStatus });
+  };
+
+  const renderTaskItem = (task: any) => (
+    <div key={task.id} className="flex items-center gap-3 p-2 border rounded-lg hover:bg-accent/50 transition-colors group">
+      <Checkbox
+        checked={task.status === "completed"}
+        onCheckedChange={() => handleToggleTask(task.id, task.status)}
+      />
+      <div
+        className="flex-1 cursor-pointer"
+        onClick={() => setEditingTask(task)}
+      >
+        <p className={`text-sm font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+          {task.title}
+        </p>
+        <p className="text-xs text-muted-foreground">{task.task_number}</p>
+      </div>
+      <Badge variant="outline" className="text-xs">
+        {getAssigneeName(task.assigned_to)}
+      </Badge>
+      {(task.priority === "high" || task.priority === "critical") && (
+        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      )}
+    </div>
+  );
 
   // If no phases exist, show tasks by general structure
   if (phases.length === 0) {
@@ -108,21 +165,7 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {tasks.slice(0, 10).map((task) => (
-                  <div key={task.id} className="flex items-center gap-3 p-2 border rounded-lg">
-                    <Checkbox checked={task.status === "completed"} disabled />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{task.task_number}</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {getAssigneeName(task.assigned_to)}
-                    </Badge>
-                    {task.priority === "high" || task.priority === "critical" ? (
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                    ) : null}
-                  </div>
-                ))}
+                {tasks.slice(0, 10).map(renderTaskItem)}
                 {tasks.length > 10 && (
                   <p className="text-xs text-muted-foreground text-center">
                     + {tasks.length - 10} more tasks
@@ -140,6 +183,12 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
             <p className="text-sm">Use "Enrich with AI" to generate a project plan</p>
           </div>
         )}
+
+        <EditTaskDialog
+          open={!!editingTask}
+          onOpenChange={(open) => !open && setEditingTask(null)}
+          task={editingTask}
+        />
       </div>
     );
   }
@@ -201,9 +250,15 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
                 </h4>
                 <div className="space-y-2">
                   {phaseTasks.slice(0, 5).map((task) => (
-                    <div key={task.id} className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={task.status === "completed"} disabled />
-                      <span className={task.status === "completed" ? "line-through text-muted-foreground" : ""}>
+                    <div key={task.id} className="flex items-center gap-2 text-sm hover:bg-accent/50 rounded p-1 transition-colors">
+                      <Checkbox
+                        checked={task.status === "completed"}
+                        onCheckedChange={() => handleToggleTask(task.id, task.status)}
+                      />
+                      <span
+                        className={`flex-1 cursor-pointer ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}
+                        onClick={() => setEditingTask(task)}
+                      >
                         {task.title}
                       </span>
                       <Badge variant="outline" className="ml-auto text-xs">
@@ -244,6 +299,12 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
           </Card>
         );
       })}
+
+      <EditTaskDialog
+        open={!!editingTask}
+        onOpenChange={(open) => !open && setEditingTask(null)}
+        task={editingTask}
+      />
     </div>
   );
 }
