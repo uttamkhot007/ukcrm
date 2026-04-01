@@ -1289,6 +1289,109 @@ export type Database = {
           },
         ]
       }
+      communications_announcements: {
+        Row: {
+          audience: string | null
+          content: string | null
+          created_at: string
+          created_by: string
+          id: string
+          scheduled_date: string | null
+          status: string
+          tenant_id: string | null
+          title: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          content?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          scheduled_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          scheduled_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_announcements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_releases: {
+        Row: {
+          author: string | null
+          content: string | null
+          created_at: string
+          created_by: string
+          distribution_outlet: string | null
+          id: string
+          published_date: string | null
+          scheduled_date: string | null
+          status: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          content?: string | null
+          created_at?: string
+          created_by: string
+          distribution_outlet?: string | null
+          id?: string
+          published_date?: string | null
+          scheduled_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          distribution_outlet?: string | null
+          id?: string
+          published_date?: string | null
+          scheduled_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_releases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_assessments: {
         Row: {
           assessment_date: string
@@ -6562,6 +6665,118 @@ export type Database = {
           },
         ]
       }
+      marketing_campaigns: {
+        Row: {
+          budget: number | null
+          conversions_count: number | null
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string | null
+          id: string
+          leads_count: number | null
+          name: string
+          spent: number | null
+          start_date: string | null
+          status: string
+          tenant_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          conversions_count?: number | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          leads_count?: number | null
+          name: string
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          conversions_count?: number | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          leads_count?: number | null
+          name?: string
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          tenant_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_content: {
+        Row: {
+          author: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          status: string
+          tenant_id: string | null
+          title: string
+          type: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          status?: string
+          tenant_id?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_content_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_journeys: {
         Row: {
           completions: number | null
@@ -6611,6 +6826,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "marketing_journeys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_contacts: {
+        Row: {
+          beat: string | null
+          created_at: string
+          created_by: string
+          email: string | null
+          id: string
+          last_contact_date: string | null
+          name: string
+          notes: string | null
+          outlet: string | null
+          phone: string | null
+          role: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          beat?: string | null
+          created_at?: string
+          created_by: string
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          name: string
+          notes?: string | null
+          outlet?: string | null
+          phone?: string | null
+          role?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          beat?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          name?: string
+          notes?: string | null
+          outlet?: string | null
+          phone?: string | null
+          role?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_contacts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -8568,6 +8839,112 @@ export type Database = {
           },
           {
             foreignKeyName: "post_sale_workflows_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pr_events: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          event_date: string | null
+          id: string
+          location: string | null
+          name: string
+          role: string | null
+          status: string | null
+          tenant_id: string | null
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          role?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          role?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pr_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pr_media_coverage: {
+        Row: {
+          author_name: string | null
+          coverage_date: string | null
+          created_at: string
+          created_by: string
+          headline: string
+          id: string
+          outlet: string | null
+          reach: number | null
+          sentiment: string | null
+          tenant_id: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          author_name?: string | null
+          coverage_date?: string | null
+          created_at?: string
+          created_by: string
+          headline: string
+          id?: string
+          outlet?: string | null
+          reach?: number | null
+          sentiment?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          author_name?: string | null
+          coverage_date?: string | null
+          created_at?: string
+          created_by?: string
+          headline?: string
+          id?: string
+          outlet?: string | null
+          reach?: number | null
+          sentiment?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pr_media_coverage_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

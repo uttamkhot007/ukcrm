@@ -25,6 +25,9 @@ import {
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
+import { HRPeopleManagement } from "./HRPeopleManagement";
+import { HRSalaryBenefits } from "./HRSalaryBenefits";
+import { HROnboarding } from "./HROnboarding";
 import { EmployeeDocumentsView } from "./EmployeeDocumentsView";
 import { EmployeeProfilePage } from "./EmployeeProfilePage";
 import { HRComplianceModule } from "./compliance/HRComplianceModule";
