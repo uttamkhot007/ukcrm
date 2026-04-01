@@ -88,7 +88,7 @@ export function ITSupportTickets() {
         category,
         assigned_to,
         created_at,
-        requester_id
+        created_by
       `)
       .eq("tenant_id", currentTenant.id)
       .order("created_at", { ascending: false });
