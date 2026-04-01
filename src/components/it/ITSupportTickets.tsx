@@ -110,7 +110,7 @@ export function ITSupportTickets() {
         category: t.category,
         assigned_to: t.assigned_to,
         created_at: t.created_at,
-        user_id: t.requester_id,
+        user_id: t.created_by,
       }));
       setTickets(mappedTickets);
     }
