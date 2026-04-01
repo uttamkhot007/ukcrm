@@ -33,6 +33,19 @@ const INTERNAL_ACTIVITIES = [
   { value: "learning", label: "Learning / Research" },
 ];
 
+const MEETING_PURPOSES = [
+  "Info Gathering",
+  "Technical Presentation",
+  "Understanding Requirements",
+  "Understanding Pain Areas",
+  "Vinca's Approach Presentation",
+  "Product Demo",
+  "Commercial Discussion",
+  "Relationship Building",
+  "Follow-up",
+  "Escalation Handling",
+];
+
 const EXTERNAL_ACTIVITIES = [
   { value: "customer_meeting_online", label: "Customer Meeting (Online)" },
   { value: "customer_meeting_onsite", label: "Customer Meeting (Onsite)" },
@@ -59,6 +72,7 @@ export function DailyActivityTracker() {
   const [duration, setDuration] = useState("30");
   const [description, setDescription] = useState("");
   const [organizationId, setOrganizationId] = useState("");
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
 
   const { data: organizations = [] } = useQuery({
     queryKey: ["customer-organizations-activity", currentTenant?.id],
@@ -97,6 +111,7 @@ export function DailyActivityTracker() {
         activity_date: selectedDate,
         activity_category: category,
         activity_type: activityType,
+        activity_subtype: selectedPurposes.length > 0 ? selectedPurposes.join(", ") : null,
         duration_minutes: parseInt(duration),
         description: description || null,
         related_organization_id: category === "external" && organizationId ? organizationId : null,
@@ -110,7 +125,7 @@ export function DailyActivityTracker() {
       setDuration("30");
       setDescription("");
       setOrganizationId("");
-      toast.success("Activity logged");
+      setSelectedPurposes([]);
     },
     onError: (error) => toast.error("Failed: " + error.message),
   });
@@ -218,6 +233,35 @@ export function DailyActivityTracker() {
               <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} min="1" />
             </div>
           </div>
+          {/* Meeting Purpose Capsules */}
+          {(activityType.includes("meeting") || activityType.includes("customer_meeting") || activityType === "demo" || activityType === "consultation" || activityType === "poc") && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">Meeting Purpose</label>
+              <div className="flex flex-wrap gap-2">
+                {MEETING_PURPOSES.map((purpose) => {
+                  const isSelected = selectedPurposes.includes(purpose);
+                  return (
+                    <button
+                      key={purpose}
+                      type="button"
+                      onClick={() =>
+                        setSelectedPurposes((prev) =>
+                          isSelected ? prev.filter((p) => p !== purpose) : [...prev, purpose]
+                        )
+                      }
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:border-primary/40"
+                      }`}
+                    >
+                      {purpose}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <label className="text-sm font-medium">Description (Optional)</label>
             <Textarea placeholder="Brief description..." value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -250,6 +294,15 @@ export function DailyActivityTracker() {
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Building2 className="w-3 h-3" />{activity.organization.name}
                         </p>
+                      )}
+                      {activity.activity_subtype && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {activity.activity_subtype.split(", ").map((tag: string) => (
+                            <span key={tag} className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       )}
                       {activity.description && <p className="text-xs text-muted-foreground">{activity.description}</p>}
                     </div>
