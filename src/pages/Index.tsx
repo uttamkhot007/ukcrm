@@ -460,6 +460,49 @@ const Index = () => {
       case "projects-timesheet":
         return <ProjectsModule defaultTab="timesheet" />;
       
+      // Marketing modules
+      case "marketing":
+      case "marketing-campaigns":
+        return <MarketingModule initialTab="campaigns" />;
+      case "marketing-content":
+        return <MarketingModule initialTab="content" />;
+      case "marketing-leads":
+        return <MarketingModule initialTab="leads" />;
+      case "marketing-analytics":
+        return <MarketingModule initialTab="analytics" />;
+      case "marketing-social":
+        return <MarketingModule initialTab="assets" />;
+      case "marketing-events":
+        return <MarketingModule initialTab="campaigns" />;
+      
+      // Communications modules
+      case "communications":
+      case "communications-internal":
+        return <CommunicationsModule initialTab="internal" />;
+      case "communications-external":
+        return <CommunicationsModule initialTab="press" />;
+      case "communications-newsletters":
+        return <CommunicationsModule initialTab="media" />;
+      case "communications-announcements":
+        return <CommunicationsModule initialTab="internal" />;
+      case "communications-templates":
+        return <CommunicationsModule initialTab="press" />;
+      
+      // Public Relations modules
+      case "pr":
+      case "pr-media":
+      case "pr-coverage":
+        return <PublicRelationsModule initialTab="coverage" />;
+      case "pr-press":
+        return <PublicRelationsModule initialTab="coverage" />;
+      case "pr-contacts":
+        return <PublicRelationsModule initialTab="partnerships" />;
+      case "pr-events":
+        return <PublicRelationsModule initialTab="events" />;
+      case "pr-crisis":
+        return <PublicRelationsModule initialTab="reputation" />;
+      
+
       // Admin modules
       case "admin":
       case "admin-facilities":
@@ -505,9 +548,7 @@ const Index = () => {
       case "offensive-remediation":
         return <PlaceholderModule title="Offensive Security" section={activeModule} />;
       
-      // Billing
-      case "billing":
-        return <BillingModule />;
+      // Billing (duplicate removed - already handled at line ~414)
       
       // Compliance
       case "compliance":

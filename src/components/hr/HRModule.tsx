@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,9 +45,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function HRModule({ initialTab = "directory" }: HRModuleProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const { currentTenant } = useTenant();
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["hr-employees", currentTenant?.id],
@@ -93,12 +98,12 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   };
 
   const renderContent = () => {
-    if (initialTab.startsWith("workflows-")) {
-      const workflowType = initialTab.replace("workflows-", "");
+    if (activeTab.startsWith("workflows-")) {
+      const workflowType = activeTab.replace("workflows-", "");
       return <HRWorkflowsTab filterType={workflowType} />;
     }
 
-    switch (initialTab) {
+    switch (activeTab) {
       case "directory":
         return (
           <div className="space-y-4">
