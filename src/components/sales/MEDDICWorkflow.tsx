@@ -691,10 +691,20 @@ export function MEDDICWorkflow() {
           {selectedDeal && (
             <>
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  {selectedDeal.title}
-                  <Badge>{STAGE_LABELS[selectedDeal.stage]}</Badge>
-                </SheetTitle>
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="flex items-center gap-2">
+                    {selectedDeal.title}
+                    <Badge>{STAGE_LABELS[selectedDeal.stage]}</Badge>
+                  </SheetTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDealToDelete(selectedDeal)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
                 <SheetDescription>
                   {selectedDeal.organization_name} • {formatCurrency(selectedDeal.value)}
                 </SheetDescription>
