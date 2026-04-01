@@ -48,11 +48,10 @@ async function buildServer() {
   // Routes
   await app.register(healthRoutes, { prefix: '/api/health' });
   await app.register(authRoutes, { prefix: '/api/auth' });
-  await app.register(contactsRoutes, { prefix: '/api/contacts' });
-  await app.register(dealsRoutes, { prefix: '/api/deals' });
-  await app.register(ticketsRoutes, { prefix: '/api/tickets' });
-  await app.register(organizationsRoutes, { prefix: '/api/organizations' });
   await app.register(aiRoutes, { prefix: '/api/ai' });
+
+  // Register all CRUD routes for every table
+  registerAllCrudRoutes(app);
 
   // Global error handler
   app.setErrorHandler((error, request, reply) => {
