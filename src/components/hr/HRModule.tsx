@@ -223,44 +223,7 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
       case "compliance":
         return <HRComplianceModule />;
       case "onboarding":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Onboarding Setup
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <UserPlus className="w-8 h-8 mx-auto text-blue-500 mb-2" />
-                    <h4 className="font-medium">New Hire Checklist</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Onboarding task templates</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                    <h4 className="font-medium">Document Collection</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Required documents tracking</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <Calendar className="w-8 h-8 mx-auto text-purple-500 mb-2" />
-                    <h4 className="font-medium">Training Schedule</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Induction programs</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <HROnboarding />;
       default:
         return null;
     }
