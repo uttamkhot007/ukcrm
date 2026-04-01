@@ -614,12 +614,32 @@ export function MEDDICWorkflow() {
                       }}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-sm truncate max-w-[120px]">
+                        <span className="font-medium text-sm truncate max-w-[100px]">
                           {deal.title}
                         </span>
-                        {nextStage?.canProgress && (
-                          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                        )}
+                        <div className="flex items-center gap-1">
+                          {nextStage?.canProgress && (
+                            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedDeal(deal); }}>
+                                <Pencil className="h-4 w-4 mr-2" /> Edit / Enrich
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={(e) => { e.stopPropagation(); setDealToDelete(deal); }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {deal.organization_name || 'No organization'}
