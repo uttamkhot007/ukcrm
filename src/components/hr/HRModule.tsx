@@ -9,19 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Users,
   UserPlus,
-  Briefcase,
-  Calendar,
   Search,
   Building2,
   CheckCircle2,
   Clock,
-  FileText,
-  TrendingUp,
-  AlertCircle,
-  DollarSign,
   MapPin,
   Mail,
-  Scale,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
