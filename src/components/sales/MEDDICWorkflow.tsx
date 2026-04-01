@@ -193,6 +193,38 @@ export function MEDDICWorkflow() {
   const [workflowDeal, setWorkflowDeal] = useState<Deal | null>(null);
   // State for MEDDIC wizard
   const [wizardDeal, setWizardDeal] = useState<Deal | null>(null);
+  const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
+
+  // Delete deal mutation with cascade
+  const deleteDeal = useMutation({
+    mutationFn: async (dealId: string) => {
+      const relatedTables = [
+        "deal_activities", "deal_products", "deal_stage_progression_log",
+        "quotations", "invoices", "estimates", "renewals",
+        "inside_sales_prospects", "order_processing_requests",
+        "accounts_workflows", "poc_requests", "demo_schedules",
+        "technical_assessments", "rfp_responses", "customer_deliveries",
+        "deal_registrations", "deal_contact_roles"
+      ];
+      for (const table of relatedTables) {
+        await supabase.from(table as any).delete().eq("deal_id", dealId);
+      }
+      await supabase.from("projects").update({ deal_id: null } as any).eq("deal_id", dealId);
+      await supabase.from("tenders").update({ deal_id: null } as any).eq("deal_id", dealId);
+      const { error } = await supabase.from("deals").delete().eq("id", dealId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      setSelectedDeal(null);
+      setDealToDelete(null);
+      toast.success("Deal deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to delete deal: " + error.message);
+    },
+  });
   // Sync form values when deal changes
   useEffect(() => {
     if (selectedDeal) {
