@@ -422,6 +422,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "finance-post-sale", label: "Post-Sale Workflows", icon: FolderKanban },
           { id: "finance-workflows", label: "Workflows", icon: RefreshCw },
           { id: "finance-procurement", label: "Procurement & Inventory", icon: Package },
+          { id: "finance-quotation-approvals", label: "Quotation → Invoice", icon: FileText },
           { id: "finance-sla-reminders", label: "SLA & Reminders", icon: Bell },
         ],
       });

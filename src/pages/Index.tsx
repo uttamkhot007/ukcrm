@@ -364,6 +364,8 @@ const Index = () => {
         return <ProcurementInventoryModule initialTab="inventory" />;
       case "finance-sla-reminders":
         return <AccountsModule initialTab="sla-reminders" />;
+      case "finance-quotation-approvals":
+        return <AccountsModule initialTab="quotation-approvals" />;
       
       // Legacy accounts-finance routes (backward compatibility)
       case "accounts-finance":

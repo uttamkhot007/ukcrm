@@ -6,6 +6,7 @@ import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
 import { SalesAnalyticsModule } from "./SalesAnalyticsModule";
 import { PostSaleWorkflowView } from "./PostSaleWorkflowView";
+import { QuotationApprovals } from "./QuotationApprovals";
 
 interface AccountsModuleProps {
   initialTab?: string;
@@ -33,6 +34,8 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
         return <AccountsARaging />;
       case "sla-reminders":
         return <AccountsSLAReminders />;
+      case "quotation-approvals":
+        return <QuotationApprovals />;
       case "analytics":
         return <SalesAnalyticsModule />;
       default:
