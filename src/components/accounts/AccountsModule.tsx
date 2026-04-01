@@ -34,6 +34,8 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
         return <AccountsARaging />;
       case "sla-reminders":
         return <AccountsSLAReminders />;
+      case "quotation-approvals":
+        return <QuotationApprovals />;
       case "analytics":
         return <SalesAnalyticsModule />;
       default:
