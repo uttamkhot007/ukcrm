@@ -111,6 +111,7 @@ export function DailyActivityTracker() {
         activity_date: selectedDate,
         activity_category: category,
         activity_type: activityType,
+        activity_subtype: selectedPurposes.length > 0 ? selectedPurposes.join(", ") : null,
         duration_minutes: parseInt(duration),
         description: description || null,
         related_organization_id: category === "external" && organizationId ? organizationId : null,
