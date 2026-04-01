@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +62,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function PublicRelationsModule({ initialTab = "coverage" }: PublicRelationsModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewEventDialog, setShowNewEventDialog] = useState(false);
 

@@ -52,6 +52,10 @@ interface DRStats {
 
 export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [tenders, setTenders] = useState<any[]>([]);
   const [dealRegistrations, setDealRegistrations] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);

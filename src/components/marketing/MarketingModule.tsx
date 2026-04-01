@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,6 +65,10 @@ export function MarketingModule({ initialTab = "campaigns" }: MarketingModulePro
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewCampaignDialog, setShowNewCampaignDialog] = useState(false);
   const [campaigns] = useState(MOCK_CAMPAIGNS);

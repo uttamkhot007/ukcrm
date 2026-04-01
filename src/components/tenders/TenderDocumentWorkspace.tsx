@@ -34,6 +34,10 @@ interface WorkspaceStats {
 
 export function TenderDocumentWorkspace({ initialTab = 'rfp-specs' }: TenderDocumentWorkspaceProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

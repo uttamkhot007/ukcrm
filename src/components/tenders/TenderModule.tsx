@@ -36,6 +36,10 @@ interface TenderStats {
 
 export function TenderModule({ initialTab = 'opportunities' }: TenderModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [tenders, setTenders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

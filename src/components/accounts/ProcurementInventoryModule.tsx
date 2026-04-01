@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, ShoppingCart, Warehouse } from "lucide-react";
 import { AccountsProcurement } from "./AccountsProcurement";
@@ -11,6 +11,10 @@ interface ProcurementInventoryModuleProps {
 
 export function ProcurementInventoryModule({ initialTab = "procurement" }: ProcurementInventoryModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   return (
     <div className="space-y-6">
