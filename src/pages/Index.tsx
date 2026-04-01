@@ -548,9 +548,7 @@ const Index = () => {
       case "offensive-remediation":
         return <PlaceholderModule title="Offensive Security" section={activeModule} />;
       
-      // Billing
-      case "billing":
-        return <BillingModule />;
+      // Billing (duplicate removed - already handled at line ~414)
       
       // Compliance
       case "compliance":
