@@ -154,6 +154,7 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [prospectToDelete, setProspectToDelete] = useState<Prospect | null>(null);
 
   const today = new Date();
 
