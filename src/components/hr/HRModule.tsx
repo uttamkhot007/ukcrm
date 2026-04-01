@@ -45,9 +45,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function HRModule({ initialTab = "directory" }: HRModuleProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const { currentTenant } = useTenant();
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["hr-employees", currentTenant?.id],
