@@ -65,6 +65,10 @@ export function MarketingModule({ initialTab = "campaigns" }: MarketingModulePro
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewCampaignDialog, setShowNewCampaignDialog] = useState(false);
   const [campaigns] = useState(MOCK_CAMPAIGNS);

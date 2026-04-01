@@ -54,6 +54,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function CommunicationsModule({ initialTab = "press" }: CommunicationsModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewPRDialog, setShowNewPRDialog] = useState(false);
   const [showNewAnnouncementDialog, setShowNewAnnouncementDialog] = useState(false);

@@ -34,6 +34,10 @@ interface FinanceInsights {
 
 export function TaxationModule({ initialTab = "gst" }: TaxationModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [insights, setInsights] = useState<FinanceInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);

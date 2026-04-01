@@ -12,6 +12,10 @@ interface ProcurementInventoryModuleProps {
 export function ProcurementInventoryModule({ initialTab = "procurement" }: ProcurementInventoryModuleProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   return (
     <div className="space-y-6">
       <div>
