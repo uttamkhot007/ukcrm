@@ -3,25 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Users,
   UserPlus,
-  Briefcase,
-  Calendar,
   Search,
   Building2,
   CheckCircle2,
   Clock,
-  FileText,
-  TrendingUp,
-  AlertCircle,
-  DollarSign,
   MapPin,
   Mail,
-  Scale,
 } from "lucide-react";
 import { HRWorkflowsTab } from "./workflows/HRWorkflowsTab";
 import { MoodAnalyticsDashboard } from "./MoodAnalyticsDashboard";
@@ -217,124 +210,13 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
       case "mood-analytics":
         return <MoodAnalyticsDashboard />;
       case "people":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                People Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <TrendingUp className="w-8 h-8 mx-auto text-primary mb-2" />
-                    <h4 className="font-medium">Performance Reviews</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Track and manage employee performance</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <AlertCircle className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
-                    <h4 className="font-medium">PIP Management</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Performance improvement plans</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-blue-500 mb-2" />
-                    <h4 className="font-medium">Exit Management</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Offboarding and exit interviews</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <HRPeopleManagement />;
       case "salary":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Salary & Benefits
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <DollarSign className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                    <h4 className="font-medium">Payroll Processing</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Monthly salary processing</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <Briefcase className="w-8 h-8 mx-auto text-purple-500 mb-2" />
-                    <h4 className="font-medium">Benefits Administration</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Insurance, PF, gratuity</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-orange-500 mb-2" />
-                    <h4 className="font-medium">Salary Slips</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Generate and distribute</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <HRSalaryBenefits />;
       case "compliance":
         return <HRComplianceModule />;
       case "onboarding":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Onboarding Setup
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <UserPlus className="w-8 h-8 mx-auto text-blue-500 mb-2" />
-                    <h4 className="font-medium">New Hire Checklist</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Onboarding task templates</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                    <h4 className="font-medium">Document Collection</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Required documents tracking</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-dashed">
-                  <CardContent className="p-6 text-center">
-                    <Calendar className="w-8 h-8 mx-auto text-purple-500 mb-2" />
-                    <h4 className="font-medium">Training Schedule</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Induction programs</p>
-                    <Button variant="outline" size="sm" className="mt-4">Configure</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <HROnboarding />;
       default:
         return null;
     }
