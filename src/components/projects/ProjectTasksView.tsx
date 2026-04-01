@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, ListTodo } from "lucide-react";
+import { Plus, Search, ListTodo, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { NewTaskDialog } from "./NewTaskDialog";
+import { EditTaskDialog } from "./EditTaskDialog";
+import { toast } from "sonner";
 
 export function ProjectTasksView() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["my-tasks", searchQuery],
@@ -43,6 +47,27 @@ export function ProjectTasksView() {
       return data;
     },
     enabled: !!user?.id,
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ taskId, currentStatus }: { taskId: string; currentStatus: string }) => {
+      const newStatus = currentStatus === "completed" ? "todo" : "completed";
+      const { error } = await supabase
+        .from("project_tasks")
+        .update({
+          status: newStatus,
+          completed_at: newStatus === "completed" ? new Date().toISOString() : null,
+        })
+        .eq("id", taskId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects-stats"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update task: " + error.message);
+    },
   });
 
   const getStatusBadge = (status: string) => {
@@ -96,25 +121,30 @@ export function ProjectTasksView() {
               <TableHead>Priority</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead className="text-right">Est. Hours</TableHead>
+              <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   Loading tasks...
                 </TableCell>
               </TableRow>
             ) : tasks?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <ListTodo className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">No tasks assigned to you</p>
                 </TableCell>
               </TableRow>
             ) : (
               tasks?.map((task) => (
-                <TableRow key={task.id}>
+                <TableRow 
+                  key={task.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setEditingTask(task)}
+                >
                   <TableCell>
                     <div>
                       <p className="font-medium">{task.title}</p>
@@ -141,6 +171,19 @@ export function ProjectTasksView() {
                   <TableCell className="text-right">
                     {task.estimated_hours || "-"}
                   </TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingTask(task);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -149,6 +192,11 @@ export function ProjectTasksView() {
       </div>
 
       <NewTaskDialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen} />
+      <EditTaskDialog 
+        open={!!editingTask} 
+        onOpenChange={(open) => !open && setEditingTask(null)} 
+        task={editingTask} 
+      />
     </div>
   );
 }
