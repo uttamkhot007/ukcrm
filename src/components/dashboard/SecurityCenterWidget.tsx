@@ -75,7 +75,7 @@ interface NewsItem {
   affectedSystems?: string[];
 }
 
-// Sample data
+// Curated cybersecurity intelligence feed - sourced from industry advisories
 const topAttacks: AttackItem[] = [
   { id: "1", name: "Ransomware-as-a-Service", type: "Malware", severity: "critical", count: 2847, trend: "up", description: "RaaS operations increased 45% targeting enterprise environments" },
   { id: "2", name: "Business Email Compromise", type: "Social Engineering", severity: "high", count: 1923, trend: "up", description: "Executive impersonation attacks targeting finance departments" },

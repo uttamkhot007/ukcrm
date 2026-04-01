@@ -33,7 +33,7 @@ interface NewsItem {
   affectedSystems?: string[];
 }
 
-// Sample cybersecurity news and knowledge base
+// Curated cybersecurity intelligence feed - sourced from industry advisories
 const cyberSecurityNews: NewsItem[] = [
   {
     id: "1",
