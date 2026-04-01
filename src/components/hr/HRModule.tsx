@@ -237,6 +237,15 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
                 ))
               )}
             </div>
+
+            <DeleteConfirmDialog
+              open={!!deleteTarget}
+              onOpenChange={(open) => !open && setDeleteTarget(null)}
+              onConfirm={() => deleteTarget && deleteEmployee.mutate(deleteTarget.id)}
+              title="Remove Employee"
+              description={`Are you sure you want to remove "${deleteTarget?.full_name}"? This action cannot be undone.`}
+              isDeleting={deleteEmployee.isPending}
+            />
           </div>
         );
       case "documents":
