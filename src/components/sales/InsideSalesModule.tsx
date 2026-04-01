@@ -781,6 +781,27 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
           <OfferingsModule />
         </TabsContent>
       </Tabs>
+
+      {/* Delete Prospect Confirmation Dialog */}
+      <AlertDialog open={!!prospectToDelete} onOpenChange={(open) => !open && setProspectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Prospect</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the prospect "{prospectToDelete?.company_name || prospectToDelete?.contact_name || 'Unknown'}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => prospectToDelete && handleDeleteProspect(prospectToDelete.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
