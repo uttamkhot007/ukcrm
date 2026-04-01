@@ -1,60 +1,71 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'NexusCRM - ECS Fargate deployment with ALB, VPC, ECR, and auto-scaling'
+Description: 'NexusCRM Full Stack - ECS Fargate + RDS + Cognito + S3'
 
 Parameters:
   EnvironmentName:
     Type: String
     Default: production
     AllowedValues: [production, staging, development]
-  
-  ViteSupabaseUrl:
+
+  DBInstanceClass:
     Type: String
-    Description: Supabase project URL
-    NoEcho: true
-  
-  ViteSupabasePublishableKey:
+    Default: db.t4g.medium
+    AllowedValues: [db.t4g.micro, db.t4g.small, db.t4g.medium, db.t4g.large, db.r6g.large]
+
+  DBAllocatedStorage:
+    Type: Number
+    Default: 50
+    MinValue: 20
+    MaxValue: 1000
+
+  DBMasterUsername:
     Type: String
-    Description: Supabase anon/publishable key
-    NoEcho: true
-  
-  ViteSupabaseProjectId:
-    Type: String
-    Description: Supabase project ID
+    Default: nexuscrm_admin
     NoEcho: true
 
-  ContainerPort:
+  DBMasterPassword:
+    Type: String
+    MinLength: 16
+    NoEcho: true
+
+  FrontendCpu:
     Type: Number
-    Default: 8080
+    Default: 256
+
+  FrontendMemory:
+    Type: Number
+    Default: 512
+
+  BackendCpu:
+    Type: Number
+    Default: 512
+
+  BackendMemory:
+    Type: Number
+    Default: 1024
 
   DesiredCount:
     Type: Number
     Default: 2
 
-  MinCapacity:
-    Type: Number
-    Default: 1
-
-  MaxCapacity:
-    Type: Number
-    Default: 10
-
-  CpuUnits:
-    Type: Number
-    Default: 256
-    AllowedValues: [256, 512, 1024, 2048, 4096]
-
-  MemoryMB:
-    Type: Number
-    Default: 512
-    AllowedValues: [512, 1024, 2048, 4096, 8192]
-
   CertificateArn:
     Type: String
     Default: ''
-    Description: ACM Certificate ARN for HTTPS (optional)
+
+  AIOpenAIKey:
+    Type: String
+    Default: ''
+    NoEcho: true
+
+  AIGoogleKey:
+    Type: String
+    Default: ''
+    NoEcho: true
 
 Conditions:
   HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
+  HasOpenAIKey: !Not [!Equals [!Ref AIOpenAIKey, '']]
+  HasGoogleKey: !Not [!Equals [!Ref AIGoogleKey, '']]
 
 Resources:
   # ==================== VPC ====================
@@ -70,10 +81,6 @@ Resources:
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub '${EnvironmentName}-nexuscrm-igw'
 
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -88,9 +95,6 @@ Resources:
       CidrBlock: 10.0.1.0/24
       AvailabilityZone: !Select [0, !GetAZs '']
       MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub '${EnvironmentName}-public-1'
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -99,9 +103,6 @@ Resources:
       CidrBlock: 10.0.2.0/24
       AvailabilityZone: !Select [1, !GetAZs '']
       MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub '${EnvironmentName}-public-2'
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -109,9 +110,6 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: 10.0.3.0/24
       AvailabilityZone: !Select [0, !GetAZs '']
-      Tags:
-        - Key: Name
-          Value: !Sub '${EnvironmentName}-private-1'
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -119,9 +117,20 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: 10.0.4.0/24
       AvailabilityZone: !Select [1, !GetAZs '']
-      Tags:
-        - Key: Name
-          Value: !Sub '${EnvironmentName}-private-2'
+
+  DBSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.5.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+
+  DBSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.6.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -136,19 +145,18 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  PublicSubnet1RouteTableAssociation:
+  PublicSubnet1RouteAssoc:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
-  PublicSubnet2RouteTableAssociation:
+  PublicSubnet2RouteAssoc:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
 
-  # NAT Gateway for private subnets
   NatEIP:
     Type: AWS::EC2::EIP
     Properties:
@@ -172,41 +180,17 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway
 
-  PrivateSubnet1RouteTableAssociation:
+  PrivateSubnet1RouteAssoc:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable
 
-  PrivateSubnet2RouteTableAssociation:
+  PrivateSubnet2RouteAssoc:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
-
-  # ==================== ECR ====================
-  ECRRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: !Sub '${EnvironmentName}-nexuscrm'
-      ImageScanningConfiguration:
-        ScanOnPush: true
-      LifecyclePolicy:
-        LifecyclePolicyText: |
-          {
-            "rules": [
-              {
-                "rulePriority": 1,
-                "description": "Keep last 10 images",
-                "selection": {
-                  "tagStatus": "any",
-                  "countType": "imageCountMoreThan",
-                  "countNumber": 10
-                },
-                "action": { "type": "expire" }
-              }
-            ]
-          }
 
   # ==================== Security Groups ====================
   ALBSecurityGroup:
@@ -231,12 +215,198 @@ Resources:
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: !Ref ContainerPort
-          ToPort: !Ref ContainerPort
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 3001
+          ToPort: 3001
           SourceSecurityGroupId: !Ref ALBSecurityGroup
 
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+
+  # ==================== RDS PostgreSQL ====================
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: NexusCRM DB Subnet Group
+      SubnetIds:
+        - !Ref DBSubnet1
+        - !Ref DBSubnet2
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-db'
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: postgres
+      EngineVersion: '16.4'
+      AllocatedStorage: !Ref DBAllocatedStorage
+      StorageType: gp3
+      StorageEncrypted: true
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: nexuscrm
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      MultiAZ: true
+      BackupRetentionPeriod: 14
+      PreferredBackupWindow: '03:00-04:00'
+      PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+      DeletionProtection: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-nexuscrm-db'
+
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  # ==================== AWS Cognito ====================
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${EnvironmentName}-nexuscrm-users'
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      MfaConfiguration: OPTIONAL
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+        - Name: name
+          Required: false
+          Mutable: true
+        - Name: tenant_id
+          AttributeDataType: String
+          Mutable: true
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub '${EnvironmentName}-nexuscrm-app'
+      UserPoolId: !Ref CognitoUserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub '${EnvironmentName}-nexuscrm'
+      UserPoolId: !Ref CognitoUserPool
+
+  # ==================== Secrets Manager ====================
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${EnvironmentName}/nexuscrm/db'
+      Description: NexusCRM Database Credentials
+      SecretString: !Sub |
+        {
+          "host": "${RDSInstance.Endpoint.Address}",
+          "port": ${RDSInstance.Endpoint.Port},
+          "database": "nexuscrm",
+          "username": "${DBMasterUsername}",
+          "password": "${DBMasterPassword}"
+        }
+
+  AISecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${EnvironmentName}/nexuscrm/ai'
+      Description: NexusCRM AI Provider Keys
+      SecretString: !Sub |
+        {
+          "openai_api_key": "${AIOpenAIKey}",
+          "google_api_key": "${AIGoogleKey}"
+        }
+
+  # ==================== S3 ====================
+  UploadsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-nexuscrm-uploads-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  # ==================== ECR ====================
+  FrontendECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub '${EnvironmentName}-nexuscrm-frontend'
+      ImageScanningConfiguration:
+        ScanOnPush: true
+
+  BackendECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub '${EnvironmentName}-nexuscrm-backend'
+      ImageScanningConfiguration:
+        ScanOnPush: true
+
   # ==================== ALB ====================
-  ApplicationLoadBalancer:
+  ALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: !Sub '${EnvironmentName}-nexuscrm-alb'
@@ -248,26 +418,30 @@ Resources:
       SecurityGroups:
         - !Ref ALBSecurityGroup
 
-  ALBTargetGroup:
+  FrontendTG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${EnvironmentName}-nexuscrm-tg'
-      Port: !Ref ContainerPort
+      Name: !Sub '${EnvironmentName}-frontend-tg'
+      Port: 8080
       Protocol: HTTP
       VpcId: !Ref VPC
       TargetType: ip
       HealthCheckPath: /health
-      HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 3
-      Matcher:
-        HttpCode: 200
+
+  BackendTG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${EnvironmentName}-backend-tg'
+      Port: 3001
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /api/health
 
   ALBListenerHTTP:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      LoadBalancerArn: !Ref ALB
       Port: 80
       Protocol: HTTP
       DefaultActions:
@@ -279,13 +453,13 @@ Resources:
               Port: '443'
               StatusCode: HTTP_301
           - Type: forward
-            TargetGroupArn: !Ref ALBTargetGroup
+            TargetGroupArn: !Ref FrontendTG
 
   ALBListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Condition: HasCertificate
     Properties:
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      LoadBalancerArn: !Ref ALB
       Port: 443
       Protocol: HTTPS
       Certificates:
@@ -293,13 +467,26 @@ Resources:
       SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
+          TargetGroupArn: !Ref FrontendTG
+
+  # API routing rule
+  APIListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !If [HasCertificate, !Ref ALBListenerHTTPS, !Ref ALBListenerHTTP]
+      Priority: 10
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTG
 
   # ==================== ECS ====================
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub '${EnvironmentName}-nexuscrm-cluster'
+      ClusterName: !Sub '${EnvironmentName}-nexuscrm'
       ClusterSettings:
         - Name: containerInsights
           Value: enabled
@@ -317,18 +504,18 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       Policies:
-        - PolicyName: ECRPullPolicy
+        - PolicyName: SecretsAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchGetImage
-                  - ecr:GetAuthorizationToken
-                Resource: '*'
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref DBSecret
+                  - !Ref AISecret
 
-  ECSTaskRole:
+  BackendTaskRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -338,47 +525,135 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: '*'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt UploadsBucket.Arn
+                  - !Sub '${UploadsBucket.Arn}/*'
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:ListUsers
+                Resource: !GetAtt CognitoUserPool.Arn
 
-  LogGroup:
+  FrontendLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/ecs/${EnvironmentName}-nexuscrm'
+      LogGroupName: !Sub '/ecs/${EnvironmentName}-nexuscrm-frontend'
       RetentionInDays: 30
 
-  TaskDefinition:
+  BackendLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${EnvironmentName}-nexuscrm-backend'
+      RetentionInDays: 30
+
+  FrontendTaskDef:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub '${EnvironmentName}-nexuscrm'
-      Cpu: !Ref CpuUnits
-      Memory: !Ref MemoryMB
+      Family: !Sub '${EnvironmentName}-nexuscrm-frontend'
+      Cpu: !Ref FrontendCpu
+      Memory: !Ref FrontendMemory
       NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
+      RequiresCompatibilities: [FARGATE]
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt ECSTaskRole.Arn
       ContainerDefinitions:
-        - Name: nexuscrm
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest'
+        - Name: frontend
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${FrontendECR}:latest'
           PortMappings:
-            - ContainerPort: !Ref ContainerPort
-              Protocol: tcp
+            - ContainerPort: 8080
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref LogGroup
+              awslogs-group: !Ref FrontendLogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
-          Essential: true
-          ReadonlyRootFilesystem: false
 
-  ECSService:
-    Type: AWS::ECS::Service
-    DependsOn:
-      - ALBListenerHTTP
+  BackendTaskDef:
+    Type: AWS::ECS::TaskDefinition
     Properties:
-      ServiceName: !Sub '${EnvironmentName}-nexuscrm-service'
+      Family: !Sub '${EnvironmentName}-nexuscrm-backend'
+      Cpu: !Ref BackendCpu
+      Memory: !Ref BackendMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt BackendTaskRole.Arn
+      ContainerDefinitions:
+        - Name: backend
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BackendECR}:latest'
+          PortMappings:
+            - ContainerPort: 3001
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref BackendLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: NODE_ENV
+              Value: production
+            - Name: PORT
+              Value: '3001'
+            - Name: DB_HOST
+              Value: !GetAtt RDSInstance.Endpoint.Address
+            - Name: DB_PORT
+              Value: !Sub '${RDSInstance.Endpoint.Port}'
+            - Name: DB_NAME
+              Value: nexuscrm
+            - Name: DB_SSL
+              Value: 'true'
+            - Name: COGNITO_USER_POOL_ID
+              Value: !Ref CognitoUserPool
+            - Name: COGNITO_CLIENT_ID
+              Value: !Ref CognitoUserPoolClient
+            - Name: COGNITO_REGION
+              Value: !Ref AWS::Region
+            - Name: AI_BEDROCK_ENABLED
+              Value: 'true'
+            - Name: AI_BEDROCK_REGION
+              Value: !Ref AWS::Region
+            - Name: S3_BUCKET
+              Value: !Ref UploadsBucket
+            - Name: S3_REGION
+              Value: !Ref AWS::Region
+          Secrets:
+            - Name: DB_USER
+              ValueFrom: !Sub '${DBSecret}:username::'
+            - Name: DB_PASSWORD
+              ValueFrom: !Sub '${DBSecret}:password::'
+
+  FrontendService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListenerHTTP
+    Properties:
+      ServiceName: !Sub '${EnvironmentName}-frontend'
       Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref TaskDefinition
+      TaskDefinition: !Ref FrontendTaskDef
       DesiredCount: !Ref DesiredCount
       LaunchType: FARGATE
       DeploymentConfiguration:
@@ -390,109 +665,89 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
-          Subnets:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-          SecurityGroups:
-            - !Ref ECSSecurityGroup
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref ECSSecurityGroup]
       LoadBalancers:
-        - TargetGroupArn: !Ref ALBTargetGroup
-          ContainerName: nexuscrm
-          ContainerPort: !Ref ContainerPort
+        - TargetGroupArn: !Ref FrontendTG
+          ContainerName: frontend
+          ContainerPort: 8080
+
+  BackendService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListenerHTTP
+    Properties:
+      ServiceName: !Sub '${EnvironmentName}-backend'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref BackendTaskDef
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref ECSSecurityGroup]
+      LoadBalancers:
+        - TargetGroupArn: !Ref BackendTG
+          ContainerName: backend
+          ContainerPort: 3001
 
   # ==================== Auto Scaling ====================
-  ScalableTarget:
+  BackendScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
-      MaxCapacity: !Ref MaxCapacity
-      MinCapacity: !Ref MinCapacity
-      ResourceId: !Sub 'service/${ECSCluster}/${ECSService.Name}'
+      MaxCapacity: 10
+      MinCapacity: 1
+      ResourceId: !Sub 'service/${ECSCluster}/${BackendService.Name}'
       RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
 
-  ScalingPolicyCPU:
+  BackendCPUScaling:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: !Sub '${EnvironmentName}-cpu-scaling'
+      PolicyName: backend-cpu-scaling
       PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ScalableTarget
+      ScalingTargetId: !Ref BackendScalableTarget
       TargetTrackingScalingPolicyConfiguration:
         PredefinedMetricSpecification:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         TargetValue: 70.0
-        ScaleInCooldown: 300
-        ScaleOutCooldown: 60
-
-  ScalingPolicyMemory:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub '${EnvironmentName}-memory-scaling'
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageMemoryUtilization
-        TargetValue: 80.0
-        ScaleInCooldown: 300
-        ScaleOutCooldown: 60
-
-  # ==================== CloudWatch Alarms ====================
-  HighCPUAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: !Sub '${EnvironmentName}-nexuscrm-high-cpu'
-      AlarmDescription: CPU utilization exceeds 85%
-      Namespace: AWS/ECS
-      MetricName: CPUUtilization
-      Dimensions:
-        - Name: ClusterName
-          Value: !Ref ECSCluster
-        - Name: ServiceName
-          Value: !GetAtt ECSService.Name
-      Statistic: Average
-      Period: 300
-      EvaluationPeriods: 2
-      Threshold: 85
-      ComparisonOperator: GreaterThanThreshold
-
-  UnhealthyHostAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: !Sub '${EnvironmentName}-nexuscrm-unhealthy'
-      AlarmDescription: Unhealthy host count exceeds 0
-      Namespace: AWS/ApplicationELB
-      MetricName: UnHealthyHostCount
-      Dimensions:
-        - Name: TargetGroup
-          Value: !GetAtt ALBTargetGroup.TargetGroupFullName
-        - Name: LoadBalancer
-          Value: !GetAtt ApplicationLoadBalancer.LoadBalancerFullName
-      Statistic: Sum
-      Period: 60
-      EvaluationPeriods: 2
-      Threshold: 0
-      ComparisonOperator: GreaterThanThreshold
 
 Outputs:
-  ALBDnsName:
-    Description: Application Load Balancer DNS
-    Value: !GetAtt ApplicationLoadBalancer.DNSName
-    Export:
-      Name: !Sub '${EnvironmentName}-nexuscrm-alb-dns'
+  ALBDNS:
+    Description: Application URL
+    Value: !GetAtt ALB.DNSName
 
-  ECRRepositoryUri:
-    Description: ECR Repository URI
-    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}'
+  RDSEndpoint:
+    Description: RDS PostgreSQL Endpoint
+    Value: !GetAtt RDSInstance.Endpoint.Address
 
-  ECSClusterName:
-    Description: ECS Cluster Name
-    Value: !Ref ECSCluster
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
 
-  ECSServiceName:
-    Description: ECS Service Name
-    Value: !GetAtt ECSService.Name
+  CognitoClientId:
+    Description: Cognito App Client ID
+    Value: !Ref CognitoUserPoolClient
 
-  VPCId:
-    Description: VPC ID
-    Value: !Ref VPC
+  CognitoDomain:
+    Description: Cognito Hosted UI Domain
+    Value: !Sub 'https://${EnvironmentName}-nexuscrm.auth.${AWS::Region}.amazoncognito.com'
+
+  S3Bucket:
+    Description: Uploads S3 Bucket
+    Value: !Ref UploadsBucket
+
+  FrontendECRUri:
+    Description: Frontend ECR URI
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${FrontendECR}'
+
+  BackendECRUri:
+    Description: Backend ECR URI
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BackendECR}'
