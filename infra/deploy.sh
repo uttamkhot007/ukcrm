@@ -2,102 +2,82 @@
 set -euo pipefail
 
 # ====================================================
-# NexusCRM - AWS Deployment Script
+# NexusCRM - Full Stack AWS Deployment
 # ====================================================
 # Prerequisites:
-#   - AWS CLI configured with appropriate credentials
-#   - Docker installed and running
-#   - Environment variables set (see below)
+#   - AWS CLI configured
+#   - Docker installed
+#   - Environment variables set
 # ====================================================
 
-# Required environment variables
 : "${AWS_REGION:=ap-south-1}"
 : "${ENV_NAME:=production}"
-: "${VITE_SUPABASE_URL:?Set VITE_SUPABASE_URL}"
-: "${VITE_SUPABASE_PUBLISHABLE_KEY:?Set VITE_SUPABASE_PUBLISHABLE_KEY}"
-: "${VITE_SUPABASE_PROJECT_ID:?Set VITE_SUPABASE_PROJECT_ID}"
+: "${DB_MASTER_PASSWORD:?Set DB_MASTER_PASSWORD (min 16 chars)}"
 
 STACK_NAME="${ENV_NAME}-nexuscrm"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-ECR_REPO="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ENV_NAME}-nexuscrm"
 
 echo "============================================"
-echo " NexusCRM AWS Deployment"
+echo " NexusCRM Full Stack Deployment"
 echo " Environment: ${ENV_NAME}"
 echo " Region: ${AWS_REGION}"
-echo " Account: ${ACCOUNT_ID}"
 echo "============================================"
 
-# Step 1: Deploy CloudFormation stack
+# Step 1: Deploy CloudFormation
 echo ""
-echo ">>> Step 1: Deploying CloudFormation stack..."
+echo ">>> Step 1: Deploying infrastructure..."
 aws cloudformation deploy \
   --template-file infra/cloudformation.yaml \
   --stack-name "${STACK_NAME}" \
   --parameter-overrides \
     EnvironmentName="${ENV_NAME}" \
-    ViteSupabaseUrl="${VITE_SUPABASE_URL}" \
-    ViteSupabasePublishableKey="${VITE_SUPABASE_PUBLISHABLE_KEY}" \
-    ViteSupabaseProjectId="${VITE_SUPABASE_PROJECT_ID}" \
+    DBMasterPassword="${DB_MASTER_PASSWORD}" \
+    AIOpenAIKey="${AI_OPENAI_API_KEY:-}" \
+    AIGoogleKey="${AI_GOOGLE_API_KEY:-}" \
   --capabilities CAPABILITY_IAM \
   --region "${AWS_REGION}" \
   --no-fail-on-empty-changeset
 
-echo "    Stack deployed successfully."
+# Get outputs
+FRONTEND_ECR=$(aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='FrontendECRUri'].OutputValue" --output text --region "${AWS_REGION}")
+BACKEND_ECR=$(aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='BackendECRUri'].OutputValue" --output text --region "${AWS_REGION}")
+ALB_DNS=$(aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='ALBDNS'].OutputValue" --output text --region "${AWS_REGION}")
+COGNITO_POOL=$(aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='CognitoUserPoolId'].OutputValue" --output text --region "${AWS_REGION}")
+COGNITO_CLIENT=$(aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='CognitoClientId'].OutputValue" --output text --region "${AWS_REGION}")
 
-# Step 2: Build Docker image
+echo "    Infrastructure deployed."
+
+# Step 2: Login to ECR
 echo ""
-echo ">>> Step 2: Building Docker image..."
+echo ">>> Step 2: Logging into ECR..."
+aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+# Step 3: Build & push frontend
+echo ""
+echo ">>> Step 3: Building frontend..."
 docker build \
-  --build-arg VITE_SUPABASE_URL="${VITE_SUPABASE_URL}" \
-  --build-arg VITE_SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY}" \
-  --build-arg VITE_SUPABASE_PROJECT_ID="${VITE_SUPABASE_PROJECT_ID}" \
-  -t nexuscrm:latest .
+  --build-arg VITE_API_URL="http://${ALB_DNS}" \
+  -t "${FRONTEND_ECR}:latest" .
+docker push "${FRONTEND_ECR}:latest"
 
-echo "    Image built successfully."
-
-# Step 3: Push to ECR
+# Step 4: Build & push backend
 echo ""
-echo ">>> Step 3: Pushing image to ECR..."
-aws ecr get-login-password --region "${AWS_REGION}" | \
-  docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+echo ">>> Step 4: Building backend..."
+docker build \
+  -t "${BACKEND_ECR}:latest" ./backend
+docker push "${BACKEND_ECR}:latest"
 
-docker tag nexuscrm:latest "${ECR_REPO}:latest"
-docker tag nexuscrm:latest "${ECR_REPO}:$(git rev-parse --short HEAD 2>/dev/null || echo 'manual')"
-docker push "${ECR_REPO}:latest"
-docker push "${ECR_REPO}:$(git rev-parse --short HEAD 2>/dev/null || echo 'manual')"
-
-echo "    Image pushed to ECR."
-
-# Step 4: Update ECS service
+# Step 5: Force new deployment
 echo ""
-echo ">>> Step 4: Updating ECS service..."
-CLUSTER_NAME=$(aws cloudformation describe-stacks \
-  --stack-name "${STACK_NAME}" \
-  --query "Stacks[0].Outputs[?OutputKey=='ECSClusterName'].OutputValue" \
-  --output text --region "${AWS_REGION}")
+echo ">>> Step 5: Deploying services..."
+CLUSTER="${ENV_NAME}-nexuscrm"
+aws ecs update-service --cluster "${CLUSTER}" --service "${ENV_NAME}-frontend" --force-new-deployment --region "${AWS_REGION}" > /dev/null
+aws ecs update-service --cluster "${CLUSTER}" --service "${ENV_NAME}-backend" --force-new-deployment --region "${AWS_REGION}" > /dev/null
 
-SERVICE_NAME=$(aws cloudformation describe-stacks \
-  --stack-name "${STACK_NAME}" \
-  --query "Stacks[0].Outputs[?OutputKey=='ECSServiceName'].OutputValue" \
-  --output text --region "${AWS_REGION}")
-
-aws ecs update-service \
-  --cluster "${CLUSTER_NAME}" \
-  --service "${SERVICE_NAME}" \
-  --force-new-deployment \
-  --region "${AWS_REGION}" > /dev/null
-
-echo "    ECS service updated. Deployment in progress..."
-
-# Step 5: Get ALB URL
 echo ""
-ALB_DNS=$(aws cloudformation describe-stacks \
-  --stack-name "${STACK_NAME}" \
-  --query "Stacks[0].Outputs[?OutputKey=='ALBDnsName'].OutputValue" \
-  --output text --region "${AWS_REGION}")
-
 echo "============================================"
 echo " Deployment Complete!"
 echo " URL: http://${ALB_DNS}"
+echo " Cognito Pool: ${COGNITO_POOL}"
+echo " Cognito Client: ${COGNITO_CLIENT}"
 echo "============================================"
