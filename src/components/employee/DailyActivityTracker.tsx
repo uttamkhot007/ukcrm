@@ -295,6 +295,15 @@ export function DailyActivityTracker() {
                           <Building2 className="w-3 h-3" />{activity.organization.name}
                         </p>
                       )}
+                      {activity.activity_subtype && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {activity.activity_subtype.split(", ").map((tag: string) => (
+                            <span key={tag} className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {activity.description && <p className="text-xs text-muted-foreground">{activity.description}</p>}
                     </div>
                   </div>
