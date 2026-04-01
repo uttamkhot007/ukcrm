@@ -22,8 +22,25 @@ import {
   Target, TrendingUp, Users, DollarSign, FileText, 
   CheckCircle2, Circle, ArrowRight, Zap, AlertTriangle,
   ChevronRight, Clock, Award, BarChart3, Settings,
-  Sparkles, Play, Pause, RefreshCw, Info, History, Save
+  Sparkles, Play, Pause, RefreshCw, Info, History, Save,
+  Trash2, Pencil, MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 import { MEDDICWizard } from "@/components/sales/MEDDICWizard";
 import { workflows } from "@/lib/workflows";
