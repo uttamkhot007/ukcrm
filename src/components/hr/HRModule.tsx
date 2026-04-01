@@ -98,12 +98,12 @@ export function HRModule({ initialTab = "directory" }: HRModuleProps) {
   };
 
   const renderContent = () => {
-    if (initialTab.startsWith("workflows-")) {
-      const workflowType = initialTab.replace("workflows-", "");
+    if (activeTab.startsWith("workflows-")) {
+      const workflowType = activeTab.replace("workflows-", "");
       return <HRWorkflowsTab filterType={workflowType} />;
     }
 
-    switch (initialTab) {
+    switch (activeTab) {
       case "directory":
         return (
           <div className="space-y-4">
