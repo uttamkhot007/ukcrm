@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
 
 export function BankReconciliation() {
@@ -12,11 +12,14 @@ export function BankReconciliation() {
         <p className="text-muted-foreground">Match bank statements with book entries</p>
       </div>
       <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Bank reconciliation with statement import, cheque clearing, and reconciliation reports will be available here.</p>
+        <CardContent className="p-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">No reconciliation data</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Bank reconciliation with statement import, cheque clearing, and reconciliation reports will be available once bank accounts are configured.
+          </p>
         </CardContent>
       </Card>
     </div>

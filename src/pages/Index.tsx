@@ -580,7 +580,7 @@ const Index = () => {
     }
   };
 
-  // Placeholder component for modules not yet implemented
+  // Polished placeholder for modules not yet implemented
   const PlaceholderModule = ({ title, section }: { title: string; section: string }) => {
     const sectionLabels: Record<string, string> = {
       "hr-people": "People Management",
@@ -605,14 +605,12 @@ const Index = () => {
       "admin-procurement": "Procurement",
       "management-performance": "People Performance",
       "management-cashflow": "Inflow vs Outflow",
-      // MSS Section Labels
       "mss-soc": "SOC Operations",
       "mss-monitoring": "Threat Monitoring",
       "mss-incidents": "Incident Response",
       "mss-alerts": "Security Alerts",
       "mss-reports": "Security Reports",
       "mss-clients": "Client Portals",
-      // Offensive Security Labels
       "offensive-pentest": "Penetration Testing",
       "offensive-vapt": "VAPT Assessments",
       "offensive-redteam": "Red Team Operations",
@@ -622,14 +620,17 @@ const Index = () => {
     };
 
     return (
-      <div className="p-6">
-        <div className="glass rounded-xl border border-border p-8 text-center">
-          <h2 className="text-2xl font-bold mb-2">{title}</h2>
-          <p className="text-lg text-muted-foreground mb-4">
+      <div className="p-6 flex items-center justify-center min-h-[60vh]">
+        <div className="glass rounded-2xl border border-border/50 p-12 text-center max-w-lg w-full space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <span className="text-3xl">🚀</span>
+          </div>
+          <h2 className="text-2xl font-bold">{title}</h2>
+          <p className="text-lg text-muted-foreground">
             {sectionLabels[section] || section.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
           </p>
-          <p className="text-sm text-muted-foreground">
-            This module is coming soon. Configure workflows and customize as needed.
+          <p className="text-sm text-muted-foreground/70">
+            This module is under development. It will be available in a future release.
           </p>
         </div>
       </div>
