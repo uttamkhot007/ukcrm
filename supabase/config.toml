@@ -83,3 +83,15 @@ verify_jwt = true
 
 [functions.tender-ai-assistant]
 verify_jwt = true
+
+[functions.intelligent-assistant]
+verify_jwt = true
+
+[functions.finance-ai-insights]
+verify_jwt = true
+
+[functions.meddic-insights]
+verify_jwt = true
+
+[functions.enrich-project-plan]
+verify_jwt = true
