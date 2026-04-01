@@ -122,6 +122,10 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
   const orgCurrency = settings?.currency || "INR";
   const alternateCurrency = orgCurrency === "INR" ? "USD" : "INR";
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
