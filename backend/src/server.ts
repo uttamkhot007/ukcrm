@@ -8,11 +8,8 @@ import { logger } from './lib/logger.js';
 import { authPlugin } from './plugins/auth.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
-import { contactsRoutes } from './routes/contacts.js';
-import { dealsRoutes } from './routes/deals.js';
 import { aiRoutes } from './routes/ai.js';
-import { ticketsRoutes } from './routes/tickets.js';
-import { organizationsRoutes } from './routes/organizations.js';
+import { registerAllCrudRoutes } from './routes/all-routes.js';
 
 async function buildServer() {
   const app = Fastify({
