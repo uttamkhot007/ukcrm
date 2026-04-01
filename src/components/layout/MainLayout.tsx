@@ -33,7 +33,7 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
   }
 
   return (
-    <div className="min-h-screen bg-background perspective-container overflow-hidden">
+    <div className="min-h-screen bg-background perspective-container">
       {/* Ambient Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-float" />
@@ -63,15 +63,15 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
       <MobileHeader onMenuClick={() => setIsMobileSidebarOpen(true)} />
       
       <div className={cn(
-        "transition-all duration-500 relative z-10",
+        "transition-all duration-500 relative z-10 h-screen flex flex-col",
         "md:ml-64"
       )}>
         {/* Desktop Header */}
-        <div className="hidden md:block sticky top-0 z-50">
+        <div className="hidden md:block sticky top-0 z-50 flex-shrink-0">
           <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
         </div>
         
-        <main className="min-h-[calc(100vh-4rem)] pb-safe relative page-3d">
+        <main className="flex-1 overflow-y-auto pb-safe relative page-3d">
           <div className="animate-fade-in">
             {children}
           </div>
