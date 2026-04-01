@@ -604,7 +604,17 @@ export function InsideSalesModule({ initialTab = "prospects" }: InsideSalesModul
             {selectedProspect && (
               <>
                 <SheetHeader>
-                  <SheetTitle>{selectedProspect.company_name || "Unknown Company"}</SheetTitle>
+                  <div className="flex items-center justify-between">
+                    <SheetTitle>{selectedProspect.company_name || "Unknown Company"}</SheetTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setProspectToDelete(selectedProspect)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <SheetDescription>
                     {getStatusBadge(selectedProspect.status)}
                     <span className="ml-2">{getPriorityBadge(selectedProspect.priority)}</span>
