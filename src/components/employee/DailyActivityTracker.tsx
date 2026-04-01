@@ -72,6 +72,7 @@ export function DailyActivityTracker() {
   const [duration, setDuration] = useState("30");
   const [description, setDescription] = useState("");
   const [organizationId, setOrganizationId] = useState("");
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
 
   const { data: organizations = [] } = useQuery({
     queryKey: ["customer-organizations-activity", currentTenant?.id],
