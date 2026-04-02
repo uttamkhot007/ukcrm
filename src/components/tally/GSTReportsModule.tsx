@@ -50,9 +50,9 @@ export function GSTReportsModule() {
         .from("gst_transactions")
         .select("*")
         .eq("tenant_id", currentTenant?.id)
-        .gte("transaction_date", `${selectedYear}-04-01`)
-        .lte("transaction_date", `${parseInt(selectedYear) + 1}-03-31`)
-        .order("transaction_date", { ascending: false });
+       .gte("invoice_date", `${selectedYear}-04-01`)
+       .lte("invoice_date", `${parseInt(selectedYear) + 1}-03-31`)
+       .order("invoice_date", { ascending: false });
       if (error) throw error;
       return data || [];
     },
