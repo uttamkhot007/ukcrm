@@ -198,7 +198,7 @@ export function GSTReportsModule() {
                     <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No purchase transactions for this period</TableCell></TableRow>
                   ) : purchaseTransactions.map((t) => (
                     <TableRow key={t.id}>
-                      <TableCell>{format(new Date(t.transaction_date || t.invoice_date), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{format(new Date(t.invoice_date || t.created_at), "dd/MM/yyyy")}</TableCell>
                       <TableCell>{t.invoice_number}</TableCell>
                       <TableCell className="font-mono text-sm">{t.gstin || "—"}</TableCell>
                       <TableCell>{t.hsn_code || "—"}</TableCell>
