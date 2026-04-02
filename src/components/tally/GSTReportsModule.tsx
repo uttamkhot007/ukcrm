@@ -361,7 +361,7 @@ export function GSTReportsModule() {
                     <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No credit/debit notes for this period</TableCell></TableRow>
                   ) : creditNotes.map((note) => (
                     <TableRow key={note.id}>
-                      <TableCell>{format(new Date(note.transaction_date || note.invoice_date), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{format(new Date(note.invoice_date || note.created_at), "dd/MM/yyyy")}</TableCell>
                       <TableCell>{note.invoice_number}</TableCell>
                       <TableCell><Badge variant={note.transaction_type === "credit_note" ? "default" : "destructive"}>{note.transaction_type === "credit_note" ? "Credit Note" : "Debit Note"}</Badge></TableCell>
                       <TableCell className="font-mono text-sm">{note.gstin || "—"}</TableCell>
