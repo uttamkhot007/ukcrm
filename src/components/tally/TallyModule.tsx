@@ -11,6 +11,7 @@ import { RatioAnalysis } from "./RatioAnalysis";
 import { TallyDashboard } from "./TallyDashboard";
 import { BookkeepingModule } from "./BookkeepingModule";
 import { TaxationModule } from "./TaxationModule";
+import { GSTReportsModule } from "./GSTReportsModule";
 
 interface TallyModuleProps {
   initialTab?: string;
