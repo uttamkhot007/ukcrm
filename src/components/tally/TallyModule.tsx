@@ -66,6 +66,10 @@ export function TallyModule({ initialTab = "dashboard" }: TallyModuleProps) {
       case "eway-bill":
         return <TaxationModule initialTab="eway-bill" />;
       
+      // GST Reports
+      case "gst-reports":
+        return <GSTReportsModule />;
+      
       // Others
       case "budgets":
         return <BudgetManagement />;
