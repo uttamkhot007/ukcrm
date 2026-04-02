@@ -332,6 +332,8 @@ const Index = () => {
         return <TallyModule initialTab="taxation" />;
       case "finance-gst":
         return <TallyModule initialTab="gst" />;
+      case "finance-gst-reports":
+        return <TallyModule initialTab="gst-reports" />;
       case "finance-e-invoicing":
         return <TallyModule initialTab="e-invoicing" />;
       case "finance-eway-bill":

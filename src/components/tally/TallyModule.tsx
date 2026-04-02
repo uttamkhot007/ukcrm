@@ -11,6 +11,7 @@ import { RatioAnalysis } from "./RatioAnalysis";
 import { TallyDashboard } from "./TallyDashboard";
 import { BookkeepingModule } from "./BookkeepingModule";
 import { TaxationModule } from "./TaxationModule";
+import { GSTReportsModule } from "./GSTReportsModule";
 
 interface TallyModuleProps {
   initialTab?: string;
@@ -64,6 +65,10 @@ export function TallyModule({ initialTab = "dashboard" }: TallyModuleProps) {
         return <TaxationModule initialTab="e-invoicing" />;
       case "eway-bill":
         return <TaxationModule initialTab="eway-bill" />;
+      
+      // GST Reports
+      case "gst-reports":
+        return <GSTReportsModule />;
       
       // Others
       case "budgets":

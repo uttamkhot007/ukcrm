@@ -814,6 +814,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "finance-profit-loss", label: "Profit & Loss", icon: BarChart3 },
             { id: "finance-balance-sheet", label: "Balance Sheet", icon: PieChart },
             { id: "finance-gst", label: "GST Module", icon: Receipt },
+            { id: "finance-gst-reports", label: "GST Reports", icon: Receipt },
             { id: "finance-contracts", label: "Contracts", icon: FileText },
             { id: "finance-ar-aging", label: "AR Aging", icon: Clock },
             { id: "finance-procurement", label: "Procurement & Inventory", icon: Package },
