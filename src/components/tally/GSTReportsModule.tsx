@@ -24,8 +24,6 @@ export function GSTReportsModule() {
 
   const startDate = startOfMonth(new Date(selectedMonth + "-01"));
   const endDate = endOfMonth(new Date(selectedMonth + "-01"));
-  const fyStart = startOfYear(new Date(selectedYear + "-04-01"));
-  const fyEnd = endOfYear(new Date(selectedYear + "-04-01"));
 
   // Fetch all GST transactions for the period
   const { data: gstTransactions = [], isLoading } = useQuery({
@@ -35,9 +33,9 @@ export function GSTReportsModule() {
         .from("gst_transactions")
         .select("*, voucher:vouchers(*)")
         .eq("tenant_id", currentTenant?.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"))
-        .order("transaction_date", { ascending: false });
+        .gte("invoice_date", format(startDate, "yyyy-MM-dd"))
+        .lte("invoice_date", format(endDate, "yyyy-MM-dd"))
+        .order("invoice_date", { ascending: false });
       if (error) throw error;
       return data || [];
     },
