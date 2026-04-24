@@ -83,7 +83,8 @@ export function GSTReportsModule() {
   const rcmTax = purchaseTransactions.filter(t => t.reverse_charge).reduce((s, t) => s + (t.cgst_amount || 0) + (t.sgst_amount || 0) + (t.igst_amount || 0), 0);
 
   // HSN-wise summary
-  const hsnSummary = gstTransactions.reduce((acc, t) => {
+  type HsnRow = { hsn: string; taxableValue: number; igst: number; cgst: number; sgst: number; count: number };
+  const hsnSummary: Record<string, HsnRow> = (gstTransactions as any[]).reduce((acc: Record<string, HsnRow>, t: any) => {
     const key = t.hsn_code || "Unclassified";
     if (!acc[key]) acc[key] = { hsn: key, taxableValue: 0, igst: 0, cgst: 0, sgst: 0, count: 0 };
     acc[key].taxableValue += t.taxable_value || 0;
@@ -92,7 +93,7 @@ export function GSTReportsModule() {
     acc[key].sgst += t.sgst_amount || 0;
     acc[key].count += 1;
     return acc;
-  }, {} as Record<string, { hsn: string; taxableValue: number; igst: number; cgst: number; sgst: number; count: number }>);
+  }, {} as Record<string, HsnRow>);
 
   // GSTR-9 Annual Summary
   const annualSalesTx = annualTransactions.filter(t => t.transaction_type === "sale");
