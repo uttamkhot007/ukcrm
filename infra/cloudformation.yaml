@@ -62,10 +62,16 @@ Parameters:
     Default: ''
     NoEcho: true
 
+  AlarmEmail:
+    Type: String
+    Default: ''
+    Description: Optional email address to receive CloudWatch alarm notifications.
+
 Conditions:
   HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
   HasOpenAIKey: !Not [!Equals [!Ref AIOpenAIKey, '']]
   HasGoogleKey: !Not [!Equals [!Ref AIGoogleKey, '']]
+  HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, '']]
 
 Resources:
   # ==================== VPC ====================
@@ -763,6 +769,14 @@ Resources:
     Properties:
       TopicName: !Sub '${EnvironmentName}-nexuscrm-alarms'
       DisplayName: NexusCRM Production Alarms
+
+  AlarmEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlarmEmail
+    Properties:
+      TopicArn: !Ref AlarmTopic
+      Protocol: email
+      Endpoint: !Ref AlarmEmail
 
   # ==================== CloudWatch Alarms ====================
   BackendHighCPUAlarm:
