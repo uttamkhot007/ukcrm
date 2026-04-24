@@ -67,7 +67,7 @@ export function HRAnalyticsDashboard() {
         return acc;
       }, {}) || {};
 
-      const departmentBreakdown = Object.entries(departmentData)
+      const departmentBreakdown = (Object.entries(departmentData) as [string, number][])
         .map(([name, value], index) => ({
           name,
           value,
@@ -520,7 +520,7 @@ export function HRAnalyticsDashboard() {
                   />
                   <span className="font-medium">{type.name}</span>
                 </div>
-                <Badge variant="secondary">{type.value}</Badge>
+                <Badge variant="secondary">{type.value as React.ReactNode}</Badge>
               </div>
             ))}
           </div>

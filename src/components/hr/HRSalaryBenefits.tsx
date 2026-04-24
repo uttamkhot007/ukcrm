@@ -154,10 +154,10 @@ export function HRSalaryBenefits() {
               <p className="text-sm text-muted-foreground">Generate salary slips for employees</p>
             </div>
             <div className="space-y-2">
-              {departments.slice(0, 4).map(dept => (
-                <div key={dept} className="flex items-center justify-between p-2 rounded bg-muted/50 text-sm">
-                  <span>{dept}</span>
-                  <span className="text-muted-foreground">{employees.filter(e => e.department === dept).length} emp</span>
+              {departments.slice(0, 4).map((dept: any) => (
+                <div key={String(dept)} className="flex items-center justify-between p-2 rounded bg-muted/50 text-sm">
+                  <span>{String(dept)}</span>
+                  <span className="text-muted-foreground">{employees.filter((e: any) => e.department === dept).length} emp</span>
                 </div>
               ))}
             </div>

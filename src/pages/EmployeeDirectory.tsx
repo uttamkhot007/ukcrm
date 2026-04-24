@@ -182,9 +182,9 @@ export default function EmployeeDirectory() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {locations.map((loc) => (
-                          <SelectItem key={loc} value={loc as string}>
-                            {loc}
+                        {locations.map((loc: any) => (
+                          <SelectItem key={String(loc)} value={String(loc)}>
+                            {String(loc)}
                           </SelectItem>
                         ))}
                       </SelectContent>

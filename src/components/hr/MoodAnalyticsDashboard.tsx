@@ -100,7 +100,7 @@ export function MoodAnalyticsDashboard() {
       }, {});
 
       const total = logs?.length || 0;
-      const stats = Object.entries(moodCounts).map(([mood, count]) => ({
+      const stats = (Object.entries(moodCounts) as [string, number][]).map(([mood, count]) => ({
         mood,
         count,
         percentage: total > 0 ? Math.round((count / total) * 100) : 0,

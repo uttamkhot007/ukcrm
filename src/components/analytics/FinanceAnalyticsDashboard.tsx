@@ -142,7 +142,7 @@ export function FinanceAnalyticsDashboard() {
         return acc;
       }, {}) || {};
 
-      const expenseCategoryData = Object.entries(expenseCategories)
+      const expenseCategoryData = (Object.entries(expenseCategories) as [string, number][])
         .map(([name, value], index) => ({
           name,
           value,

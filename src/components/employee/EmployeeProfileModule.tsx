@@ -100,7 +100,7 @@ export function EmployeeProfileModule() {
       if (!user?.id) throw new Error("Not authenticated");
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(updates as Record<string, unknown>)
         .eq('id', user.id);
       
       if (error) throw error;
