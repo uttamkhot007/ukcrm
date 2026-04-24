@@ -619,6 +619,8 @@ const storage = {
       createSignedUploadUrl: softWarn("storage.createSignedUploadUrl") as (...args: any[]) => Promise<any>,
     };
   },
+  listBuckets: (async () => ({ data: [] as any[], error: null })) as () => Promise<{ data: any[]; error: any }>,
+  getBucket: (async (_id: string) => ({ data: null, error: null })) as (id: string) => Promise<{ data: any; error: any }>,
 };
 
 const functions = {
