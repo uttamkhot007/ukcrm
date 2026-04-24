@@ -227,8 +227,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (!isMounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(session as unknown as Session);
+        setUser((session?.user ?? null) as unknown as User);
         
         if (session?.user) {
           await fetchUserData(session.user.id);
@@ -254,8 +254,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Skip if this is the initial session (already handled above)
         if (!initialSessionHandled) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(session as unknown as Session);
+        setUser((session?.user ?? null) as unknown as User);
 
         if (session?.user) {
           // Use setTimeout to avoid Supabase auth deadlock
