@@ -8,7 +8,7 @@ import {
   CheckCircle, AlertCircle, Clock, FileSpreadsheet, Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/api/client';
 import { toast } from 'sonner';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow, TableCell, WidthType } from 'docx';
 import { saveAs } from 'file-saver';

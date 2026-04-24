@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { format, subMonths, subDays, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
@@ -142,7 +142,7 @@ export function FinanceAnalyticsDashboard() {
         return acc;
       }, {}) || {};
 
-      const expenseCategoryData = Object.entries(expenseCategories)
+      const expenseCategoryData = (Object.entries(expenseCategories) as [string, number][])
         .map(([name, value], index) => ({
           name,
           value,

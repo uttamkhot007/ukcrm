@@ -18,7 +18,7 @@ import {
   HardDrive,
   Wrench
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { toast } from "sonner";
 
 interface HealthCheck {

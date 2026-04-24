@@ -7,7 +7,7 @@ import {
   FileText, Calendar, Building2, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/api/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';

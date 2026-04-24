@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -145,7 +145,7 @@ export function FrameworkDetailsSheet({ frameworkId, open, onOpenChange }: Frame
               </div>
 
               <div className="space-y-4">
-                {Object.entries(groupedControls).map(([category, categoryControls]) => (
+                {(Object.entries(groupedControls) as [string, any[]][]).map(([category, categoryControls]) => (
                   <Collapsible key={category} defaultOpen>
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted">
                       <span className="font-medium">{category}</span>
@@ -155,7 +155,7 @@ export function FrameworkDetailsSheet({ frameworkId, open, onOpenChange }: Frame
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-2 mt-2">
-                      {categoryControls?.map((control) => (
+                      {categoryControls?.map((control: any) => (
                         <div key={control.id} className="p-3 border rounded-lg">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">

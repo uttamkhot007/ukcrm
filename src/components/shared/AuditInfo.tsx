@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { formatDistanceToNow, format } from "date-fns";
 import { User, Clock, Edit3 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";

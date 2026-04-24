@@ -20,7 +20,7 @@ import { DayBook } from "./DayBook";
 import { CashBook } from "./CashBook";
 import { BankBook } from "./BankBook";
 import { BankReconciliation } from "./BankReconciliation";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 
 interface BookkeepingModuleProps {
   initialTab?: string;

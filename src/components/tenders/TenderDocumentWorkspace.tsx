@@ -9,7 +9,7 @@ import {
   FileCheck, Clock, CheckCircle, AlertCircle, Loader2, Brain,
   FileType, Settings2
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/api/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";

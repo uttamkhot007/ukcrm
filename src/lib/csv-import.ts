@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { parseFile } from "./file-parser";
 
 export interface ContactCSVRow {

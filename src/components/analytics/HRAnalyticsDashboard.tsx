@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { format, subMonths, subDays, startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 import {
@@ -67,7 +67,7 @@ export function HRAnalyticsDashboard() {
         return acc;
       }, {}) || {};
 
-      const departmentBreakdown = Object.entries(departmentData)
+      const departmentBreakdown = (Object.entries(departmentData) as [string, number][])
         .map(([name, value], index) => ({
           name,
           value,
@@ -520,7 +520,7 @@ export function HRAnalyticsDashboard() {
                   />
                   <span className="font-medium">{type.name}</span>
                 </div>
-                <Badge variant="secondary">{type.value}</Badge>
+                <Badge variant="secondary">{type.value as React.ReactNode}</Badge>
               </div>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -282,7 +282,7 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     return acc;
   }, {} as Record<string, number>);
 
-  const segmentData = Object.entries(customersBySegment)
+  const segmentData = (Object.entries(customersBySegment) as [string, number][])
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
@@ -336,7 +336,7 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     return acc;
   }, {} as Record<string, number>);
 
-  const revenueByTypeData = Object.entries(revenueByType)
+  const revenueByTypeData = (Object.entries(revenueByType) as [string, number][])
     .map(([name, value]) => ({ 
       name: name === "product" ? "Products" : 
             name === "service" ? "Managed Services" : 
@@ -354,7 +354,7 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
     return acc;
   }, {} as Record<string, number>);
 
-  const regionData = Object.entries(revenueByRegion)
+  const regionData = (Object.entries(revenueByRegion) as [string, number][])
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
@@ -837,10 +837,10 @@ export function SalesManagerDashboard({ onNavigate }: SalesManagerDashboardProps
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium truncate">{region.name}</span>
-                      <span className="text-sm text-muted-foreground">{region.value}</span>
+                      <span className="text-sm text-muted-foreground">{region.value as React.ReactNode}</span>
                     </div>
                     <Progress 
-                      value={(region.value / customers.length) * 100} 
+                      value={((region.value as number) / customers.length) * 100} 
                       className="h-2"
                     />
                   </div>

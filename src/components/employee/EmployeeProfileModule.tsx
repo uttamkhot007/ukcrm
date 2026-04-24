@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,7 +100,7 @@ export function EmployeeProfileModule() {
       if (!user?.id) throw new Error("Not authenticated");
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(updates as Record<string, unknown>)
         .eq('id', user.id);
       
       if (error) throw error;

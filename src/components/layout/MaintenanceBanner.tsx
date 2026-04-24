@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 
 export function MaintenanceBanner() {
   const [isVisible, setIsVisible] = useState(false);

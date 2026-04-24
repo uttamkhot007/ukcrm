@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -221,7 +221,7 @@ export function EmployeeProfilePage({
     acc[log.mood] = (acc[log.mood] || 0) + 1;
     return acc;
   }, {});
-  const primaryMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+  const primaryMood = (Object.entries(moodCounts) as [string, number][]).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
   const getStatusColor = (status: string) => {
     switch (status) {

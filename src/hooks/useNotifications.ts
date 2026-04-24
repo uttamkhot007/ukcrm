@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
 import { useNotificationSound, isWithinQuietHours, SoundType } from "@/hooks/useNotificationSound";

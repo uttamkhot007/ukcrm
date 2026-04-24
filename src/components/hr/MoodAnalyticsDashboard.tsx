@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { format, subDays, startOfDay } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
@@ -100,7 +100,7 @@ export function MoodAnalyticsDashboard() {
       }, {});
 
       const total = logs?.length || 0;
-      const stats = Object.entries(moodCounts).map(([mood, count]) => ({
+      const stats = (Object.entries(moodCounts) as [string, number][]).map(([mood, count]) => ({
         mood,
         count,
         percentage: total > 0 ? Math.round((count / total) * 100) : 0,

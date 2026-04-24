@@ -13,7 +13,7 @@ import { useWebRTC, Call, VirtualBackground } from '@/hooks/useWebRTC';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
 import { useBrowserNotifications } from '@/hooks/useBrowserNotifications';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/api/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Phone, Video, Monitor, PhoneOff, Mic, MicOff, VideoOff,
