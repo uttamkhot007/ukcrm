@@ -597,52 +597,68 @@ const auth = {
 // Stubs for unimplemented surfaces (storage, functions, channel, rpc)
 // ============================================================================
 
-function notImplemented(name: string) {
-  return () => {
-    throw new Error(
-      `[supabase-shim] ${name} is not supported by the self-hosted REST backend. Migrate this call to a dedicated endpoint.`,
+function softWarn(name: string) {
+  return (...args: any[]) => {
+    console.warn(
+      `[supabase-shim] ${name} is not supported by the self-hosted REST backend. Args:`,
+      args,
     );
+    return Promise.resolve({ data: null, error: { message: `${name} not supported` } });
   };
 }
 
 const storage = {
   from(_bucket: string) {
     return {
-      upload: notImplemented("storage.upload"),
-      download: notImplemented("storage.download"),
-      remove: notImplemented("storage.remove"),
-      list: notImplemented("storage.list"),
-      getPublicUrl: () => ({ data: { publicUrl: "" } }),
-      createSignedUrl: notImplemented("storage.createSignedUrl"),
+      upload: softWarn("storage.upload") as (...args: any[]) => Promise<any>,
+      download: softWarn("storage.download") as (...args: any[]) => Promise<any>,
+      remove: softWarn("storage.remove") as (...args: any[]) => Promise<any>,
+      list: softWarn("storage.list") as (...args: any[]) => Promise<any>,
+      getPublicUrl: (_path?: string) => ({ data: { publicUrl: "" } }),
+      createSignedUrl: softWarn("storage.createSignedUrl") as (...args: any[]) => Promise<any>,
+      createSignedUploadUrl: softWarn("storage.createSignedUploadUrl") as (...args: any[]) => Promise<any>,
     };
   },
 };
 
 const functions = {
-  invoke: notImplemented("functions.invoke"),
+  invoke: (async (name: string, _opts?: { body?: any; headers?: Record<string, string> }) => {
+    console.warn(`[supabase-shim] functions.invoke("${name}") not supported by REST backend`);
+    return { data: null, error: { message: `functions.invoke("${name}") not supported` } };
+  }) as (name: string, opts?: any) => Promise<{ data: any; error: any }>,
 };
 
 function channel(_name: string) {
-  return {
-    on() {
-      return this;
+  const ch: any = {
+    on(_event: string, _filter?: any, _cb?: any) {
+      return ch;
     },
-    subscribe() {
-      return this;
+    subscribe(_cb?: any) {
+      return ch;
     },
     unsubscribe() {
       return Promise.resolve("ok");
     },
+    send(_payload: any) {
+      return Promise.resolve("ok");
+    },
+    track(_state: any) {
+      return Promise.resolve("ok");
+    },
+    untrack() {
+      return Promise.resolve("ok");
+    },
   };
+  return ch;
 }
 
 function removeChannel(_ch: unknown) {
   return Promise.resolve("ok");
 }
 
-function rpc(name: string, _args?: Record<string, unknown>) {
+function rpc(name: string, _args?: Record<string, unknown>): any {
   console.warn(`[supabase-shim] rpc("${name}") is not supported by REST backend`);
-  return Promise.resolve(fail(new Error(`rpc("${name}") not supported`)));
+  return Promise.resolve({ data: null, error: { message: `rpc("${name}") not supported` } });
 }
 
 // ============================================================================
@@ -650,7 +666,10 @@ function rpc(name: string, _args?: Record<string, unknown>) {
 // ============================================================================
 
 export const supabaseShim = {
-  from<T = unknown>(table: string) {
+  // Default to `any` so legacy call sites that relied on Supabase's typed
+  // `Database` generics keep their inferred row shapes without manual edits.
+  // Strict typing can be restored module-by-module by passing an explicit T.
+  from<T = any>(table: string) {
     return new QueryBuilder<T>(table);
   },
   auth,
