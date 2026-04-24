@@ -232,14 +232,64 @@ export const ai = {
 };
 
 // ============= API Object =============
+// Mirrors the routes registered in backend/src/routes/all-routes.ts so
+// callers get autocompletion for every table in the system.
+const tableRoutes = [
+  'contacts', 'deals', 'tickets', 'alliance-organizations', 'alliance-users',
+  'assets', 'asset-categories', 'asset-assignments', 'asset-maintenance',
+  'attendance', 'attendance-activities', 'activity-definitions',
+  'calendar-events', 'chat-conversations', 'chat-messages', 'chat-participants',
+  'compliance-frameworks', 'compliance-controls', 'compliance-evidence',
+  'compliance-assessments', 'contractors', 'quotations', 'quotation-items',
+  'invoices', 'invoice-items', 'estimates', 'estimate-items',
+  'deal-activities', 'deal-products', 'deal-registrations', 'deal-stage-log',
+  'employee-requests', 'leave-requests', 'leave-policies', 'leave-balances',
+  'expense-reports', 'expense-items', 'expense-categories',
+  'travel-requests', 'travel-bookings', 'renewals',
+  'sales-teams', 'sales-team-members', 'sales-targets', 'sales-territories',
+  'sales-forecasts', 'inside-sales-prospects', 'leads',
+  'projects', 'project-tasks', 'project-members', 'project-milestones',
+  'project-documents', 'tenders', 'tender-documents', 'sops',
+  'customer-support-contracts', 'customer-support-tickets', 'customer-deliveries',
+  'notifications', 'profiles', 'user-roles', 'user-teams',
+  'tenant-members', 'tenants', 'tenant-modules', 'module-definitions',
+  'account-groups', 'ledger-accounts', 'voucher-types', 'vouchers',
+  'voucher-entries', 'budgets', 'budget-items', 'currencies',
+  'cost-centers', 'bank-reconciliation', 'day-book-entries', 'fiscal-years',
+  'stock-items', 'stock-groups', 'inventory-items',
+  'gst-transactions', 'gst-returns', 'product-catalog',
+  'vendors', 'distributors', 'job-postings', 'job-applicants',
+  'hr-workflows', 'onboarding-requests', 'resignation-requests',
+  'employee-documents', 'employee-events', 'employee-certifications',
+  'daily-activities', 'presales-opportunities', 'poc-requests',
+  'demo-schedules', 'payment-records', 'post-sale-workflows',
+  'accounts-workflows', 'order-processing-requests', 'legal-documents',
+  'email-templates', 'email-sequences', 'document-templates',
+  'training-sessions', 'learning-courses', 'approval-workflows',
+  'canned-responses', 'cybersecurity-news', 'cynet-licenses',
+  'integrations', 'team-chat-messages', 'team-reminders',
+  'video-calls', 'remote-sessions', 'landing-pages', 'web-form-captures',
+  'marketing-journeys', 'sales-automations', 'rotten-deal-settings',
+  'tenant-audit-log', 'tenant-invitations', 'organization-settings',
+  'organization-notes', 'organization-meetings', 'organization-tasks',
+  'support-slas', 'oem-technologies', 'contact-lifecycle-stages',
+  'notification-preferences',
+] as const;
+
+type TableRoute = typeof tableRoutes[number];
+type ApiTables = { [K in TableRoute]: ReturnType<typeof createCrudApi> };
+
+const tableApis = tableRoutes.reduce((acc, route) => {
+  acc[route] = createCrudApi(route);
+  return acc;
+}, {} as ApiTables);
+
 export const api = {
   auth,
-  contacts: createCrudApi('contacts'),
-  deals: createCrudApi('deals'),
-  tickets: createCrudApi('tickets'),
-  organizations: createCrudApi('organizations'),
   ai,
-  
+  ...tableApis,
+  // Convenience alias so existing `api.organizations` keeps working
+  organizations: createCrudApi('alliance-organizations'),
   // Raw request for custom endpoints
   request,
 };

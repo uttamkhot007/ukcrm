@@ -54,14 +54,63 @@ export function createCrudRoutes(config: CrudConfig) {
         countQuery = countQuery.where(userField, request.user!.id);
       }
 
-      // Apply generic column filters from query params
+      // Apply generic column filters from query params.
+      // Supports `column=value` (eq) and `column__op=value` for op in
+      // gt|gte|lt|lte|like|ilike|in|neq|is, plus `column__not__op=value`.
       const reservedParams = ['page', 'limit', 'search', 'sortBy', 'sortOrder'];
-      for (const [key, value] of Object.entries(query)) {
-        if (!reservedParams.includes(key) && typeof value === 'string' && value) {
-          baseQuery = baseQuery.where(key, value);
-          countQuery = countQuery.where(key, value);
+      const opMap: Record<string, string> = {
+        gt: '>',
+        gte: '>=',
+        lt: '<',
+        lte: '<=',
+        neq: '<>',
+        like: 'like',
+        ilike: 'ilike',
+      };
+      for (const [key, rawValue] of Object.entries(query)) {
+        if (reservedParams.includes(key)) continue;
+        if (typeof rawValue !== 'string' || rawValue === '') continue;
+
+        // Parse `column__op` and `column__not__op`
+        let column = key;
+        let op = 'eq';
+        let negate = false;
+        const parts = key.split('__');
+        if (parts.length >= 2) {
+          column = parts[0];
+          if (parts[1] === 'not' && parts[2]) {
+            negate = true;
+            op = parts[2];
+          } else {
+            op = parts[1];
+          }
         }
+
+        const applyFilter = (qb: any) => {
+          if (op === 'eq') {
+            negate ? qb.whereNot(column, rawValue) : qb.where(column, rawValue);
+          } else if (op === 'in') {
+            const vals = rawValue.split(',');
+            negate ? qb.whereNotIn(column, vals) : qb.whereIn(column, vals);
+          } else if (op === 'is') {
+            // is null / is true / is false
+            const v = rawValue.toLowerCase();
+            if (v === 'null') negate ? qb.whereNotNull(column) : qb.whereNull(column);
+            else if (v === 'true') qb.where(column, true);
+            else if (v === 'false') qb.where(column, false);
+            else qb.where(column, rawValue);
+          } else if (opMap[op]) {
+            const sqlOp = opMap[op];
+            negate
+              ? qb.whereNot(column, sqlOp, rawValue)
+              : qb.where(column, sqlOp, rawValue);
+          }
+        };
+
+        applyFilter(baseQuery);
+        applyFilter(countQuery);
       }
+
 
       if (search && searchColumns.length > 0) {
         const searchFilter = `%${search}%`;
