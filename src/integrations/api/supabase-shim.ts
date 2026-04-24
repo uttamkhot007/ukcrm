@@ -505,7 +505,7 @@ const auth = {
   }: {
     email: string;
     password: string;
-    options?: { data?: { full_name?: string } };
+    options?: { data?: { full_name?: string }; emailRedirectTo?: string };
   }) {
     try {
       const fullName = options?.data?.full_name || email;
@@ -520,7 +520,7 @@ const auth = {
     }
   },
 
-  async signOut() {
+  async signOut(_opts?: { scope?: "global" | "local" | "others" }) {
     try {
       await restRequest("/api/auth/logout", { method: "POST" }).catch(() => null);
     } finally {
