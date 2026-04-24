@@ -264,7 +264,7 @@ class QueryBuilder<T = unknown> implements PromiseLike<PostgrestResponse<T | T[]
   }
 
   // -------- modifiers --------
-  order(column: string, opts?: { ascending?: boolean }) {
+  order(column: string, opts?: { ascending?: boolean; nullsFirst?: boolean; foreignTable?: string }) {
     this.state.orderBy = { column, ascending: opts?.ascending !== false };
     return this;
   }
