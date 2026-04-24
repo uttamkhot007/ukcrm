@@ -37,7 +37,7 @@ export function GSTReportsModule() {
         .lte("invoice_date", format(endDate, "yyyy-MM-dd"))
         .order("invoice_date", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: !!currentTenant?.id,
   });
@@ -54,7 +54,7 @@ export function GSTReportsModule() {
        .lte("invoice_date", `${parseInt(selectedYear) + 1}-03-31`)
        .order("invoice_date", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: !!currentTenant?.id && activeReport === "gstr9",
   });
