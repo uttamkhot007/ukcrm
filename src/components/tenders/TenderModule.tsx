@@ -8,7 +8,7 @@ import {
   Plus, Search, FileText, Users, Activity, Calendar, 
   TrendingUp, AlertTriangle, CheckCircle, Clock, XCircle 
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/api/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';

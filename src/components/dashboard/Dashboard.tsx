@@ -20,7 +20,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { PremiumMetricCard } from "./PremiumMetricCard";
 import { PremiumModuleCard } from "./PremiumModuleCard";
 import { ActivityFeed } from "./ActivityFeed";

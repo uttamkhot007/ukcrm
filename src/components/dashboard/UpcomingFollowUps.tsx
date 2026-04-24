@@ -15,7 +15,7 @@ import {
   Bell,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
 

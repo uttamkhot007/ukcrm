@@ -12,7 +12,7 @@ import {
   IndianRupee, Scale, ArrowRight, Clock
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 

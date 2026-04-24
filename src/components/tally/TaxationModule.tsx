@@ -20,7 +20,7 @@ import { GSTModule } from "./GSTModule";
 import { TDSTCSModule } from "./TDSTCSModule";
 import { EInvoicingModule } from "./EInvoicingModule";
 import { EWayBillModule } from "./EWayBillModule";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 
 interface TaxationModuleProps {
   initialTab?: string;

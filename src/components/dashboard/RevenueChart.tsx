@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/api/client";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTenant } from "@/contexts/TenantContext";
