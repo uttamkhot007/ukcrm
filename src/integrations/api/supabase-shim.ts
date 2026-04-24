@@ -132,6 +132,8 @@ interface BuilderState {
   mode: "select" | "insert" | "update" | "upsert" | "delete";
   payload?: unknown;
   upsertOnConflict?: string;
+  countMode?: "exact" | "planned" | "estimated";
+  headOnly?: boolean;
 }
 
 class QueryBuilder<T = unknown> implements PromiseLike<PostgrestResponse<T | T[]>> {
@@ -148,8 +150,13 @@ class QueryBuilder<T = unknown> implements PromiseLike<PostgrestResponse<T | T[]
   }
 
   // -------- mutation entry points --------
-  select(cols = "*"): this {
+  select(
+    cols: string = "*",
+    opts?: { count?: "exact" | "planned" | "estimated"; head?: boolean },
+  ): this {
     this.state.selectCols = cols;
+    if (opts?.count) this.state.countMode = opts.count;
+    if (opts?.head) this.state.headOnly = true;
     if (cols.includes("(") || cols.includes(")")) {
       // Embedded-resource selects are not supported by the REST factory.
       // We log once but still execute, returning the row without joins.
