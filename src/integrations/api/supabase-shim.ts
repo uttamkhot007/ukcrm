@@ -623,11 +623,20 @@ const storage = {
   getBucket: (async (_id: string) => ({ data: null, error: null })) as (id: string) => Promise<{ data: any; error: any }>,
 };
 
+interface FunctionsInvokeOptions {
+  body?: any;
+  headers?: Record<string, string>;
+  method?: string;
+}
+
 const functions = {
-  invoke: (async (name: string, _opts?: { body?: any; headers?: Record<string, string> }) => {
+  async invoke<T = any>(
+    name: string,
+    _opts?: FunctionsInvokeOptions,
+  ): Promise<{ data: T | null; error: { message: string } | null }> {
     console.warn(`[supabase-shim] functions.invoke("${name}") not supported by REST backend`);
     return { data: null, error: { message: `functions.invoke("${name}") not supported` } };
-  }) as (name: string, opts?: any) => Promise<{ data: any; error: any }>,
+  },
 };
 
 function channel(_name: string) {
