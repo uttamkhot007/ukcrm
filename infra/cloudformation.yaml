@@ -746,6 +746,18 @@ Resources:
               Value: !Ref UploadsBucket
             - Name: S3_REGION
               Value: !Ref AWS::Region
+            - Name: REDIS_HOST
+              Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+            - Name: REDIS_PORT
+              Value: !GetAtt RedisCluster.PrimaryEndPoint.Port
+            - Name: REDIS_TLS
+              Value: 'true'
+            - Name: SES_REGION
+              Value: !Ref AWS::Region
+            - Name: SES_FROM_DOMAIN
+              Value: !Ref SesDomainName
+            - Name: PUBLIC_ASSET_HOST
+              Value: !Sub 'https://${PublicAssetsCDN.DomainName}'
           Secrets:
             - Name: DB_USER
               ValueFrom: !Sub '${DBSecret}:username::'
