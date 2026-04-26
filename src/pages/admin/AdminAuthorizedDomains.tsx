@@ -171,11 +171,14 @@ export default function AdminAuthorizedDomains() {
               <Label htmlFor="domain">Email domain</Label>
               <Input
                 id="domain"
-                placeholder="acme.com"
+                placeholder="acme.com  or  *.acme.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 required
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use <code className="font-mono">*.acme.com</code> to allow every subdomain.
+              </p>
             </div>
 
             {isSuperAdmin && (
