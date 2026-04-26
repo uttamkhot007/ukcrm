@@ -459,7 +459,7 @@ export function HRStageRulesDialog({ open, onOpenChange }: HRStageRulesDialogPro
           </DialogTitle>
           <DialogDescription>
             Configure who gets notified and what they see at each onboarding, offboarding, and
-            retention stage. Use {{token}} placeholders in messages.
+            retention stage. Use {`{{token}}`} placeholders in messages.
           </DialogDescription>
         </DialogHeader>
 
@@ -702,9 +702,9 @@ export function HRStageRulesDialog({ open, onOpenChange }: HRStageRulesDialogPro
                           />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Tokens: {{employee_name}}, {{employee_email}}, {{stage}},{" "}
-                          {{workflow_title}}, {{manager_name}}, {{company}},{" "}
-                          {{due_date}}
+                          Tokens: {`{{employee_name}}`}, {`{{employee_email}}`}, {`{{stage}}`},{" "}
+                          {`{{workflow_title}}`}, {`{{manager_name}}`}, {`{{company}}`},{" "}
+                          {`{{due_date}}`}
                         </p>
                       </div>
                     </div>
