@@ -1,0 +1,99 @@
+name: Deploy NexusCRM to AWS ECS Fargate
+
+# ──────────────────────────────────────────────────────────────────────
+# Triggered on push to main. Builds frontend + backend Docker images,
+# pushes to ECR, runs DB migrations, force-deploys ECS services.
+#
+# Prerequisites (one-time setup in your AWS account):
+#   1. CloudFormation stack deployed:  bash infra/deploy.sh
+#   2. IAM role for GitHub OIDC trust   (see runbook DEPLOYMENT.md)
+#   3. Repository secrets set:
+#        AWS_DEPLOY_ROLE_ARN  — arn:aws:iam::<acct>:role/GitHubDeployRole
+#        AWS_REGION           — ap-south-1
+#        ENV_NAME             — production
+# ──────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # OIDC
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ENV_NAME: ${{ secrets.ENV_NAME }}
+  STACK_NAME: ${{ secrets.ENV_NAME }}-nexuscrm
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Read CloudFormation outputs
+        id: cfn
+        run: |
+          OUT() { aws cloudformation describe-stacks --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+          echo "frontend_ecr=$(OUT FrontendECRUri)"     >> $GITHUB_OUTPUT
+          echo "backend_ecr=$(OUT BackendECRUri)"       >> $GITHUB_OUTPUT
+          echo "alb_dns=$(OUT ALBDNS)"                  >> $GITHUB_OUTPUT
+          echo "cluster=${ENV_NAME}-nexuscrm"           >> $GITHUB_OUTPUT
+
+      - name: Build & push frontend
+        run: |
+          docker build \
+            --build-arg VITE_API_URL="https://${{ steps.cfn.outputs.alb_dns }}" \
+            -t ${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }} \
+            -t ${{ steps.cfn.outputs.frontend_ecr }}:latest .
+          docker push ${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }}
+          docker push ${{ steps.cfn.outputs.frontend_ecr }}:latest
+
+      - name: Build & push backend
+        run: |
+          docker build \
+            -t ${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }} \
+            -t ${{ steps.cfn.outputs.backend_ecr }}:latest ./backend
+          docker push ${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }}
+          docker push ${{ steps.cfn.outputs.backend_ecr }}:latest
+
+      - name: Run DB migrations (one-shot ECS task)
+        run: |
+          aws ecs run-task \
+            --cluster ${{ steps.cfn.outputs.cluster }} \
+            --task-definition ${ENV_NAME}-backend \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnets'].OutputValue" --output text)],assignPublicIp=DISABLED}" \
+            --overrides '{"containerOverrides":[{"name":"backend","command":["node","dist/db/migrate.js"]}]}' \
+            --started-by "gha-${{ github.run_id }}"
+
+      - name: Force new deployment of ECS services
+        run: |
+          aws ecs update-service --cluster ${{ steps.cfn.outputs.cluster }} \
+            --service ${ENV_NAME}-frontend --force-new-deployment > /dev/null
+          aws ecs update-service --cluster ${{ steps.cfn.outputs.cluster }} \
+            --service ${ENV_NAME}-backend  --force-new-deployment > /dev/null
+
+      - name: Wait for services to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ steps.cfn.outputs.cluster }} \
+            --services ${ENV_NAME}-frontend ${ENV_NAME}-backend
+
+      - name: Summary
+        run: |
+          echo "✅ Deployed commit ${{ github.sha }}"
+          echo "🌐 https://${{ steps.cfn.outputs.alb_dns }}"
