@@ -299,6 +299,8 @@ export default function AdminAuthorizedDomains() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>• When someone signs up, the backend rejects their request unless their email's domain matches an enabled entry above.</p>
+          <p>• Wildcards: <code className="font-mono">*.acme.com</code> matches <em>any</em> subdomain (e.g. <code>eng.acme.com</code>, <code>a.b.acme.com</code>) but <strong>not</strong> the apex <code>acme.com</code> — add both if you need both.</p>
+          <p>• Match priority: tenant-scoped beats global, exact match beats wildcard.</p>
           <p>• If the matched entry is scoped to a tenant, the new user is automatically added to that tenant.</p>
           <p>• <strong>Default role = "Tenant Admin"</strong> means anyone signing up with that domain becomes an admin of the scoped tenant. Use sparingly.</p>
           <p>• Disabling an entry stops new signups but does not remove existing users.</p>
