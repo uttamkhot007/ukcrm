@@ -254,7 +254,12 @@ export default function AdminAuthorizedDomains() {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell className="font-mono">@{row.domain}</TableCell>
+                    <TableCell>
+                      <span className="font-mono">{row.domain.startsWith("*.") ? row.domain : `@${row.domain}`}</span>
+                      {row.domain.startsWith("*.") && (
+                        <Badge variant="outline" className="ml-2 text-[10px]">wildcard</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {row.tenant_name ? (
                         <Badge variant="secondary">{row.tenant_name}</Badge>
