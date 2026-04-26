@@ -25,6 +25,7 @@ import AdminProcurement from "./pages/admin/AdminProcurement";
 import AdminSupportManagement from "./pages/admin/AdminSupportManagement";
 import AdminDocumentTemplates from "./pages/admin/AdminDocumentTemplates";
 import AdminWhitelabel from "./pages/admin/AdminWhitelabel";
+import AdminAuthorizedDomains from "./pages/admin/AdminAuthorizedDomains";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import SupportPortal from "./pages/SupportPortal";
@@ -84,6 +85,7 @@ const App = () => (
                   <Route path="procurement" element={<AdminProcurement />} />
                   <Route path="support-management" element={<AdminSupportManagement />} />
                   <Route path="document-templates" element={<AdminDocumentTemplates />} />
+                  <Route path="authorized-domains" element={<AdminAuthorizedDomains />} />
                 </Route>
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
