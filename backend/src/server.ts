@@ -11,6 +11,11 @@ import { authRoutes } from './routes/auth.js';
 import { aiRoutes } from './routes/ai.js';
 import { workflowRoutes } from './routes/workflows.js';
 import { storageRoutes } from './routes/storage.js';
+import { integrationsRoutes } from './routes/integrations.js';
+import { adminUserRoutes } from './routes/users-admin.js';
+import { exchangeRatesRoutes } from './routes/exchange-rates.js';
+import { realtimePlugin } from './plugins/realtime.js';
+import { closeAllQueues } from './lib/queues.js';
 import { registerAllCrudRoutes } from './routes/all-routes.js';
 
 async function buildServer() {
@@ -53,6 +58,12 @@ async function buildServer() {
   await app.register(aiRoutes, { prefix: '/api/ai' });
   await app.register(workflowRoutes, { prefix: '/api/workflows' });
   await app.register(storageRoutes, { prefix: '/api/storage' });
+  await app.register(integrationsRoutes, { prefix: '/api/integrations' });
+  await app.register(adminUserRoutes, { prefix: '/api/admin' });
+  await app.register(exchangeRatesRoutes, { prefix: '/api/exchange-rates' });
+
+  // WebSocket realtime gateway (mounts /api/realtime)
+  await app.register(realtimePlugin);
 
   // Register all CRUD routes for every table
   registerAllCrudRoutes(app);
@@ -80,6 +91,7 @@ async function buildServer() {
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}, shutting down gracefully...`);
     await app.close();
+    await closeAllQueues();
     await db.destroy();
     process.exit(0);
   };
