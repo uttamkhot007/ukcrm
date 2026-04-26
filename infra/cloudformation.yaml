@@ -80,6 +80,7 @@ Conditions:
   HasOpenAIKey: !Not [!Equals [!Ref AIOpenAIKey, '']]
   HasGoogleKey: !Not [!Equals [!Ref AIGoogleKey, '']]
   HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, '']]
+  HasSesDomain: !Not [!Equals [!Ref SesDomainName, '']]
 
 Resources:
   # ==================== VPC ====================
