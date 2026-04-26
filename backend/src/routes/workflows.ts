@@ -14,6 +14,8 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/connection.js';
 import { logger } from '../lib/logger.js';
+import { getQueue } from '../lib/queues.js';
+import { publishRealtime } from '../lib/redis.js';
 
 const triggerSchema = z.object({
   type: z.enum([
@@ -51,7 +53,11 @@ interface NotificationInsert {
 
 async function createNotifications(rows: NotificationInsert[]) {
   if (rows.length === 0) return;
-  await db('notifications').insert(rows);
+  // Enqueue rather than insert directly — the worker persists, fans out via
+  // WebSocket, and dispatches the email channel.
+  for (const row of rows) {
+    await getQueue('notifications').add('workflow', row);
+  }
 }
 
 async function getManagerIds(tenantId?: string): Promise<string[]> {
