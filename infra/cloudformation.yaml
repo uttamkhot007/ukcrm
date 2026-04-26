@@ -662,8 +662,19 @@ Resources:
                   - cognito-idp:AdminGetUser
                   - cognito-idp:AdminCreateUser
                   - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminUpdateUserAttributes
                   - cognito-idp:ListUsers
                 Resource: !GetAtt CognitoUserPool.Arn
+        - PolicyName: SESSendEmail
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                  - ses:SendTemplatedEmail
+                Resource: '*'
 
   FrontendLogGroup:
     Type: AWS::Logs::LogGroup
