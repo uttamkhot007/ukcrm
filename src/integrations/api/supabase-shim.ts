@@ -707,6 +707,15 @@ const storage = {
 const FUNCTION_ROUTE_MAP: Record<string, string> = {
   "workflow-trigger": "/api/workflows/trigger",
   "exchange-rates": "/api/exchange-rates",
+  "scheduled-checks": "/api/workflows/trigger", // worker handles cron
+  // Admin user management
+  "create-users": "/api/admin/users/bulk-create",
+  "set-user-password": "/api/admin/users/set-password",
+  // Integrations
+  "hubspot-auth": "/api/integrations/hubspot/callback",
+  "hubspot-sync": "/api/integrations/hubspot/sync",
+  "office365-auth": "/api/integrations/office365/callback",
+  "office365-sync": "/api/integrations/office365/sync",
   // AI assistants & insights — point at the unified /api/ai/chat with a context hint
   "intelligent-assistant": "/api/ai/chat",
   "sales-assistant": "/api/ai/chat",
@@ -719,6 +728,19 @@ const FUNCTION_ROUTE_MAP: Record<string, string> = {
   "meddic-insights": "/api/ai/insights",
   "account-intelligence": "/api/ai/insights",
   "contact-intelligence": "/api/ai/insights",
+  // AI enrichment / generators (all funnel through unified chat with a typed context)
+  "enrich-company": "/api/ai/chat",
+  "enrich-executives": "/api/ai/chat",
+  "enrich-offering": "/api/ai/chat",
+  "enrich-problem-area": "/api/ai/chat",
+  "enrich-project-plan": "/api/ai/chat",
+  "enrich-user": "/api/ai/chat",
+  "batch-enrich-offerings": "/api/ai/chat",
+  "fetch-company-info": "/api/ai/chat",
+  "generate-recommendation-steps": "/api/ai/chat",
+  "generate-solution-documentation": "/api/ai/chat",
+  "verify-document": "/api/ai/chat",
+  "threat-intelligence": "/api/ai/chat",
 };
 
 interface FunctionsInvokeOptions {
@@ -751,31 +773,156 @@ const functions = {
   },
 };
 
-function channel(_name: string) {
+// ============================================================================
+// Realtime channels — backed by a single WebSocket to /api/realtime
+// ============================================================================
+//
+// Map of supabase channel API onto our gateway:
+//   .on('postgres_changes', { event, schema, table, filter? }, cb)
+//      -> subscribe to "tenant:<tenantId>:<table>"  (publishers emit there)
+//   .on('broadcast', { event }, cb)
+//      -> subscribe to "broadcast:<channelName>:<event>"
+//   .on('presence', ...) -> ignored (no-op)
+//
+// All callbacks for a given channel name share one logical subscription.
+// We open a single shared WebSocket on first subscribe and reuse it.
+
+interface RealtimeMessage { channel: string; data: any }
+type ChannelHandler = (msg: any) => void;
+
+class RealtimeClient {
+  private ws: WebSocket | null = null;
+  private connecting: Promise<void> | null = null;
+  private handlers = new Map<string, Set<ChannelHandler>>();
+  private pending: string[] = [];
+
+  private buildUrl(token: string, channels: string[]): string {
+    const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || "";
+    const wsBase = apiBase
+      ? apiBase.replace(/^http/, "ws")
+      : `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
+    const params = new URLSearchParams({ token });
+    for (const c of channels) params.append("channel", c);
+    return `${wsBase}/api/realtime?${params.toString()}`;
+  }
+
+  private async connect() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
+    if (this.connecting) return this.connecting;
+    const token = tokenStore.get();
+    if (!token) return; // not signed in — skip silently
+    this.connecting = new Promise<void>((resolve) => {
+      const url = this.buildUrl(token, Array.from(this.handlers.keys()));
+      const ws = new WebSocket(url);
+      this.ws = ws;
+      ws.onopen = () => {
+        // flush any pending subscriptions
+        for (const ch of this.pending) ws.send(JSON.stringify({ action: "subscribe", channel: ch }));
+        this.pending = [];
+        resolve();
+      };
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data) as RealtimeMessage;
+          const set = this.handlers.get(msg.channel);
+          if (set) for (const h of set) h(msg.data);
+        } catch {}
+      };
+      ws.onclose = () => {
+        this.ws = null;
+        this.connecting = null;
+        // simple reconnect after 2s if we have handlers
+        if (this.handlers.size > 0) setTimeout(() => this.connect(), 2_000);
+      };
+      ws.onerror = () => { /* close handler will reconnect */ };
+    });
+    return this.connecting;
+  }
+
+  subscribe(channel: string, handler: ChannelHandler) {
+    let set = this.handlers.get(channel);
+    if (!set) { set = new Set(); this.handlers.set(channel, set); }
+    set.add(handler);
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ action: "subscribe", channel }));
+    } else {
+      this.pending.push(channel);
+      this.connect();
+    }
+  }
+
+  unsubscribe(channel: string, handler?: ChannelHandler) {
+    const set = this.handlers.get(channel);
+    if (!set) return;
+    if (handler) set.delete(handler); else set.clear();
+    if (set.size === 0) {
+      this.handlers.delete(channel);
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ action: "unsubscribe", channel }));
+      }
+    }
+  }
+}
+
+const realtimeClient = typeof window !== "undefined" ? new RealtimeClient() : null;
+
+interface ChannelConfig {
+  table?: string;
+  schema?: string;
+  filter?: string;
+  event?: string;
+}
+
+function channel(name: string) {
+  const subscriptions: Array<{ ch: string; cb: ChannelHandler }> = [];
   const ch: any = {
-    on(_event: string, _filter?: any, _cb?: any) {
+    on(event: string, filter: ChannelConfig | ((p: any) => void), cb?: (payload: any) => void) {
+      // Support both signatures: .on(event, cb) and .on(event, filter, cb)
+      const handler = (typeof filter === "function" ? filter : cb) as ChannelHandler;
+      const cfg = (typeof filter === "function" ? {} : filter) as ChannelConfig;
+      let topic: string;
+      if (event === "postgres_changes" && cfg.table) {
+        // We don't have tenant scope on the client easily — backend enforces.
+        topic = `table:${cfg.table}`;
+      } else if (event === "broadcast") {
+        topic = `broadcast:${name}`;
+      } else {
+        topic = `${event}:${name}`;
+      }
+      const wrapped: ChannelHandler = (payload) => {
+        // emulate supabase shape: { eventType, new, old, schema, table }
+        try {
+          handler({
+            eventType: payload?.event || event,
+            new: payload?.row || payload?.new || payload,
+            old: payload?.old || null,
+            schema: cfg.schema || "public",
+            table: cfg.table,
+          });
+        } catch {}
+      };
+      subscriptions.push({ ch: topic, cb: wrapped });
       return ch;
     },
-    subscribe(_cb?: any) {
+    subscribe(cb?: (status: string) => void) {
+      for (const s of subscriptions) realtimeClient?.subscribe(s.ch, s.cb);
+      queueMicrotask(() => cb?.("SUBSCRIBED"));
       return ch;
     },
     unsubscribe() {
+      for (const s of subscriptions) realtimeClient?.unsubscribe(s.ch, s.cb);
+      subscriptions.length = 0;
       return Promise.resolve("ok");
     },
-    send(_payload: any) {
-      return Promise.resolve("ok");
-    },
-    track(_state: any) {
-      return Promise.resolve("ok");
-    },
-    untrack() {
-      return Promise.resolve("ok");
-    },
+    send(_payload: any) { return Promise.resolve("ok"); },
+    track(_state: any) { return Promise.resolve("ok"); },
+    untrack() { return Promise.resolve("ok"); },
   };
   return ch;
 }
 
-function removeChannel(_ch: unknown) {
+function removeChannel(ch: any) {
+  try { ch?.unsubscribe?.(); } catch {}
   return Promise.resolve("ok");
 }
 
