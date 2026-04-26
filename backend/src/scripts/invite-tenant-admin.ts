@@ -90,6 +90,20 @@ async function main() {
     .insert({ tenant_id: tenant.id, user_id: userSub, role: 'admin', status: 'active' })
     .onConflict(['tenant_id', 'user_id']).merge({ role: 'admin', status: 'active' });
 
+  // Auto-allowlist the admin's email domain so their colleagues can self-signup
+  const emailDomain = EMAIL!.split('@')[1].toLowerCase();
+  await db('authorized_domains')
+    .insert({
+      tenant_id: tenant.id,
+      domain: emailDomain,
+      default_role: 'user',
+      enabled: true,
+      notes: `Auto-added when inviting first admin (${EMAIL})`,
+      created_by: userSub,
+    })
+    .onConflict(['tenant_id', 'domain']).ignore();
+  console.log(`  ✓ Allowlisted "${emailDomain}" for tenant "${tenant.slug}"`);
+
   console.log(`\n✅ ${EMAIL} is now admin of "${tenant.name}"`);
   console.log(`   They will receive an email from Cognito with a temporary password.\n`);
   await db.destroy();

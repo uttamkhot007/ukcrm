@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { config } from '../config/index.js';
 import { logger } from '../lib/logger.js';
 import { db } from '../db/connection.js';
+import { lookupAuthorizedDomain } from './authorized-domains.js';
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: config.cognito.region,
@@ -102,6 +103,15 @@ export async function authRoutes(app: FastifyInstance) {
 
     const { email, password, fullName } = parsed.data;
 
+    // Strict allowlist: email domain must be authorized
+    const allowed = await lookupAuthorizedDomain(email);
+    if (!allowed) {
+      logger.warn({ email }, 'Signup rejected: domain not authorized');
+      return reply.status(403).send({
+        error: 'Email domain not authorized for signup. Please contact your administrator.',
+      });
+    }
+
     try {
       const command = new SignUpCommand({
         ClientId: config.cognito.clientId,
@@ -115,12 +125,30 @@ export async function authRoutes(app: FastifyInstance) {
 
       const response = await cognitoClient.send(command);
 
-      // Create profile in DB
+      // Create profile in DB scoped to the matched tenant (if any)
       await db('profiles').insert({
         user_id: response.UserSub,
         email,
         full_name: fullName,
+        tenant_id: allowed.tenant_id ?? null,
       }).onConflict('email').ignore();
+
+      // Assign default role from allowlist (user | admin)
+      await db('user_roles')
+        .insert({ user_id: response.UserSub!, role: allowed.default_role })
+        .onConflict(['user_id', 'role']).ignore();
+
+      // If domain is scoped to a tenant, add membership
+      if (allowed.tenant_id) {
+        await db('tenant_members')
+          .insert({
+            tenant_id: allowed.tenant_id,
+            user_id: response.UserSub!,
+            role: allowed.default_role,
+            status: 'active',
+          })
+          .onConflict(['tenant_id', 'user_id']).ignore();
+      }
 
       return {
         message: 'Registration successful. Please check your email for the verification code.',

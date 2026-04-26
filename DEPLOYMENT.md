@@ -104,7 +104,37 @@ What it does (idempotent, safe to re-run):
 
 Login → `https://<ALB-DNS>/auth` with the email + password you set.
 
+### 4b. Alternative: seed from GitHub Actions (no laptop needed)
+
+After step 2's OIDC role is in place, add these GitHub repo secrets:
+- `SUPERADMIN_EMAIL` (e.g. `platform@yourco.com`)
+- `SUPERADMIN_PASSWORD` (strong, 12+ chars)
+- `SUPERADMIN_NAME` (optional)
+
+Then go to **GitHub → Actions → "Seed Superadmin (one-shot)" → Run workflow**,
+type `SEED` to confirm. The workflow runs `seed-superadmin.ts` as a one-shot
+Fargate task using the already-deployed backend image.
+
 ---
+
+## 4c. Authorize email domains for tenant signup (Strict Allowlist)
+
+Self-signup is **blocked by default**. To let users register with their
+corporate email, the super admin (or a tenant admin) must allowlist the
+domain in the UI:
+
+1. Log in as super admin.
+2. Go to **Admin Center → Authorized Domains**.
+3. Add the domain (e.g. `acme.com`), pick the tenant, choose default role
+   (`User` for staff, `Tenant Admin` to auto-promote).
+4. From now on anyone signing up with `*@acme.com` is auto-added to that tenant.
+
+> The `invite-tenant-admin.ts` script auto-allowlists the admin's email
+> domain for the tenant on first invite, so you usually don't need to add
+> the first entry manually.
+
+---
+
 
 ## 5. Invite a **Tenant Admin** (logs in with their corporate email)
 

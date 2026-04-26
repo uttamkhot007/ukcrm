@@ -13,6 +13,7 @@ import { workflowRoutes } from './routes/workflows.js';
 import { storageRoutes } from './routes/storage.js';
 import { integrationsRoutes } from './routes/integrations.js';
 import { adminUserRoutes } from './routes/users-admin.js';
+import { authorizedDomainsRoutes } from './routes/authorized-domains.js';
 import { exchangeRatesRoutes } from './routes/exchange-rates.js';
 import { realtimePlugin } from './plugins/realtime.js';
 import { closeAllQueues } from './lib/queues.js';
@@ -60,6 +61,7 @@ async function buildServer() {
   await app.register(storageRoutes, { prefix: '/api/storage' });
   await app.register(integrationsRoutes, { prefix: '/api/integrations' });
   await app.register(adminUserRoutes, { prefix: '/api/admin' });
+  await app.register(authorizedDomainsRoutes, { prefix: '/api/admin' });
   await app.register(exchangeRatesRoutes, { prefix: '/api/exchange-rates' });
 
   // WebSocket realtime gateway (mounts /api/realtime)
