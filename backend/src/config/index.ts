@@ -106,4 +106,32 @@ export const config = {
   // Rate Limiting
   rateLimitMax: parseInt(optionalEnv('RATE_LIMIT_MAX', '100'), 10),
   rateLimitWindowMs: parseInt(optionalEnv('RATE_LIMIT_WINDOW_MS', '60000'), 10),
+
+  // Redis / ElastiCache (Valkey) - used for BullMQ queues & realtime pub/sub
+  redis: {
+    host: optionalEnv('REDIS_HOST', 'localhost'),
+    port: parseInt(optionalEnv('REDIS_PORT', '6379'), 10),
+    password: process.env['REDIS_PASSWORD'] || undefined,
+    tls: boolEnv('REDIS_TLS', false),
+    db: parseInt(optionalEnv('REDIS_DB', '0'), 10),
+  },
+
+  // SES (transactional email)
+  ses: {
+    region: optionalEnv('SES_REGION', 'ap-south-1'),
+    fromAddress: optionalEnv('SES_FROM', 'noreply@nexuscrm.local'),
+  },
+
+  // Integrations
+  hubspot: {
+    clientId: process.env['HUBSPOT_CLIENT_ID'] || '',
+    clientSecret: process.env['HUBSPOT_CLIENT_SECRET'] || '',
+    redirectUri: process.env['HUBSPOT_REDIRECT_URI'] || '',
+  },
+  office365: {
+    clientId: process.env['OFFICE365_CLIENT_ID'] || '',
+    clientSecret: process.env['OFFICE365_CLIENT_SECRET'] || '',
+    tenantId: optionalEnv('OFFICE365_TENANT_ID', 'common'),
+    redirectUri: process.env['OFFICE365_REDIRECT_URI'] || '',
+  },
 };
