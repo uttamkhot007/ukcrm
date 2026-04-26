@@ -24,6 +24,7 @@ import { WorkflowTimelineView } from "./WorkflowTimelineView";
 import { NewOnboardingWorkflowDialog } from "./NewOnboardingWorkflowDialog";
 import { WorkflowDetailsSheet } from "./WorkflowDetailsSheet";
 import { WorkflowSettingsDialog } from "./WorkflowSettingsDialog";
+import { HRStageRulesDialog } from "./HRStageRulesDialog";
 import { WorkflowTemplateBoards } from "./WorkflowTemplateBoards";
 
 interface HRWorkflowsTabProps {
@@ -36,6 +37,7 @@ export function HRWorkflowsTab({ filterType = "all" }: HRWorkflowsTabProps) {
   const [showNewWorkflow, setShowNewWorkflow] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStageRules, setShowStageRules] = useState(false);
 
   const { data: workflows = [], isLoading, refetch } = useQuery({
     queryKey: ["hr-workflows", filterType],
@@ -166,6 +168,10 @@ export function HRWorkflowsTab({ filterType = "all" }: HRWorkflowsTabProps) {
           </div>
           {canManageWorkflows && (
             <>
+              <Button variant="outline" size="sm" onClick={() => setShowStageRules(true)}>
+                <GitBranch className="w-4 h-4 mr-2" />
+                Stage Rules
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
@@ -215,6 +221,11 @@ export function HRWorkflowsTab({ filterType = "all" }: HRWorkflowsTabProps) {
       <WorkflowSettingsDialog
         open={showSettings}
         onOpenChange={setShowSettings}
+      />
+
+      <HRStageRulesDialog
+        open={showStageRules}
+        onOpenChange={setShowStageRules}
       />
     </div>
   );
