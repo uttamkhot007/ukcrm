@@ -77,6 +77,7 @@ import {
   Newspaper,
   Video,
   Palette,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -225,6 +226,7 @@ const adminItems: NavItem[] = [
       { id: "admin-center-organization", label: "Organization", icon: Building2 },
       { id: "admin-center-whitelabel", label: "Whitelabel", icon: Palette },
       { id: "admin-center-users", label: "User Management", icon: Users },
+      { id: "admin-center-authorized-domains", label: "Authorized Domains", icon: ShieldCheck },
       { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
       { id: "admin-center-offerings", label: "Offerings", icon: Package },
       { id: "admin-center-document-templates", label: "Document Templates", icon: FileText },
