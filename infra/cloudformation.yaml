@@ -241,7 +241,7 @@ Resources:
   DBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: RDS Security Group
+      GroupDescription: Aurora PostgreSQL Security Group
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -249,46 +249,84 @@ Resources:
           ToPort: 5432
           SourceSecurityGroupId: !Ref ECSSecurityGroup
 
-  # ==================== RDS PostgreSQL ====================
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ElastiCache Valkey Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+
+  # ==================== Aurora PostgreSQL Serverless v2 ====================
+  # Recommended database for this multi-tenant CRM workload.
+  # - Drop-in PostgreSQL: keeps every existing trigger, function, RLS policy, and SQL query.
+  # - Auto-scales 0.5 -> 128 ACUs in seconds (no manual instance resizing).
+  # - 6-way replicated storage, sub-30s failover, up to 15 read replicas.
+  # - Native pgvector / pg_cron / logical replication for future AI/embedding features.
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: NexusCRM DB Subnet Group
+      DBSubnetGroupDescription: NexusCRM Aurora Subnet Group
       SubnetIds:
         - !Ref DBSubnet1
         - !Ref DBSubnet2
 
-  RDSInstance:
-    Type: AWS::RDS::DBInstance
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
     DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
     Properties:
-      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-db'
-      DBInstanceClass: !Ref DBInstanceClass
-      Engine: postgres
+      DBClusterIdentifier: !Sub '${EnvironmentName}-nexuscrm-aurora'
+      Engine: aurora-postgresql
       EngineVersion: '16.4'
-      AllocatedStorage: !Ref DBAllocatedStorage
-      StorageType: gp3
-      StorageEncrypted: true
+      EngineMode: provisioned
+      DatabaseName: nexuscrm
       MasterUsername: !Ref DBMasterUsername
       MasterUserPassword: !Ref DBMasterPassword
-      DBName: nexuscrm
-      VPCSecurityGroups:
-        - !Ref DBSecurityGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
-      MultiAZ: true
+      VpcSecurityGroupIds:
+        - !Ref DBSecurityGroup
+      StorageEncrypted: true
       BackupRetentionPeriod: 14
       PreferredBackupWindow: '03:00-04:00'
       PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
-      AutoMinorVersionUpgrade: true
-      CopyTagsToSnapshot: true
       DeletionProtection: true
-      MonitoringInterval: 60
-      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
-      EnablePerformanceInsights: true
-      PerformanceInsightsRetentionPeriod: 7
+      EnableCloudwatchLogsExports:
+        - postgresql
+      CopyTagsToSnapshot: true
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref AuroraMinCapacity
+        MaxCapacity: !Ref AuroraMaxCapacity
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName}-nexuscrm-db'
+          Value: !Sub '${EnvironmentName}-nexuscrm-aurora'
+
+  AuroraWriter:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-writer'
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+
+  AuroraReader:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-reader'
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
 
   RDSMonitoringRole:
     Type: AWS::IAM::Role
@@ -302,6 +340,34 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  # ==================== ElastiCache Valkey ====================
+  # Used for: BullMQ background jobs, realtime pub/sub fan-out, session/AI response cache.
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: NexusCRM Valkey subnet group
+      SubnetIds:
+        - !Ref DBSubnet1
+        - !Ref DBSubnet2
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupId: !Sub '${EnvironmentName}-nexuscrm-cache'
+      ReplicationGroupDescription: NexusCRM Valkey cluster
+      Engine: valkey
+      EngineVersion: '7.2'
+      CacheNodeType: cache.t4g.small
+      NumCacheClusters: 2
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      AtRestEncryptionEnabled: true
+      TransitEncryptionEnabled: true
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      SecurityGroupIds:
+        - !Ref RedisSecurityGroup
+      AutoMinorVersionUpgrade: true
 
   # ==================== AWS Cognito ====================
   CognitoUserPool:
