@@ -917,10 +917,10 @@ Resources:
       AlarmActions: [!Ref AlarmTopic]
       TreatMissingData: notBreaching
 
-  RDSCPUAlarm:
+  AuroraCPUAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${EnvironmentName}-rds-high-cpu'
+      AlarmName: !Sub '${EnvironmentName}-aurora-high-cpu'
       Namespace: AWS/RDS
       MetricName: CPUUtilization
       Statistic: Average
@@ -929,42 +929,60 @@ Resources:
       Threshold: 80
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
-        - Name: DBInstanceIdentifier
+        - Name: DBClusterIdentifier
           Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
 
-  RDSStorageAlarm:
+  AuroraCapacityAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${EnvironmentName}-rds-low-storage'
-      AlarmDescription: RDS free storage below 5GB
+      AlarmName: !Sub '${EnvironmentName}-aurora-near-max-capacity'
+      AlarmDescription: Aurora Serverless v2 sustained near max ACU - consider raising AuroraMaxCapacity.
       Namespace: AWS/RDS
-      MetricName: FreeStorageSpace
+      MetricName: ServerlessDatabaseCapacity
       Statistic: Average
       Period: 300
-      EvaluationPeriods: 2
-      Threshold: 5368709120
-      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: 3
+      Threshold: !Ref AuroraMaxCapacity
+      ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
-        - Name: DBInstanceIdentifier
+        - Name: DBClusterIdentifier
+          Value: !Ref AuroraCluster
+      AlarmActions: [!Ref AlarmTopic]
+      TreatMissingData: notBreaching
+
+  AuroraConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-aurora-high-connections'
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 200
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBClusterIdentifier
           Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
 
-  RDSConnectionsAlarm:
+  RedisCPUAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${EnvironmentName}-rds-high-connections'
-      Namespace: AWS/RDS
-      MetricName: DatabaseConnections
+      AlarmName: !Sub '${EnvironmentName}-redis-high-cpu'
+      Namespace: AWS/ElastiCache
+      MetricName: EngineCPUUtilization
       Statistic: Average
       Period: 300
       EvaluationPeriods: 3
       Threshold: 80
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
-        - Name: DBInstanceIdentifier
-          Value: !Ref AuroraCluster
+        - Name: ReplicationGroupId
+          Value: !Ref RedisCluster
       AlarmActions: [!Ref AlarmTopic]
+      TreatMissingData: notBreaching
 
   ALB5xxAlarm:
     Type: AWS::CloudWatch::Alarm
