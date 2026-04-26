@@ -68,15 +68,31 @@ export default function AdminAuthorizedDomains() {
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [isSuperAdmin]);
 
+  // Same regex as backend zod schema (exact OR leftmost wildcard).
+  const DOMAIN_RE = /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
+
+  function normalizeDomain(input: string): string {
+    return input.trim().toLowerCase().replace(/^@/, "");
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!domain.trim()) return;
+    const cleaned = normalizeDomain(domain);
+    if (!cleaned) return;
+    if (!DOMAIN_RE.test(cleaned)) {
+      toast({
+        title: "Invalid domain",
+        description: 'Use "acme.com" or wildcard "*.acme.com".',
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       await restRequest("/api/admin/authorized-domains", {
         method: "POST",
         body: {
-          domain: domain.trim().toLowerCase().replace(/^@/, ""),
+          domain: cleaned,
           tenant_id: tenantId === "__none__" ? null : tenantId,
           default_role: defaultRole,
           notes: notes || undefined,
@@ -155,11 +171,14 @@ export default function AdminAuthorizedDomains() {
               <Label htmlFor="domain">Email domain</Label>
               <Input
                 id="domain"
-                placeholder="acme.com"
+                placeholder="acme.com  or  *.acme.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 required
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use <code className="font-mono">*.acme.com</code> to allow every subdomain.
+              </p>
             </div>
 
             {isSuperAdmin && (
@@ -235,7 +254,12 @@ export default function AdminAuthorizedDomains() {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell className="font-mono">@{row.domain}</TableCell>
+                    <TableCell>
+                      <span className="font-mono">{row.domain.startsWith("*.") ? row.domain : `@${row.domain}`}</span>
+                      {row.domain.startsWith("*.") && (
+                        <Badge variant="outline" className="ml-2 text-[10px]">wildcard</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {row.tenant_name ? (
                         <Badge variant="secondary">{row.tenant_name}</Badge>
@@ -275,6 +299,8 @@ export default function AdminAuthorizedDomains() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>• When someone signs up, the backend rejects their request unless their email's domain matches an enabled entry above.</p>
+          <p>• Wildcards: <code className="font-mono">*.acme.com</code> matches <em>any</em> subdomain (e.g. <code>eng.acme.com</code>, <code>a.b.acme.com</code>) but <strong>not</strong> the apex <code>acme.com</code> — add both if you need both.</p>
+          <p>• Match priority: tenant-scoped beats global, exact match beats wildcard.</p>
           <p>• If the matched entry is scoped to a tenant, the new user is automatically added to that tenant.</p>
           <p>• <strong>Default role = "Tenant Admin"</strong> means anyone signing up with that domain becomes an admin of the scoped tenant. Use sparingly.</p>
           <p>• Disabling an entry stops new signups but does not remove existing users.</p>
