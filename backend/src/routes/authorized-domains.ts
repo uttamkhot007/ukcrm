@@ -83,7 +83,7 @@ export async function authorizedDomainsRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
     }
     let { domain, tenant_id, default_role, enabled, notes } = parsed.data;
-    domain = domain.toLowerCase().replace(/^@/, '').trim();
+    domain = normalizeDomainPattern(domain);
 
     if (!isSuperAdmin) {
       // Force tenant admins to scope to their own tenant
