@@ -157,28 +157,79 @@ export async function authorizedDomainsRoutes(app: FastifyInstance) {
   app.post('/authorized-domains/check', async (req: FastifyRequest) => {
     const body = (req.body as any) || {};
     const email = String(body.email || '').toLowerCase();
-    const at = email.indexOf('@');
-    if (at < 0) return { allowed: false };
-    const domain = email.slice(at + 1);
-    const row = await db('authorized_domains')
-      .where({ domain, enabled: true })
-      .orderByRaw('tenant_id IS NULL') // tenant-specific first
-      .first();
+    const row = await lookupAuthorizedDomain(email);
     if (!row) return { allowed: false };
     return { allowed: true, role: row.default_role, tenant_id: row.tenant_id };
   });
 }
 
 /**
+ * Normalize a stored domain pattern.
+ *  - lowercase, trim
+ *  - strip leading "@"
+ *  - "*.acme.com" stays as "*.acme.com" (wildcard)
+ *  - "acme.com"   stays as "acme.com"   (exact)
+ */
+export function normalizeDomainPattern(input: string): string {
+  return String(input || '').trim().toLowerCase().replace(/^@/, '');
+}
+
+/**
+ * Match an email's domain against a stored pattern.
+ *  - exact:    "acme.com"   matches only "acme.com"
+ *  - wildcard: "*.acme.com" matches any subdomain of acme.com (eng.acme.com,
+ *              a.b.acme.com) but NOT the apex "acme.com" itself.
+ */
+export function domainMatchesPattern(emailDomain: string, pattern: string): boolean {
+  const d = emailDomain.toLowerCase();
+  const p = pattern.toLowerCase();
+  if (p.startsWith('*.')) {
+    const base = p.slice(2);
+    return d !== base && d.endsWith('.' + base);
+  }
+  return d === p;
+}
+
+/**
  * Helper used by /api/auth/register to enforce strict allowlist.
- * Returns matched row or null.
+ * Returns the best-matching enabled row (tenant-specific beats global,
+ * exact match beats wildcard) or null.
  */
 export async function lookupAuthorizedDomain(email: string) {
   const at = email.indexOf('@');
   if (at < 0) return null;
-  const domain = email.slice(at + 1).toLowerCase();
-  return db('authorized_domains')
-    .where({ domain, enabled: true })
-    .orderByRaw('tenant_id IS NULL') // prefer tenant-specific over global
-    .first();
+  const emailDomain = email.slice(at + 1).toLowerCase();
+  if (!emailDomain) return null;
+
+  // Build the set of candidate patterns: exact + every wildcard suffix.
+  // For "eng.acme.com" the candidates are:
+  //   eng.acme.com, *.eng.acme.com (no, that wouldn't match itself),
+  //   *.acme.com, *.com
+  const labels = emailDomain.split('.');
+  const candidates: string[] = [emailDomain];
+  for (let i = 1; i < labels.length; i++) {
+    candidates.push('*.' + labels.slice(i).join('.'));
+  }
+
+  const rows = await db('authorized_domains')
+    .whereIn('domain', candidates)
+    .andWhere({ enabled: true });
+
+  if (!rows.length) return null;
+
+  // Verify each row actually matches (defensive — covers any future pattern types).
+  const matches = rows.filter((r) => domainMatchesPattern(emailDomain, r.domain));
+  if (!matches.length) return null;
+
+  // Prefer: tenant-scoped over global, exact over wildcard.
+  matches.sort((a, b) => {
+    const tA = a.tenant_id ? 0 : 1;
+    const tB = b.tenant_id ? 0 : 1;
+    if (tA !== tB) return tA - tB;
+    const wA = a.domain.startsWith('*.') ? 1 : 0;
+    const wB = b.domain.startsWith('*.') ? 1 : 0;
+    return wA - wB;
+  });
+  return matches[0];
 }
+
