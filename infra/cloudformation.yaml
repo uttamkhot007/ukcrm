@@ -1110,6 +1110,65 @@ Resources:
       ResourceArn: !Ref ALB
       WebACLArn: !GetAtt WebACL.Arn
 
+  # ==================== SES (transactional email) ====================
+  # Replaces Resend/Supabase email sender. Verify the domain (DKIM/SPF) after stack creation.
+  SesDomainIdentity:
+    Type: AWS::SES::EmailIdentity
+    Condition: HasSesDomain
+    Properties:
+      EmailIdentity: !Ref SesDomainName
+      DkimAttributes:
+        SigningEnabled: true
+
+  # ==================== CloudFront for public S3 assets ====================
+  # Caches tenant logos, SOP images, organization assets at the edge.
+  PublicAssetsOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${EnvironmentName}-nexuscrm-public-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  PublicAssetsCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'NexusCRM ${EnvironmentName} public assets'
+        PriceClass: PriceClass_100
+        DefaultCacheBehavior:
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          TargetOriginId: s3-public-assets
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+        Origins:
+          - Id: s3-public-assets
+            DomainName: !GetAtt UploadsBucket.RegionalDomainName
+            OriginPath: /public
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt PublicAssetsOAC.Id
+
+  PublicAssetsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UploadsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${UploadsBucket.Arn}/public/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PublicAssetsCDN}'
+
 Outputs:
   ALBDNS:
     Description: Application URL
