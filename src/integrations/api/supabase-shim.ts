@@ -615,19 +615,110 @@ function softWarn(name: string) {
 }
 
 const storage = {
-  from(_bucket: string) {
+  from(bucket: string) {
     return {
-      upload: softWarn("storage.upload") as (...args: any[]) => Promise<any>,
-      download: softWarn("storage.download") as (...args: any[]) => Promise<any>,
-      remove: softWarn("storage.remove") as (...args: any[]) => Promise<any>,
+      async upload(path: string, file: Blob | File | ArrayBuffer, opts?: { contentType?: string; upsert?: boolean }) {
+        try {
+          const sig = await restRequest<{ url: string; key: string }>("/api/storage/sign-upload", {
+            method: "POST",
+            body: { bucket, path, contentType: opts?.contentType ?? (file as File).type },
+          });
+          const body = file instanceof Blob ? file : new Blob([file as ArrayBuffer]);
+          const put = await fetch(sig.url, {
+            method: "PUT",
+            headers: opts?.contentType ? { "Content-Type": opts.contentType } : undefined,
+            body,
+          });
+          if (!put.ok) throw new Error(`S3 upload failed: ${put.status}`);
+          return { data: { path, key: sig.key }, error: null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Upload failed";
+          return { data: null, error: { message } };
+        }
+      },
+      async createSignedUrl(path: string, expiresIn = 900) {
+        try {
+          const sig = await restRequest<{ url: string }>("/api/storage/sign-download", {
+            method: "POST",
+            body: { bucket, path, expiresIn },
+          });
+          return { data: { signedUrl: sig.url }, error: null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Sign failed";
+          return { data: null, error: { message } };
+        }
+      },
+      createSignedUploadUrl: (async (path: string) => {
+        try {
+          const sig = await restRequest<{ url: string; key: string }>("/api/storage/sign-upload", {
+            method: "POST",
+            body: { bucket, path },
+          });
+          return { data: { signedUrl: sig.url, path: sig.key, token: "" }, error: null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Sign failed";
+          return { data: null, error: { message } };
+        }
+      }) as (path: string) => Promise<any>,
+      async remove(paths: string[]) {
+        try {
+          for (const p of paths) {
+            await restRequest("/api/storage/object", {
+              method: "DELETE",
+              body: { bucket, path: p },
+            });
+          }
+          return { data: paths.map((p) => ({ name: p })), error: null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Delete failed";
+          return { data: null, error: { message } };
+        }
+      },
+      async download(path: string) {
+        try {
+          const sig = await restRequest<{ url: string }>("/api/storage/sign-download", {
+            method: "POST",
+            body: { bucket, path },
+          });
+          const resp = await fetch(sig.url);
+          if (!resp.ok) throw new Error(`Download failed: ${resp.status}`);
+          return { data: await resp.blob(), error: null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Download failed";
+          return { data: null, error: { message } };
+        }
+      },
       list: softWarn("storage.list") as (...args: any[]) => Promise<any>,
-      getPublicUrl: (_path?: string) => ({ data: { publicUrl: "" } }),
-      createSignedUrl: softWarn("storage.createSignedUrl") as (...args: any[]) => Promise<any>,
-      createSignedUploadUrl: softWarn("storage.createSignedUploadUrl") as (...args: any[]) => Promise<any>,
+      getPublicUrl: (path: string) => {
+        const host = (import.meta as any).env?.VITE_PUBLIC_ASSET_HOST || "";
+        if (host) {
+          return { data: { publicUrl: `${String(host).replace(/\/$/, "")}/${bucket}/${path.replace(/^\/+/, "")}` } };
+        }
+        return { data: { publicUrl: "" } };
+      },
     };
   },
   listBuckets: (async () => ({ data: [] as any[], error: null })) as () => Promise<{ data: any[]; error: any }>,
   getBucket: (async (_id: string) => ({ data: null, error: null })) as (id: string) => Promise<{ data: any; error: any }>,
+};
+
+// Map legacy Supabase edge-function names to backend REST routes.
+// Unmapped names log a clear warning so the failure is loud, not silent.
+const FUNCTION_ROUTE_MAP: Record<string, string> = {
+  "workflow-trigger": "/api/workflows/trigger",
+  "exchange-rates": "/api/exchange-rates",
+  // AI assistants & insights — point at the unified /api/ai/chat with a context hint
+  "intelligent-assistant": "/api/ai/chat",
+  "sales-assistant": "/api/ai/chat",
+  "support-assistant": "/api/ai/chat",
+  "employee-assistant": "/api/ai/chat",
+  "tender-ai-assistant": "/api/ai/chat",
+  "sales-ai-insights": "/api/ai/insights",
+  "finance-ai-insights": "/api/ai/insights",
+  "executive-insights": "/api/ai/insights",
+  "meddic-insights": "/api/ai/insights",
+  "account-intelligence": "/api/ai/insights",
+  "contact-intelligence": "/api/ai/insights",
 };
 
 interface FunctionsInvokeOptions {
@@ -639,10 +730,24 @@ interface FunctionsInvokeOptions {
 const functions = {
   async invoke<T = any>(
     name: string,
-    _opts?: FunctionsInvokeOptions,
+    opts?: FunctionsInvokeOptions,
   ): Promise<{ data: T | null; error: { message: string } | null }> {
-    console.warn(`[supabase-shim] functions.invoke("${name}") not supported by REST backend`);
-    return { data: null, error: { message: `functions.invoke("${name}") not supported` } };
+    const path = FUNCTION_ROUTE_MAP[name];
+    if (!path) {
+      console.warn(`[api-shim] No backend route mapped for function "${name}"`);
+      return { data: null, error: { message: `function "${name}" not implemented on backend` } };
+    }
+    try {
+      const data = await restRequest<T>(path, {
+        method: (opts?.method as any) || "POST",
+        body: opts?.body,
+        headers: opts?.headers,
+      });
+      return { data, error: null };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Function call failed";
+      return { data: null, error: { message } };
+    }
   },
 };
 

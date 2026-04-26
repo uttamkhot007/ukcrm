@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'NexusCRM Full Stack - ECS Fargate + RDS + Cognito + S3'
+Description: 'NexusCRM Full Stack - ECS Fargate + Aurora PostgreSQL Serverless v2 + ElastiCache Valkey + Cognito + S3/CloudFront + SES'
 
 Parameters:
   EnvironmentName:
@@ -7,16 +7,19 @@ Parameters:
     Default: production
     AllowedValues: [production, staging, development]
 
-  DBInstanceClass:
-    Type: String
-    Default: db.t4g.medium
-    AllowedValues: [db.t4g.micro, db.t4g.small, db.t4g.medium, db.t4g.large, db.r6g.large]
-
-  DBAllocatedStorage:
+  AuroraMinCapacity:
     Type: Number
-    Default: 50
-    MinValue: 20
-    MaxValue: 1000
+    Default: 0.5
+    Description: Aurora Serverless v2 minimum ACU (0.5 - 128). Lower = cheaper idle, slower cold start.
+    MinValue: 0.5
+    MaxValue: 128
+
+  AuroraMaxCapacity:
+    Type: Number
+    Default: 16
+    Description: Aurora Serverless v2 maximum ACU (0.5 - 128). Sized for multi-tenant burst.
+    MinValue: 1
+    MaxValue: 128
 
   DBMasterUsername:
     Type: String
@@ -27,6 +30,11 @@ Parameters:
     Type: String
     MinLength: 16
     NoEcho: true
+
+  SesDomainName:
+    Type: String
+    Default: ''
+    Description: 'Optional verified SES sender domain (e.g. nexuscrm.example.com). Leave blank to skip SES setup.'
 
   FrontendCpu:
     Type: Number
@@ -72,6 +80,7 @@ Conditions:
   HasOpenAIKey: !Not [!Equals [!Ref AIOpenAIKey, '']]
   HasGoogleKey: !Not [!Equals [!Ref AIGoogleKey, '']]
   HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, '']]
+  HasSesDomain: !Not [!Equals [!Ref SesDomainName, '']]
 
 Resources:
   # ==================== VPC ====================
@@ -232,7 +241,7 @@ Resources:
   DBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: RDS Security Group
+      GroupDescription: Aurora PostgreSQL Security Group
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -240,46 +249,84 @@ Resources:
           ToPort: 5432
           SourceSecurityGroupId: !Ref ECSSecurityGroup
 
-  # ==================== RDS PostgreSQL ====================
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ElastiCache Valkey Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+
+  # ==================== Aurora PostgreSQL Serverless v2 ====================
+  # Recommended database for this multi-tenant CRM workload.
+  # - Drop-in PostgreSQL: keeps every existing trigger, function, RLS policy, and SQL query.
+  # - Auto-scales 0.5 -> 128 ACUs in seconds (no manual instance resizing).
+  # - 6-way replicated storage, sub-30s failover, up to 15 read replicas.
+  # - Native pgvector / pg_cron / logical replication for future AI/embedding features.
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: NexusCRM DB Subnet Group
+      DBSubnetGroupDescription: NexusCRM Aurora Subnet Group
       SubnetIds:
         - !Ref DBSubnet1
         - !Ref DBSubnet2
 
-  RDSInstance:
-    Type: AWS::RDS::DBInstance
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
     DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
     Properties:
-      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-db'
-      DBInstanceClass: !Ref DBInstanceClass
-      Engine: postgres
+      DBClusterIdentifier: !Sub '${EnvironmentName}-nexuscrm-aurora'
+      Engine: aurora-postgresql
       EngineVersion: '16.4'
-      AllocatedStorage: !Ref DBAllocatedStorage
-      StorageType: gp3
-      StorageEncrypted: true
+      EngineMode: provisioned
+      DatabaseName: nexuscrm
       MasterUsername: !Ref DBMasterUsername
       MasterUserPassword: !Ref DBMasterPassword
-      DBName: nexuscrm
-      VPCSecurityGroups:
-        - !Ref DBSecurityGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
-      MultiAZ: true
+      VpcSecurityGroupIds:
+        - !Ref DBSecurityGroup
+      StorageEncrypted: true
       BackupRetentionPeriod: 14
       PreferredBackupWindow: '03:00-04:00'
       PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
-      AutoMinorVersionUpgrade: true
-      CopyTagsToSnapshot: true
       DeletionProtection: true
-      MonitoringInterval: 60
-      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
-      EnablePerformanceInsights: true
-      PerformanceInsightsRetentionPeriod: 7
+      EnableCloudwatchLogsExports:
+        - postgresql
+      CopyTagsToSnapshot: true
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref AuroraMinCapacity
+        MaxCapacity: !Ref AuroraMaxCapacity
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName}-nexuscrm-db'
+          Value: !Sub '${EnvironmentName}-nexuscrm-aurora'
+
+  AuroraWriter:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-writer'
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+
+  AuroraReader:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-nexuscrm-reader'
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
 
   RDSMonitoringRole:
     Type: AWS::IAM::Role
@@ -293,6 +340,34 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  # ==================== ElastiCache Valkey ====================
+  # Used for: BullMQ background jobs, realtime pub/sub fan-out, session/AI response cache.
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: NexusCRM Valkey subnet group
+      SubnetIds:
+        - !Ref DBSubnet1
+        - !Ref DBSubnet2
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupId: !Sub '${EnvironmentName}-nexuscrm-cache'
+      ReplicationGroupDescription: NexusCRM Valkey cluster
+      Engine: valkey
+      EngineVersion: '7.2'
+      CacheNodeType: cache.t4g.small
+      NumCacheClusters: 2
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      AtRestEncryptionEnabled: true
+      TransitEncryptionEnabled: true
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      SecurityGroupIds:
+        - !Ref RedisSecurityGroup
+      AutoMinorVersionUpgrade: true
 
   # ==================== AWS Cognito ====================
   CognitoUserPool:
@@ -361,8 +436,8 @@ Resources:
       Description: NexusCRM Database Credentials
       SecretString: !Sub |
         {
-          "host": "${RDSInstance.Endpoint.Address}",
-          "port": ${RDSInstance.Endpoint.Port},
+          "host": "${AuroraCluster.Endpoint.Address}",
+          "port": ${AuroraCluster.Endpoint.Port},
           "database": "nexuscrm",
           "username": "${DBMasterUsername}",
           "password": "${DBMasterPassword}"
@@ -587,8 +662,19 @@ Resources:
                   - cognito-idp:AdminGetUser
                   - cognito-idp:AdminCreateUser
                   - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminUpdateUserAttributes
                   - cognito-idp:ListUsers
                 Resource: !GetAtt CognitoUserPool.Arn
+        - PolicyName: SESSendEmail
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                  - ses:SendTemplatedEmail
+                Resource: '*'
 
   FrontendLogGroup:
     Type: AWS::Logs::LogGroup
@@ -650,9 +736,9 @@ Resources:
             - Name: PORT
               Value: '3001'
             - Name: DB_HOST
-              Value: !GetAtt RDSInstance.Endpoint.Address
+              Value: !GetAtt AuroraCluster.Endpoint.Address
             - Name: DB_PORT
-              Value: !Sub '${RDSInstance.Endpoint.Port}'
+              Value: !Sub '${AuroraCluster.Endpoint.Port}'
             - Name: DB_NAME
               Value: nexuscrm
             - Name: DB_SSL
@@ -671,6 +757,18 @@ Resources:
               Value: !Ref UploadsBucket
             - Name: S3_REGION
               Value: !Ref AWS::Region
+            - Name: REDIS_HOST
+              Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+            - Name: REDIS_PORT
+              Value: !GetAtt RedisCluster.PrimaryEndPoint.Port
+            - Name: REDIS_TLS
+              Value: 'true'
+            - Name: SES_REGION
+              Value: !Ref AWS::Region
+            - Name: SES_FROM_DOMAIN
+              Value: !Ref SesDomainName
+            - Name: PUBLIC_ASSET_HOST
+              Value: !Sub 'https://${PublicAssetsCDN.DomainName}'
           Secrets:
             - Name: DB_USER
               ValueFrom: !Sub '${DBSecret}:username::'
@@ -842,10 +940,10 @@ Resources:
       AlarmActions: [!Ref AlarmTopic]
       TreatMissingData: notBreaching
 
-  RDSCPUAlarm:
+  AuroraCPUAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${EnvironmentName}-rds-high-cpu'
+      AlarmName: !Sub '${EnvironmentName}-aurora-high-cpu'
       Namespace: AWS/RDS
       MetricName: CPUUtilization
       Statistic: Average
@@ -854,42 +952,60 @@ Resources:
       Threshold: 80
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
-        - Name: DBInstanceIdentifier
-          Value: !Ref RDSInstance
+        - Name: DBClusterIdentifier
+          Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
 
-  RDSStorageAlarm:
+  AuroraCapacityAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${EnvironmentName}-rds-low-storage'
-      AlarmDescription: RDS free storage below 5GB
+      AlarmName: !Sub '${EnvironmentName}-aurora-near-max-capacity'
+      AlarmDescription: Aurora Serverless v2 sustained near max ACU - consider raising AuroraMaxCapacity.
       Namespace: AWS/RDS
-      MetricName: FreeStorageSpace
+      MetricName: ServerlessDatabaseCapacity
       Statistic: Average
       Period: 300
-      EvaluationPeriods: 2
-      Threshold: 5368709120
-      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: 3
+      Threshold: !Ref AuroraMaxCapacity
+      ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
-        - Name: DBInstanceIdentifier
-          Value: !Ref RDSInstance
+        - Name: DBClusterIdentifier
+          Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
+      TreatMissingData: notBreaching
 
-  RDSConnectionsAlarm:
+  AuroraConnectionsAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${EnvironmentName}-rds-high-connections'
+      AlarmName: !Sub '${EnvironmentName}-aurora-high-connections'
       Namespace: AWS/RDS
       MetricName: DatabaseConnections
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 200
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBClusterIdentifier
+          Value: !Ref AuroraCluster
+      AlarmActions: [!Ref AlarmTopic]
+
+  RedisCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-redis-high-cpu'
+      Namespace: AWS/ElastiCache
+      MetricName: EngineCPUUtilization
       Statistic: Average
       Period: 300
       EvaluationPeriods: 3
       Threshold: 80
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
-        - Name: DBInstanceIdentifier
-          Value: !Ref RDSInstance
+        - Name: ReplicationGroupId
+          Value: !Ref RedisCluster
       AlarmActions: [!Ref AlarmTopic]
+      TreatMissingData: notBreaching
 
   ALB5xxAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -994,14 +1110,85 @@ Resources:
       ResourceArn: !Ref ALB
       WebACLArn: !GetAtt WebACL.Arn
 
+  # ==================== SES (transactional email) ====================
+  # Replaces Resend/Supabase email sender. Verify the domain (DKIM/SPF) after stack creation.
+  SesDomainIdentity:
+    Type: AWS::SES::EmailIdentity
+    Condition: HasSesDomain
+    Properties:
+      EmailIdentity: !Ref SesDomainName
+      DkimAttributes:
+        SigningEnabled: true
+
+  # ==================== CloudFront for public S3 assets ====================
+  # Caches tenant logos, SOP images, organization assets at the edge.
+  PublicAssetsOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${EnvironmentName}-nexuscrm-public-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  PublicAssetsCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'NexusCRM ${EnvironmentName} public assets'
+        PriceClass: PriceClass_100
+        DefaultCacheBehavior:
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          TargetOriginId: s3-public-assets
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+        Origins:
+          - Id: s3-public-assets
+            DomainName: !GetAtt UploadsBucket.RegionalDomainName
+            OriginPath: /public
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt PublicAssetsOAC.Id
+
+  PublicAssetsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UploadsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${UploadsBucket.Arn}/public/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PublicAssetsCDN}'
+
 Outputs:
   ALBDNS:
     Description: Application URL
     Value: !GetAtt ALB.DNSName
 
-  RDSEndpoint:
-    Description: RDS PostgreSQL Endpoint
-    Value: !GetAtt RDSInstance.Endpoint.Address
+  AuroraClusterEndpoint:
+    Description: Aurora PostgreSQL writer endpoint
+    Value: !GetAtt AuroraCluster.Endpoint.Address
+
+  AuroraReaderEndpoint:
+    Description: Aurora PostgreSQL reader endpoint
+    Value: !GetAtt AuroraCluster.ReadEndpoint.Address
+
+  RedisEndpoint:
+    Description: ElastiCache Valkey primary endpoint
+    Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+
+  PublicAssetsCDN:
+    Description: CloudFront URL for public S3 assets (logos, SOP images, etc.)
+    Value: !Sub 'https://${PublicAssetsCDN.DomainName}'
 
   CognitoUserPoolId:
     Description: Cognito User Pool ID
