@@ -1,0 +1,88 @@
+name: Seed Superadmin (one-shot)
+
+# ──────────────────────────────────────────────────────────────────────
+# Manually-triggered workflow that runs `seed-superadmin.ts` as a
+# one-shot Fargate task using the already-deployed backend image.
+#
+# Required GitHub repository secrets:
+#   AWS_DEPLOY_ROLE_ARN   — same role used by deploy.yml
+#   AWS_REGION            — ap-south-1
+#   ENV_NAME              — production
+#   SUPERADMIN_EMAIL      — e.g. platform@yourco.com
+#   SUPERADMIN_PASSWORD   — strong password (min 12 chars, mixed)
+#   SUPERADMIN_NAME       — display name (optional, defaults to "Super Admin")
+#
+# Trigger: GitHub UI → Actions → "Seed Superadmin (one-shot)" → Run workflow.
+# Idempotent — safe to re-run; will reset the password if user already exists.
+# ──────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "SEED" to confirm'
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ENV_NAME:   ${{ secrets.ENV_NAME }}
+  STACK_NAME: ${{ secrets.ENV_NAME }}-nexuscrm
+
+jobs:
+  seed:
+    if: ${{ github.event.inputs.confirm == 'SEED' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Read CloudFormation outputs
+        id: cfn
+        run: |
+          OUT() { aws cloudformation describe-stacks --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+          echo "subnets=$(OUT PrivateSubnets)" >> $GITHUB_OUTPUT
+          echo "cluster=${ENV_NAME}-nexuscrm" >> $GITHUB_OUTPUT
+          echo "pool_id=$(OUT CognitoUserPoolId)" >> $GITHUB_OUTPUT
+          echo "client_id=$(OUT CognitoClientId)" >> $GITHUB_OUTPUT
+
+      - name: Run seed-superadmin task on ECS Fargate
+        run: |
+          OVERRIDES=$(cat <<JSON
+          {
+            "containerOverrides": [{
+              "name": "backend",
+              "command": ["npx", "tsx", "src/scripts/seed-superadmin.ts"],
+              "environment": [
+                { "name": "SUPERADMIN_EMAIL",    "value": "${{ secrets.SUPERADMIN_EMAIL }}" },
+                { "name": "SUPERADMIN_PASSWORD", "value": "${{ secrets.SUPERADMIN_PASSWORD }}" },
+                { "name": "SUPERADMIN_NAME",     "value": "${{ secrets.SUPERADMIN_NAME }}" },
+                { "name": "COGNITO_USER_POOL_ID","value": "${{ steps.cfn.outputs.pool_id }}" },
+                { "name": "COGNITO_CLIENT_ID",   "value": "${{ steps.cfn.outputs.client_id }}" }
+              ]
+            }]
+          }
+          JSON
+          )
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ steps.cfn.outputs.cluster }} \
+            --task-definition ${ENV_NAME}-backend \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.cfn.outputs.subnets }}],assignPublicIp=DISABLED}" \
+            --overrides "$OVERRIDES" \
+            --started-by "gha-seed-${{ github.run_id }}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Started task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster ${{ steps.cfn.outputs.cluster }} --tasks "$TASK_ARN"
+          EXIT=$(aws ecs describe-tasks --cluster ${{ steps.cfn.outputs.cluster }} --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Task exit code: $EXIT"
+          if [ "$EXIT" != "0" ]; then exit 1; fi
+          echo "✅ Superadmin seeded — log in with SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD."
