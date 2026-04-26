@@ -436,8 +436,8 @@ Resources:
       Description: NexusCRM Database Credentials
       SecretString: !Sub |
         {
-          "host": "${RDSInstance.Endpoint.Address}",
-          "port": ${RDSInstance.Endpoint.Port},
+          "host": "${AuroraCluster.Endpoint.Address}",
+          "port": ${AuroraCluster.Endpoint.Port},
           "database": "nexuscrm",
           "username": "${DBMasterUsername}",
           "password": "${DBMasterPassword}"
@@ -725,9 +725,9 @@ Resources:
             - Name: PORT
               Value: '3001'
             - Name: DB_HOST
-              Value: !GetAtt RDSInstance.Endpoint.Address
+              Value: !GetAtt AuroraCluster.Endpoint.Address
             - Name: DB_PORT
-              Value: !Sub '${RDSInstance.Endpoint.Port}'
+              Value: !Sub '${AuroraCluster.Endpoint.Port}'
             - Name: DB_NAME
               Value: nexuscrm
             - Name: DB_SSL
@@ -930,7 +930,7 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: DBInstanceIdentifier
-          Value: !Ref RDSInstance
+          Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
 
   RDSStorageAlarm:
@@ -947,7 +947,7 @@ Resources:
       ComparisonOperator: LessThanThreshold
       Dimensions:
         - Name: DBInstanceIdentifier
-          Value: !Ref RDSInstance
+          Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
 
   RDSConnectionsAlarm:
@@ -963,7 +963,7 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: DBInstanceIdentifier
-          Value: !Ref RDSInstance
+          Value: !Ref AuroraCluster
       AlarmActions: [!Ref AlarmTopic]
 
   ALB5xxAlarm:
@@ -1076,7 +1076,7 @@ Outputs:
 
   RDSEndpoint:
     Description: RDS PostgreSQL Endpoint
-    Value: !GetAtt RDSInstance.Endpoint.Address
+    Value: !GetAtt AuroraCluster.Endpoint.Address
 
   CognitoUserPoolId:
     Description: Cognito User Pool ID
