@@ -32,7 +32,14 @@ async function getActiveTenantId(userId: string): Promise<string | null> {
 }
 
 const createSchema = z.object({
-  domain: z.string().min(3).max(253).regex(/^[a-z0-9.-]+\.[a-z]{2,}$/i),
+  // Accepts:
+  //   - exact:    acme.com
+  //   - wildcard: *.acme.com  (matches eng.acme.com, mail.acme.com, ...)
+  // Wildcard is ONLY allowed as the leftmost label and must be followed by a real domain.
+  domain: z.string().min(3).max(253).regex(
+    /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i,
+    { message: 'Invalid domain. Use "acme.com" or wildcard "*.acme.com".' },
+  ),
   tenant_id: z.string().uuid().nullable().optional(),
   default_role: z.enum(['user', 'admin']).default('user'),
   enabled: z.boolean().default(true),
