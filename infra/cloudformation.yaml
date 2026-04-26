@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'NexusCRM Full Stack - ECS Fargate + RDS + Cognito + S3'
+Description: 'NexusCRM Full Stack - ECS Fargate + Aurora PostgreSQL Serverless v2 + ElastiCache Valkey + Cognito + S3/CloudFront + SES'
 
 Parameters:
   EnvironmentName:
@@ -7,16 +7,19 @@ Parameters:
     Default: production
     AllowedValues: [production, staging, development]
 
-  DBInstanceClass:
-    Type: String
-    Default: db.t4g.medium
-    AllowedValues: [db.t4g.micro, db.t4g.small, db.t4g.medium, db.t4g.large, db.r6g.large]
-
-  DBAllocatedStorage:
+  AuroraMinCapacity:
     Type: Number
-    Default: 50
-    MinValue: 20
-    MaxValue: 1000
+    Default: 0.5
+    Description: Aurora Serverless v2 minimum ACU (0.5 - 128). Lower = cheaper idle, slower cold start.
+    MinValue: 0.5
+    MaxValue: 128
+
+  AuroraMaxCapacity:
+    Type: Number
+    Default: 16
+    Description: Aurora Serverless v2 maximum ACU (0.5 - 128). Sized for multi-tenant burst.
+    MinValue: 1
+    MaxValue: 128
 
   DBMasterUsername:
     Type: String
@@ -27,6 +30,11 @@ Parameters:
     Type: String
     MinLength: 16
     NoEcho: true
+
+  SesDomainName:
+    Type: String
+    Default: ''
+    Description: 'Optional verified SES sender domain (e.g. nexuscrm.example.com). Leave blank to skip SES setup.'
 
   FrontendCpu:
     Type: Number
