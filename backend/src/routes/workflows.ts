@@ -14,6 +14,8 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/connection.js';
 import { logger } from '../lib/logger.js';
+import { getQueue } from '../lib/queues.js';
+import { publishRealtime } from '../lib/redis.js';
 
 const triggerSchema = z.object({
   type: z.enum([
@@ -51,7 +53,11 @@ interface NotificationInsert {
 
 async function createNotifications(rows: NotificationInsert[]) {
   if (rows.length === 0) return;
-  await db('notifications').insert(rows);
+  // Enqueue rather than insert directly — the worker persists, fans out via
+  // WebSocket, and dispatches the email channel.
+  for (const row of rows) {
+    await getQueue('notifications').add('workflow', row);
+  }
 }
 
 async function getManagerIds(tenantId?: string): Promise<string[]> {
@@ -234,14 +240,32 @@ export async function workflowRoutes(app: FastifyInstance) {
           break;
         }
 
+        case 'onboarding_stage_changed': {
+          await getQueue('hrWorkflows').add('onboarding-stage-changed', {
+            workflow_id: entity_id,
+            new_stage: data?.newStage ?? data?.new_stage,
+            employee_user_id: data?.employee_user_id,
+            tenant_id: tenantId,
+          });
+          break;
+        }
+        case 'offboarding_initiated': {
+          await getQueue('hrWorkflows').add('offboarding-initiated', {
+            employee_user_id: entity_id,
+            tenant_id: tenantId,
+          });
+          break;
+        }
         case 'compliance_due':
         case 'renewal_reminder':
-        case 'onboarding_stage_changed':
-        case 'offboarding_initiated':
-          // Light handlers — full logic moves to background workers.
           logger.info({ type, entity_id }, 'Workflow accepted (worker handles details)');
           break;
       }
+
+      // Realtime fan-out for table-changes channel
+      await publishRealtime(`tenant:${tenantId || 'global'}:${entity_type}`, {
+        event: type, id: entity_id, data,
+      });
 
       // Audit trail
       try {
