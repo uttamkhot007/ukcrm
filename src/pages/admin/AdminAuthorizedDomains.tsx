@@ -68,15 +68,31 @@ export default function AdminAuthorizedDomains() {
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [isSuperAdmin]);
 
+  // Same regex as backend zod schema (exact OR leftmost wildcard).
+  const DOMAIN_RE = /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
+
+  function normalizeDomain(input: string): string {
+    return input.trim().toLowerCase().replace(/^@/, "");
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!domain.trim()) return;
+    const cleaned = normalizeDomain(domain);
+    if (!cleaned) return;
+    if (!DOMAIN_RE.test(cleaned)) {
+      toast({
+        title: "Invalid domain",
+        description: 'Use "acme.com" or wildcard "*.acme.com".',
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       await restRequest("/api/admin/authorized-domains", {
         method: "POST",
         body: {
-          domain: domain.trim().toLowerCase().replace(/^@/, ""),
+          domain: cleaned,
           tenant_id: tenantId === "__none__" ? null : tenantId,
           default_role: defaultRole,
           notes: notes || undefined,
