@@ -9,6 +9,8 @@ import { authPlugin } from './plugins/auth.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 import { aiRoutes } from './routes/ai.js';
+import { workflowRoutes } from './routes/workflows.js';
+import { storageRoutes } from './routes/storage.js';
 import { registerAllCrudRoutes } from './routes/all-routes.js';
 
 async function buildServer() {
@@ -49,6 +51,8 @@ async function buildServer() {
   await app.register(healthRoutes, { prefix: '/api/health' });
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(aiRoutes, { prefix: '/api/ai' });
+  await app.register(workflowRoutes, { prefix: '/api/workflows' });
+  await app.register(storageRoutes, { prefix: '/api/storage' });
 
   // Register all CRUD routes for every table
   registerAllCrudRoutes(app);
