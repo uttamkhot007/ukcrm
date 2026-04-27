@@ -12,11 +12,15 @@ export default function AdminLayout() {
   const location = useLocation();
 
   // Check if this is a super-admin-only route
-  const isSuperAdminRoute = location.pathname.includes("/admin/tenants");
+  const isSuperAdminRoute = location.pathname.includes("/admin/tenants") || location.pathname.includes("/admin/platform");
 
   // Map route to module id for sidebar highlighting
   const getActiveModule = () => {
     const path = location.pathname;
+    if (path.includes("/admin/platform/tenants")) return "platform-tenants";
+    if (path.includes("/admin/platform/users")) return "platform-users";
+    if (path.includes("/admin/platform/licenses")) return "platform-licenses";
+    if (path.includes("/admin/platform/integrations")) return "platform-integrations";
     if (path.includes("/admin/organization")) return "admin-center-organization";
     if (path.includes("/admin/whitelabel")) return "admin-center-whitelabel";
     if (path.includes("/admin/users")) return "admin-center-users";
@@ -24,7 +28,7 @@ export default function AdminLayout() {
     if (path.includes("/admin/documentation")) return "admin-center-documentation";
     if (path.includes("/admin/portal")) return "admin-center-portal";
     if (path.includes("/admin/health")) return "admin-center-health";
-    if (path.includes("/admin/tenants")) return "super-admin-tenants";
+    if (path.includes("/admin/tenants")) return "platform-tenants";
     if (path.includes("/admin/alliance")) return "admin-center-alliance";
     if (path.includes("/admin/offerings")) return "admin-center-offerings";
     if (path.includes("/admin/procurement")) return "admin-center-procurement";
@@ -82,8 +86,11 @@ export default function AdminLayout() {
     } else if (module.startsWith("admin-center-")) {
       const subPath = module.replace("admin-center-", "");
       navigate(`/admin/${subPath}`);
-    } else if (module === "super-admin-tenants") {
-      navigate("/admin/tenants");
+    } else if (module === "super-admin-tenants" || module === "platform-tenants") {
+      navigate("/admin/platform/tenants");
+    } else if (module.startsWith("platform-")) {
+      const subPath = module.replace("platform-", "");
+      navigate(`/admin/platform/${subPath}`);
     }
   };
 

@@ -1,114 +1,154 @@
+
 ## Goal
 
-Complete the Supabase removal so the platform runs entirely on AWS-native infrastructure. Pick the right database for each workload, then physically delete every Supabase artifact from the repository.
+Today, **Tenant Management** (`/admin/tenants`) is a single-page list with a configure sheet. We will turn it into a true **Super-Admin Platform Console** with four sibling sections that operate at the *platform* level, not the per-tenant level:
 
-## Database recommendation
+1. **Tenants** — directory + lifecycle of all workspaces
+2. **User Management** — cross-tenant user/identity governance
+3. **License Management** — subscription, seats, modules, billing
+4. **Integrations** — platform-wide / shared integrations
 
-**Stay on PostgreSQL — but on Amazon Aurora PostgreSQL Serverless v2, not vanilla RDS.**
+These are explicitly **distinct** from the existing per-tenant pages under Admin Center (`/admin/organization`, `/admin/users`, `/admin/integrations`), which only operate inside the currently selected tenant.
 
-| Option | When to use | Verdict for this app |
-|---|---|---|
-| RDS for PostgreSQL (current CFN) | Predictable load, lowest cost | Works, but manual scaling and slower failover |
-| **Aurora PostgreSQL Serverless v2** | Bursty multi-tenant SaaS, HA, fast failover | **Recommended** |
-| Aurora DSQL | Active-active multi-region writes | Overkill, newer, fewer extensions |
-| DynamoDB | Single-digit-ms KV / time-series | Wrong fit — schema is heavily relational with 100+ joined tables |
-| Redshift | Analytics warehouse | Add later only if reporting load grows |
-| Timestream | Pure time-series metrics | Not needed for CRM data |
+---
 
-**Why Aurora PG Serverless v2 wins here**
-- Drop-in PostgreSQL — zero code changes, all 50+ existing trigger/SECURITY DEFINER functions keep working.
-- Auto-scales 0.5 → 128 ACUs in seconds, ideal for the multi-tenant traffic pattern.
-- 6-way replicated storage, sub-30s failover, 15 read replicas, point-in-time restore.
-- ~3-5× write throughput vs RDS on the same vCPU.
-- Native pgvector, pg_cron, pg_partman, logical replication — supports future AI/embedding features without another DB.
+## Innovative angle: "Platform vs Tenant" mental model
 
-**Companion stores**
-- **ElastiCache Redis (Valkey)** — sessions, BullMQ queues, realtime pub/sub, AI response cache.
-- **OpenSearch Serverless** — full-text search across tickets/contacts/deals (replaces `ILIKE %x%` scans on big tables).
-- **S3** — files (replaces all Supabase Storage buckets).
-- **Cognito** — identity (already wired).
-- **SES** — transactional email (replaces Resend dependency in edge functions).
+A clear visual separation will be enforced everywhere so super-admins never confuse the two scopes:
 
-## Removal scope — what physically goes away
+- New URL prefix `/admin/platform/...` for super-admin-only pages (the existing `/admin/tenants` will redirect into it).
+- A persistent **"Platform Console" header banner** with a purple accent, "Operating across all tenants" badge, and a quick-jump tenant filter that scopes the views.
+- Sidebar groups the four items under a collapsible "Platform Console" section visible only to super-admins.
 
-### Repository deletes
-- `supabase/` entire directory: `config.toml`, all 38 edge functions under `supabase/functions/*`, migrations folder.
-- `src/integrations/supabase/client.ts` and `src/integrations/supabase/types.ts`.
-- `@supabase/supabase-js` and `@supabase/auth-helpers-*` from `package.json`.
-- All `VITE_SUPABASE_*` env var references in `.env.example`, README, MIGRATION.md, Dockerfile.
-- The shim's auto-warning logs that mention "supabase" — renamed to `api-shim`.
+---
 
-### Frontend rewires (already-migrated shim, just rename + harden)
-- Rename `src/integrations/api/client.ts` exports from `supabase` → `api` and update the 287 import sites in one mechanical pass. Keep a 1-line backward-compat alias for one release.
-- Replace `src/integrations/supabase/types.ts` with a generated `src/integrations/api/types.ts` produced from the backend OpenAPI spec (`@hey-api/openapi-ts`) so `Database` types disappear cleanly.
+## New Routes & Files
 
-### Edge function replacements (port → Fastify, then delete)
-All 38 Supabase functions get backend equivalents under `/api/*`:
+```text
+/admin/platform                  → redirect to /admin/platform/tenants
+/admin/platform/tenants          → PlatformTenants.tsx        (refactor of AdminTenants)
+/admin/platform/users            → PlatformUsers.tsx          (NEW)
+/admin/platform/licenses         → PlatformLicenses.tsx       (NEW)
+/admin/platform/integrations     → PlatformIntegrations.tsx   (NEW)
+```
 
-| Supabase function | New Fastify route | Worker queue |
-|---|---|---|
-| workflow-trigger | POST /api/workflows/trigger | `workflows` |
-| scheduled-checks | (cron in worker) | `scheduled` |
-| create-users, set-user-password | /api/admin/users/* | — |
-| hubspot-auth, hubspot-sync | /api/integrations/hubspot/* | `integrations` |
-| office365-auth, office365-sync | /api/integrations/office365/* | `integrations` |
-| exchange-rates | /api/exchange-rates (Redis-cached) | `scheduled` |
-| intelligent/sales/support/employee/tender/sales-assistant | /api/ai/assistant/* | `ai-jobs` |
-| sales/finance/executive/meddic-insights | /api/ai/insights/* | `ai-jobs` |
-| enrich-company / executives / user / offering / problem-area / project-plan / batch-enrich-offerings | /api/ai/enrich/* | `ai-jobs` |
-| generate-recommendation-steps, generate-solution-documentation | /api/ai/generate/* | `ai-jobs` |
-| account-intelligence, contact-intelligence, threat-intelligence | /api/ai/intelligence/* | `ai-jobs` |
-| verify-document | /api/ai/verify-document | `ai-jobs` |
-| fetch-company-info | /api/ai/fetch-company-info | `ai-jobs` |
-| finance-ai-insights | /api/ai/insights/finance | `ai-jobs` |
+Layout wrapper: `src/pages/admin/platform/PlatformLayout.tsx` adds the banner + sub-nav tabs and gates everything on `isSuperAdmin`.
 
-Email: Resend → SES (worker `email` queue). Bedrock + OpenAI + Google through existing `lib/ai-provider.ts`.
+---
 
-### Storage bucket migration
-8 Supabase buckets → S3 prefixes in a single bucket:
-- `sop-images`, `organization-assets`, `tenant-logos` → `public/` prefix, CloudFront-fronted.
-- `order-documents`, `employee-documents`, `expense-receipts`, `verification-documents`, `tender-documents` → `private/` prefix, signed URLs only.
-- One-shot migration script: list each bucket, stream objects to S3, rewrite DB columns holding old paths.
+## 1. Tenants (refactored)
 
-### Database migration
-- Use AWS DMS (CDC mode) to copy current Supabase Postgres → Aurora PG Serverless v2 with minimal downtime.
-- All 50 SECURITY DEFINER functions and triggers transfer as-is (they're standard PostgreSQL).
-- Auth subjects in `user_id` columns stay as UUIDs and are kept in sync with Cognito `sub` (already the case for new users; one backfill script for legacy users).
-- After cutover, drop Supabase-only schemas (`auth`, `storage`, `realtime`, `vault`, `supabase_functions`).
+Keep all current functionality, plus:
 
-### Realtime
-- Postgres `LISTEN/NOTIFY` triggers + Fastify WebSocket gateway (planned in the prior task) replace Supabase Realtime.
-- Channel API in the shim already mimics Supabase semantics, so calling code is unchanged.
+- KPI strip: total tenants, active, suspended, trial, MRR estimate.
+- Bulk actions: suspend / reactivate / export.
+- New columns: status (active/suspended/trial), seat usage (used/licensed), last activity.
+- Lifecycle controls in detail sheet: Suspend, Archive, Transfer Ownership.
 
-### Infra (`infra/cloudformation.yaml`) updates
-- Replace `AWS::RDS::DBInstance` with `AWS::RDS::DBCluster` (`engine: aurora-postgresql`, `EngineMode: provisioned`, `ServerlessV2ScalingConfiguration: {MinCapacity: 0.5, MaxCapacity: 16}`) + 2 writer/reader instances.
-- Add ElastiCache Valkey cluster (already in the previous plan).
-- Add CloudFront distribution in front of the public S3 prefix.
-- Add SES domain identity + DKIM + bounce SNS topic.
-- Remove anything pointing to Supabase URLs, anon keys, or service role keys from task definitions and parameter store.
+---
 
-## Cutover sequence
+## 2. User Management (Cross-Tenant)
 
-1. **Provision**: Aurora cluster, ElastiCache, S3 bucket, CloudFront, SES — no traffic yet.
-2. **Bulk copy**: DMS full-load Supabase → Aurora; sync storage buckets to S3.
-3. **Enable CDC**: DMS keeps Aurora in sync with Supabase writes.
-4. **Deploy backend** with all ported routes and workers pointing at Aurora.
-5. **Deploy frontend** with renamed `api` shim. Smoke test in staging tenant.
-6. **DNS / config flip**: point app to the new backend; stop writes to Supabase.
-7. **Verify** for 7 days against `tenant_audit_log` and worker error rate.
-8. **Delete**: edge functions (via `supabase--delete_edge_functions`), `supabase/` folder, npm deps, env vars, Supabase project.
+A **global user directory** that spans every tenant — something an individual tenant admin cannot see.
 
-## Out of scope
+Features:
+- Search every user across all tenants by email/name.
+- Per-row chips showing **which tenants they belong to** and their role in each.
+- Promote / demote **super_admin** flag (`profiles.is_super_admin`).
+- Move / copy a user between tenants.
+- Force password reset, disable account, view login history.
+- Filter: orphaned users (no tenant), multi-tenant users, super admins, inactive >90d.
 
-- Multi-region active-active (revisit if/when global tenants are added).
-- Migrating to a non-PostgreSQL engine — would require rewriting every trigger, RLS policy, and 100+ joined queries for marginal gain.
-- Replacing TanStack Query / shadcn / Vite — only the data layer changes.
+---
 
-## Acceptance criteria
+## 3. License Management
 
-- `rg -l supabase src/ backend/ infra/` returns 0 hits (except a CHANGELOG entry).
-- `package.json` has no `@supabase/*` dependencies.
-- All 38 edge functions deleted from the Supabase project and the repo.
-- Aurora cluster serves 100% of reads/writes; Supabase project status page is irrelevant to uptime.
-- Realtime, ticketing workflows, HR onboarding, AI insights, OAuth integrations, file uploads, and emails all work end-to-end without any Supabase call.
-- Load test: 500 concurrent users, p95 API latency < 250 ms; Aurora ACUs auto-scale and settle.
+Platform-level commercial controls, separate from per-tenant module toggles.
+
+Features:
+- **Plan catalog editor**: define/edit Starter / Professional / Enterprise — included modules, seat caps, price, trial length. Backed by new tables `license_plans` and `license_plan_modules`.
+- **Per-tenant license card**: current plan, seats licensed vs used, renewal date, trial expiry, payment status, add-on modules.
+- **Upgrade / downgrade / extend trial** actions.
+- **Module entitlements matrix**: grid of tenants × modules, super-admin can grant a module beyond the plan as an "add-on override".
+- Usage analytics: seat utilisation %, overage alerts.
+
+---
+
+## 4. Platform Integrations
+
+Integrations configured **once at the platform level** and inherited or offered to tenants — different from each tenant configuring their own HubSpot/O365 keys.
+
+Two categories:
+
+- **Platform-only integrations** (super-admin operational): Stripe billing, Resend (email), error monitoring, audit log sinks, SSO IdP federation, AWS infra hooks. Tenants never see these.
+- **Marketplace integrations**: super-admin curates the catalog of integrations available, sets default credentials/templates, marks them as "available to tenants", "auto-enabled for tier X", or "disabled". Per-tenant page consumes this catalog.
+
+Features:
+- Catalog manager (enable/disable an integration platform-wide).
+- Shared credential vault (super-admin stores org-wide OAuth client IDs once; tenants reuse without seeing secrets).
+- Webhook router: define platform-wide webhook endpoints that fan out to tenants.
+- Health dashboard: status, last sync, error rate per integration per tenant.
+
+---
+
+## Database changes
+
+New tables (migration `009_platform_console.ts`):
+
+```text
+license_plans            (id, key, name, price_monthly, seat_cap, trial_days, is_active)
+license_plan_modules     (plan_id, module_key)
+tenant_licenses          (tenant_id PK, plan_id, status, seats_licensed,
+                          trial_ends_at, renews_at, payment_status, notes)
+tenant_module_overrides  (tenant_id, module_key, granted_by, expires_at)
+platform_integrations    (id, key, name, category, is_enabled, config jsonb,
+                          available_to_tenants bool, auto_enable_tier text)
+platform_integration_credentials  (integration_id, secret_ref, created_by)
+                          -- secret value lives in secrets store, not DB
+user_audit_log           (id, user_id, actor_id, action, tenant_id, metadata, at)
+```
+
+Reuse existing `tenants`, `tenant_members`, `profiles`, `tenant_modules`, `module_definitions`.
+
+All new tables: RLS enabled; only `is_super_admin(auth.uid())` can read/write.
+
+---
+
+## Backend (Fastify)
+
+New route files under `backend/src/routes/`:
+- `platform-tenants.ts` — bulk ops, suspend, transfer.
+- `platform-users.ts` — cross-tenant search, role + super_admin mgmt.
+- `platform-licenses.ts` — plan CRUD, tenant license CRUD, override grants.
+- `platform-integrations.ts` — catalog + credential vault.
+
+All guarded by a new `requireSuperAdmin` preHandler.
+
+---
+
+## Frontend technical detail
+
+- Add `Crown`/`Building2`/`Users`/`KeyRound`/`Plug` icons to sidebar group "Platform Console" (super-admin only).
+- `PlatformLayout` renders sub-nav tabs using existing `Tabs` UI; preserves deep-link to each section.
+- Reuse existing `supabase` shim for queries; reuse `Card`, `Table`, `Sheet`, `Switch` patterns from `AdminTenants`.
+- Sidebar mapping in `AdminLayout.tsx` extended with `admin-platform-*` ids.
+
+---
+
+## Out of scope (this iteration)
+
+- Real Stripe billing integration (License Mgmt stores intent + status; wiring Stripe is a follow-up).
+- Tenant-side UI changes beyond marking which integrations are "platform-managed" (read-only).
+- Migrating existing per-tenant `/admin/integrations` page — it stays unchanged.
+
+---
+
+## Deliverables
+
+- 1 new DB migration
+- 4 backend routes (super-admin only)
+- 1 platform layout + 4 pages, sidebar + routing updates
+- Redirect from old `/admin/tenants` to `/admin/platform/tenants`
+- Memory note recording the Platform Console pattern
+
+Once you approve, I'll switch to build mode and implement in this order: migration → backend routes → layout/routing → Tenants refactor → Users → Licenses → Integrations.

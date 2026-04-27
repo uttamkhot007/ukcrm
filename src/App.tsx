@@ -26,6 +26,11 @@ import AdminSupportManagement from "./pages/admin/AdminSupportManagement";
 import AdminDocumentTemplates from "./pages/admin/AdminDocumentTemplates";
 import AdminWhitelabel from "./pages/admin/AdminWhitelabel";
 import AdminAuthorizedDomains from "./pages/admin/AdminAuthorizedDomains";
+import PlatformLayout from "./pages/admin/platform/PlatformLayout";
+import PlatformTenants from "./pages/admin/platform/PlatformTenants";
+import PlatformUsers from "./pages/admin/platform/PlatformUsers";
+import PlatformLicenses from "./pages/admin/platform/PlatformLicenses";
+import PlatformIntegrations from "./pages/admin/platform/PlatformIntegrations";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import SupportPortal from "./pages/SupportPortal";
@@ -80,7 +85,14 @@ const App = () => (
                   <Route path="integrations" element={<AdminIntegrations />} />
                   <Route path="documentation" element={<AdminDocumentation />} />
                   <Route path="portal" element={<Navigate to="/admin/users" replace />} />
-                  <Route path="tenants" element={<AdminTenants />} />
+                  <Route path="tenants" element={<Navigate to="/admin/platform/tenants" replace />} />
+                  <Route path="platform" element={<PlatformLayout />}>
+                    <Route index element={<Navigate to="/admin/platform/tenants" replace />} />
+                    <Route path="tenants" element={<PlatformTenants />} />
+                    <Route path="users" element={<PlatformUsers />} />
+                    <Route path="licenses" element={<PlatformLicenses />} />
+                    <Route path="integrations" element={<PlatformIntegrations />} />
+                  </Route>
                   <Route path="health" element={<AdminHealth />} />
                   <Route path="procurement" element={<AdminProcurement />} />
                   <Route path="support-management" element={<AdminSupportManagement />} />
