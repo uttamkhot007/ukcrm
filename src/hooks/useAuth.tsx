@@ -148,11 +148,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fetch role
-      const { data: roleData } = await supabase
+      updateStep("role", { status: "pending", message: undefined });
+      const { data: roleData, error: roleErr } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
+      if (roleErr) {
+        updateStep("role", { status: "error", message: roleErr.message });
+      }
 
       const isSuperAdminUser = (profileData as any)?.is_super_admin === true;
       
