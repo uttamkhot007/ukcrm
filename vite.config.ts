@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { VitePWA } from "vite-plugin-pwa";
 
 // `lovable-tagger` is a Lovable-editor-only devDependency. Loading it lazily
 // (and only in development) means the AWS production bundle has no hard
@@ -31,59 +30,6 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       react(),
       tagger,
-      VitePWA({
-        registerType: "autoUpdate",
-        includeAssets: ["favicon.ico", "robots.txt"],
-        manifest: {
-          name: "NexusCRM",
-          short_name: "NexusCRM",
-          description: "Enterprise CRM platform",
-          theme_color: "#6366f1",
-          background_color: "#0f0f23",
-          display: "standalone",
-          orientation: "portrait-primary",
-          scope: "/",
-          start_url: "/",
-          icons: [
-            {
-              src: "/pwa-192x192.png",
-              sizes: "192x192",
-              type: "image/png",
-              purpose: "any",
-            },
-            {
-              src: "/pwa-512x512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any",
-            },
-            {
-              src: "/pwa-maskable-512x512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "maskable",
-            },
-          ],
-        },
-        workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-          maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8 MiB
-          runtimeCaching: [
-            {
-              // Cache same-origin API calls to the self-hosted backend.
-              urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-              handler: "NetworkFirst",
-              options: {
-                cacheName: "api-cache",
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 24, // 1 day
-                },
-              },
-            },
-          ],
-        },
-      }),
     ].filter(Boolean),
     resolve: {
       alias: {
