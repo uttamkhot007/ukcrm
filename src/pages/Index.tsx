@@ -65,6 +65,15 @@ const Index = () => {
   const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
+  // Hard timeout so a stuck profile/role fetch can't block the UI forever.
+  // After this elapses we proceed with whatever auth state we have.
+  const [authResolveTimedOut, setAuthResolveTimedOut] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    const t = setTimeout(() => setAuthResolveTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [user]);
+
   // Redirect to auth if not logged in
   useEffect(() => {
     if (!isLoading && !user) {
@@ -72,19 +81,25 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Wait for profile to be loaded before checking super admin status
-  const profileLoaded = !isLoading && profile !== null;
-  
   // Check if user is super admin directly from profile to avoid race conditions
   const isUserSuperAdmin = profile?.is_super_admin === true || isSuperAdmin;
   const shouldEnterPlatformConsole = isUserSuperAdmin || role === "admin" || isAdmin || isAdminMode;
+
+  // We treat profile+role as "resolved" once either both are populated, or the
+  // safety timeout has fired. This prevents rendering the tenant dashboard
+  // during the brief window where isLoading=false but profile/role are still
+  // null (which is what was causing admins to flash the dashboard before being
+  // redirected to /admin/platform/tenants).
+  const profileResolved = profile !== null || authResolveTimedOut;
+  const roleResolved = role !== null || authResolveTimedOut;
+  const authFullyResolved = !isLoading && !tenantLoading && profileResolved && roleResolved;
   
   // Only redirect to workspace creation if user has no tenant memberships at all
   // The TenantContext automatically selects a tenant if available
   useEffect(() => {
-    // Don't redirect until we know the user's super admin status and tenant loading is complete
-    if (!isLoading && !tenantLoading && user && profileLoaded) {
-      // Super admins should always enter the global Platform Console from the root.
+    // Don't redirect until profile + role + tenant info are all resolved.
+    if (authFullyResolved && user) {
+      // Super admins / admins should always enter the global Platform Console from the root.
       if (shouldEnterPlatformConsole) {
         const target = "/admin/platform/tenants";
         recordRedirect("/", target);
@@ -100,19 +115,16 @@ const Index = () => {
         navigate(target, { replace: true });
         return;
       }
-      
+
       // Check if user has tenant access via memberships OR profile tenant_id (for employees)
       const hasTenantAccess = tenantMemberships.length > 0 || profile?.tenant_id;
-      
+
       // Only redirect to create workspace if user has NO tenant access at all
       if (!hasTenantAccess) {
         navigate("/workspace/new");
       }
-      // If user has exactly one tenant, TenantContext will auto-select it
-      // If user has multiple tenants, TenantContext will select from localStorage or first one
-      // So we don't need to redirect to /workspace/select anymore
     }
-  }, [user, isLoading, tenantLoading, tenantMemberships, shouldEnterPlatformConsole, navigate, profileLoaded, profile?.tenant_id]);
+  }, [user, authFullyResolved, tenantMemberships, shouldEnterPlatformConsole, navigate, profile?.tenant_id]);
 
   // Set initial module based on portal mode - only on initial mount
   useEffect(() => {
@@ -123,7 +135,9 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (isLoading || tenantLoading) {
+  // Block render until we know the user's role/profile. This prevents the
+  // tenant dashboard from flashing for an admin before the redirect fires.
+  if (isLoading || tenantLoading || (user && !authFullyResolved)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -132,7 +146,13 @@ const Index = () => {
           </div>
           <div className="text-center">
             <p className="text-lg font-medium text-foreground">Loading...</p>
-            <p className="text-sm text-muted-foreground">Preparing your workspace</p>
+            <p className="text-sm text-muted-foreground">
+              {!profileResolved
+                ? "Loading your profile…"
+                : !roleResolved
+                ? "Checking your access…"
+                : "Preparing your workspace"}
+            </p>
           </div>
         </div>
       </div>
