@@ -9,7 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { restRequest, ApiError } from "@/integrations/api/rest-client";
+import { useAIChat } from "@/hooks/useAIChat";
+import { AIChatErrorBanner } from "@/components/ai/AIChatErrorBanner";
 
 interface Message {
   id: string;
@@ -45,11 +46,12 @@ export function SalesAIAssistant() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [lastUserText, setLastUserText] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
+  const { send, isLoading, error, attemptCount, reset } = useAIChat();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -68,31 +70,24 @@ export function SalesAIAssistant() {
       timestamp: new Date(),
     };
 
+    // Optimistically append the user's message and remember it for retry.
+    // The conversation is preserved on failure — the error banner sits below.
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    setIsLoading(true);
+    setLastUserText(messageText);
+    reset();
 
     try {
-      // Calls the self-hosted Fastify backend (`backend/src/routes/ai.ts`).
-      // The endpoint returns `{ response, provider, model, usage }` — no
-      // streaming, no Supabase Edge Functions.
-      const data = await restRequest<{
-        response: string;
-        toolResults?: { success: boolean; message: string }[];
-      }>("/api/ai/chat", {
-        method: "POST",
-        body: {
-          context: "sales",
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          userId: user.id,
-          tenantId: currentTenant.id,
-        },
+      const data = await send({
+        context: "sales",
+        messages: [...messages, userMessage].map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        userId: user.id,
+        tenantId: currentTenant.id,
       });
 
-      // Invalidate queries if any tool was executed successfully
       if (data.toolResults) {
         const successfulTools = data.toolResults.filter((r) => r.success);
         if (successfulTools.length > 0) {
@@ -101,41 +96,31 @@ export function SalesAIAssistant() {
           queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
           queryClient.invalidateQueries({ queryKey: ["offerings-products"] });
           queryClient.invalidateQueries({ queryKey: ["offerings-oems"] });
-
-          successfulTools.forEach((result) => {
-            toast.success(result.message);
-          });
+          successfulTools.forEach((r) => toast.success(r.message));
         }
       }
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.response,
-        timestamp: new Date(),
-        toolResults: data.toolResults,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error:", error);
-      if (error instanceof ApiError) {
-        if (error.status === 429) toast.error("Rate limit exceeded. Please try again later.");
-        else if (error.status === 402) toast.error("AI credits exhausted. Please add funds.");
-        else toast.error(error.message || "Failed to get response");
-      }
       setMessages((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "I apologize, but I encountered an error. Please try again.",
+          content: data.response,
           timestamp: new Date(),
+          toolResults: data.toolResults,
         },
       ]);
-    } finally {
-      setIsLoading(false);
+      setLastUserText(null);
+    } catch (err) {
+      // `useAIChat` already classified the error and stored it on `error`.
+      // We deliberately do NOT push a fake assistant message — the banner
+      // (rendered above the input) gives clearer recovery actions.
+      console.error("AI chat failed:", err);
     }
+  };
+
+  const handleRetry = () => {
+    if (lastUserText) handleSend(lastUserText);
   };
 
   return (
@@ -239,6 +224,17 @@ export function SalesAIAssistant() {
                 )}
               </div>
             </ScrollArea>
+
+            {error && (
+              <div className="px-4 pt-3">
+                <AIChatErrorBanner
+                  error={error}
+                  onRetry={handleRetry}
+                  isRetrying={isLoading}
+                  attemptCount={attemptCount}
+                />
+              </div>
+            )}
 
             {/* Input Area */}
             <div className="p-4 border-t border-border">

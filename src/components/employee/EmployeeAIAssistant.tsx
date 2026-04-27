@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { restRequest } from "@/integrations/api/rest-client";
+import { useAIChat } from "@/hooks/useAIChat";
+import { AIChatErrorBanner } from "@/components/ai/AIChatErrorBanner";
 
 interface Message {
   id: string;
@@ -45,8 +46,9 @@ export function EmployeeAIAssistant() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [lastUserText, setLastUserText] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { send, isLoading, error, attemptCount, reset } = useAIChat();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -67,22 +69,16 @@ export function EmployeeAIAssistant() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    setIsLoading(true);
+    setLastUserText(messageText);
+    reset();
 
     try {
-      // Calls the self-hosted Fastify backend (`backend/src/routes/ai.ts`)
-      // with the `employee` context. The backend returns a single JSON
-      // payload — we simulate the previous typewriter UX by revealing the
-      // text in chunks for a smooth feel.
-      const data = await restRequest<{ response: string }>("/api/ai/chat", {
-        method: "POST",
-        body: {
-          context: "employee",
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        },
+      const data = await send({
+        context: "employee",
+        messages: [...messages, userMessage].map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
       });
 
       const assistantId = (Date.now() + 1).toString();
@@ -93,33 +89,26 @@ export function EmployeeAIAssistant() {
 
       const fullText = data.response ?? "";
       const chunkSize = Math.max(2, Math.ceil(fullText.length / 60));
-      let revealed = "";
       for (let i = 0; i < fullText.length; i += chunkSize) {
-        revealed = fullText.slice(0, i + chunkSize);
+        const revealed = fullText.slice(0, i + chunkSize);
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, content: revealed } : m))
         );
-        // 12ms cadence ≈ 60 frames over the message
         await new Promise((r) => setTimeout(r, 12));
       }
-      // Ensure the final state is exact (in case the loop rounded short)
       setMessages((prev) =>
         prev.map((m) => (m.id === assistantId ? { ...m, content: fullText } : m))
       );
-    } catch (error) {
-      console.error("Error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "I apologize, but I encountered an error. Please try again.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
+      setLastUserText(null);
+    } catch (err) {
+      // Banner (rendered above the input) shows actionable recovery steps.
+      // Conversation history is intact.
+      console.error("AI chat failed:", err);
     }
+  };
+
+  const handleRetry = () => {
+    if (lastUserText) handleSend(lastUserText);
   };
 
   return (
@@ -211,6 +200,17 @@ export function EmployeeAIAssistant() {
                 )}
               </div>
             </ScrollArea>
+
+            {error && (
+              <div className="px-4 pt-3">
+                <AIChatErrorBanner
+                  error={error}
+                  onRetry={handleRetry}
+                  isRetrying={isLoading}
+                  attemptCount={attemptCount}
+                />
+              </div>
+            )}
 
             {/* Input Area */}
             <div className="p-4 border-t border-border">

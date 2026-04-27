@@ -180,26 +180,26 @@ docker build -t nexuscrm .
 docker run -p 80:80 nexuscrm`,
   },
   {
-    id: "edge-functions",
-    title: "Edge Functions Deployment",
-    content: `Edge functions are automatically deployed with Lovable Cloud. For manual deployment:`,
-    code: `# Deploy all edge functions
-supabase functions deploy
+    id: "backend-deploy",
+    title: "Backend Deployment",
+    content: `The Fastify backend ships as a Docker image and is deployed to AWS ECS Fargate via the GitHub Actions workflow. To deploy locally:`,
+    code: `# Build and push the backend image
+docker build -t nexuscrm-backend ./backend
+docker push <your-ecr-repo>/nexuscrm-backend:latest
 
-# Deploy specific function
-supabase functions deploy function-name`,
+# Force a new ECS deployment
+aws ecs update-service --cluster <cluster> --service <env>-backend --force-new-deployment`,
   },
   {
     id: "database-migrations",
     title: "Database Migrations",
-    content: `Database changes are managed through migrations in the supabase/migrations folder. 
+    content: `Database changes are managed through Knex.js migrations under backend/src/db/migrations. Migrations run automatically as a one-shot ECS task during deploy. For manual runs:`,
+    code: `# Apply pending migrations
+cd backend
+npm run migrate
 
-Migrations run automatically when approved in Lovable. For manual environments:`,
-    code: `# Apply migrations
-supabase db push
-
-# Create new migration
-supabase migration new migration_name`,
+# Roll back the last batch
+npm run migrate:rollback`,
   },
 ];
 
@@ -309,12 +309,12 @@ NexusCRM is built on a modern, scalable architecture using the following core te
 - **TanStack Query** - Data fetching and caching
 - **React Router** - Client-side routing
 
-### Backend Stack (Lovable Cloud / Supabase)
-- **PostgreSQL** - Primary database
-- **Supabase Auth** - Authentication & authorization
-- **Edge Functions** - Serverless backend logic (Deno)
-- **Realtime** - WebSocket subscriptions
-- **Storage** - File storage with CDN
+### Backend Stack (Self-hosted on AWS)
+- **Fastify** - High-performance Node.js HTTP server
+- **AWS Aurora PostgreSQL** - Primary database
+- **AWS Cognito** - Authentication and user pools
+- **AWS S3** - File storage with presigned URLs
+- **ElastiCache (Valkey)** - BullMQ queues + realtime pub/sub
 
 ### Security
 - Row Level Security (RLS) on all tables
