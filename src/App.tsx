@@ -105,27 +105,27 @@ const App = () => (
                 </Route>
                 <Route path="/admin/platform" element={<Navigate to="/admin/platform/tenants" replace />} />
                 <Route path="/admin/platform/tenants" element={<AdminLayout />}>
-                  <Route index element={<PlatformLayout />}>
+                  <Route element={<PlatformLayout />}>
                     <Route index element={<PlatformTenants />} />
                   </Route>
                 </Route>
                 <Route path="/admin/platform/users" element={<AdminLayout />}>
-                  <Route index element={<PlatformLayout />}>
+                  <Route element={<PlatformLayout />}>
                     <Route index element={<PlatformUsers />} />
                   </Route>
                 </Route>
                 <Route path="/admin/platform/licenses" element={<AdminLayout />}>
-                  <Route index element={<PlatformLayout />}>
+                  <Route element={<PlatformLayout />}>
                     <Route index element={<PlatformLicenses />} />
                   </Route>
                 </Route>
                 <Route path="/admin/platform/integrations" element={<AdminLayout />}>
-                  <Route index element={<PlatformLayout />}>
+                  <Route element={<PlatformLayout />}>
                     <Route index element={<PlatformIntegrations />} />
                   </Route>
                 </Route>
                 <Route path="/admin/platform/status" element={<AdminLayout />}>
-                  <Route index element={<PlatformLayout />}>
+                  <Route element={<PlatformLayout />}>
                     <Route index element={<PlatformStatus />} />
                   </Route>
                 </Route>
