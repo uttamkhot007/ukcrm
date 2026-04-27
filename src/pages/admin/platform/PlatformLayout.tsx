@@ -18,10 +18,11 @@ const TABS = [
 ];
 
 export default function PlatformLayout() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, role, isAdmin } = useAuth();
   const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
+  const canAccessPlatformConsole = isSuperAdmin || isAdmin || role === "admin";
 
   useEffect(() => {
     if (!isLoading && !user) navigate("/auth");
@@ -49,7 +50,7 @@ export default function PlatformLayout() {
     );
   }
 
-  if (!isSuperAdmin) {
+  if (!canAccessPlatformConsole) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Card className="max-w-md">
@@ -57,7 +58,7 @@ export default function PlatformLayout() {
             <ShieldAlert className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
             <CardTitle>Platform Console Restricted</CardTitle>
             <CardDescription>
-              The Platform Console is reserved for super administrators. It controls
+              The Platform Console is reserved for administrators. It controls
               configuration that spans every tenant on this deployment.
             </CardDescription>
           </CardHeader>
@@ -83,7 +84,7 @@ export default function PlatformLayout() {
             </div>
           </div>
           <Badge variant="outline" className="border-purple-500/40 text-purple-600 dark:text-purple-300">
-            Super Admin
+              {isSuperAdmin ? "Super Admin" : "Admin"}
           </Badge>
         </div>
       </div>
