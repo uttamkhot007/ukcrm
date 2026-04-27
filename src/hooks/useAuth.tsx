@@ -470,6 +470,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshTeams,
     consoleAccess,
     hasModuleAccess,
+    diagnostics,
+    resetDiagnostics,
+    getRedirectPath,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
