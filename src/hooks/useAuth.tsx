@@ -116,6 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (userId: string) => {
     try {
+      setProfile(null);
+      setRole(null);
       // Fetch profile
       setIsProfileLoading(true);
       updateStep("profile", { status: "pending", message: undefined });
@@ -352,6 +354,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser((session?.user ?? null) as unknown as User);
 
         if (session?.user) {
+          setIsProfileLoading(true);
+          setIsRoleLoading(true);
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(async () => {
             if (isMounted) {
