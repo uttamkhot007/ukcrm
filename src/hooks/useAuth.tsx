@@ -58,6 +58,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  isPlatformAdmin: boolean;
   isManager: boolean;
   isEmployee: boolean;
   isCustomer: boolean;
@@ -395,10 +396,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Compute the correct landing path post-login based on user state.
   const getRedirectPath = (): string => {
-    // Super admins land on the platform console
-    if (profile?.is_super_admin) return "/admin/platform/tenants";
-    // Tenant admins land on the admin center
-    if (role === "admin") return "/admin";
+    // Platform / super admins land on the global Platform Console
+    if (profile?.is_super_admin || role === "admin") return "/admin/platform/tenants";
     // Customers go to their portal
     if (profile?.user_category === "customer") return "/customer";
     // Everyone else lands on the workspace home
@@ -463,7 +462,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Super admins are also considered admins
   const isSuperAdmin = profile?.is_super_admin === true;
   const isAdminOrSuperAdmin = role === "admin" || isSuperAdmin;
-  const isAuthResolved = !isLoading && !isProfileLoading && !isRoleLoading;
+  // True for any user who should land in the global Platform Console.
+  const isPlatformAdmin = isAdminOrSuperAdmin;
+  // Auth is "resolved" when:
+  //  - the initial session check finished (isLoading=false), AND
+  //  - if a user is logged in, we've finished fetching profile + role.
+  // For unauthenticated visitors, the initial check alone is enough.
+  const isAuthResolved =
+    !isLoading &&
+    (!user || (!isProfileLoading && !isRoleLoading));
 
   const value: AuthContextType = {
     user,
@@ -484,6 +491,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     isAdmin: isAdminOrSuperAdmin,
     isSuperAdmin,
+    isPlatformAdmin,
     isManager: role === "manager",
     isEmployee: role === "employee",
     isCustomer,
