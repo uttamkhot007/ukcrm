@@ -297,12 +297,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // First, get the initial session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        updateStep("session", { status: "pending" });
+        const { data: { session }, error: sessErr } = await supabase.auth.getSession();
         
         if (!isMounted) return;
         
         setSession(session as unknown as Session);
         setUser((session?.user ?? null) as unknown as User);
+        if (sessErr) {
+          updateStep("session", { status: "error", message: sessErr.message });
+        } else if (session?.user) {
+          updateStep("session", { status: "ok", message: `uid: ${session.user.id.slice(0, 8)}…` });
+        } else {
+          updateStep("session", { status: "skipped", message: "No active session" });
+        }
         
         if (session?.user) {
           await fetchUserData(session.user.id);
@@ -310,8 +318,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         initialSessionHandled = true;
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error initializing auth:", error);
+        updateStep("session", { status: "error", message: error?.message ?? "init failed" });
         if (isMounted) {
           setIsLoading(false);
         }
