@@ -1,77 +1,45 @@
-// Service Worker for Push Notifications
+// Self-destruct service worker.
+//
+// The previous service worker registered for push notifications was caching
+// the app shell and intercepting navigations, which caused super-admins to
+// see stale "old format" UI even after deploys.
+//
+// This worker exists ONLY to clean up after itself: any browser that still
+// has /sw.js registered will:
+//   1. Skip waiting on install
+//   2. On activate: delete every cache, unregister itself, reload all clients
+//
+// Once everyone has loaded the app at least once after this change,
+// no service worker will be running anywhere.
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
-      .then(() => self.clients.claim())
-  );
-});
+  event.waitUntil((async () => {
+    try {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    } catch (e) {
+      // ignore
+    }
 
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
+    try {
+      await self.registration.unregister();
+    } catch (e) {
+      // ignore
+    }
 
-  const data = event.data.json();
-  const options = {
-    body: data.message || 'You have a new notification',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.action_url || '/',
-      notificationId: data.id,
-    },
-    actions: [
-      { action: 'view', title: 'View' },
-      { action: 'dismiss', title: 'Dismiss' },
-    ],
-    tag: data.id || 'default',
-    renotify: true,
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Notification', options)
-  );
-});
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'dismiss') return;
-
-  const urlToOpen = event.notification.data?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Check if there's already a window open
-      for (const client of windowClients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.focus();
-          client.postMessage({ type: 'NOTIFICATION_CLICK', url: urlToOpen });
-          return;
-        }
-      }
-      // Open new window if none exists
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
-});
-
-self.addEventListener('pushsubscriptionchange', (event) => {
-  event.waitUntil(
-    self.registration.pushManager.subscribe(event.oldSubscription.options).then((subscription) => {
-      // Notify the app about the subscription change
-      self.clients.matchAll().then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({ type: 'SUBSCRIPTION_CHANGED', subscription });
-        });
+    try {
+      const clientList = await self.clients.matchAll({ type: 'window' });
+      clientList.forEach((client) => {
+        try { client.navigate(client.url); } catch (e) { /* ignore */ }
       });
-    })
-  );
+    } catch (e) {
+      // ignore
+    }
+  })());
 });
+
+// Intentionally NO fetch handler — the SW must not intercept any request.

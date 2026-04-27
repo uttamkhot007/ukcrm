@@ -1,6 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { readFileSync } from "fs";
+
+// Read package.json once at config-load time so we can inject the
+// version string into the bundle (visible in the Build Version badge).
+const pkg = JSON.parse(
+  readFileSync(path.resolve(__dirname, "./package.json"), "utf-8")
+) as { version: string };
+const BUILD_TIME = new Date().toISOString();
+const BUILD_COMMIT =
+  process.env.LOVABLE_COMMIT_SHA ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GITHUB_SHA ||
+  "dev";
 
 // `lovable-tagger` is a Lovable-editor-only devDependency. Loading it lazily
 // (and only in development) means the AWS production bundle has no hard
@@ -65,12 +78,17 @@ export default defineConfig(async ({ mode }) => {
     // We explicitly redefine them as empty strings so they evaporate from
     // the production bundle while still working in the Lovable editor.
     // ========================================================================
-    define: isProd
-      ? {
-          "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(""),
-          "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(""),
-          "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(""),
-        }
-      : {},
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __APP_BUILD_TIME__: JSON.stringify(BUILD_TIME),
+      __APP_COMMIT__: JSON.stringify(BUILD_COMMIT),
+      ...(isProd
+        ? {
+            "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(""),
+            "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(""),
+            "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(""),
+          }
+        : {}),
+    },
   };
 });
