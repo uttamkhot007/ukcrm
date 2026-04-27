@@ -35,7 +35,7 @@ export default function PlatformUsers() {
         supabase.from("tenants").select("id, name"),
       ]);
 
-      const tenantMap = new Map((tenants || []).map((t: any) => [t.id, t.name]));
+      const tenantMap = new Map<string, string>((tenants || []).map((t: any) => [t.id as string, t.name as string]));
       const membershipMap = new Map<string, PlatformUser["memberships"]>();
       (members || []).forEach((m: any) => {
         const arr = membershipMap.get(m.user_id) || [];
