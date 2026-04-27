@@ -1,5 +1,17 @@
 // Service Worker for Push Notifications
 
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
+      .then(() => self.clients.claim())
+  );
+});
+
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
