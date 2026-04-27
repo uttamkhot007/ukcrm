@@ -18,15 +18,15 @@ const TABS = [
 ];
 
 export default function PlatformLayout() {
-  const { user, isLoading, role, isAdmin } = useAuth();
+  const { user, isAuthResolved, role, isAdmin } = useAuth();
   const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
   const canAccessPlatformConsole = isSuperAdmin || isAdmin || role === "admin";
 
   useEffect(() => {
-    if (!isLoading && !user) navigate("/auth");
-  }, [user, isLoading, navigate]);
+    if (isAuthResolved && !user) navigate("/auth");
+  }, [user, isAuthResolved, navigate]);
 
   // Redirect bare /admin/platform → tenants
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function PlatformLayout() {
     }
   }, [location.pathname, navigate]);
 
-  if (isLoading || tenantLoading) {
+  if (!isAuthResolved || tenantLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

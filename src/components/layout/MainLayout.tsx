@@ -19,12 +19,12 @@ interface MainLayoutProps {
 export function MainLayout({ children, activeModule, onModuleChange }: MainLayoutProps) {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, isAuthResolved } = useAuth();
   const { isLoading: tenantLoading } = useTenant();
 
   // Prevent sidebar/module flicker/disappearing by not rendering layout until
   // auth + tenant context are fully ready.
-  if (authLoading || tenantLoading) {
+  if (authLoading || !isAuthResolved || tenantLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

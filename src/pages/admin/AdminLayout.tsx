@@ -6,7 +6,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
-  const { user, isLoading, role, isAdmin } = useAuth();
+  const { user, isAuthResolved, role, isAdmin } = useAuth();
   const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,13 +45,13 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (isAuthResolved && !user) {
       navigate("/auth");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isAuthResolved, navigate]);
 
   useEffect(() => {
-    if (!isLoading && !tenantLoading && user) {
+    if (isAuthResolved && !tenantLoading && user) {
       // Super admin routes require super admin status
       if (isSuperAdminRoute && !canAccessPlatformRoute) {
         navigate("/");
@@ -62,9 +62,9 @@ export default function AdminLayout() {
         navigate("/");
       }
     }
-  }, [user, isLoading, tenantLoading, role, isSuperAdmin, isSuperAdminRoute, canAccessPlatformRoute, navigate]);
+  }, [user, isAuthResolved, tenantLoading, role, isSuperAdmin, isSuperAdminRoute, canAccessPlatformRoute, navigate]);
 
-  if (isLoading || tenantLoading) {
+  if (!isAuthResolved || tenantLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

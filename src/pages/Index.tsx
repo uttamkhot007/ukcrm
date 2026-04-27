@@ -61,7 +61,7 @@ import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const { user, isLoading, portalMode, isCustomer, isAdminMode, profile, role, isAdmin } = useAuth();
+  const { user, isLoading, isAuthResolved, isProfileLoading, isRoleLoading, portalMode, isCustomer, isAdminMode, profile, role, isAdmin } = useAuth();
   const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
@@ -90,9 +90,9 @@ const Index = () => {
   // during the brief window where isLoading=false but profile/role are still
   // null (which is what was causing admins to flash the dashboard before being
   // redirected to /admin/platform/tenants).
-  const profileResolved = profile !== null || authResolveTimedOut;
-  const roleResolved = role !== null || authResolveTimedOut;
-  const authFullyResolved = !isLoading && !tenantLoading && profileResolved && roleResolved;
+  const profileResolved = !isProfileLoading && (profile !== null || authResolveTimedOut);
+  const roleResolved = !isRoleLoading && (role !== null || authResolveTimedOut);
+  const authFullyResolved = isAuthResolved && !tenantLoading && profileResolved && roleResolved;
   
   // Only redirect to workspace creation if user has no tenant memberships at all
   // The TenantContext automatically selects a tenant if available
