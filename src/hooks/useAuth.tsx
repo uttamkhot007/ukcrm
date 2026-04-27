@@ -162,12 +162,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (roleData) {
         setRole(roleData.role as AppRole);
+        updateStep("role", { status: "ok", message: roleData.role as string });
         // Set default portal mode for admins and super admins
         if ((roleData.role === 'admin' || isSuperAdminUser) && profileData?.user_category !== 'customer') {
           setPortalMode('admin');
         }
       } else {
         setRole("employee");
+        updateStep("role", { status: "ok", message: isSuperAdminUser ? "super_admin (implicit)" : "employee (default)" });
         // Super admins without explicit role still get admin mode
         if (isSuperAdminUser) {
           setPortalMode('admin');
@@ -177,21 +179,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fetch teams
-      const { data: teamsData } = await supabase
+      updateStep("teams", { status: "pending", message: undefined });
+      const { data: teamsData, error: teamsErr } = await supabase
         .from("user_teams")
         .select("team")
         .eq("user_id", userId);
-
-      if (teamsData) {
-        setTeams(teamsData.map(t => t.team as TeamType));
+      if (teamsErr) {
+        updateStep("teams", { status: "error", message: teamsErr.message });
+      } else {
+        const list = (teamsData ?? []).map(t => t.team as TeamType);
+        setTeams(list);
+        updateStep("teams", { status: "ok", message: list.length ? list.join(", ") : "no teams assigned" });
       }
 
       // Fetch console access settings
-      const { data: consoleAccessData } = await supabase
+      updateStep("console_access", { status: "pending", message: undefined });
+      const { data: consoleAccessData, error: caErr } = await supabase
         .from("user_console_access")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
+      if (caErr) {
+        updateStep("console_access", { status: "error", message: caErr.message });
+      }
+
 
 
       if (consoleAccessData) {
