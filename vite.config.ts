@@ -55,6 +55,19 @@ export default defineConfig(async ({ mode }) => {
           },
         },
       },
+      {
+        name: "append-build-query-to-html-assets",
+        transformIndexHtml: {
+          order: "post" as const,
+          handler(html: string) {
+            const buildQuery = `build=${encodeURIComponent(BUILD_TIME)}`;
+            return html.replace(/\b(src|href)="([^"#?]*(?:\/assets\/|\/src\/)[^"]+)"/g, (_match, attr, value) => {
+              const separator = value.includes("?") ? "&" : "?";
+              return `${attr}="${value}${separator}${buildQuery}"`;
+            });
+          },
+        },
+      },
     ].filter(Boolean),
     resolve: {
       alias: {
