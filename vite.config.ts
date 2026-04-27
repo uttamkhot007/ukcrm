@@ -43,6 +43,14 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       react(),
       tagger,
+      // Replace the build-time placeholder in index.html so the static
+      // fallback badge can show when this exact HTML payload was built.
+      {
+        name: "inject-build-time-into-html",
+        transformIndexHtml(html: string) {
+          return html.replace(/__INDEX_HTML_BUILT__/g, BUILD_TIME);
+        },
+      },
     ].filter(Boolean),
     resolve: {
       alias: {
