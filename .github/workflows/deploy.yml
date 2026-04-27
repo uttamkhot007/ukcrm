@@ -53,6 +53,9 @@ jobs:
           echo "alb_dns=$(OUT ALBDNS)"                  >> $GITHUB_OUTPUT
           echo "cluster=${ENV_NAME}-nexuscrm"           >> $GITHUB_OUTPUT
 
+      # The Dockerfile already runs `verify-aws-bundle.mjs` inside the build
+      # stage, so an unclean bundle (any supabase.co, @supabase/supabase-js,
+      # or "lovable" reference) fails this step before the image is pushed.
       - name: Build & push frontend
         run: |
           docker build \
