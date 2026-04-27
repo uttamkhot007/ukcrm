@@ -61,10 +61,18 @@ pnpm install`,
   {
     id: "env-setup",
     title: "Environment Setup",
-    content: "Create a .env file in the root directory with your Supabase credentials:",
-    code: `VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
-VITE_SUPABASE_PROJECT_ID=your_project_id`,
+    content: "Create a .env file in the root directory pointing at your self-hosted backend:",
+    code: `# Frontend
+VITE_API_URL=http://localhost:3001
+
+# Backend (in backend/.env)
+DB_HOST=localhost
+DB_NAME=nexuscrm
+DB_USER=nexuscrm
+DB_PASSWORD=changeme
+COGNITO_USER_POOL_ID=ap-south-1_XXXX
+COGNITO_CLIENT_ID=XXXX
+S3_BUCKET=nexuscrm-uploads`,
   },
   {
     id: "start-dev",
@@ -145,16 +153,16 @@ const deploymentDocs: DocSection[] = [
 # Output will be in the 'dist' folder`,
   },
   {
-    id: "lovable-deploy",
-    title: "Deploy via Lovable",
-    content: `For projects hosted on Lovable:
+    id: "aws-deploy",
+    title: "Deploy to AWS",
+    content: `Production deployments target AWS:
 
-1. Click the "Publish" button in the top-right corner
-2. Wait for the build to complete
-3. Click "Update" to deploy changes
-4. Your app will be live at your-project.lovable.app
+1. Push to the main branch — GitHub Actions builds the Docker image
+2. Image is pushed to Amazon ECR
+3. ECS Fargate service performs a rolling update
+4. The Application Load Balancer routes traffic to the new task set
 
-Custom domains can be configured in Project Settings > Domains.`,
+See DEPLOYMENT.md for the full AWS runbook (Cognito, RDS, ECS, S3, SES).`,
   },
   {
     id: "self-hosting",

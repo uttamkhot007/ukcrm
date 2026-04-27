@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { restRequest } from "@/integrations/api/rest-client";
 
 interface Message {
   id: string;
@@ -69,74 +70,42 @@ export function EmployeeAIAssistant() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/employee-assistant`, {
+      // Calls the self-hosted Fastify backend (`backend/src/routes/ai.ts`)
+      // with the `employee` context. The backend returns a single JSON
+      // payload — we simulate the previous typewriter UX by revealing the
+      // text in chunks for a smooth feel.
+      const data = await restRequest<{ response: string }>("/api/ai/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+        body: {
+          context: "employee",
           messages: [...messages, userMessage].map((m) => ({
             role: m.role,
             content: m.content,
           })),
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response body");
-
-      const decoder = new TextDecoder();
-      let assistantContent = "";
       const assistantId = (Date.now() + 1).toString();
-
-      // Add empty assistant message
       setMessages((prev) => [
         ...prev,
         { id: assistantId, role: "assistant", content: "", timestamp: new Date() },
       ]);
 
-      let textBuffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: assistantContent } : m
-                )
-              );
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
+      const fullText = data.response ?? "";
+      const chunkSize = Math.max(2, Math.ceil(fullText.length / 60));
+      let revealed = "";
+      for (let i = 0; i < fullText.length; i += chunkSize) {
+        revealed = fullText.slice(0, i + chunkSize);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: revealed } : m))
+        );
+        // 12ms cadence ≈ 60 frames over the message
+        await new Promise((r) => setTimeout(r, 12));
       }
+      // Ensure the final state is exact (in case the loop rounded short)
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, content: fullText } : m))
+      );
     } catch (error) {
       console.error("Error:", error);
       setMessages((prev) => [

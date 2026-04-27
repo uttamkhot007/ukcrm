@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { restRequest, ApiError } from "@/integrations/api/rest-client";
 
 interface Message {
   id: string;
@@ -72,47 +73,36 @@ export function SalesAIAssistant() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sales-assistant`, {
+      // Calls the self-hosted Fastify backend (`backend/src/routes/ai.ts`).
+      // The endpoint returns `{ response, provider, model, usage }` — no
+      // streaming, no Supabase Edge Functions.
+      const data = await restRequest<{
+        response: string;
+        toolResults?: { success: boolean; message: string }[];
+      }>("/api/ai/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+        body: {
+          context: "sales",
           messages: [...messages, userMessage].map((m) => ({
             role: m.role,
             content: m.content,
           })),
           userId: user.id,
           tenantId: currentTenant.id,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (response.status === 429) {
-          toast.error("Rate limit exceeded. Please try again later.");
-        } else if (response.status === 402) {
-          toast.error("AI credits exhausted. Please add funds.");
-        } else {
-          toast.error(errorData.error || "Failed to get response");
-        }
-        throw new Error(errorData.error || "Failed to get response");
-      }
-
-      const data = await response.json();
-      
       // Invalidate queries if any tool was executed successfully
       if (data.toolResults) {
-        const successfulTools = data.toolResults.filter((r: any) => r.success);
+        const successfulTools = data.toolResults.filter((r) => r.success);
         if (successfulTools.length > 0) {
           queryClient.invalidateQueries({ queryKey: ["deals"] });
           queryClient.invalidateQueries({ queryKey: ["contacts"] });
           queryClient.invalidateQueries({ queryKey: ["alliance-organizations"] });
           queryClient.invalidateQueries({ queryKey: ["offerings-products"] });
           queryClient.invalidateQueries({ queryKey: ["offerings-oems"] });
-          
-          successfulTools.forEach((result: any) => {
+
+          successfulTools.forEach((result) => {
             toast.success(result.message);
           });
         }
@@ -121,7 +111,7 @@ export function SalesAIAssistant() {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.content,
+        content: data.response,
         timestamp: new Date(),
         toolResults: data.toolResults,
       };
@@ -129,6 +119,11 @@ export function SalesAIAssistant() {
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error:", error);
+      if (error instanceof ApiError) {
+        if (error.status === 429) toast.error("Rate limit exceeded. Please try again later.");
+        else if (error.status === 402) toast.error("AI credits exhausted. Please add funds.");
+        else toast.error(error.message || "Failed to get response");
+      }
       setMessages((prev) => [
         ...prev,
         {
