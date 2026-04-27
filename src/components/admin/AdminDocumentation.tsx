@@ -145,16 +145,16 @@ const deploymentDocs: DocSection[] = [
 # Output will be in the 'dist' folder`,
   },
   {
-    id: "lovable-deploy",
-    title: "Deploy via Lovable",
-    content: `For projects hosted on Lovable:
+    id: "aws-deploy",
+    title: "Deploy to AWS",
+    content: `Production deployments target AWS:
 
-1. Click the "Publish" button in the top-right corner
-2. Wait for the build to complete
-3. Click "Update" to deploy changes
-4. Your app will be live at your-project.lovable.app
+1. Push to the main branch — GitHub Actions builds the Docker image
+2. Image is pushed to Amazon ECR
+3. ECS Fargate service performs a rolling update
+4. The Application Load Balancer routes traffic to the new task set
 
-Custom domains can be configured in Project Settings > Domains.`,
+See DEPLOYMENT.md for the full AWS runbook (Cognito, RDS, ECS, S3, SES).`,
   },
   {
     id: "self-hosting",
