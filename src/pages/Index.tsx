@@ -65,6 +65,15 @@ const Index = () => {
   const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
+  // Hard timeout so a stuck profile/role fetch can't block the UI forever.
+  // After this elapses we proceed with whatever auth state we have.
+  const [authResolveTimedOut, setAuthResolveTimedOut] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    const t = setTimeout(() => setAuthResolveTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [user]);
+
   // Redirect to auth if not logged in
   useEffect(() => {
     if (!isLoading && !user) {
@@ -72,12 +81,18 @@ const Index = () => {
     }
   }, [user, isLoading, navigate]);
 
-  // Wait for profile to be loaded before checking super admin status
-  const profileLoaded = !isLoading && profile !== null;
-  
   // Check if user is super admin directly from profile to avoid race conditions
   const isUserSuperAdmin = profile?.is_super_admin === true || isSuperAdmin;
   const shouldEnterPlatformConsole = isUserSuperAdmin || role === "admin" || isAdmin || isAdminMode;
+
+  // We treat profile+role as "resolved" once either both are populated, or the
+  // safety timeout has fired. This prevents rendering the tenant dashboard
+  // during the brief window where isLoading=false but profile/role are still
+  // null (which is what was causing admins to flash the dashboard before being
+  // redirected to /admin/platform/tenants).
+  const profileResolved = profile !== null || authResolveTimedOut;
+  const roleResolved = role !== null || authResolveTimedOut;
+  const authFullyResolved = !isLoading && !tenantLoading && profileResolved && roleResolved;
   
   // Only redirect to workspace creation if user has no tenant memberships at all
   // The TenantContext automatically selects a tenant if available
