@@ -11,20 +11,9 @@ console.info(
   "color:#a78bfa;font-weight:bold"
 );
 
-const clearLegacyAppCaches = async () => {
-  if ("serviceWorker" in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map((registration) => registration.unregister()));
-  }
-
-  if ("caches" in window) {
-    const cacheNames = await caches.keys();
-    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-  }
-};
-
-clearLegacyAppCaches().catch((error) => {
-  console.warn("Legacy app cache cleanup skipped", error);
-});
+// Mark React as mounted so the static fallback badge in index.html hides
+// itself. If this attribute never appears, the user knows React failed to
+// boot and the static "html · <build-time>" badge stays visible.
+document.documentElement.setAttribute("data-react-mounted", "1");
 
 createRoot(document.getElementById("root")!).render(<App />);
