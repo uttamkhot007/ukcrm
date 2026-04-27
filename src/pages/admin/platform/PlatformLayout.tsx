@@ -67,7 +67,7 @@ export default function PlatformLayout() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-platform-shell="1">
       {/* Platform banner — visually distinct from per-tenant pages */}
       <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-500/10 via-fuchsia-500/5 to-transparent p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
