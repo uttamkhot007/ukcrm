@@ -201,6 +201,17 @@ export function EmployeeAIAssistant() {
               </div>
             </ScrollArea>
 
+            {error && (
+              <div className="px-4 pt-3">
+                <AIChatErrorBanner
+                  error={error}
+                  onRetry={handleRetry}
+                  isRetrying={isLoading}
+                  attemptCount={attemptCount}
+                />
+              </div>
+            )}
+
             {/* Input Area */}
             <div className="p-4 border-t border-border">
               <div className="flex gap-2">
