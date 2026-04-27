@@ -18,6 +18,65 @@
     <!-- Build identity (also surfaced by BuildVersionBadge after React mounts). -->
     <meta name="build-time" content="__INDEX_HTML_BUILT__" />
 
+    <script>
+      (function () {
+        try {
+          var buildTime = document.querySelector('meta[name="build-time"]')?.getAttribute("content") || String(Date.now());
+          window.__BUILD_TIME__ = buildTime;
+
+          function hardUrl(reason) {
+            var next = new URL(window.location.href);
+            next.searchParams.set("fresh", String(Date.now()));
+            next.searchParams.set(reason || "build", buildTime);
+            return next.toString();
+          }
+
+          function waitForActivation(reg) {
+            return new Promise(function (resolve) {
+              var worker = reg && (reg.installing || reg.waiting || reg.active);
+              if (!worker || worker.state === "activated") return resolve();
+              var done = false;
+              var timer = setTimeout(function () { if (!done) { done = true; resolve(); } }, 5000);
+              worker.addEventListener("statechange", function () {
+                if (done || worker.state !== "activated") return;
+                done = true;
+                clearTimeout(timer);
+                resolve();
+              });
+            });
+          }
+
+          window.__NEXUS_HARD_RELOAD_LATEST__ = function () {
+            window.location.replace(hardUrl("hardReload"));
+          };
+
+          window.addEventListener("message", function (event) {
+            var data = event && event.data;
+            var type = data && typeof data === "object" ? (data.type || data.kind) : null;
+            if (type === "NEXUS_BUILD_CHANGED" || type === "LOVABLE_BUILD_CHANGED" || type === "NEXUS_HARD_RELOAD_LATEST") {
+              window.location.replace(hardUrl("iframeBuild"));
+            }
+          });
+
+          if ("serviceWorker" in navigator) {
+            navigator.serviceWorker
+              .register("/sw.js?v=" + encodeURIComponent(buildTime))
+              .then(waitForActivation)
+              .then(function () {
+                try {
+                  if (sessionStorage.getItem("cache-killer:head-reloaded") === buildTime) return;
+                  sessionStorage.setItem("cache-killer:head-reloaded", buildTime);
+                } catch (e) { /* ignore */ }
+                if (!new URL(window.location.href).searchParams.has("fresh")) {
+                  window.location.replace(hardUrl("swActivated"));
+                }
+              })
+              .catch(function () { /* ignore */ });
+          }
+        } catch (e) { /* never block app startup */ }
+      })();
+    </script>
+
     <meta name="theme-color" content="#6366f1" />
 
     <!-- Mobile Optimization -->
