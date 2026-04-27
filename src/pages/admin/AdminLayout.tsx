@@ -6,13 +6,14 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
-  const { user, isLoading, role } = useAuth();
+  const { user, isLoading, role, isAdmin } = useAuth();
   const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Check if this is a super-admin-only route
   const isSuperAdminRoute = location.pathname.includes("/admin/tenants") || location.pathname.includes("/admin/platform");
+  const canAccessPlatformRoute = isSuperAdmin || isAdmin || role === "admin";
 
   // Map route to module id for sidebar highlighting
   const getActiveModule = () => {
@@ -52,7 +53,7 @@ export default function AdminLayout() {
   useEffect(() => {
     if (!isLoading && !tenantLoading && user) {
       // Super admin routes require super admin status
-      if (isSuperAdminRoute && !isSuperAdmin) {
+      if (isSuperAdminRoute && !canAccessPlatformRoute) {
         navigate("/");
         return;
       }
@@ -61,7 +62,7 @@ export default function AdminLayout() {
         navigate("/");
       }
     }
-  }, [user, isLoading, tenantLoading, role, isSuperAdmin, isSuperAdminRoute, navigate]);
+  }, [user, isLoading, tenantLoading, role, isSuperAdmin, isSuperAdminRoute, canAccessPlatformRoute, navigate]);
 
   if (isLoading || tenantLoading) {
     return (
@@ -71,8 +72,8 @@ export default function AdminLayout() {
     );
   }
 
-  // Allow access if: super admin OR (admin role AND not super admin route)
-  const hasAccess = isSuperAdmin || (role === "admin" && !isSuperAdminRoute);
+  // Allow access if: platform admin route OR regular tenant admin route.
+  const hasAccess = isSuperAdminRoute ? canAccessPlatformRoute : isSuperAdmin || role === "admin";
 
   if (!user || !hasAccess) {
     return null;
