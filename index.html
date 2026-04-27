@@ -59,7 +59,7 @@
           });
 
           if ("serviceWorker" in navigator) {
-            navigator.serviceWorker
+            window.__NEXUS_SW_ACTIVATION__ = navigator.serviceWorker
               .register("/sw.js?v=" + encodeURIComponent(buildTime))
               .then(waitForActivation)
               .then(function () {
@@ -180,19 +180,23 @@
 
           var swCleanup = Promise.resolve();
           if ("serviceWorker" in navigator) {
-            swCleanup = navigator.serviceWorker
-              .getRegistrations()
-              .then(function (regs) {
-                if (regs && regs.length) {
-                  didCleanup = true;
-                  return Promise.all(
-                    regs.map(function (r) {
-                      try { return r.unregister(); } catch (e) { return null; }
-                    })
-                  );
-                }
-              })
-              .catch(function () { /* ignore */ });
+            if (window.__NEXUS_SW_ACTIVATION__) {
+              swCleanup = window.__NEXUS_SW_ACTIVATION__;
+            } else {
+              swCleanup = navigator.serviceWorker
+                .getRegistrations()
+                .then(function (regs) {
+                  if (regs && regs.length) {
+                    didCleanup = true;
+                    return Promise.all(
+                      regs.map(function (r) {
+                        try { return r.unregister(); } catch (e) { return null; }
+                      })
+                    );
+                  }
+                })
+                .catch(function () { /* ignore */ });
+            }
           }
 
           var cacheCleanup = Promise.resolve();
@@ -217,7 +221,9 @@
             // The ?v= ensures the browser treats it as a brand-new SW URL and
             // actually fetches it from the network instead of using its cache.
             var activation = Promise.resolve();
-            if ("serviceWorker" in navigator) {
+            if (window.__NEXUS_SW_ACTIVATION__) {
+              activation = window.__NEXUS_SW_ACTIVATION__;
+            } else if ("serviceWorker" in navigator) {
               try {
                 activation = navigator.serviceWorker
                   .register("/sw.js?v=" + (window.__BUILD_TIME__ || Date.now()))
