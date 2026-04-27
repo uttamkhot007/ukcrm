@@ -30,14 +30,19 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
   
-  const { signIn, signUp, user, isLoading } = useAuth();
+  const { signIn, signUp, user, isLoading, getRedirectPath, profile, role } = useAuth();
   const navigate = useNavigate();
 
+  // Post-login redirect health check: once the user + profile + role are loaded,
+  // route them to the correct landing page (super-admin → /admin/platform,
+  // tenant admin → /admin, customer → /customer, else → /).
   useEffect(() => {
-    if (user && !isLoading) {
-      navigate("/");
-    }
-  }, [user, isLoading, navigate]);
+    if (!user || isLoading) return;
+    // Wait until profile + role have resolved so getRedirectPath() is accurate.
+    if (!profile || !role) return;
+    const target = getRedirectPath();
+    navigate(target, { replace: true });
+  }, [user, isLoading, profile, role, getRedirectPath, navigate]);
 
   const validate = () => {
     const newErrors: { email?: string; password?: string; fullName?: string } = {};
