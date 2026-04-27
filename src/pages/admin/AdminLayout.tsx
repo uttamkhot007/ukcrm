@@ -86,8 +86,11 @@ export default function AdminLayout() {
     } else if (module.startsWith("admin-center-")) {
       const subPath = module.replace("admin-center-", "");
       navigate(`/admin/${subPath}`);
-    } else if (module === "super-admin-tenants") {
-      navigate("/admin/tenants");
+    } else if (module === "super-admin-tenants" || module === "platform-tenants") {
+      navigate("/admin/platform/tenants");
+    } else if (module.startsWith("platform-")) {
+      const subPath = module.replace("platform-", "");
+      navigate(`/admin/platform/${subPath}`);
     }
   };
 
