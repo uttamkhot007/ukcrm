@@ -362,12 +362,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    resetDiagnostics();
+    updateStep("login", { status: "pending" });
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    if (error) {
+      updateStep("login", { status: "error", message: error.message });
+    } else {
+      updateStep("login", { status: "ok", message: email });
+    }
     return { error: error as Error | null };
   };
+
+  // Compute the correct landing path post-login based on user state.
+  const getRedirectPath = (): string => {
+    // Super admins land on the platform console
+    if (profile?.is_super_admin) return "/admin/platform";
+    // Tenant admins land on the admin center
+    if (role === "admin") return "/admin";
+    // Customers go to their portal
+    if (profile?.user_category === "customer") return "/customer";
+    // Everyone else lands on the workspace home
+    return "/";
+  };
+
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
