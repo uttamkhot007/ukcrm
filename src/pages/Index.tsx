@@ -61,83 +61,80 @@ import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const { user, isLoading, isAuthResolved, isProfileLoading, isRoleLoading, portalMode, isCustomer, isAdminMode, profile, role, isAdmin } = useAuth();
-  const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
+  const {
+    user,
+    isLoading,
+    isAuthResolved,
+    portalMode,
+    isCustomer,
+    profile,
+    role,
+    isPlatformAdmin,
+  } = useAuth();
+  const { isLoading: tenantLoading, tenantMemberships } = useTenant();
   const navigate = useNavigate();
 
-  // Hard timeout so a stuck profile/role fetch can't block the UI forever.
-  // After this elapses we proceed with whatever auth state we have.
-  const [authResolveTimedOut, setAuthResolveTimedOut] = useState(false);
+  // Decide what "/" should do once auth + tenant info are resolved.
+  // We do this in a single effect so the decision is deterministic and the
+  // tenant dashboard never flashes for an admin.
   useEffect(() => {
-    if (!user) return;
-    const t = setTimeout(() => setAuthResolveTimedOut(true), 6000);
-    return () => clearTimeout(t);
-  }, [user]);
+    if (isLoading || !isAuthResolved || tenantLoading) return;
 
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate("/auth");
+    if (!user) {
+      navigate("/auth", { replace: true });
+      return;
     }
-  }, [user, isLoading, navigate]);
 
-  // Check if user is super admin directly from profile to avoid race conditions
-  const isUserSuperAdmin = profile?.is_super_admin === true || isSuperAdmin;
-  const shouldEnterPlatformConsole = isUserSuperAdmin || role === "admin" || isAdmin || isAdminMode;
-
-  // We treat profile+role as "resolved" once either both are populated, or the
-  // safety timeout has fired. This prevents rendering the tenant dashboard
-  // during the brief window where isLoading=false but profile/role are still
-  // null (which is what was causing admins to flash the dashboard before being
-  // redirected to /admin/platform/tenants).
-  const profileResolved = !isProfileLoading && (profile !== null || authResolveTimedOut);
-  const roleResolved = !isRoleLoading && (role !== null || authResolveTimedOut);
-  const authFullyResolved = isAuthResolved && !tenantLoading && profileResolved && roleResolved;
-  
-  // Only redirect to workspace creation if user has no tenant memberships at all
-  // The TenantContext automatically selects a tenant if available
-  useEffect(() => {
-    // Don't redirect until profile + role + tenant info are all resolved.
-    if (authFullyResolved && user) {
-      // Super admins / admins should always enter the global Platform Console from the root.
-      if (shouldEnterPlatformConsole) {
-        const target = "/admin/platform/tenants";
-        recordRedirect("/", target);
-        if (shouldForceCleanup("/", target)) {
-          // Detected a root↔dashboard bounce loop — purge caches and hard reload.
-          console.warn(
-            "[redirect-loop-guard] Detected repeated /→%s redirects, forcing cache cleanup",
-            target
-          );
-          forceFreshReload(target);
-          return;
-        }
-        navigate(target, { replace: true });
+    if (isPlatformAdmin) {
+      const target = "/admin/platform/tenants";
+      recordRedirect("/", target);
+      if (shouldForceCleanup("/", target)) {
+        console.warn(
+          "[redirect-loop-guard] Detected repeated /→%s redirects, forcing cache cleanup",
+          target,
+        );
+        forceFreshReload(target);
         return;
       }
-
-      // Check if user has tenant access via memberships OR profile tenant_id (for employees)
-      const hasTenantAccess = tenantMemberships.length > 0 || profile?.tenant_id;
-
-      // Only redirect to create workspace if user has NO tenant access at all
-      if (!hasTenantAccess) {
-        navigate("/workspace/new");
-      }
+      console.info("[root-route] platform admin → %s", target);
+      navigate(target, { replace: true });
+      return;
     }
-  }, [user, authFullyResolved, tenantMemberships, shouldEnterPlatformConsole, navigate, profile?.tenant_id]);
 
-  // Set initial module based on portal mode - only on initial mount
+    const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
+    if (!hasTenantAccess) {
+      navigate("/workspace/new", { replace: true });
+    }
+  }, [
+    isLoading,
+    isAuthResolved,
+    tenantLoading,
+    user,
+    isPlatformAdmin,
+    tenantMemberships,
+    profile?.tenant_id,
+    navigate,
+  ]);
+
+  // Set initial module for customer portal once.
   useEffect(() => {
-    if (isCustomer || portalMode === 'customer') {
-      setActiveModule('customer-support');
+    if (isCustomer || portalMode === "customer") {
+      setActiveModule("customer-support");
     }
-    // Only run on initial mount, not on every portalMode change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Block render until we know the user's role/profile. This prevents the
-  // tenant dashboard from flashing for an admin before the redirect fires.
-  if (isLoading || tenantLoading || (user && !authFullyResolved)) {
+  // While auth/tenant is loading OR we've decided to redirect an admin away,
+  // never render the tenant dashboard underneath. This is the key guard that
+  // prevents the "old format" flash on refresh.
+  const shouldBlockRender =
+    isLoading ||
+    !isAuthResolved ||
+    tenantLoading ||
+    !user ||
+    isPlatformAdmin;
+
+  if (shouldBlockRender) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -145,26 +142,18 @@ const Index = () => {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-medium text-foreground">Loading...</p>
+            <p className="text-lg font-medium text-foreground">Loading…</p>
             <p className="text-sm text-muted-foreground">
-              {!profileResolved
-                ? "Loading your profile…"
-                : !roleResolved
+              {!isAuthResolved
                 ? "Checking your access…"
+                : isPlatformAdmin
+                ? "Opening Platform Console…"
                 : "Preparing your workspace"}
             </p>
           </div>
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (shouldEnterPlatformConsole) {
-    return <Navigate to="/admin/platform/tenants" replace />;
   }
 
   const renderContent = () => {
