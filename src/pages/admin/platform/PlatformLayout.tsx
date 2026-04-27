@@ -18,14 +18,13 @@ const TABS = [
 ];
 
 export default function PlatformLayout() {
-  const { user, isAuthResolved, role, isAdmin } = useAuth();
-  const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
+  const { user, isAuthResolved, isPlatformAdmin, isSuperAdmin } = useAuth();
+  const { isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
-  const canAccessPlatformConsole = isSuperAdmin || isAdmin || role === "admin";
 
   useEffect(() => {
-    if (isAuthResolved && !user) navigate("/auth");
+    if (isAuthResolved && !user) navigate("/auth", { replace: true });
   }, [user, isAuthResolved, navigate]);
 
   // Redirect bare /admin/platform → tenants
@@ -50,7 +49,7 @@ export default function PlatformLayout() {
     );
   }
 
-  if (!canAccessPlatformConsole) {
+  if (!isPlatformAdmin) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Card className="max-w-md">
