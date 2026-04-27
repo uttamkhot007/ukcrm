@@ -71,6 +71,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SALES_TEAMS: TeamType[] = ["sales", "presales", "inside_sales", "management"];
 
+const INITIAL_DIAGNOSTICS: DiagnosticStep[] = [
+  { key: "login", label: "Login (credentials)", status: "idle" },
+  { key: "session", label: "Session established", status: "idle" },
+  { key: "profile", label: "Profile loaded", status: "idle" },
+  { key: "role", label: "Role assigned", status: "idle" },
+  { key: "teams", label: "Teams fetched", status: "idle" },
+  { key: "console_access", label: "Console access resolved", status: "idle" },
+  { key: "redirect", label: "Post-login redirect resolved", status: "idle" },
+];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -80,6 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [portalMode, setPortalMode] = useState<PortalMode>("admin");
   const [isLoading, setIsLoading] = useState(true);
   const [consoleAccess, setConsoleAccess] = useState<ConsoleAccess | null>(null);
+  const [diagnostics, setDiagnostics] = useState<DiagnosticStep[]>(INITIAL_DIAGNOSTICS);
+
+  const updateStep = (key: DiagnosticStep["key"], patch: Partial<DiagnosticStep>) => {
+    setDiagnostics(prev =>
+      prev.map(s => {
+        if (s.key !== key) return s;
+        const next = { ...s, ...patch };
+        if (patch.status === "pending") next.startedAt = Date.now();
+        if ((patch.status === "ok" || patch.status === "error") && s.startedAt) {
+          next.durationMs = Date.now() - s.startedAt;
+        }
+        return next;
+      })
+    );
+  };
+
+  const resetDiagnostics = () => setDiagnostics(INITIAL_DIAGNOSTICS.map(s => ({ ...s })));
+
 
   const fetchUserData = async (userId: string) => {
     try {
