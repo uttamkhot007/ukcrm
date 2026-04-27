@@ -53,6 +53,11 @@ import { SkillMatrixModule } from "@/components/employee/SkillMatrixModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
+import {
+  recordRedirect,
+  shouldForceCleanup,
+} from "@/lib/redirect-loop-guard";
+import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
@@ -80,7 +85,18 @@ const Index = () => {
     if (!isLoading && !tenantLoading && user && profileLoaded) {
       // Super admins should always enter the global Platform Console from the root.
       if (isUserSuperAdmin) {
-        navigate("/admin/platform/tenants", { replace: true });
+        const target = "/admin/platform/tenants";
+        recordRedirect("/", target);
+        if (shouldForceCleanup("/", target)) {
+          // Detected a root↔dashboard bounce loop — purge caches and hard reload.
+          console.warn(
+            "[redirect-loop-guard] Detected repeated /→%s redirects, forcing cache cleanup",
+            target
+          );
+          forceFreshReload(target);
+          return;
+        }
+        navigate(target, { replace: true });
         return;
       }
       

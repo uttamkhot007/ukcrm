@@ -6,6 +6,8 @@ import { Crown, Building2, Users, KeyRound, Plug, Activity, Loader2, ShieldAlert
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { recordRedirect, shouldForceCleanup } from "@/lib/redirect-loop-guard";
+import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const TABS = [
   { to: "/admin/platform/tenants", label: "Tenants", icon: Building2 },
@@ -28,7 +30,14 @@ export default function PlatformLayout() {
   // Redirect bare /admin/platform → tenants
   useEffect(() => {
     if (location.pathname === "/admin/platform" || location.pathname === "/admin/platform/") {
-      navigate("/admin/platform/tenants", { replace: true });
+      const target = "/admin/platform/tenants";
+      recordRedirect(location.pathname, target);
+      if (shouldForceCleanup(location.pathname, target)) {
+        console.warn("[redirect-loop-guard] Loop on PlatformLayout, forcing cleanup");
+        forceFreshReload(target);
+        return;
+      }
+      navigate(target, { replace: true });
     }
   }, [location.pathname, navigate]);
 

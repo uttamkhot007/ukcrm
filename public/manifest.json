@@ -1,37 +1,7 @@
 {
   "name": "NexusCRM",
   "short_name": "NexusCRM",
-  "description": "Enterprise CRM platform for managing sales, customers, and workflows",
-  "theme_color": "#6366f1",
-  "background_color": "#0f0f23",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "scope": "/",
+  "display": "browser",
   "start_url": "/",
-  "icons": [
-    {
-      "src": "/pwa-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/pwa-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/pwa-maskable-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/pwa-maskable-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
+  "scope": "/"
 }

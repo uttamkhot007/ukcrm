@@ -6,14 +6,16 @@
     <title>NexusCRM - AI-Powered Business Management Platform</title>
     <meta name="description" content="Comprehensive AI-enabled CRM with Sales, Finance, HR, Technical, Marketing, and Employee Management modules. Streamline your business operations." />
     <meta name="author" content="NexusCRM" />
-    
-    <!-- PWA Meta Tags -->
+
+    <!--
+      Cache-Control: prevent the HTML shell from ever being cached.
+      Ensures admin routes always fetch the latest JS bundle from the network.
+    -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <meta name="theme-color" content="#6366f1" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="NexusCRM" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    <link rel="manifest" href="/manifest.json" />
 
     <!-- Mobile Optimization -->
     <meta name="mobile-web-app-capable" content="yes" />
@@ -23,11 +25,9 @@
     <meta property="og:title" content="NexusCRM - AI-Powered Business Management" />
     <meta property="og:description" content="Comprehensive AI-enabled CRM with Sales, Finance, HR, Technical, Marketing, and Employee Management modules." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/pwa-512x512.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@NexusCRM" />
-    <meta name="twitter:image" content="/pwa-512x512.png" />
   </head>
 
   <body class="dark">

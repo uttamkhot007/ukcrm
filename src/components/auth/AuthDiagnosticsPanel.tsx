@@ -14,6 +14,7 @@ import {
   Copy,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { getRecentRedirects } from "@/lib/redirect-loop-guard";
 
 interface AuthDiagnosticsPanelProps {
   /** Hide the panel entirely until user opens it. */
@@ -166,6 +167,29 @@ export function AuthDiagnosticsPanel({
               <code className="text-primary">{getRedirectPath()}</code>
             </div>
           </div>
+
+          {(() => {
+            const recents = getRecentRedirects(5);
+            if (recents.length === 0) return null;
+            return (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[10px] font-mono">
+                <div className="text-[11px] font-sans font-semibold text-amber-600 dark:text-amber-300 mb-1">
+                  Recent redirects (last 10s)
+                </div>
+                <ul className="space-y-0.5 text-muted-foreground">
+                  {recents.map((r, i) => (
+                    <li
+                      key={i}
+                      className="truncate"
+                      title={`${r.from} → ${r.to}`}
+                    >
+                      {r.from} → <span className="text-foreground">{r.to}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
 
           <Button
             size="sm"
