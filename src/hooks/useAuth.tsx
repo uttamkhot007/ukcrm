@@ -29,6 +29,16 @@ interface ConsoleAccess {
   has_full_access: boolean; // true = full access based on role, false = employee portal only
 }
 
+export type DiagnosticStatus = "idle" | "pending" | "ok" | "error" | "skipped";
+export interface DiagnosticStep {
+  key: "login" | "session" | "profile" | "role" | "teams" | "console_access" | "redirect";
+  label: string;
+  status: DiagnosticStatus;
+  message?: string;
+  durationMs?: number;
+  startedAt?: number;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -52,6 +62,9 @@ interface AuthContextType {
   refreshTeams: () => Promise<void>;
   consoleAccess: ConsoleAccess | null;
   hasModuleAccess: (moduleId: string) => boolean;
+  diagnostics: DiagnosticStep[];
+  resetDiagnostics: () => void;
+  getRedirectPath: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
