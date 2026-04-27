@@ -44,16 +44,17 @@
       is to clean up at the HTML level — the React code can't help
       if it's the thing being cached.
 
-      Flow:
+       Flow:
         1. Unregister every service-worker registration we find.
         2. Delete every entry in the Cache Storage API.
         3. Re-register /sw.js with a cache-busting query so the
-           browser is FORCED to download the new self-destruct SW
-           (otherwise it would happily keep using the old one).
-        4. If we actually killed something AND the URL doesn't
+           browser is FORCED to download the new self-destruct SW.
+        4. Wait until that new SW reaches `activated` before reload.
+        5. If we actually killed something AND the URL doesn't
            already carry ?fresh=, do exactly ONE hard reload so the
            next request bypasses any in-flight HTML cache.
-        5. Hide the static "stale build" fallback once React mounts.
+        6. Listen for preview/build refresh postMessages and hard reload
+           with a cache-busting query when requested by the iframe host.
     -->
     <script>
       (function () {
@@ -69,16 +70,54 @@
               .querySelector('meta[name="build-time"]')
               ?.getAttribute("content") || "unknown";
 
-          function reloadFresh() {
+          function withFreshUrl(extraParam) {
+            var freshUrl = new URL(window.location.href);
+            freshUrl.searchParams.set(FRESH_PARAM, String(Date.now()));
+            if (extraParam) freshUrl.searchParams.set(extraParam, window.__BUILD_TIME__ || String(Date.now()));
+            return freshUrl.toString();
+          }
+
+          function reloadFresh(extraParam) {
             // Guard: only ever do ONE auto-reload per session, otherwise we
             // risk an infinite loop if the cleanup keeps "finding" things.
             try {
-              if (sessionStorage.getItem("cache-killer:reloaded") === "1") return;
-              sessionStorage.setItem("cache-killer:reloaded", "1");
+              var key = extraParam ? "cache-killer:manual-reloaded" : "cache-killer:reloaded";
+              if (!extraParam && sessionStorage.getItem(key) === "1") return;
+              sessionStorage.setItem(key, String(Date.now()));
             } catch (e) { /* ignore */ }
-            url.searchParams.set(FRESH_PARAM, String(Date.now()));
-            window.location.replace(url.toString());
+            window.location.replace(withFreshUrl(extraParam));
           }
+
+          function waitForActivation(reg) {
+            return new Promise(function (resolve) {
+              var worker = reg && (reg.installing || reg.waiting || reg.active);
+              if (!worker) return resolve();
+              if (worker.state === "activated") return resolve();
+              var done = false;
+              var timeout = setTimeout(function () {
+                if (done) return;
+                done = true;
+                resolve();
+              }, 5000);
+              worker.addEventListener("statechange", function () {
+                if (done || worker.state !== "activated") return;
+                done = true;
+                clearTimeout(timeout);
+                resolve();
+              });
+            });
+          }
+
+          window.__NEXUS_HARD_RELOAD_LATEST__ = function () { reloadFresh("hardReload"); };
+
+          window.addEventListener("message", function (event) {
+            var data = event && event.data;
+            if (!data || typeof data !== "object") return;
+            var type = data.type || data.kind;
+            if (type === "NEXUS_BUILD_CHANGED" || type === "LOVABLE_BUILD_CHANGED" || type === "NEXUS_HARD_RELOAD_LATEST") {
+              reloadFresh("iframeBuild");
+            }
+          });
 
           var swCleanup = Promise.resolve();
           if ("serviceWorker" in navigator) {
@@ -118,17 +157,19 @@
             // Re-register the new self-destruct SW with a cache-busting query.
             // The ?v= ensures the browser treats it as a brand-new SW URL and
             // actually fetches it from the network instead of using its cache.
+            var activation = Promise.resolve();
             if ("serviceWorker" in navigator) {
               try {
-                navigator.serviceWorker
+                activation = navigator.serviceWorker
                   .register("/sw.js?v=" + (window.__BUILD_TIME__ || Date.now()))
+                  .then(waitForActivation)
                   .catch(function () { /* ignore */ });
               } catch (e) { /* ignore */ }
             }
 
-            if (didCleanup && !alreadyFresh) {
-              reloadFresh();
-            }
+            activation.then(function () {
+              if (didCleanup && !alreadyFresh) reloadFresh();
+            });
           });
         } catch (e) {
           // Never block the app on cleanup failure.
