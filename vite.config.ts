@@ -110,5 +110,21 @@ export default defineConfig(async ({ mode }) => {
           : {}),
       },
     },
+    // ========================================================================
+    // AWS production: scrub Supabase env vars from the bundle.
+    //
+    // Vite normally inlines all `VITE_*` env vars at build time. Lovable's
+    // auto-managed `.env` injects VITE_SUPABASE_URL/PROJECT_ID/PUBLISHABLE_KEY
+    // for editor previews, but the AWS deployment must not ship those URLs.
+    // We explicitly redefine them as empty strings so they evaporate from
+    // the production bundle while still working in the Lovable editor.
+    // ========================================================================
+    define: isProd
+      ? {
+          "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(""),
+          "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(""),
+          "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(""),
+        }
+      : {},
   };
 });
