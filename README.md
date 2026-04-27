@@ -1,73 +1,61 @@
-# Welcome to your Lovable project
+# NexusCRM
 
-## Project info
+Enterprise-grade, multi-tenant CRM platform with Sales, Finance, HR, Technical,
+Marketing, and Employee Management modules. AI-enabled across the stack.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech stack
 
-## How can I edit this code?
+**Frontend**
+- Vite + React 18 + TypeScript
+- Tailwind CSS v3 + shadcn/ui
+- React Router, TanStack Query
 
-There are several ways of editing your application.
+**Backend (self-hosted on AWS)**
+- Fastify (Node 20) on ECS Fargate
+- AWS Aurora PostgreSQL 15
+- AWS Cognito for authentication
+- AWS S3 for file storage
+- AWS SES for transactional email
+- ElastiCache (Valkey) for queues + realtime pub/sub
+- BullMQ background workers
 
-**Use Lovable**
+The backend lives in `backend/` and is deployed via the GitHub Actions
+workflows in `.github/workflows/`. See [DEPLOYMENT.md](./DEPLOYMENT.md) for the
+full AWS setup, including Cognito, RDS, ECS, ALB, and S3 provisioning.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Install dependencies (frontend)
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Start the frontend dev server
+npm run dev
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. In a separate terminal, start the backend
+cd backend
+cp .env.example .env       # fill in DB / Cognito / S3 values
+npm install
+npm run migrate
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend talks to the backend via `VITE_API_URL` (defaults to the same
+origin). All HTTP calls go through the REST shim in
+`src/integrations/api/` — there is no Supabase coupling in production
+builds (see the production aliases in `vite.config.ts`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Production build
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Output is a static SPA in `dist/`. Serve it from any static host (the included
+`nginx/` config + `Dockerfile` produce a container suitable for ECS).
 
-## What technologies are used for this project?
+## Documentation
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — system design overview
+- [DEPLOYMENT.md](./DEPLOYMENT.md) — AWS deployment runbook
+- [MIGRATION.md](./MIGRATION.md) — database migration guide
