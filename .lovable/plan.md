@@ -1,92 +1,69 @@
-## Goal
+## What you're seeing in the screenshot
 
-Eliminate stale-bundle issues for super-admins by (1) ensuring no offline/PWA caching is active, (2) auto-recovering from root↔dashboard redirect loops, (3) giving you a manual "force fresh build" button, and (4) showing the current build version on every page so you can confirm what's loaded.
+You're on `/admin/platform/tenants` but the page is rendering **only** the inner `AdminTenants` table — the purple **Platform Console** banner, the **Tenants / User Management / License Management / Integrations / System Status** sub-tabs, AND the new **Build Version badge** in the bottom-left are all missing.
 
-## What you'll see
+That's the smoking gun: your browser is still running an **old JS bundle** that pre-dates the `PlatformLayout` wrapper and the `BuildVersionBadge`. The fixes from the last round shipped to the codebase but never reached your browser.
 
-- A small **build badge** in the bottom-left of every page showing version + short commit/build timestamp (e.g. `v0.0.0 · 26-Apr 14:32`). Click it to expand and see a **"Clear cache & reload"** button plus the build hash.
-- If a redirect loop is detected (root → /admin/platform/tenants bouncing 3+ times in 10 seconds), the app automatically purges caches, unregisters the service worker, and does a hard reload to `/admin/platform/tenants?fresh=1`.
-- Admin routes will always be served fresh from the network — no service worker can intercept them.
+## Why the previous fix didn't actually work
 
----
+The "self-destruct service worker" only purges itself **after the new `/sw.js` is downloaded and activated by the browser**. But:
 
-## Plan
+1. Nothing in the current code calls `navigator.serviceWorker.register('/sw.js')` anymore (we made `usePushNotifications` a no-op), so **the browser never fetches the new self-destruct SW**.
+2. The OLD SW that was already installed weeks ago is still alive, intercepting `index.html` and JS requests, and serving cached responses.
+3. Result: the new self-destruct logic never runs, and the legacy cleanup in `main.tsx` never runs either (because old `main.tsx` is what's being served).
 
-### 1. Kill all caching for the admin shell (permanent)
+It's a chicken-and-egg problem: the only code that can clean things up lives in the bundle that's stuck behind the cache.
 
-- **`index.html`** — remove the `<link rel="manifest">` and `apple-touch-icon` PWA tags so browsers stop treating the app as installable/offline-capable. Add `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">` so the HTML shell is never cached.
-- **`public/manifest.json`** — neutralize it (empty manifest with `display: "browser"`) so any cached install references stop standalone behavior.
-- **`public/sw.js`** — replace the existing notifications SW with a **self-destruct SW**: on `install`/`activate` it deletes all caches, calls `self.registration.unregister()`, and reloads all clients. (This guarantees any browser still holding the old SW will purge itself on next visit.)
-- **`src/hooks/usePushNotifications.ts`** — stop registering `/sw.js`. Push notifications will be disabled until a fresh, scoped SW is reintroduced (the current one was the source of the staleness). The hook becomes a no-op that returns `supported: false`.
-- **`src/main.tsx`** — keep the existing `clearLegacyAppCaches()` and additionally call `caches.delete` on every page load (cheap, runs once).
+## The permanent fix
 
-### 2. Build version surfaced everywhere
+Break the cycle **before any React code loads** by putting the cleanup in two places that the cache can't intercept: an **inline `<script>` in `index.html`** and an **explicit re-registration of the new self-destruct SW**.
 
-- **`vite.config.ts`** — inject build metadata via `define`:
-  - `__APP_VERSION__` from `package.json` version
-  - `__APP_BUILD_TIME__` from `new Date().toISOString()` at build time
-  - `__APP_COMMIT__` from `process.env.LOVABLE_COMMIT_SHA` if available, else `'dev'`
-- **`src/lib/build-info.ts`** (new) — exports `BUILD_VERSION`, `BUILD_TIME`, `BUILD_COMMIT`, plus a `formatBuildLabel()` helper.
-- **`src/components/system/BuildVersionBadge.tsx`** (new) — fixed bottom-left pill (`z-[60]`, low-opacity until hover). Click expands a popover showing:
-  - Full build label
-  - Current route
-  - **"Clear cache & reload"** button (calls the cleanup util from step 3)
-  - **"Copy build info"** button
-- Mount `<BuildVersionBadge />` in `src/App.tsx` next to `<AuthDiagnosticsGate />` so it renders on every route including `/auth`.
+### 1. Inline cache-killer in `index.html` (runs before bundle loads)
 
-### 3. Manual cache-cleanup utility
+Add a small `<script>` block at the top of `<body>` that runs synchronously on every page load:
 
-- **`src/lib/cache-cleanup.ts`** (new) — exports `forceFreshReload(targetPath?: string)`:
-  1. Unregister all service workers
-  2. Delete all `caches` entries
-  3. Clear `sessionStorage` keys prefixed with `redirect-loop:`
-  4. `window.location.replace(targetPath ?? window.location.pathname + '?fresh=' + Date.now())`
-- Used by both the manual badge button and the auto-recovery in step 4.
+- Unregister every service worker registration
+- Delete every `caches` entry  
+- **Re-register `/sw.js?v=<timestamp>`** so the new self-destruct SW actually gets installed and can claim/clean any clients still holding the old one
+- If `?fresh=...` is NOT in the URL and we just unregistered something OR found old caches, force `location.reload(true)` once to ensure the next request bypasses any in-flight HTML cache
 
-### 4. Redirect-loop safeguard
+Because this script lives in `index.html` (which has `Cache-Control: no-cache, no-store, must-revalidate`) and runs before the `<script type="module" src="/src/main.tsx">` tag, it works even if the bundle itself is stale.
 
-- **`src/lib/redirect-loop-guard.ts`** (new) — exports `recordRedirect(from, to)` and `shouldForceCleanup()`.
-  - Stores a sliding window of `{from, to, t}` entries in `sessionStorage` under `redirect-loop:history` (keep last 10, drop entries older than 10s).
-  - Returns `true` when the same `from→to` pair has fired **3+ times within 10 seconds**.
-- **`src/pages/Index.tsx`** — before each `navigate("/admin/platform/tenants", …)` call, invoke `recordRedirect("/", "/admin/platform/tenants")`. If `shouldForceCleanup()` returns true, call `forceFreshReload("/admin/platform/tenants")` instead of `navigate(...)`.
-- **`src/pages/admin/platform/PlatformLayout.tsx`** (and `AdminLayout` if it has a similar redirect) — same instrumentation for any redirect that could feed the loop (e.g. `/admin/platform` → `/admin/platform/tenants`).
-- **`src/components/auth/AuthDiagnosticsPanel.tsx`** — surface the loop history (last 5 entries) so you can see exactly which pair was bouncing.
+### 2. Add a versioned SW import to force a real fetch
 
-### 5. Verify admin routes always fetch fresh JS
+The browser only re-checks `/sw.js` when something registers it. Add a tiny inline `register('/sw.js?v=<BUILD_TIME>')` call in `index.html` (or a 5-line `public/sw-bootstrap.js`). The `?v=` query forces the browser to treat it as a different SW URL → guaranteed fresh fetch → install → activate → self-destruct → clean state.
 
-- The Vite dev server already emits hashed asset URLs and `Cache-Control: no-cache` for the HTML shell; with the SW removed and the manifest neutralized, nothing will intercept fetches.
-- Add a sanity check in `src/main.tsx`: on startup, log `[build] vX.Y.Z @ <time>` so you can confirm the bundle in the console matches the badge.
+### 3. Add an HTTP-level no-cache hint for `/sw.js` and `/index.html`
 
----
+Update `nginx/default.conf` so Nginx returns `Cache-Control: no-store` for `index.html` AND `sw.js`. Without this, even after we fix the JS, an intermediate proxy or browser HTTP cache could still serve stale copies of those files. Asset chunks (under `/assets/...`) keep their long-lived hashed-file caching — those are safe.
 
-## Technical notes
+### 4. Promote the BuildVersionBadge into `index.html` as a static fallback
 
-- **Why remove `usePushNotifications` SW registration entirely**: the existing `/sw.js` had a generic `activate` handler that was claiming clients on every navigation. Even after the recent activate-time cache purge, browsers that registered it before still hold the old version until the new SW fully activates — which is exactly the "old format" symptom. A self-destruct SW + no new registration is the only way to guarantee permanent cleanup. We can reintroduce push notifications later with a scoped, versioned SW (e.g. `/push-sw.js` registered only for users who opt in).
-- **Why `sessionStorage` for the loop guard** (not in-memory): full-page reloads from cache cleanup must still remember recent attempts, otherwise the recovery itself could loop.
-- **Build version in production AWS bundle**: `__APP_VERSION__` is statically replaced at build time, so it works identically in the AWS production bundle (no runtime env dependency).
-- **No new dependencies** — all work uses existing React/Vite primitives.
+Inject a tiny static `<div>` in `index.html` showing the build timestamp (filled in by the inline script reading `window.__BUILD_TIME__` set via `<meta>`). That way you can confirm the latest HTML loaded **even if the React bundle never mounts**. Once React mounts, the rich `BuildVersionBadge` component takes over and hides the static one.
 
-## Files
+### 5. Tell `AdminTenants` to detect "I'm rendered without my PlatformLayout shell" and self-recover
 
-**New**
-- `src/lib/build-info.ts`
-- `src/lib/cache-cleanup.ts`
-- `src/lib/redirect-loop-guard.ts`
-- `src/components/system/BuildVersionBadge.tsx`
+If `AdminTenants` is mounted at `/admin/platform/tenants` but the surrounding `PlatformLayout` banner element isn't in the DOM (we'll add a `data-platform-shell="1"` attribute to detect it), it means the user is on a stale bundle that nested routes incorrectly. In that case, call `forceFreshReload('/admin/platform/tenants')` automatically. One-time guard via `sessionStorage` prevents loops.
+
+## What you'll see after this ships
+
+- Within seconds of opening the preview, the inline script wipes the old SW + caches and reloads once. After the reload, the new bundle loads with the purple Platform Console banner, the sub-tabs, and the BuildVersionBadge in the bottom-left.
+- The badge will show a new build timestamp (e.g. `v0.0.0 · 27-Apr 09:14`) — if it doesn't update on a future change, you'll know immediately.
+- If something ever goes stale again, just click the badge and hit **Clear cache & reload latest build**.
+
+## Files to change
 
 **Edited**
-- `index.html` (remove PWA tags, add no-cache meta)
-- `public/manifest.json` (neutralize)
-- `public/sw.js` (self-destruct SW)
-- `src/hooks/usePushNotifications.ts` (no-op)
-- `src/main.tsx` (startup log, keep cleanup)
-- `vite.config.ts` (define build constants)
-- `src/App.tsx` (mount BuildVersionBadge)
-- `src/pages/Index.tsx` (loop-guarded redirects)
-- `src/pages/admin/platform/PlatformLayout.tsx` (loop-guarded redirects)
-- `src/components/auth/AuthDiagnosticsPanel.tsx` (show loop history)
+- `index.html` — add inline cache-killer `<script>`, versioned SW registration, static build-time fallback badge, `<meta name="build-time">`
+- `public/sw.js` — keep self-destruct logic; add explicit cache-buster header in response (already mostly done)
+- `nginx/default.conf` — `Cache-Control: no-store` for `index.html` and `sw.js`, keep long cache for `/assets/*`
+- `src/pages/admin/platform/PlatformLayout.tsx` — add `data-platform-shell="1"` marker to root div
+- `src/pages/admin/AdminTenants.tsx` — add "missing shell" detector that triggers `forceFreshReload` once
+- `src/main.tsx` — keep existing cleanup; remove the now-redundant duplicate logic
+
+**No new files needed.**
 
 ## Out of scope
 
-- Re-enabling push notifications (will be a follow-up with a separate scoped SW).
-- Any backend / Supabase changes — this is entirely client-side.
+- Adding back PWA / push notifications (still deferred until cache story is solid)
+- Any backend or Supabase changes

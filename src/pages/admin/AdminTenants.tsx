@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Building2, Plus, Search, Users, Settings, Package, MoreHorizontal, Loader2, Shield, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import { useTenant, TenantTier, Tenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { forceFreshReload } from '@/lib/cache-cleanup';
 
 interface TenantMember {
   id: string;
@@ -47,9 +49,29 @@ interface ModuleDefinition {
 
 export default function AdminTenants() {
   const { isSuperAdmin, refetchTenants } = useTenant();
+  const location = useLocation();
   const [tenants, setTenants] = useState<any[]>([]);
   const [modules, setModules] = useState<ModuleDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Self-recover from a stale bundle: if we're on /admin/platform/tenants but
+  // the PlatformLayout shell isn't in the DOM, the user is running an old
+  // bundle that didn't have the platform wrapper yet. Force a fresh reload.
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin/platform/')) {
+      // Defer one tick so the shell has a chance to render.
+      const id = window.setTimeout(() => {
+        const hasShell = !!document.querySelector('[data-platform-shell="1"]');
+        const alreadyRecovered = sessionStorage.getItem('stale-shell:recovered') === '1';
+        if (!hasShell && !alreadyRecovered) {
+          sessionStorage.setItem('stale-shell:recovered', '1');
+          console.warn('[stale-shell] PlatformLayout shell missing — forcing fresh reload');
+          forceFreshReload('/admin/platform/tenants');
+        }
+      }, 250);
+      return () => window.clearTimeout(id);
+    }
+  }, [location.pathname]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
