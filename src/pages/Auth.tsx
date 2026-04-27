@@ -323,9 +323,13 @@ export default function Auth() {
           <div className="text-center text-xs text-muted-foreground/70 animate-fade-in" style={{ animationDelay: "300ms" }}>
             <p>New users are assigned the <span className="text-primary font-semibold">Employee</span> role by default.</p>
             <p className="mt-1">Contact an admin for role upgrades.</p>
-          </div>
         </div>
       </div>
+
+      {/* Floating diagnostics panel — visible on the auth screen so login
+          failures (credentials, session, profile, role, teams) are easy to
+          identify without exposing tokens. */}
+      <AuthDiagnosticsPanel />
     </div>
   );
 }
