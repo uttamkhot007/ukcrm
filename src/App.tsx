@@ -31,6 +31,7 @@ import PlatformTenants from "./pages/admin/platform/PlatformTenants";
 import PlatformUsers from "./pages/admin/platform/PlatformUsers";
 import PlatformLicenses from "./pages/admin/platform/PlatformLicenses";
 import PlatformIntegrations from "./pages/admin/platform/PlatformIntegrations";
+import PlatformStatus from "./pages/admin/platform/PlatformStatus";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import SelectWorkspace from "./pages/workspace/SelectWorkspace";
 import SupportPortal from "./pages/SupportPortal";
@@ -92,6 +93,7 @@ const App = () => (
                     <Route path="users" element={<PlatformUsers />} />
                     <Route path="licenses" element={<PlatformLicenses />} />
                     <Route path="integrations" element={<PlatformIntegrations />} />
+                    <Route path="status" element={<PlatformStatus />} />
                   </Route>
                   <Route path="health" element={<AdminHealth />} />
                   <Route path="procurement" element={<AdminProcurement />} />
