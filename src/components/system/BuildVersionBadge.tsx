@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Tag, RefreshCw, Copy, X, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import {
   formatBuildLabel,
   getFullBuildInfo,
 } from "@/lib/build-info";
-import { forceFreshReload, clearAllAppCaches } from "@/lib/cache-cleanup";
+import { forceFreshReload, clearAllAppCaches, hardReloadLatestBuild } from "@/lib/cache-cleanup";
 import {
   getRecentRedirects,
   clearRedirectHistory,
@@ -29,7 +29,14 @@ import { toast } from "@/hooks/use-toast";
 export function BuildVersionBadge() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [badgeNonce, setBadgeNonce] = useState(0);
   const location = useLocation();
+
+  useEffect(() => {
+    const rerender = () => setBadgeNonce((n) => n + 1);
+    window.addEventListener("nexus:build-info-updated", rerender);
+    return () => window.removeEventListener("nexus:build-info-updated", rerender);
+  }, []);
 
   const handleHardReload = async () => {
     setBusy(true);
@@ -81,6 +88,24 @@ export function BuildVersionBadge() {
     }
   };
 
+  const handleHardLatestBuild = async () => {
+    setBusy(true);
+    toast({
+      title: "Hard reloading latest build…",
+      description: "Bypassing service workers and cache-busting asset URLs.",
+    });
+    try {
+      await hardReloadLatestBuild(location.pathname + location.search);
+    } catch (e) {
+      setBusy(false);
+      toast({
+        title: "Hard reload failed",
+        description: e instanceof Error ? e.message : String(e),
+        variant: "destructive",
+      });
+    }
+  };
+
   const recents = getRecentRedirects(5);
 
   if (!open) {
@@ -93,6 +118,7 @@ export function BuildVersionBadge() {
       >
         <Tag className="w-3 h-3" />
         {formatBuildLabel()}
+        {badgeNonce > 0 ? " · fresh" : ""}
       </button>
     );
   }
@@ -181,6 +207,17 @@ export function BuildVersionBadge() {
         >
           <RefreshCw className={`w-3 h-3 mr-1 ${busy ? "animate-spin" : ""}`} />
           Clear cache &amp; reload latest build
+        </Button>
+
+        <Button
+          size="sm"
+          variant="secondary"
+          className="w-full h-8 text-[11px]"
+          onClick={handleHardLatestBuild}
+          disabled={busy}
+        >
+          <RefreshCw className={`w-3 h-3 mr-1 ${busy ? "animate-spin" : ""}`} />
+          Hard reload latest build
         </Button>
       </div>
     </div>
