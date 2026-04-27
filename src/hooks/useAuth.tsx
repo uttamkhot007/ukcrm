@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import type { User, Session } from "@/integrations/api/aws-types";
 import { supabase } from "@/integrations/api/client";
 
 type AppRole = "admin" | "manager" | "employee";
