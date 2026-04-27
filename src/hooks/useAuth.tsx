@@ -379,7 +379,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Compute the correct landing path post-login based on user state.
   const getRedirectPath = (): string => {
     // Super admins land on the platform console
-    if (profile?.is_super_admin) return "/admin/platform";
+    if (profile?.is_super_admin) return "/admin/platform/tenants";
     // Tenant admins land on the admin center
     if (role === "admin") return "/admin";
     // Customers go to their portal
