@@ -1135,6 +1135,11 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                         const path = child.id.replace("admin-center-", "");
                         navigate(`/admin/${path}`);
                       }
+                      // Handle Platform Console children
+                      if (child.id.startsWith("platform-")) {
+                        const path = child.id.replace("platform-", "");
+                        navigate(`/admin/platform/${path}`);
+                      }
                       onModuleChange(child.id);
                     }}
                     className={cn(
