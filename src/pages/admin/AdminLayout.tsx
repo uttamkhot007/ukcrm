@@ -6,7 +6,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
-  const { user, isLoading, isAuthResolved, role, isAdmin } = useAuth();
+  const { user, isAuthResolved, role, isAdmin } = useAuth();
   const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
