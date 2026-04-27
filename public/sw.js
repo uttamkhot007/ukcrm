@@ -7,7 +7,12 @@
 // This worker exists ONLY to clean up after itself: any browser that still
 // has /sw.js registered will:
 //   1. Skip waiting on install
-//   2. On activate: delete every cache, unregister itself, reload all clients
+//   2. On activate: delete every cache and unregister itself
+//
+// The page-level cache-killer waits for this worker to reach `activated`
+// before it reloads. This worker intentionally does NOT navigate clients,
+// because doing that here can race ahead of the page before activation is
+// observable.
 //
 // Once everyone has loaded the app at least once after this change,
 // no service worker will be running anywhere.
@@ -31,14 +36,6 @@ self.addEventListener('activate', (event) => {
       // ignore
     }
 
-    try {
-      const clientList = await self.clients.matchAll({ type: 'window' });
-      clientList.forEach((client) => {
-        try { client.navigate(client.url); } catch (e) { /* ignore */ }
-      });
-    } catch (e) {
-      // ignore
-    }
   })());
 });
 
