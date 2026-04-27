@@ -61,10 +61,18 @@ pnpm install`,
   {
     id: "env-setup",
     title: "Environment Setup",
-    content: "Create a .env file in the root directory with your Supabase credentials:",
-    code: `VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
-VITE_SUPABASE_PROJECT_ID=your_project_id`,
+    content: "Create a .env file in the root directory pointing at your self-hosted backend:",
+    code: `# Frontend
+VITE_API_URL=http://localhost:3001
+
+# Backend (in backend/.env)
+DB_HOST=localhost
+DB_NAME=nexuscrm
+DB_USER=nexuscrm
+DB_PASSWORD=changeme
+COGNITO_USER_POOL_ID=ap-south-1_XXXX
+COGNITO_CLIENT_ID=XXXX
+S3_BUCKET=nexuscrm-uploads`,
   },
   {
     id: "start-dev",
