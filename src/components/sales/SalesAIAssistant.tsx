@@ -9,7 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { restRequest, ApiError } from "@/integrations/api/rest-client";
+import { useAIChat } from "@/hooks/useAIChat";
+import { AIChatErrorBanner } from "@/components/ai/AIChatErrorBanner";
 
 interface Message {
   id: string;
@@ -45,11 +46,12 @@ export function SalesAIAssistant() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [lastUserText, setLastUserText] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const queryClient = useQueryClient();
+  const { send, isLoading, error, attemptCount, reset } = useAIChat();
 
   useEffect(() => {
     if (scrollRef.current) {
