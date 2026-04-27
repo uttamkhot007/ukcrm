@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { SalesModule } from "@/components/sales/SalesModule";
@@ -61,7 +61,7 @@ import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const { user, isLoading, portalMode, isCustomer, isAdminMode, profile } = useAuth();
+  const { user, isLoading, portalMode, isCustomer, isAdminMode, profile, role, isAdmin } = useAuth();
   const { currentTenant, isLoading: tenantLoading, tenantMemberships, isSuperAdmin } = useTenant();
   const navigate = useNavigate();
 
@@ -77,6 +77,7 @@ const Index = () => {
   
   // Check if user is super admin directly from profile to avoid race conditions
   const isUserSuperAdmin = profile?.is_super_admin === true || isSuperAdmin;
+  const shouldEnterPlatformConsole = isUserSuperAdmin || role === "admin" || isAdmin || isAdminMode;
   
   // Only redirect to workspace creation if user has no tenant memberships at all
   // The TenantContext automatically selects a tenant if available
@@ -84,7 +85,7 @@ const Index = () => {
     // Don't redirect until we know the user's super admin status and tenant loading is complete
     if (!isLoading && !tenantLoading && user && profileLoaded) {
       // Super admins should always enter the global Platform Console from the root.
-      if (isUserSuperAdmin) {
+      if (shouldEnterPlatformConsole) {
         const target = "/admin/platform/tenants";
         recordRedirect("/", target);
         if (shouldForceCleanup("/", target)) {
@@ -111,7 +112,7 @@ const Index = () => {
       // If user has multiple tenants, TenantContext will select from localStorage or first one
       // So we don't need to redirect to /workspace/select anymore
     }
-  }, [user, isLoading, tenantLoading, tenantMemberships, isUserSuperAdmin, navigate, profileLoaded, profile?.tenant_id]);
+  }, [user, isLoading, tenantLoading, tenantMemberships, shouldEnterPlatformConsole, navigate, profileLoaded, profile?.tenant_id]);
 
   // Set initial module based on portal mode - only on initial mount
   useEffect(() => {
@@ -140,6 +141,10 @@ const Index = () => {
 
   if (!user) {
     return null;
+  }
+
+  if (shouldEnterPlatformConsole) {
+    return <Navigate to="/admin/platform/tenants" replace />;
   }
 
   const renderContent = () => {
