@@ -15,6 +15,7 @@ import { integrationsRoutes } from './routes/integrations.js';
 import { adminUserRoutes } from './routes/users-admin.js';
 import { authorizedDomainsRoutes } from './routes/authorized-domains.js';
 import { exchangeRatesRoutes } from './routes/exchange-rates.js';
+import { platformStatusRoutes } from './routes/platform-status.js';
 import { realtimePlugin } from './plugins/realtime.js';
 import { closeAllQueues } from './lib/queues.js';
 import { registerAllCrudRoutes } from './routes/all-routes.js';
@@ -63,6 +64,7 @@ async function buildServer() {
   await app.register(adminUserRoutes, { prefix: '/api/admin' });
   await app.register(authorizedDomainsRoutes, { prefix: '/api/admin' });
   await app.register(exchangeRatesRoutes, { prefix: '/api/exchange-rates' });
+  await app.register(platformStatusRoutes, { prefix: '/api/platform' });
 
   // WebSocket realtime gateway (mounts /api/realtime)
   await app.register(realtimePlugin);
