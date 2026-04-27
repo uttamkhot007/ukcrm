@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { User, Session } from "@/integrations/api/aws-types";
-import { supabase } from "@/integrations/api/client";
+// IMPORTANT: import the real Supabase client (works in the Lovable preview).
+// In the AWS production build, the Vite alias in vite.config.ts rewrites this
+// import to the REST-shim stub, so the same source works in both environments.
+import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
 type TeamType = "sales" | "presales" | "technical" | "managed_services" | "management" | "hr" | "finance" | "inside_sales" | "marketing" | "renewals" | "accounts" | "admin" | "mss" | "offensive";
