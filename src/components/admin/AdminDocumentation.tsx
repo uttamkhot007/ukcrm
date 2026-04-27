@@ -309,12 +309,12 @@ NexusCRM is built on a modern, scalable architecture using the following core te
 - **TanStack Query** - Data fetching and caching
 - **React Router** - Client-side routing
 
-### Backend Stack (Lovable Cloud / Supabase)
-- **PostgreSQL** - Primary database
-- **Supabase Auth** - Authentication & authorization
-- **Edge Functions** - Serverless backend logic (Deno)
-- **Realtime** - WebSocket subscriptions
-- **Storage** - File storage with CDN
+### Backend Stack (Self-hosted on AWS)
+- **Fastify** - High-performance Node.js HTTP server
+- **AWS Aurora PostgreSQL** - Primary database
+- **AWS Cognito** - Authentication and user pools
+- **AWS S3** - File storage with presigned URLs
+- **ElastiCache (Valkey)** - BullMQ queues + realtime pub/sub
 
 ### Security
 - Row Level Security (RLS) on all tables
