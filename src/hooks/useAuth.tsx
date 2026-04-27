@@ -264,9 +264,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPortalMode('workspace');
         }
       }
-    } catch (error) {
+      // Mark console_access ok if not already errored
+      setDiagnostics(prev => prev.map(s =>
+        s.key === "console_access" && s.status === "pending"
+          ? { ...s, status: "ok", message: consoleAccessData ? "configured" : "derived from role", durationMs: s.startedAt ? Date.now() - s.startedAt : undefined }
+          : s
+      ));
+    } catch (error: any) {
       console.error("Error fetching user data:", error);
       setRole("employee");
+      updateStep("profile", { status: "error", message: error?.message ?? "unexpected error" });
     }
   };
 
