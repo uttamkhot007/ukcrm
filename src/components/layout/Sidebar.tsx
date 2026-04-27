@@ -240,12 +240,16 @@ const adminItems: NavItem[] = [
 // Super admin only items - shown separately
 const superAdminItems: NavItem[] = [
   {
-    id: "super-admin-tenants",
-    label: "Tenant Management",
-    icon: Network,
-    color: "text-amber-500",
-    isLink: true,
-    linkPath: "/admin/tenants",
+    id: "platform-console",
+    label: "Platform Console",
+    icon: Crown,
+    color: "text-purple-500",
+    children: [
+      { id: "platform-tenants", label: "Tenants", icon: Network },
+      { id: "platform-users", label: "User Management", icon: Users },
+      { id: "platform-licenses", label: "License Management", icon: Key },
+      { id: "platform-integrations", label: "Integrations", icon: Puzzle },
+    ],
   },
 ];
 
