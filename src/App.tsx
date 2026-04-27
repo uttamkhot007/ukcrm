@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthDiagnosticsGate } from "@/components/auth/AuthDiagnosticsGate";
+import { BuildVersionBadge } from "@/components/system/BuildVersionBadge";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Notifications from "./pages/Notifications";
@@ -107,6 +108,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <AuthDiagnosticsGate />
+              <BuildVersionBadge />
             </TooltipProvider>
           </TenantProvider>
         </AuthProvider>
