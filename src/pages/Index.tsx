@@ -641,8 +641,33 @@ const Index = () => {
     );
   };
 
+  // Intercept clicks on Platform Console and Admin Center sidebar items so
+  // they navigate to their dedicated routes instead of trying to render
+  // inside the Index page (which has no renderer for them).
+  const handleModuleChange = (module: string) => {
+    if (module === "platform-console" || module === "platform-tenants") {
+      navigate("/admin/platform/tenants");
+      return;
+    }
+    if (module.startsWith("platform-")) {
+      const subPath = module.replace("platform-", "");
+      navigate(`/admin/platform/${subPath}`);
+      return;
+    }
+    if (module === "admin-center") {
+      navigate("/admin/organization");
+      return;
+    }
+    if (module.startsWith("admin-center-")) {
+      const subPath = module.replace("admin-center-", "");
+      navigate(`/admin/${subPath}`);
+      return;
+    }
+    setActiveModule(module);
+  };
+
   return (
-    <MainLayout activeModule={activeModule} onModuleChange={setActiveModule}>
+    <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
       {renderContent()}
     </MainLayout>
   );
