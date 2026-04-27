@@ -58,20 +58,62 @@
             }
           });
 
+          // Self-destruct service worker. We register so any stale SW from a
+          // previous build gets replaced. We only force a one-time reload if:
+          //   - we actually unregistered an old SW or deleted caches, AND
+          //   - the URL doesn't already carry ?fresh=, AND
+          //   - we haven't already reloaded for this build in this tab.
           if ("serviceWorker" in navigator) {
-            window.__NEXUS_SW_ACTIVATION__ = navigator.serviceWorker
-              .register("/sw.js?v=" + encodeURIComponent(buildTime))
-              .then(waitForActivation)
-              .then(function () {
-                try {
-                  if (sessionStorage.getItem("cache-killer:head-reloaded") === buildTime) return;
-                  sessionStorage.setItem("cache-killer:head-reloaded", buildTime);
-                } catch (e) { /* ignore */ }
-                if (!new URL(window.location.href).searchParams.has("fresh")) {
-                  window.location.replace(hardUrl("swActivated"));
+            var didCleanup = false;
+            var cleanups = [];
+
+            cleanups.push(
+              navigator.serviceWorker.getRegistrations().then(function (regs) {
+                if (regs && regs.length) {
+                  // If there's already an active SW for /sw.js (this same one),
+                  // don't treat that as cleanup needed.
+                  var hadOther = regs.some(function (r) {
+                    return !r.active || (r.active.scriptURL && r.active.scriptURL.indexOf("/sw.js") === -1);
+                  });
+                  if (hadOther) {
+                    didCleanup = true;
+                    return Promise.all(regs.map(function (r) {
+                      try { return r.unregister(); } catch (e) { return null; }
+                    }));
+                  }
                 }
-              })
-              .catch(function () { /* ignore */ });
+              }).catch(function () {})
+            );
+
+            if ("caches" in window) {
+              cleanups.push(
+                caches.keys().then(function (names) {
+                  if (names && names.length) {
+                    didCleanup = true;
+                    return Promise.all(names.map(function (n) {
+                      try { return caches.delete(n); } catch (e) { return null; }
+                    }));
+                  }
+                }).catch(function () {})
+              );
+            }
+
+            window.__NEXUS_SW_ACTIVATION__ = Promise.all(cleanups).then(function () {
+              return navigator.serviceWorker
+                .register("/sw.js?v=" + encodeURIComponent(buildTime))
+                .then(waitForActivation)
+                .then(function () {
+                  if (!didCleanup) return;
+                  try {
+                    if (sessionStorage.getItem("cache-killer:head-reloaded") === buildTime) return;
+                    sessionStorage.setItem("cache-killer:head-reloaded", buildTime);
+                  } catch (e) { /* ignore */ }
+                  if (!new URL(window.location.href).searchParams.has("fresh")) {
+                    window.location.replace(hardUrl("swActivated"));
+                  }
+                })
+                .catch(function () {});
+            });
           }
         } catch (e) { /* never block app startup */ }
       })();
@@ -94,156 +136,11 @@
 
   <body class="dark">
     <!--
-      ============================================================
-      INLINE CACHE-KILLER (runs before any bundle code).
-      ============================================================
-      This script runs on every page load, BEFORE the JS bundle is
-      executed. It exists because the only way to recover from a
-      browser that's stuck on an old service worker + cached bundle
-      is to clean up at the HTML level — the React code can't help
-      if it's the thing being cached.
-
-       Flow:
-        1. Unregister every service-worker registration we find.
-        2. Delete every entry in the Cache Storage API.
-        3. Re-register /sw.js with a cache-busting query so the
-           browser is FORCED to download the new self-destruct SW.
-        4. Wait until that new SW reaches `activated` before reload.
-        5. If we actually killed something AND the URL doesn't
-           already carry ?fresh=, do exactly ONE hard reload so the
-           next request bypasses any in-flight HTML cache.
-        6. Listen for preview/build refresh postMessages and hard reload
-           with a cache-busting query when requested by the iframe host.
+      The cache-killer (registers the self-destruct service worker, deletes
+      old caches, then reloads ONCE if needed) lives in the <head> script
+      above. Do not duplicate it here — running it twice caused a second
+      hard reload that produced a brief blank page on every refresh.
     -->
-    <script>
-      (function () {
-        try {
-          var FRESH_PARAM = "fresh";
-          var url = new URL(window.location.href);
-          var alreadyFresh = url.searchParams.has(FRESH_PARAM);
-          var didCleanup = false;
-
-          // Mark when this exact HTML payload was served (used by the static badge).
-          window.__BUILD_TIME__ =
-            document
-              .querySelector('meta[name="build-time"]')
-              ?.getAttribute("content") || "unknown";
-
-          function withFreshUrl(extraParam) {
-            var freshUrl = new URL(window.location.href);
-            freshUrl.searchParams.set(FRESH_PARAM, String(Date.now()));
-            if (extraParam) freshUrl.searchParams.set(extraParam, window.__BUILD_TIME__ || String(Date.now()));
-            return freshUrl.toString();
-          }
-
-          function reloadFresh(extraParam) {
-            // Guard: only ever do ONE auto-reload per session, otherwise we
-            // risk an infinite loop if the cleanup keeps "finding" things.
-            try {
-              var key = extraParam ? "cache-killer:manual-reloaded" : "cache-killer:reloaded";
-              if (!extraParam && sessionStorage.getItem(key) === "1") return;
-              sessionStorage.setItem(key, String(Date.now()));
-            } catch (e) { /* ignore */ }
-            window.location.replace(withFreshUrl(extraParam));
-          }
-
-          function waitForActivation(reg) {
-            return new Promise(function (resolve) {
-              var worker = reg && (reg.installing || reg.waiting || reg.active);
-              if (!worker) return resolve();
-              if (worker.state === "activated") return resolve();
-              var done = false;
-              var timeout = setTimeout(function () {
-                if (done) return;
-                done = true;
-                resolve();
-              }, 5000);
-              worker.addEventListener("statechange", function () {
-                if (done || worker.state !== "activated") return;
-                done = true;
-                clearTimeout(timeout);
-                resolve();
-              });
-            });
-          }
-
-          window.__NEXUS_HARD_RELOAD_LATEST__ = function () { reloadFresh("hardReload"); };
-
-          window.addEventListener("message", function (event) {
-            var data = event && event.data;
-            if (!data || typeof data !== "object") return;
-            var type = data.type || data.kind;
-            if (type === "NEXUS_BUILD_CHANGED" || type === "LOVABLE_BUILD_CHANGED" || type === "NEXUS_HARD_RELOAD_LATEST") {
-              reloadFresh("iframeBuild");
-            }
-          });
-
-          var swCleanup = Promise.resolve();
-          if ("serviceWorker" in navigator) {
-            if (window.__NEXUS_SW_ACTIVATION__) {
-              swCleanup = window.__NEXUS_SW_ACTIVATION__;
-            } else {
-              swCleanup = navigator.serviceWorker
-                .getRegistrations()
-                .then(function (regs) {
-                  if (regs && regs.length) {
-                    didCleanup = true;
-                    return Promise.all(
-                      regs.map(function (r) {
-                        try { return r.unregister(); } catch (e) { return null; }
-                      })
-                    );
-                  }
-                })
-                .catch(function () { /* ignore */ });
-            }
-          }
-
-          var cacheCleanup = Promise.resolve();
-          if ("caches" in window) {
-            cacheCleanup = caches
-              .keys()
-              .then(function (names) {
-                if (names && names.length) {
-                  didCleanup = true;
-                  return Promise.all(
-                    names.map(function (n) {
-                      try { return caches.delete(n); } catch (e) { return null; }
-                    })
-                  );
-                }
-              })
-              .catch(function () { /* ignore */ });
-          }
-
-          Promise.all([swCleanup, cacheCleanup]).then(function () {
-            // Re-register the new self-destruct SW with a cache-busting query.
-            // The ?v= ensures the browser treats it as a brand-new SW URL and
-            // actually fetches it from the network instead of using its cache.
-            var activation = Promise.resolve();
-            if (window.__NEXUS_SW_ACTIVATION__) {
-              activation = window.__NEXUS_SW_ACTIVATION__;
-            } else if ("serviceWorker" in navigator) {
-              try {
-                activation = navigator.serviceWorker
-                  .register("/sw.js?v=" + (window.__BUILD_TIME__ || Date.now()))
-                  .then(waitForActivation)
-                  .catch(function () { /* ignore */ });
-              } catch (e) { /* ignore */ }
-            }
-
-            activation.then(function () {
-              if (didCleanup && !alreadyFresh) reloadFresh();
-            });
-          });
-        } catch (e) {
-          // Never block the app on cleanup failure.
-          if (window.console && console.warn) {
-            console.warn("[cache-killer] failed", e);
-          }
-        }
-      })();
-    </script>
 
     <!--
       Static fallback build badge. Visible only if React fails to mount

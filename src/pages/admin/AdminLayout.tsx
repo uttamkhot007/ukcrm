@@ -6,22 +6,18 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout() {
-  const { user, isAuthResolved, role, isAdmin } = useAuth();
-  const { isSuperAdmin, isLoading: tenantLoading } = useTenant();
+  const { user, isAuthResolved, isPlatformAdmin } = useAuth();
+  const { isLoading: tenantLoading } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if this is a super-admin-only route
-  const isSuperAdminRoute = location.pathname.includes("/admin/tenants") || location.pathname.includes("/admin/platform");
-  const canAccessPlatformRoute = isSuperAdmin || isAdmin || role === "admin";
-
-  // Map route to module id for sidebar highlighting
   const getActiveModule = () => {
     const path = location.pathname;
     if (path.includes("/admin/platform/tenants")) return "platform-tenants";
     if (path.includes("/admin/platform/users")) return "platform-users";
     if (path.includes("/admin/platform/licenses")) return "platform-licenses";
     if (path.includes("/admin/platform/integrations")) return "platform-integrations";
+    if (path.includes("/admin/platform/status")) return "platform-status";
     if (path.includes("/admin/organization")) return "admin-center-organization";
     if (path.includes("/admin/whitelabel")) return "admin-center-whitelabel";
     if (path.includes("/admin/users")) return "admin-center-users";
@@ -42,27 +38,25 @@ export default function AdminLayout() {
 
   useEffect(() => {
     setActiveModule(getActiveModule());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  // Strict order: never decide where to send the user until auth + tenant
+  // contexts are fully resolved. This is what stops the "bounce back to /
+  // and re-render the tenant dashboard" loop.
   useEffect(() => {
-    if (isAuthResolved && !user) {
-      navigate("/auth");
-    }
-  }, [user, isAuthResolved, navigate]);
+    if (!isAuthResolved || tenantLoading) return;
 
-  useEffect(() => {
-    if (isAuthResolved && !tenantLoading && user) {
-      // Super admin routes require super admin status
-      if (isSuperAdminRoute && !canAccessPlatformRoute) {
-        navigate("/");
-        return;
-      }
-      // Regular admin routes require admin role (or super admin)
-      if (!isSuperAdminRoute && role !== "admin" && !isSuperAdmin) {
-        navigate("/");
-      }
+    if (!user) {
+      navigate("/auth", { replace: true });
+      return;
     }
-  }, [user, isAuthResolved, tenantLoading, role, isSuperAdmin, isSuperAdminRoute, canAccessPlatformRoute, navigate]);
+
+    if (!isPlatformAdmin) {
+      console.info("[admin-guard] non-admin on %s → /", location.pathname);
+      navigate("/", { replace: true });
+    }
+  }, [user, isAuthResolved, tenantLoading, isPlatformAdmin, navigate, location.pathname]);
 
   if (!isAuthResolved || tenantLoading) {
     return (
@@ -72,24 +66,28 @@ export default function AdminLayout() {
     );
   }
 
-  // Allow access if: platform admin route OR regular tenant admin route.
-  const hasAccess = isSuperAdminRoute ? canAccessPlatformRoute : isSuperAdmin || role === "admin";
-
-  if (!user || !hasAccess) {
+  if (!user || !isPlatformAdmin) {
+    // While the redirect effect runs, render nothing (no tenant dashboard).
     return null;
   }
 
   const handleModuleChange = (module: string) => {
     setActiveModule(module);
-    // Navigate to the appropriate route based on module
     if (module === "dashboard") {
-      navigate("/");
-    } else if (module.startsWith("admin-center-")) {
+      // Platform admins should never be sent back to the tenant dashboard.
+      navigate(isPlatformAdmin ? "/admin/platform/tenants" : "/");
+      return;
+    }
+    if (module.startsWith("admin-center-")) {
       const subPath = module.replace("admin-center-", "");
       navigate(`/admin/${subPath}`);
-    } else if (module === "super-admin-tenants" || module === "platform-tenants") {
+      return;
+    }
+    if (module === "super-admin-tenants" || module === "platform-tenants") {
       navigate("/admin/platform/tenants");
-    } else if (module.startsWith("platform-")) {
+      return;
+    }
+    if (module.startsWith("platform-")) {
       const subPath = module.replace("platform-", "");
       navigate(`/admin/platform/${subPath}`);
     }

@@ -1,69 +1,55 @@
-## What you're seeing in the screenshot
+I found two real code issues behind the repeated “same dashboard”/refresh problem:
 
-You're on `/admin/platform/tenants` but the page is rendering **only** the inner `AdminTenants` table — the purple **Platform Console** banner, the **Tenants / User Management / License Management / Integrations / System Status** sub-tabs, AND the new **Build Version badge** in the bottom-left are all missing.
+1. The app is still using `profile.is_super_admin` as an access signal in the frontend and database helpers, even though roles are supposed to be authoritative in `user_roles`. This creates split-brain admin detection and race conditions between `useAuth`, `TenantContext`, `Index`, `AdminLayout`, and `PlatformLayout`.
+2. The cache-killer code is duplicated in `index.html` and can race/reload before React fully stabilizes. In my browser check it produced a blank page with only the static build badge visible before later landing on `/auth`, meaning the cleanup flow itself can break the app experience.
 
-That's the smoking gun: your browser is still running an **old JS bundle** that pre-dates the `PlatformLayout` wrapper and the `BuildVersionBadge`. The fixes from the last round shipped to the codebase but never reached your browser.
+Plan to fix it permanently:
 
-## Why the previous fix didn't actually work
+1. Create one authoritative admin access model
+   - Add a small frontend helper for role decisions, e.g. `isPlatformAdmin = role === "admin" || role === "super_admin"` / `isSuperAdmin = role === "super_admin"` as supported by the existing schema.
+   - Stop using `portalMode === "admin"` as proof of admin access.
+   - Stop using `profile.is_super_admin` as the main routing guard in app code; keep it only as backward-compatible metadata if needed.
 
-The "self-destruct service worker" only purges itself **after the new `/sw.js` is downloaded and activated by the browser**. But:
+2. Harden `useAuth` so auth/profile/role resolution is deterministic
+   - Track separate resolved flags instead of relying on `null` values and a 6-second timeout.
+   - Fetch profile, all role rows, teams, and console access in one guarded sequence per session.
+   - Make `getRedirectPath()` return `/admin/platform/tenants` for admin/platform users, not `/admin`.
+   - Ensure sign-in and initial page refresh use the same redirect logic.
 
-1. Nothing in the current code calls `navigator.serviceWorker.register('/sw.js')` anymore (we made `usePushNotifications` a no-op), so **the browser never fetches the new self-destruct SW**.
-2. The OLD SW that was already installed weeks ago is still alive, intercepting `index.html` and JS requests, and serving cached responses.
-3. Result: the new self-destruct logic never runs, and the legacy cleanup in `main.tsx` never runs either (because old `main.tsx` is what's being served).
+3. Fix root route behavior (`/`)
+   - Replace the current effect-based redirect with a decisive guarded render:
+     - while auth/role/tenant is unresolved: show loading only
+     - if unauthenticated: navigate to `/auth`
+     - if platform admin: navigate to `/admin/platform/tenants`
+     - otherwise: render tenant/workspace dashboard
+   - Remove the timeout path that can incorrectly proceed to the tenant dashboard before role data is ready.
 
-It's a chicken-and-egg problem: the only code that can clean things up lives in the bundle that's stuck behind the cache.
+4. Fix admin/platform route guards
+   - Update `AdminLayout` and `PlatformLayout` to use the same centralized admin helper.
+   - Prevent any redirect back to `/` until auth and role are fully resolved.
+   - Keep `/admin/platform/*` matched only through the nested admin route to avoid duplicate route/layout behavior.
 
-## The permanent fix
+5. Fix the sidebar/header confusion
+   - For platform admins, show the Platform Console navigation consistently.
+   - Make the Dashboard sidebar item route to the correct admin landing page instead of sending platform admins back to the tenant dashboard.
+   - Keep workspace/customer preview modes as view modes only, not access-control signals.
 
-Break the cycle **before any React code loads** by putting the cleanup in two places that the cache can't intercept: an **inline `<script>` in `index.html`** and an **explicit re-registration of the new self-destruct SW**.
+6. Remove the fragile duplicate cache-killer path
+   - Consolidate the HTML cache cleanup to one script path.
+   - Wait for self-destruct service worker activation before reload, but only do one guarded reload per build.
+   - Ensure React mount is not hidden by stale cleanup state and the static build badge only appears when React actually fails.
 
-### 1. Inline cache-killer in `index.html` (runs before bundle loads)
+7. Add temporary targeted diagnostics for this issue
+   - Add concise console logs for: auth resolved, role resolved, root redirect target, admin guard decision.
+   - These logs can confirm the real route decision if the issue appears again; they will not include tokens or secrets.
 
-Add a small `<script>` block at the top of `<body>` that runs synchronously on every page load:
+8. Verify before final response
+   - Run TypeScript/build checks.
+   - Verify `/` redirects to `/admin/platform/tenants` for the current Uttam admin record.
+   - Verify refreshing `/` and `/admin/platform/tenants` does not show the tenant dashboard.
+   - Verify the white-screen/static-badge-only state is gone.
 
-- Unregister every service worker registration
-- Delete every `caches` entry  
-- **Re-register `/sw.js?v=<timestamp>`** so the new self-destruct SW actually gets installed and can claim/clean any clients still holding the old one
-- If `?fresh=...` is NOT in the URL and we just unregistered something OR found old caches, force `location.reload(true)` once to ensure the next request bypasses any in-flight HTML cache
-
-Because this script lives in `index.html` (which has `Cache-Control: no-cache, no-store, must-revalidate`) and runs before the `<script type="module" src="/src/main.tsx">` tag, it works even if the bundle itself is stale.
-
-### 2. Add a versioned SW import to force a real fetch
-
-The browser only re-checks `/sw.js` when something registers it. Add a tiny inline `register('/sw.js?v=<BUILD_TIME>')` call in `index.html` (or a 5-line `public/sw-bootstrap.js`). The `?v=` query forces the browser to treat it as a different SW URL → guaranteed fresh fetch → install → activate → self-destruct → clean state.
-
-### 3. Add an HTTP-level no-cache hint for `/sw.js` and `/index.html`
-
-Update `nginx/default.conf` so Nginx returns `Cache-Control: no-store` for `index.html` AND `sw.js`. Without this, even after we fix the JS, an intermediate proxy or browser HTTP cache could still serve stale copies of those files. Asset chunks (under `/assets/...`) keep their long-lived hashed-file caching — those are safe.
-
-### 4. Promote the BuildVersionBadge into `index.html` as a static fallback
-
-Inject a tiny static `<div>` in `index.html` showing the build timestamp (filled in by the inline script reading `window.__BUILD_TIME__` set via `<meta>`). That way you can confirm the latest HTML loaded **even if the React bundle never mounts**. Once React mounts, the rich `BuildVersionBadge` component takes over and hides the static one.
-
-### 5. Tell `AdminTenants` to detect "I'm rendered without my PlatformLayout shell" and self-recover
-
-If `AdminTenants` is mounted at `/admin/platform/tenants` but the surrounding `PlatformLayout` banner element isn't in the DOM (we'll add a `data-platform-shell="1"` attribute to detect it), it means the user is on a stale bundle that nested routes incorrectly. In that case, call `forceFreshReload('/admin/platform/tenants')` automatically. One-time guard via `sessionStorage` prevents loops.
-
-## What you'll see after this ships
-
-- Within seconds of opening the preview, the inline script wipes the old SW + caches and reloads once. After the reload, the new bundle loads with the purple Platform Console banner, the sub-tabs, and the BuildVersionBadge in the bottom-left.
-- The badge will show a new build timestamp (e.g. `v0.0.0 · 27-Apr 09:14`) — if it doesn't update on a future change, you'll know immediately.
-- If something ever goes stale again, just click the badge and hit **Clear cache & reload latest build**.
-
-## Files to change
-
-**Edited**
-- `index.html` — add inline cache-killer `<script>`, versioned SW registration, static build-time fallback badge, `<meta name="build-time">`
-- `public/sw.js` — keep self-destruct logic; add explicit cache-buster header in response (already mostly done)
-- `nginx/default.conf` — `Cache-Control: no-store` for `index.html` and `sw.js`, keep long cache for `/assets/*`
-- `src/pages/admin/platform/PlatformLayout.tsx` — add `data-platform-shell="1"` marker to root div
-- `src/pages/admin/AdminTenants.tsx` — add "missing shell" detector that triggers `forceFreshReload` once
-- `src/main.tsx` — keep existing cleanup; remove the now-redundant duplicate logic
-
-**No new files needed.**
-
-## Out of scope
-
-- Adding back PWA / push notifications (still deferred until cache story is solid)
-- Any backend or Supabase changes
+Technical notes:
+- The current database record for Uttam is already correct: role `admin`, `is_super_admin = true`, tenant assigned.
+- The fix should focus on app state/routing/cache code, not changing that user record.
+- I will not edit generated backend client/type files.
