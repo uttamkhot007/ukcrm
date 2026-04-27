@@ -112,11 +112,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
-      const { data: profileData } = await supabase
+      updateStep("profile", { status: "pending", message: undefined });
+      const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
+      if (profileErr) {
+        updateStep("profile", { status: "error", message: profileErr.message });
+      } else if (!profileData) {
+        updateStep("profile", { status: "error", message: "No profile row found for this user." });
+      } else {
+        updateStep("profile", { status: "ok", message: profileData.email ?? undefined });
+      }
 
       if (profileData) {
         setProfile({
