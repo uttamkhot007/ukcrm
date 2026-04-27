@@ -29,6 +29,16 @@ interface ConsoleAccess {
   has_full_access: boolean; // true = full access based on role, false = employee portal only
 }
 
+export type DiagnosticStatus = "idle" | "pending" | "ok" | "error" | "skipped";
+export interface DiagnosticStep {
+  key: "login" | "session" | "profile" | "role" | "teams" | "console_access" | "redirect";
+  label: string;
+  status: DiagnosticStatus;
+  message?: string;
+  durationMs?: number;
+  startedAt?: number;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -52,11 +62,24 @@ interface AuthContextType {
   refreshTeams: () => Promise<void>;
   consoleAccess: ConsoleAccess | null;
   hasModuleAccess: (moduleId: string) => boolean;
+  diagnostics: DiagnosticStep[];
+  resetDiagnostics: () => void;
+  getRedirectPath: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SALES_TEAMS: TeamType[] = ["sales", "presales", "inside_sales", "management"];
+
+const INITIAL_DIAGNOSTICS: DiagnosticStep[] = [
+  { key: "login", label: "Login (credentials)", status: "idle" },
+  { key: "session", label: "Session established", status: "idle" },
+  { key: "profile", label: "Profile loaded", status: "idle" },
+  { key: "role", label: "Role assigned", status: "idle" },
+  { key: "teams", label: "Teams fetched", status: "idle" },
+  { key: "console_access", label: "Console access resolved", status: "idle" },
+  { key: "redirect", label: "Post-login redirect resolved", status: "idle" },
+];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -67,15 +90,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [portalMode, setPortalMode] = useState<PortalMode>("admin");
   const [isLoading, setIsLoading] = useState(true);
   const [consoleAccess, setConsoleAccess] = useState<ConsoleAccess | null>(null);
+  const [diagnostics, setDiagnostics] = useState<DiagnosticStep[]>(INITIAL_DIAGNOSTICS);
+
+  const updateStep = (key: DiagnosticStep["key"], patch: Partial<DiagnosticStep>) => {
+    setDiagnostics(prev =>
+      prev.map(s => {
+        if (s.key !== key) return s;
+        const next = { ...s, ...patch };
+        if (patch.status === "pending") next.startedAt = Date.now();
+        if ((patch.status === "ok" || patch.status === "error") && s.startedAt) {
+          next.durationMs = Date.now() - s.startedAt;
+        }
+        return next;
+      })
+    );
+  };
+
+  const resetDiagnostics = () => setDiagnostics(INITIAL_DIAGNOSTICS.map(s => ({ ...s })));
+
 
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
-      const { data: profileData } = await supabase
+      updateStep("profile", { status: "pending", message: undefined });
+      const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
+      if (profileErr) {
+        updateStep("profile", { status: "error", message: profileErr.message });
+      } else if (!profileData) {
+        updateStep("profile", { status: "error", message: "No profile row found for this user." });
+      } else {
+        updateStep("profile", { status: "ok", message: profileData.email ?? undefined });
+      }
 
       if (profileData) {
         setProfile({
@@ -99,22 +148,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fetch role
-      const { data: roleData } = await supabase
+      updateStep("role", { status: "pending", message: undefined });
+      const { data: roleData, error: roleErr } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
+      if (roleErr) {
+        updateStep("role", { status: "error", message: roleErr.message });
+      }
 
       const isSuperAdminUser = (profileData as any)?.is_super_admin === true;
       
       if (roleData) {
         setRole(roleData.role as AppRole);
+        updateStep("role", { status: "ok", message: roleData.role as string });
         // Set default portal mode for admins and super admins
         if ((roleData.role === 'admin' || isSuperAdminUser) && profileData?.user_category !== 'customer') {
           setPortalMode('admin');
         }
       } else {
         setRole("employee");
+        updateStep("role", { status: "ok", message: isSuperAdminUser ? "super_admin (implicit)" : "employee (default)" });
         // Super admins without explicit role still get admin mode
         if (isSuperAdminUser) {
           setPortalMode('admin');
@@ -124,21 +179,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fetch teams
-      const { data: teamsData } = await supabase
+      updateStep("teams", { status: "pending", message: undefined });
+      const { data: teamsData, error: teamsErr } = await supabase
         .from("user_teams")
         .select("team")
         .eq("user_id", userId);
-
-      if (teamsData) {
-        setTeams(teamsData.map(t => t.team as TeamType));
+      if (teamsErr) {
+        updateStep("teams", { status: "error", message: teamsErr.message });
+      } else {
+        const list = (teamsData ?? []).map(t => t.team as TeamType);
+        setTeams(list);
+        updateStep("teams", { status: "ok", message: list.length ? list.join(", ") : "no teams assigned" });
       }
 
       // Fetch console access settings
-      const { data: consoleAccessData } = await supabase
+      updateStep("console_access", { status: "pending", message: undefined });
+      const { data: consoleAccessData, error: caErr } = await supabase
         .from("user_console_access")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
+      if (caErr) {
+        updateStep("console_access", { status: "error", message: caErr.message });
+      }
+
 
 
       if (consoleAccessData) {
@@ -200,9 +264,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPortalMode('workspace');
         }
       }
-    } catch (error) {
+      // Mark console_access ok if not already errored
+      setDiagnostics(prev => prev.map(s =>
+        s.key === "console_access" && s.status === "pending"
+          ? { ...s, status: "ok", message: consoleAccessData ? "configured" : "derived from role", durationMs: s.startedAt ? Date.now() - s.startedAt : undefined }
+          : s
+      ));
+    } catch (error: any) {
       console.error("Error fetching user data:", error);
       setRole("employee");
+      updateStep("profile", { status: "error", message: error?.message ?? "unexpected error" });
     }
   };
 
@@ -226,12 +297,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // First, get the initial session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        updateStep("session", { status: "pending" });
+        const { data: { session }, error: sessErr } = await supabase.auth.getSession();
         
         if (!isMounted) return;
         
         setSession(session as unknown as Session);
         setUser((session?.user ?? null) as unknown as User);
+        if (sessErr) {
+          updateStep("session", { status: "error", message: sessErr.message });
+        } else if (session?.user) {
+          updateStep("session", { status: "ok", message: `uid: ${session.user.id.slice(0, 8)}…` });
+        } else {
+          updateStep("session", { status: "skipped", message: "No active session" });
+        }
         
         if (session?.user) {
           await fetchUserData(session.user.id);
@@ -239,8 +318,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         initialSessionHandled = true;
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error initializing auth:", error);
+        updateStep("session", { status: "error", message: error?.message ?? "init failed" });
         if (isMounted) {
           setIsLoading(false);
         }
@@ -282,12 +362,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    resetDiagnostics();
+    updateStep("login", { status: "pending" });
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    if (error) {
+      updateStep("login", { status: "error", message: error.message });
+    } else {
+      updateStep("login", { status: "ok", message: email });
+    }
     return { error: error as Error | null };
   };
+
+  // Compute the correct landing path post-login based on user state.
+  const getRedirectPath = (): string => {
+    // Super admins land on the platform console
+    if (profile?.is_super_admin) return "/admin/platform";
+    // Tenant admins land on the admin center
+    if (role === "admin") return "/admin";
+    // Customers go to their portal
+    if (profile?.user_category === "customer") return "/customer";
+    // Everyone else lands on the workspace home
+    return "/";
+  };
+
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -370,6 +470,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshTeams,
     consoleAccess,
     hasModuleAccess,
+    diagnostics,
+    resetDiagnostics,
+    getRedirectPath,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

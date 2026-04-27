@@ -10,6 +10,7 @@ import { z } from "zod";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+import { AuthDiagnosticsPanel } from "@/components/auth/AuthDiagnosticsPanel";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -29,14 +30,19 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
   
-  const { signIn, signUp, user, isLoading } = useAuth();
+  const { signIn, signUp, user, isLoading, getRedirectPath, profile, role } = useAuth();
   const navigate = useNavigate();
 
+  // Post-login redirect health check: once the user + profile + role are loaded,
+  // route them to the correct landing page (super-admin → /admin/platform,
+  // tenant admin → /admin, customer → /customer, else → /).
   useEffect(() => {
-    if (user && !isLoading) {
-      navigate("/");
-    }
-  }, [user, isLoading, navigate]);
+    if (!user || isLoading) return;
+    // Wait until profile + role have resolved so getRedirectPath() is accurate.
+    if (!profile || !role) return;
+    const target = getRedirectPath();
+    navigate(target, { replace: true });
+  }, [user, isLoading, profile, role, getRedirectPath, navigate]);
 
   const validate = () => {
     const newErrors: { email?: string; password?: string; fullName?: string } = {};
@@ -320,6 +326,11 @@ export default function Auth() {
           </div>
         </div>
       </div>
+
+      {/* Floating diagnostics panel — visible on the auth screen so login
+          failures (credentials, session, profile, role, teams) are easy to
+          identify without exposing tokens. */}
+      <AuthDiagnosticsPanel />
     </div>
   );
 }

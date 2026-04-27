@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { AuthDiagnosticsGate } from "@/components/auth/AuthDiagnosticsGate";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Notifications from "./pages/Notifications";
@@ -105,6 +106,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <AuthDiagnosticsGate />
             </TooltipProvider>
           </TenantProvider>
         </AuthProvider>
