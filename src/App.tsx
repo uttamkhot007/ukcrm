@@ -103,6 +103,32 @@ const App = () => (
                   <Route path="document-templates" element={<AdminDocumentTemplates />} />
                   <Route path="authorized-domains" element={<AdminAuthorizedDomains />} />
                 </Route>
+                <Route path="/admin/platform" element={<Navigate to="/admin/platform/tenants" replace />} />
+                <Route path="/admin/platform/tenants" element={<AdminLayout />}>
+                  <Route index element={<PlatformLayout />}>
+                    <Route index element={<PlatformTenants />} />
+                  </Route>
+                </Route>
+                <Route path="/admin/platform/users" element={<AdminLayout />}>
+                  <Route index element={<PlatformLayout />}>
+                    <Route index element={<PlatformUsers />} />
+                  </Route>
+                </Route>
+                <Route path="/admin/platform/licenses" element={<AdminLayout />}>
+                  <Route index element={<PlatformLayout />}>
+                    <Route index element={<PlatformLicenses />} />
+                  </Route>
+                </Route>
+                <Route path="/admin/platform/integrations" element={<AdminLayout />}>
+                  <Route index element={<PlatformLayout />}>
+                    <Route index element={<PlatformIntegrations />} />
+                  </Route>
+                </Route>
+                <Route path="/admin/platform/status" element={<AdminLayout />}>
+                  <Route index element={<PlatformLayout />}>
+                    <Route index element={<PlatformStatus />} />
+                  </Route>
+                </Route>
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
