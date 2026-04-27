@@ -78,8 +78,9 @@ const Index = () => {
   useEffect(() => {
     // Don't redirect until we know the user's super admin status and tenant loading is complete
     if (!isLoading && !tenantLoading && user && profileLoaded) {
-      // Super admins bypass all tenant requirements - they manage all tenants from Admin Center
+      // Super admins should always enter the global Platform Console from the root.
       if (isUserSuperAdmin) {
+        navigate("/admin/platform/tenants", { replace: true });
         return;
       }
       
