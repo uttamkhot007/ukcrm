@@ -6665,6 +6665,71 @@ export type Database = {
           },
         ]
       }
+      license_plan_modules: {
+        Row: {
+          module_key: string
+          plan_id: string
+        }
+        Insert: {
+          module_key: string
+          plan_id: string
+        }
+        Update: {
+          module_key?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_plan_modules_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "license_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          price_monthly: number
+          seat_cap: number | null
+          sort_order: number
+          trial_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          price_monthly?: number
+          seat_cap?: number | null
+          sort_order?: number
+          trial_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          price_monthly?: number
+          seat_cap?: number | null
+          sort_order?: number
+          trial_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_campaigns: {
         Row: {
           budget: number | null
@@ -8620,6 +8685,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_integrations: {
+        Row: {
+          auto_enable_tier: string | null
+          available_to_tenants: boolean
+          category: Database["public"]["Enums"]["platform_integration_category"]
+          config: Json
+          created_at: string
+          description: string | null
+          health_status: string
+          id: string
+          is_enabled: boolean
+          key: string
+          last_synced_at: string | null
+          name: string
+          secret_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_enable_tier?: string | null
+          available_to_tenants?: boolean
+          category?: Database["public"]["Enums"]["platform_integration_category"]
+          config?: Json
+          created_at?: string
+          description?: string | null
+          health_status?: string
+          id?: string
+          is_enabled?: boolean
+          key: string
+          last_synced_at?: string | null
+          name: string
+          secret_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_enable_tier?: string | null
+          available_to_tenants?: boolean
+          category?: Database["public"]["Enums"]["platform_integration_category"]
+          config?: Json
+          created_at?: string
+          description?: string | null
+          health_status?: string
+          id?: string
+          is_enabled?: boolean
+          key?: string
+          last_synced_at?: string | null
+          name?: string
+          secret_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       poc_requests: {
         Row: {
@@ -12429,6 +12545,60 @@ export type Database = {
           },
         ]
       }
+      tenant_licenses: {
+        Row: {
+          created_at: string
+          notes: string | null
+          payment_status: Database["public"]["Enums"]["tenant_payment_status"]
+          plan_id: string | null
+          renews_at: string | null
+          seats_licensed: number
+          status: Database["public"]["Enums"]["tenant_license_status"]
+          tenant_id: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["tenant_payment_status"]
+          plan_id?: string | null
+          renews_at?: string | null
+          seats_licensed?: number
+          status?: Database["public"]["Enums"]["tenant_license_status"]
+          tenant_id: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["tenant_payment_status"]
+          plan_id?: string | null
+          renews_at?: string | null
+          seats_licensed?: number
+          status?: Database["public"]["Enums"]["tenant_license_status"]
+          tenant_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_licenses_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "license_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_licenses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_members: {
         Row: {
           created_at: string
@@ -12472,6 +12642,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tenant_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_module_overrides: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_by: string | null
+          id: string
+          module_key: string
+          reason: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          module_key: string
+          reason?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          module_key?: string
+          reason?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_module_overrides_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -13576,6 +13784,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_console_access: {
         Row: {
@@ -14794,6 +15032,13 @@ export type Database = {
         | "offer_sent"
         | "offer_accepted"
         | "completed"
+      platform_integration_category:
+        | "billing"
+        | "email"
+        | "monitoring"
+        | "sso"
+        | "infrastructure"
+        | "marketplace"
       poc_status:
         | "requested"
         | "planning"
@@ -14877,6 +15122,13 @@ export type Database = {
         | "admin"
         | "mss"
         | "offensive"
+      tenant_license_status:
+        | "trial"
+        | "active"
+        | "past_due"
+        | "suspended"
+        | "cancelled"
+      tenant_payment_status: "paid" | "pending" | "failed" | "na"
       tenant_status: "pending" | "active" | "suspended" | "cancelled"
       tenant_tier: "starter" | "professional" | "enterprise"
       tender_source:
@@ -15168,6 +15420,14 @@ export const Constants = {
         "offer_accepted",
         "completed",
       ],
+      platform_integration_category: [
+        "billing",
+        "email",
+        "monitoring",
+        "sso",
+        "infrastructure",
+        "marketplace",
+      ],
       poc_status: [
         "requested",
         "planning",
@@ -15262,6 +15522,14 @@ export const Constants = {
         "mss",
         "offensive",
       ],
+      tenant_license_status: [
+        "trial",
+        "active",
+        "past_due",
+        "suspended",
+        "cancelled",
+      ],
+      tenant_payment_status: ["paid", "pending", "failed", "na"],
       tenant_status: ["pending", "active", "suspended", "cancelled"],
       tenant_tier: ["starter", "professional", "enterprise"],
       tender_source: [
