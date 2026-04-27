@@ -15,6 +15,9 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
+    <!-- Build identity (also surfaced by BuildVersionBadge after React mounts). -->
+    <meta name="build-time" content="__INDEX_HTML_BUILT__" />
+
     <meta name="theme-color" content="#6366f1" />
 
     <!-- Mobile Optimization -->
@@ -31,6 +34,139 @@
   </head>
 
   <body class="dark">
+    <!--
+      ============================================================
+      INLINE CACHE-KILLER (runs before any bundle code).
+      ============================================================
+      This script runs on every page load, BEFORE the JS bundle is
+      executed. It exists because the only way to recover from a
+      browser that's stuck on an old service worker + cached bundle
+      is to clean up at the HTML level — the React code can't help
+      if it's the thing being cached.
+
+      Flow:
+        1. Unregister every service-worker registration we find.
+        2. Delete every entry in the Cache Storage API.
+        3. Re-register /sw.js with a cache-busting query so the
+           browser is FORCED to download the new self-destruct SW
+           (otherwise it would happily keep using the old one).
+        4. If we actually killed something AND the URL doesn't
+           already carry ?fresh=, do exactly ONE hard reload so the
+           next request bypasses any in-flight HTML cache.
+        5. Hide the static "stale build" fallback once React mounts.
+    -->
+    <script>
+      (function () {
+        try {
+          var FRESH_PARAM = "fresh";
+          var url = new URL(window.location.href);
+          var alreadyFresh = url.searchParams.has(FRESH_PARAM);
+          var didCleanup = false;
+
+          // Mark when this exact HTML payload was served (used by the static badge).
+          window.__BUILD_TIME__ =
+            document
+              .querySelector('meta[name="build-time"]')
+              ?.getAttribute("content") || "unknown";
+
+          function reloadFresh() {
+            // Guard: only ever do ONE auto-reload per session, otherwise we
+            // risk an infinite loop if the cleanup keeps "finding" things.
+            try {
+              if (sessionStorage.getItem("cache-killer:reloaded") === "1") return;
+              sessionStorage.setItem("cache-killer:reloaded", "1");
+            } catch (e) { /* ignore */ }
+            url.searchParams.set(FRESH_PARAM, String(Date.now()));
+            window.location.replace(url.toString());
+          }
+
+          var swCleanup = Promise.resolve();
+          if ("serviceWorker" in navigator) {
+            swCleanup = navigator.serviceWorker
+              .getRegistrations()
+              .then(function (regs) {
+                if (regs && regs.length) {
+                  didCleanup = true;
+                  return Promise.all(
+                    regs.map(function (r) {
+                      try { return r.unregister(); } catch (e) { return null; }
+                    })
+                  );
+                }
+              })
+              .catch(function () { /* ignore */ });
+          }
+
+          var cacheCleanup = Promise.resolve();
+          if ("caches" in window) {
+            cacheCleanup = caches
+              .keys()
+              .then(function (names) {
+                if (names && names.length) {
+                  didCleanup = true;
+                  return Promise.all(
+                    names.map(function (n) {
+                      try { return caches.delete(n); } catch (e) { return null; }
+                    })
+                  );
+                }
+              })
+              .catch(function () { /* ignore */ });
+          }
+
+          Promise.all([swCleanup, cacheCleanup]).then(function () {
+            // Re-register the new self-destruct SW with a cache-busting query.
+            // The ?v= ensures the browser treats it as a brand-new SW URL and
+            // actually fetches it from the network instead of using its cache.
+            if ("serviceWorker" in navigator) {
+              try {
+                navigator.serviceWorker
+                  .register("/sw.js?v=" + (window.__BUILD_TIME__ || Date.now()))
+                  .catch(function () { /* ignore */ });
+              } catch (e) { /* ignore */ }
+            }
+
+            if (didCleanup && !alreadyFresh) {
+              reloadFresh();
+            }
+          });
+        } catch (e) {
+          // Never block the app on cleanup failure.
+          if (window.console && console.warn) {
+            console.warn("[cache-killer] failed", e);
+          }
+        }
+      })();
+    </script>
+
+    <!--
+      Static fallback build badge. Visible only if React fails to mount
+      (in which case the BuildVersionBadge React component never replaces
+      it). When React mounts, it sets data-react-mounted="1" on <html>
+      and CSS hides this element.
+    -->
+    <div id="static-build-fallback"
+         style="position:fixed;bottom:6px;left:6px;z-index:2147483647;
+                font:10px ui-monospace,Menlo,monospace;color:#9ca3af;
+                background:rgba(15,23,42,0.7);border:1px solid rgba(148,163,184,0.25);
+                border-radius:9999px;padding:3px 8px;backdrop-filter:blur(6px);
+                pointer-events:none;">
+      <span id="static-build-fallback-label">html · loading…</span>
+    </div>
+    <style>
+      html[data-react-mounted="1"] #static-build-fallback { display: none; }
+    </style>
+    <script>
+      (function () {
+        try {
+          var el = document.getElementById("static-build-fallback-label");
+          if (el && window.__BUILD_TIME__) {
+            el.textContent = "html · " + window.__BUILD_TIME__;
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
