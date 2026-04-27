@@ -50,6 +50,9 @@ interface AuthContextType {
   hasSalesAccess: boolean;
   isManagement: boolean;
   isLoading: boolean;
+  isProfileLoading: boolean;
+  isRoleLoading: boolean;
+  isAuthResolved: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -89,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<TeamType[]>([]);
   const [portalMode, setPortalMode] = useState<PortalMode>("admin");
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [isRoleLoading, setIsRoleLoading] = useState(false);
   const [consoleAccess, setConsoleAccess] = useState<ConsoleAccess | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticStep[]>(INITIAL_DIAGNOSTICS);
 
@@ -112,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
+      setIsProfileLoading(true);
       updateStep("profile", { status: "pending", message: undefined });
       const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
@@ -146,8 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         // Admin users default to admin mode (set after role is fetched)
       }
+      setIsProfileLoading(false);
 
       // Fetch role
+      setIsRoleLoading(true);
       updateStep("role", { status: "pending", message: undefined });
       const { data: roleData, error: roleErr } = await supabase
         .from("user_roles")
@@ -177,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPortalMode('workspace');
         }
       }
+      setIsRoleLoading(false);
 
       // Fetch teams
       updateStep("teams", { status: "pending", message: undefined });
@@ -273,6 +282,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("Error fetching user data:", error);
       setRole("employee");
+      setIsProfileLoading(false);
+      setIsRoleLoading(false);
       updateStep("profile", { status: "error", message: error?.message ?? "unexpected error" });
     }
   };
@@ -350,6 +361,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRole(null);
+          setIsProfileLoading(false);
+          setIsRoleLoading(false);
           setTeams([]);
         }
       }
@@ -446,6 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Super admins are also considered admins
   const isSuperAdmin = profile?.is_super_admin === true;
   const isAdminOrSuperAdmin = role === "admin" || isSuperAdmin;
+  const isAuthResolved = !isLoading && !isProfileLoading && !isRoleLoading;
 
   const value: AuthContextType = {
     user,
@@ -458,6 +472,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasSalesAccess,
     isManagement,
     isLoading,
+    isProfileLoading,
+    isRoleLoading,
+    isAuthResolved,
     signIn,
     signUp,
     signOut,
