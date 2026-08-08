@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RevalidationBar, RevalidationBadge } from "@/components/shared/RevalidationIndicator";
-import { Plus, Search, Edit, Trash2, Package, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, Loader2, UserPlus } from "lucide-react";
+import { QuickAddLeadDialog } from "./QuickAddLeadDialog";
+
 
 import { toast } from "sonner";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -33,6 +35,9 @@ export function ProductCatalog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [leadForProduct, setLeadForProduct] = useState<Product | null>(null);
+  const [quickLeadOpen, setQuickLeadOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -201,9 +206,15 @@ export function ProductCatalog() {
           <p className="text-muted-foreground">Manage your products and services</p>
         </div>
 
+        <div className="flex items-center gap-2">
+        <Button variant="outline" onClick={() => { setLeadForProduct(null); setQuickLeadOpen(true); }}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Add lead
+        </Button>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingProduct(null); resetForm(); } }}>
           <DialogTrigger asChild>
             <Button>
+
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>
@@ -263,7 +274,18 @@ export function ProductCatalog() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      <QuickAddLeadDialog
+        key={leadForProduct?.id ?? "generic"}
+        open={quickLeadOpen}
+        onOpenChange={(open) => { setQuickLeadOpen(open); if (!open) setLeadForProduct(null); }}
+        defaultTitle={leadForProduct ? `${leadForProduct.name} opportunity` : ""}
+        defaultSource={leadForProduct ? "Product catalog" : ""}
+        defaultNotes={leadForProduct ? `Interested in ${leadForProduct.name}${leadForProduct.sku ? ` (SKU ${leadForProduct.sku})` : ""}.` : ""}
+      />
+
 
       <Card>
         <CardHeader>
@@ -307,10 +329,20 @@ export function ProductCatalog() {
                     <TableCell><Badge variant={product.is_active ? "default" : "secondary"}>{product.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setLeadForProduct(product); setQuickLeadOpen(true); }}
+                          title={`Add lead for ${product.name}`}
+                        >
+                          <UserPlus className="h-4 w-4 mr-1" />
+                          Add lead
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(product)}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(product.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>

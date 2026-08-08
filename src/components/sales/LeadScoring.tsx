@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RevalidationBar, RevalidationBadge } from "@/components/shared/RevalidationIndicator";
+import { QuickAddLeadDialog } from "./QuickAddLeadDialog";
 
 import { toast } from "sonner";
-import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap } from "lucide-react";
+import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap, Plus } from "lucide-react";
+
 
 interface LeadScore {
   score: number;
@@ -48,6 +50,8 @@ export function LeadScoring() {
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
   const [segment, setSegment] = useState<SegmentKey>("hot");
   const [page, setPage] = useState(0);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+
 
   const changeSegment = (next: SegmentKey) => {
     setSegment(next);
@@ -199,14 +203,27 @@ export function LeadScoring() {
           <p className="text-muted-foreground">AI-powered lead scoring to identify hot prospects</p>
         </div>
 
-        <Button
-          onClick={() => scoreAllLeads.mutate()}
-          disabled={scoreAllLeads.isPending || unscoredCount === 0}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
-          Score Next 10 ({unscoredCount})
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setQuickAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add lead
+          </Button>
+          <Button
+            onClick={() => scoreAllLeads.mutate()}
+            disabled={scoreAllLeads.isPending || unscoredCount === 0}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
+            Score Next 10 ({unscoredCount})
+          </Button>
+        </div>
       </div>
+
+      <QuickAddLeadDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        onCreated={() => changeSegment("unscored")}
+      />
+
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
