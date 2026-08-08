@@ -423,6 +423,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // The query cache is persisted to disk for fast reopens — it must never
+    // outlive the session, or the next user could see the previous tenant's data.
+    clearPersistedQueryCache();
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -430,6 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTeams([]);
     setPortalMode("admin");
   };
+
 
   const hasSalesAccess = role === "admin" || teams.some(t => SALES_TEAMS.includes(t));
   const isManagement = teams.includes("management") || role === "admin";
