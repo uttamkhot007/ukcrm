@@ -5,6 +5,8 @@
  */
 
 import { breakerState } from './telemetry.js';
+import { propagationHeaders, startSpan } from './tracing.js';
+
 
 export type BreakerState = 'closed' | 'half-open' | 'open';
 
@@ -220,33 +222,76 @@ function bulkheadFor(target: string): Bulkhead {
 /**
  * The only sanctioned way for a service to call another service:
  * bulkhead -> circuit breaker -> retry -> timeout.
+ *
+ * Trace context and the correlation id are injected from the ambient async
+ * context, so a call chain stays stitched together without callers having to
+ * remember to forward headers.
  */
 export async function resilientFetch(url: string, options: ResilientFetchOptions = {}): Promise<Response> {
   const { timeoutMs = 10_000, retries = 2, target, ...init } = options;
   const dependency = target ?? new URL(url).host;
   const method = (init.method ?? 'GET').toUpperCase();
-  const safeToRetry = method === 'GET' || method === 'HEAD' || Boolean((init.headers as Record<string, string> | undefined)?.['Idempotency-Key']);
+  const callerHeaders = (init.headers as Record<string, string> | undefined) ?? {};
+  const safeToRetry = method === 'GET' || method === 'HEAD' || Boolean(callerHeaders['Idempotency-Key']);
 
-  return bulkheadFor(dependency).run(() =>
-    breakerFor(dependency).run(() =>
-      retry(
-        async () => {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), timeoutMs);
-          try {
-            const res = await fetch(url, { ...init, signal: controller.signal });
-            if (res.status >= 500) {
-              const err = new Error(`${dependency} responded ${res.status}`) as Error & { statusCode: number };
-              err.statusCode = res.status;
-              throw err;
+  const span = startSpan(`${method} ${dependency}`, {
+    kind: 'client',
+    attributes: {
+      'peer.service': dependency,
+      'http.method': method,
+      'http.url': new URL(url).pathname,
+    },
+  });
+
+  // Explicit caller headers win, but the trace headers are always present.
+  const headers: Record<string, string> = {
+    ...propagationHeaders(span.spanId),
+    ...callerHeaders,
+  };
+  const propagated = propagationHeaders(span.spanId);
+  if (propagated['traceparent']) headers['traceparent'] = propagated['traceparent'];
+  if (propagated['x-correlation-id']) headers['x-correlation-id'] = propagated['x-correlation-id'];
+
+  let attempts = 0;
+  try {
+    const response = await bulkheadFor(dependency).run(() =>
+      breakerFor(dependency).run(() =>
+        retry(
+          async () => {
+            attempts += 1;
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+              const res = await fetch(url, { ...init, headers, signal: controller.signal });
+              if (res.status >= 500) {
+                const err = new Error(`${dependency} responded ${res.status}`) as Error & { statusCode: number };
+                err.statusCode = res.status;
+                throw err;
+              }
+              return res;
+            } finally {
+              clearTimeout(timer);
             }
-            return res;
-          } finally {
-            clearTimeout(timer);
-          }
-        },
-        { attempts: safeToRetry ? retries + 1 : 1 },
+          },
+          { attempts: safeToRetry ? retries + 1 : 1 },
+        ),
       ),
-    ),
-  );
+    );
+    span.end({
+      status: response.ok ? 'ok' : 'error',
+      attributes: { 'http.status_code': response.status, 'retry.attempts': attempts },
+    });
+    return response;
+  } catch (err) {
+    span.end({
+      status: 'error',
+      message: err instanceof Error ? err.message : String(err),
+      attributes: {
+        'retry.attempts': attempts,
+        'circuit.open': err instanceof CircuitOpenError,
+      },
+    });
+    throw err;
+  }
 }
+
