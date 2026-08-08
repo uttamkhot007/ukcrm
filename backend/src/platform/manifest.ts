@@ -125,7 +125,7 @@ export const SERVICES: ServiceDefinition[] = [
     port: 3012,
     database: 'tenancy',
     owns: [
-      /^tenants?$/, /^tenant_/, /^module_definitions$/, /^license_plans?$/, /^license_plan_modules$/,
+      /^tenants?$/, /^tenant_(?!ai_configs)/, /^module_definitions$/, /^license_plans?$/, /^license_plan_modules$/,
       /^organization_settings$/, /^platform_integrations$/, /^tenant_clusters$/,
     ],
     customRoutes: ['platform-status'],
@@ -332,7 +332,7 @@ export const SERVICES: ServiceDefinition[] = [
     port: 3025,
     database: 'compliance',
     owns: [
-      /^compliance_/, /^legal_/, /^software_dependencies$/, /^cybersecurity_news$/, /^tenant_audit_log$/,
+      /^compliance_/, /^legal_/, /^software_dependencies$/, /^cybersecurity_news$/,
       /^document_templates$/,
     ],
     customRoutes: [],
