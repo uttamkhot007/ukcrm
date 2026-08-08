@@ -111,6 +111,12 @@ Deno.serve(async (req) => {
     const since = new Date(Date.now() - DAYS * 86400000).toISOString();
     const sinceDate = since.slice(0, 10);
 
+    const { data: projectRows } = await admin
+      .from("projects")
+      .select("id")
+      .eq("tenant_id", tenantId);
+    const projectIds = (projectRows ?? []).map((r: Row) => r.id as string);
+
     const [profilesRes, pulseRes, attendanceRes, tasksRes] = await Promise.all([
       admin.from("profiles").select("id, full_name, department, designation").eq("tenant_id", tenantId),
       admin
@@ -120,14 +126,16 @@ Deno.serve(async (req) => {
         .gte("checkin_date", sinceDate),
       admin
         .from("attendance")
-        .select("user_id, date, check_in_time, check_out_time")
+        .select("user_id, check_in, check_out")
         .eq("tenant_id", tenantId)
-        .gte("date", sinceDate),
-      admin
-        .from("project_tasks")
-        .select("assigned_to, status, due_date")
-        .eq("tenant_id", tenantId)
-        .lt("due_date", new Date().toISOString().slice(0, 10)),
+        .gte("check_in", since),
+      projectIds.length
+        ? admin
+            .from("project_tasks")
+            .select("assigned_to, status, due_date")
+            .in("project_id", projectIds)
+            .lt("due_date", new Date().toISOString().slice(0, 10))
+        : Promise.resolve({ data: [] as Row[] }),
     ]);
 
     const profiles = (profilesRes.data ?? []) as Row[];
@@ -174,13 +182,13 @@ Deno.serve(async (req) => {
     for (const r of (attendanceRes.data ?? []) as Row[]) {
       const e = byUser.get(r.user_id as string);
       if (!e) continue;
-      const day = new Date(String(r.date));
+      if (!r.check_in) continue;
+      const day = new Date(String(r.check_in));
       const dow = day.getUTCDay();
       if (dow === 0 || dow === 6) e.weekendDays += 1;
-      if (r.check_in_time && r.check_out_time) {
-        const inMs = new Date(`1970-01-01T${r.check_in_time}Z`).getTime();
-        const outMs = new Date(`1970-01-01T${r.check_out_time}Z`).getTime();
-        if (outMs - inMs > 10 * 3600000) e.longDays += 1;
+      if (r.check_out) {
+        const hours = (new Date(String(r.check_out)).getTime() - day.getTime()) / 3600000;
+        if (hours > 10) e.longDays += 1;
       }
     }
 
