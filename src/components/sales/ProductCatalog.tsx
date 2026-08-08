@@ -206,9 +206,15 @@ export function ProductCatalog() {
           <p className="text-muted-foreground">Manage your products and services</p>
         </div>
 
+        <div className="flex items-center gap-2">
+        <Button variant="outline" onClick={() => { setLeadForProduct(null); setQuickLeadOpen(true); }}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Add lead
+        </Button>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingProduct(null); resetForm(); } }}>
           <DialogTrigger asChild>
             <Button>
+
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>
