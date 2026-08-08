@@ -230,7 +230,7 @@ const Index = () => {
   // paying a fresh download each time.
   useEffect(() => {
     if (!user) return;
-    preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
+    return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
 

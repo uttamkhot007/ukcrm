@@ -8,8 +8,14 @@
  * instant instead of showing a skeleton.
  */
 
-import { retryImport, shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
+import { retryImport } from "@/lib/chunk-retry";
 import { markChunkWarm, measureChunkLoad } from "@/lib/perf-metrics";
+import {
+  cancelPreload,
+  markPreloaded,
+  schedulePreload,
+  type PreloadTrigger,
+} from "@/lib/preload-scheduler";
 
 type Loader = () => Promise<unknown>;
 
@@ -52,45 +58,50 @@ const loaders: Record<string, Loader> = {
   customer: () => import("@/components/customer/CustomerPortal"),
 };
 
-const inflight = new Map<string, Promise<unknown>>();
 const loaded = new Set<string>();
 
 /**
  * Warm the chunk backing a module id (e.g. "sales-leads" → the Sales chunk).
  *
- * This is speculative: it is skipped entirely while offline or on a metered /
- * 2g connection so hovering a menu never competes with the work the user
- * actually asked for. Failures are swallowed and the family is left unmarked,
- * so the real navigation retries from scratch.
+ * Speculative by definition, so it goes through the preload scheduler: the
+ * trigger decides how long the intent must persist (a pointer sweeping across
+ * the sidebar never starts a download), and the scheduler caps how many warm-
+ * ups run at once so they never crowd out the request the user is waiting on.
+ * Skipped entirely while offline or on a metered / 2g connection.
  */
-export function preloadModule(moduleId: string) {
+export function preloadModule(moduleId: string, trigger: PreloadTrigger = "hover") {
   const family = moduleId.split("-")[0];
   const loader = loaders[family];
-  if (!loader || loaded.has(family) || inflight.has(family)) return;
-  if (shouldSkipSpeculativePreload()) return;
+  if (!loader || loaded.has(family)) return;
 
-  // Measured as `source: "preload"` so the dashboard can report how often
-  // speculative warming actually succeeds before the user clicks.
-  const task = measureChunkLoad(family, "preload", (onAttempt) =>
-    retryImport(loader, {
-      // Speculative work gets one cheap retry and a short leash, and must never
-      // trigger a page reload on its own.
-      retries: 1,
-      timeout: 8_000,
-      recoverStaleDeploy: false,
-      onAttempt,
-    }),
-  )
-    .then(() => {
-      loaded.add(family);
-      markChunkWarm(family);
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      inflight.delete(family);
-    });
+  schedulePreload(
+    family,
+    () =>
+      // Measured as `source: "preload"` so the dashboard can report how often
+      // speculative warming actually succeeds before the user clicks.
+      measureChunkLoad(family, "preload", (onAttempt) =>
+        retryImport(loader, {
+          // Speculative work gets one cheap retry and a short leash, and must
+          // never trigger a page reload on its own.
+          retries: 1,
+          timeout: 8_000,
+          recoverStaleDeploy: false,
+          onAttempt,
+        }),
+      ).then(() => {
+        loaded.add(family);
+        markChunkWarm(family);
+      }),
+    trigger,
+  );
+}
 
-  inflight.set(family, task);
+/**
+ * Withdraw preload intent for a module — the pointer left, or focus moved on,
+ * before the dwell delay elapsed.
+ */
+export function cancelPreloadModule(moduleId: string) {
+  cancelPreload(moduleId.split("-")[0]);
 }
 
 /**
@@ -106,6 +117,8 @@ export function loadModule(moduleId: string): Promise<unknown> {
   ).then((mod) => {
     loaded.add(family);
     markChunkWarm(family);
+    // Stop the scheduler from ever queueing speculative work for this chunk.
+    markPreloaded(family);
     return mod;
   });
 }

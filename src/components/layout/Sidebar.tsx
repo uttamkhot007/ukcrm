@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 // Note: New finance modules added - CashFlowStatement, EInvoicingModule, EWayBillModule, TDSTCSModule, EstimatesModule, BudgetManagement, RatioAnalysis
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { preloadModule } from "@/lib/module-preload";
+import { cancelPreloadModule, preloadModule } from "@/lib/module-preload";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { TenantSwitcher } from "@/components/tenant/TenantSwitcher";
@@ -1113,9 +1113,11 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               }
               aria-label={collapsed ? item.label : undefined}
               title={collapsed ? item.label : undefined}
-              onMouseEnter={() => preloadModule(item.id)}
-              onFocus={() => preloadModule(item.id)}
-              onPointerDown={() => preloadModule(item.id)}
+              onMouseEnter={() => preloadModule(item.id, "hover")}
+              onMouseLeave={() => cancelPreloadModule(item.id)}
+              onFocus={() => preloadModule(item.id, "focus")}
+              onBlur={() => cancelPreloadModule(item.id)}
+              onPointerDown={() => preloadModule(item.id, "pointer")}
               onClick={() => {
                 if (item.isLink && item.linkPath) {
                   navigate(item.linkPath);
