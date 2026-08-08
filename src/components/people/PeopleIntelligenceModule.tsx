@@ -68,6 +68,12 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
     };
   }, []);
 
+  /** Tab switch entry point — starts the paint-to-click benchmark. */
+  const selectTab = (id: TabId) => {
+    beginModuleSwitch(`people-intel:${id}`, TAB_COMPONENTS[id].chunkName);
+    setTab(id);
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     const i = TABS.findIndex((t) => t.id === tab);
     if (e.key === "ArrowRight") selectTab(TABS[(i + 1) % TABS.length].id);
