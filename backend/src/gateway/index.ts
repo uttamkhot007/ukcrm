@@ -158,21 +158,112 @@ async function main(): Promise<void> {
     })),
   }));
 
+  /* ---------------------------------------------------------------- */
+  /* Distributed trace collector                                       */
+  /* ---------------------------------------------------------------- */
+
+  /** Span ingest from every service (internal, not exposed by the LB). */
+  app.post('/internal/traces', async (request, reply) => {
+    const body = request.body as { spans?: Span[] } | undefined;
+    const spans = Array.isArray(body?.spans) ? body!.spans : [];
+    collector.ingest(spans);
+    return reply.status(202).send({ accepted: spans.length });
+  });
+
+  /** Rolling service/dependency aggregates powering the dashboard header. */
+  app.get('/api/_traces/stats', async (request) => {
+    const { windowMs } = request.query as { windowMs?: string };
+    return collector.stats(Number(windowMs ?? 5 * 60_000));
+  });
+
+  /** Live tail: pushes a compact trace summary as soon as a root span closes. */
+  app.get('/api/_traces/stream', async (request, reply) => {
+    reply.raw.writeHead(200, {
+      'content-type': 'text/event-stream',
+      'cache-control': 'no-cache, no-transform',
+      connection: 'keep-alive',
+      'x-accel-buffering': 'no',
+    });
+    reply.raw.write(`event: ready\ndata: ${JSON.stringify({ ok: true })}\n\n`);
+
+    const onSpan = (span: Span) => {
+      // Emit once per trace, when the entry span (gateway server span) closes.
+      if (span.kind !== 'server' || span.service !== 'gateway') return;
+      const detail = collector.get(span.traceId);
+      if (!detail) return;
+      const { spans: _spans, ...summary } = detail;
+      reply.raw.write(`event: trace\ndata: ${JSON.stringify(summary)}\n\n`);
+    };
+    collector.on('span', onSpan);
+
+    const heartbeat = setInterval(() => reply.raw.write(': ping\n\n'), 15_000);
+    heartbeat.unref?.();
+    const close = () => {
+      clearInterval(heartbeat);
+      collector.off('span', onSpan);
+    };
+    request.raw.on('close', close);
+    request.raw.on('error', close);
+    return reply;
+  });
+
+  /** One trace, fully expanded into an ordered span waterfall. */
+  app.get('/api/_traces/:traceId', async (request, reply) => {
+    const { traceId } = request.params as { traceId: string };
+    const detail = traceId.startsWith('cid_')
+      ? collector.findByCorrelationId(traceId)
+      : collector.get(traceId);
+    if (!detail) return reply.status(404).send({ error: 'Not Found', message: 'Trace expired or unknown' });
+    return detail;
+  });
+
+  /** Recent traces with server-side filtering. */
+  app.get('/api/_traces', async (request) => {
+    const q = request.query as Record<string, string | undefined>;
+    return {
+      generatedAt: Date.now(),
+      traces: collector.list({
+        limit: Number(q['limit'] ?? 100),
+        ...(q['service'] ? { service: q['service'] } : {}),
+        ...(q['status'] === 'error' || q['status'] === 'ok' ? { status: q['status'] } : {}),
+        ...(q['tenantId'] ? { tenantId: q['tenantId'] } : {}),
+        ...(q['search'] ? { search: q['search'] } : {}),
+        ...(q['minDurationMs'] ? { minDurationMs: Number(q['minDurationMs']) } : {}),
+      }),
+    };
+  });
+
   app.all('/api/*', async (request, reply) => {
     const started = process.hrtime.bigint();
     const url = new URL(request.url, 'http://gateway.local');
     const route = resolve(url.pathname);
 
-    const trace = parseTraceparent(request.headers['traceparent'] as string | undefined);
+    // The gateway is where a trace is born: adopt an inbound trace if the
+    // caller supplied one, otherwise mint trace + correlation ids here.
+    const ctx = contextFromHeaders('gateway', request.headers as Record<string, string | undefined>);
+    enterContext(ctx);
+    const trace = ctx.trace;
     reply.header('traceparent', formatTraceparent(trace));
+    reply.header('x-correlation-id', ctx.correlationId);
 
     if (!route) {
       return reply.status(404).send({ error: 'Not Found', message: `No service owns ${url.pathname}` });
     }
 
+    const span = startSpan(`${request.method} ${route.prefix}`, {
+      kind: 'server',
+      service: 'gateway',
+      context: ctx,
+      attributes: {
+        'http.method': request.method,
+        'http.target': url.pathname,
+        'http.route': route.prefix,
+        'peer.service': route.service.name,
+      },
+    });
+
     const target = `${upstreamFor(route.service)}${request.url}`;
     const headers: Record<string, string> = {
-      traceparent: formatTraceparent(trace),
       'x-forwarded-for': (request.headers['x-forwarded-for'] as string) ?? request.ip,
       'x-request-id': request.id,
     };
@@ -198,6 +289,10 @@ async function main(): Promise<void> {
         { service: 'gateway', route: route.prefix },
         Number(process.hrtime.bigint() - started) / 1e9,
       );
+      span.end({
+        status: upstream.status >= 500 ? 'error' : 'ok',
+        attributes: { 'http.status_code': upstream.status },
+      });
       return reply
         .status(upstream.status)
         .header('content-type', contentType)
@@ -205,6 +300,12 @@ async function main(): Promise<void> {
         .send(payload);
     } catch (err) {
       httpErrors.inc({ service: 'gateway', route: route.prefix });
+      span.end({
+        status: 'error',
+        message: err instanceof Error ? err.message : String(err),
+        attributes: { 'http.status_code': err instanceof CircuitOpenError ? 503 : 502 },
+      });
+
       if (err instanceof CircuitOpenError) {
         request.log.warn({ target: route.service.name }, 'Shedding request: circuit open');
         return reply.status(503).send({
