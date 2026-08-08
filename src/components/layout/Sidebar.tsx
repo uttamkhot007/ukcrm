@@ -82,6 +82,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUnreadEventCounts } from "@/hooks/useUnreadEventCounts";
+import { useModuleTabs } from "@/contexts/ModuleTabsContext";
 
 interface SidebarProps {
   activeModule: string;
