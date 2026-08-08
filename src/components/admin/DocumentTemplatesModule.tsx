@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
+import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
 import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
 import {
   TEMPLATE_LIBRARY,
