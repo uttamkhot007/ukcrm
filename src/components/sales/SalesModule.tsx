@@ -192,6 +192,17 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
 
   const showQuickActions = currentTab.id === "deals";
 
+  /**
+   * Tab switch entry point. Starts the performance benchmark against the tab's
+   * own chunk, so "warm" reflects whether preloading actually won the race
+   * rather than whether the Sales shell happened to be loaded.
+   */
+  const selectTab = (id: string) => {
+    const target = groups.flatMap((g) => g.tabs).find((t) => t.id === id);
+    beginModuleSwitch(`sales:${id}`, target?.preload?.chunkName ?? "sales");
+    setActiveTab(id);
+  };
+
   // Warm every chunk in the group the user is currently in, once the browser
   // is idle. Hover preloading only helps with a mouse; this makes keyboard and
   // touch navigation between sibling tabs feel instant too.
