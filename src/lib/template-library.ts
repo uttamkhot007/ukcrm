@@ -54,7 +54,7 @@ export interface LibraryTemplate {
   content: Record<string, unknown>;
   header_content: Record<string, unknown>;
   footer_content: Record<string, unknown>;
-  branding: Record<string, unknown>;
+  branding: Record<string, any>;
 }
 
 export const TEMPLATE_ROLES: TemplateRoleInfo[] = [
@@ -810,7 +810,7 @@ export interface TenantBrandingInput {
 export function applyTenantBranding(
   template: LibraryTemplate,
   tenant: TenantBrandingInput,
-): Record<string, unknown> {
+): Record<string, any> {
   return {
     ...template.branding,
     ...(tenant.primaryColor ? { primaryColor: tenant.primaryColor } : {}),
