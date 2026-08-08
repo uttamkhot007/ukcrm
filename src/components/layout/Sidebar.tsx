@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 // Note: New finance modules added - CashFlowStatement, EInvoicingModule, EWayBillModule, TDSTCSModule, EstimatesModule, BudgetManagement, RatioAnalysis
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { preloadModule } from "@/lib/module-preload";
 import { useAuth, type PortalMode, type TeamType } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { TenantSwitcher } from "@/components/tenant/TenantSwitcher";
