@@ -159,10 +159,12 @@ export function markChunkWarm(family: string): void {
 export function measureChunkLoad<T>(
   module: string,
   source: ChunkSource,
-  loader: () => Promise<T>,
+  /** Receives an attempt reporter so retries are visible in the benchmark. */
+  loader: (onAttempt: (attempt: number) => void) => Promise<T>,
 ): Promise<T> {
   const started = now();
-  const finish = (outcome: ChunkOutcome, attempts?: number) => {
+  let attempts = 1;
+  const finish = (outcome: ChunkOutcome) => {
     record({
       kind: "chunk",
       module,
@@ -173,28 +175,24 @@ export function measureChunkLoad<T>(
       offline: isBrowser && navigator.onLine === false,
       buildVersion: BUILD_VERSION,
       sessionId,
-      ...(attempts ? { attempts } : {}),
+      attempts,
       ...connectionInfo(),
     });
   };
 
-  return loader().then(
+  return loader((attempt) => {
+    attempts = attempt;
+  }).then(
     (value) => {
       warmFamilies.add(module);
-      finish("success", readAttempts(value));
+      finish("success");
       return value;
     },
     (error: unknown) => {
-      finish("failure", readAttempts(error));
+      finish("failure");
       throw error;
     },
   );
-}
-
-/** `retryImport` annotates its result/error with how many attempts it took. */
-function readAttempts(value: unknown): number | undefined {
-  const attempts = (value as { __chunkAttempts?: unknown } | null)?.__chunkAttempts;
-  return typeof attempts === "number" ? attempts : undefined;
 }
 
 /* ------------------------------------------------------------------ */
