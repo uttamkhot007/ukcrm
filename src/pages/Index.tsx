@@ -831,10 +831,14 @@ const Index = () => {
         resetKey={moduleFamily(activeModule)}
         onRetry={() => loadModule(activeModule)}
       >
-        <Suspense key={moduleFamily(activeModule)} fallback={<ModuleSkeleton />}>
+        <ProgressiveSuspense
+          boundaryKey={moduleFamily(activeModule)}
+          skeleton={<ModuleSkeleton />}
+        >
           {renderContent()}
           <ModuleSwitchProbe moduleId={activeModule} />
-        </Suspense>
+        </ProgressiveSuspense>
+
       </ModuleErrorBoundary>
     </MainLayout>
   );
