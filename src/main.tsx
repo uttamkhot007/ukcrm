@@ -5,6 +5,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { BUILD_VERSION, BUILD_TIME, BUILD_COMMIT } from "./lib/build-info";
 import { installPreviewBuildRefreshHook } from "./lib/preview-build-refresh";
+import { isStaleDeployError, recoverFromStaleDeploy } from "./lib/chunk-retry";
 
 // Log build identity to console so it's easy to confirm which bundle
 // the browser is actually running.
