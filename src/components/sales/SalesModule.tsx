@@ -6,6 +6,7 @@ import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { PanelSkeleton, ModuleShell } from "@/components/shared/ModuleSkeleton";
 import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { KeepAlive } from "@/components/shared/KeepAlive";
+import { ModuleRefreshButton } from "@/components/shared/ModuleRefreshButton";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
