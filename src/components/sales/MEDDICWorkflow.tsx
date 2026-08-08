@@ -542,30 +542,43 @@ export function MEDDICWorkflow() {
     return acc;
   }, {} as Record<string, Deal[]>) || {};
 
+  const isRevalidating = isFetching && !isLoading;
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading MEDDIC pipeline">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-60" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
         <Skeleton className="h-48 w-full" />
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-64" />)}
         </div>
+        <span className="sr-only">Loading MEDDIC pipeline…</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <RevalidationBar active={isRevalidating} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
         <h2 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
             MEDDIC Workflow
+            <RevalidationBadge active={isRevalidating} label="Refreshing pipeline…" />
           </h2>
           <p className="text-muted-foreground">
             Qualify deals using MEDDIC methodology with automatic stage progression
           </p>
         </div>
+
         <div className="flex items-center gap-2">
         <Button onClick={() => setIsNewDealOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
