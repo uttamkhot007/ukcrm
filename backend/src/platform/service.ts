@@ -64,7 +64,7 @@ export interface CreateServiceOptions {
   publicPaths?: string[];
 }
 
-const BASE_PUBLIC_PATHS = ['/health', '/health/live', '/health/ready', '/metrics'];
+const BASE_PUBLIC_PATHS = ['/health', '/health/live', '/health/ready', '/metrics', '/debug/traces'];
 
 export async function createService(options: CreateServiceOptions): Promise<ServiceRuntime> {
   const definition = getService(options.name);
