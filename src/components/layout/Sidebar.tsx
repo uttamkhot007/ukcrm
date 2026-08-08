@@ -267,11 +267,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // Show tenant switcher if user is super admin OR has multiple tenant memberships
   const showTenantSwitcher = isSuperAdmin || tenantMemberships.length > 1;
 
-  const toggleExpand = (id: string) => {
-    setExpandedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
 
   const hasAccess = (item: NavItem) => {
     // Super admins have access to everything
