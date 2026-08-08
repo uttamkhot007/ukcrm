@@ -178,6 +178,8 @@ describe('event contract', () => {
     const published = new Set(SERVICES.flatMap((s) => s.publishes));
     for (const service of SERVICES) {
       for (const event of service.consumes) {
+        // Wildcards are observers (sagas, notification fan-out), not contracts.
+        if (event === '*' || event.endsWith('.*')) continue;
         expect(published.has(event), `${service.name} consumes "${event}" but nothing publishes it`).toBe(true);
       }
     }
