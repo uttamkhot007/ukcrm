@@ -20,6 +20,17 @@ console.info(
 document.documentElement.setAttribute("data-react-mounted", "1");
 installPreviewBuildRefreshHook();
 
+// Vite fires this when a preloaded module chunk cannot be fetched — almost
+// always a dropped connection or a build that was replaced mid-session. We
+// swallow the default hard error and let the retry layer / error boundary
+// handle it, recovering onto a fresh build when the chunk is really gone.
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  const reason = (event as Event & { payload?: unknown }).payload;
+  console.warn("[chunk] preload failed, will retry on demand", reason);
+  if (navigator.onLine && isStaleDeployError(reason)) recoverFromStaleDeploy();
+});
+
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
     <App />
