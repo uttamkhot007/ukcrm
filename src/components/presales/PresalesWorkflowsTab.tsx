@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,38 +64,123 @@ const presalesWorkflowTemplates = [
   },
 ];
 
-const activeWorkflows = [
-  {
-    id: "1",
-    name: "Acme Corp POC",
-    template: "POC Execution",
-    currentStage: "Implementation",
-    progress: 45,
-    status: "on_track",
-    dueDate: "2024-02-15",
-  },
-  {
-    id: "2",
-    name: "Global Tech RFP",
-    template: "RFP Response",
-    currentStage: "Technical Review",
-    progress: 60,
-    status: "at_risk",
-    dueDate: "2024-02-10",
-  },
-  {
-    id: "3",
-    name: "StartupXYZ Demo",
-    template: "Demo Preparation",
-    currentStage: "Script Preparation",
-    progress: 50,
-    status: "on_track",
-    dueDate: "2024-02-08",
-  },
-];
+
+interface ActiveWorkflow {
+  id: string;
+  name: string;
+  template: string;
+  currentStage: string;
+  progress: number;
+  status: "on_track" | "at_risk" | "delayed";
+  dueDate: string;
+}
+
+function deriveStatus(due: string | null, progress: number): ActiveWorkflow["status"] {
+  if (!due) return "on_track";
+  const dueTime = new Date(due).getTime();
+  if (Number.isNaN(dueTime)) return "on_track";
+  const daysLeft = (dueTime - Date.now()) / 86400000;
+  if (daysLeft < 0 && progress < 100) return "delayed";
+  if (daysLeft < 7 && progress < 70) return "at_risk";
+  return "on_track";
+}
 
 export function PresalesWorkflowsTab() {
+  const { currentTenant } = useTenant();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeWorkflows, setActiveWorkflows] = useState<ActiveWorkflow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadWorkflows = useCallback(async () => {
+    if (!currentTenant?.id) {
+      setActiveWorkflows([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const tenantId = currentTenant.id;
+    const [pocs, rfps, demos] = await Promise.all([
+      supabase
+        .from("poc_requests")
+        .select("id, title, status, end_date")
+        .eq("tenant_id", tenantId)
+        .in("status", ["requested", "planning", "in_progress"]),
+      supabase
+        .from("rfp_responses")
+        .select("id, title, status, due_date, sections_completed, total_sections")
+        .eq("tenant_id", tenantId)
+        .neq("status", "submitted"),
+      supabase
+        .from("demo_schedules")
+        .select("id, title, status, scheduled_date")
+        .eq("tenant_id", tenantId)
+        .in("status", ["scheduled", "rescheduled"]),
+    ]);
+
+    const pocProgress: Record<string, number> = { requested: 10, planning: 30, in_progress: 60 };
+
+    const rows: ActiveWorkflow[] = [
+      ...(pocs.data ?? []).map((r) => {
+        const progress = pocProgress[r.status as string] ?? 20;
+        return {
+          id: `poc-${r.id}`,
+          name: r.title,
+          template: "POC Execution",
+          currentStage: String(r.status).replace(/_/g, " "),
+          progress,
+          status: deriveStatus(r.end_date, progress),
+          dueDate: r.end_date ?? "—",
+        };
+      }),
+      ...(rfps.data ?? []).map((r) => {
+        const total = r.total_sections ?? 0;
+        const progress = total > 0 ? Math.round(((r.sections_completed ?? 0) / total) * 100) : 20;
+        return {
+          id: `rfp-${r.id}`,
+          name: r.title,
+          template: "RFP Response",
+          currentStage: String(r.status ?? "drafting").replace(/_/g, " "),
+          progress,
+          status: deriveStatus(r.due_date, progress),
+          dueDate: r.due_date ?? "—",
+        };
+      }),
+      ...(demos.data ?? []).map((r) => ({
+        id: `demo-${r.id}`,
+        name: r.title,
+        template: "Demo Preparation",
+        currentStage: String(r.status).replace(/_/g, " "),
+        progress: 40,
+        status: deriveStatus(r.scheduled_date, 40),
+        dueDate: r.scheduled_date ? r.scheduled_date.split("T")[0] : "—",
+      })),
+    ];
+
+    setActiveWorkflows(rows);
+    setLoading(false);
+  }, [currentTenant?.id]);
+
+  useEffect(() => {
+    loadWorkflows();
+  }, [loadWorkflows]);
+
+  const filteredWorkflows = useMemo(
+    () =>
+      activeWorkflows.filter((w) =>
+        `${w.name} ${w.template}`.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [activeWorkflows, searchQuery]
+  );
+
+  const workflowStats = useMemo(
+    () => ({
+      total: activeWorkflows.length,
+      onTrack: activeWorkflows.filter((w) => w.status === "on_track").length,
+      atRisk: activeWorkflows.filter((w) => w.status === "at_risk").length,
+      delayed: activeWorkflows.filter((w) => w.status === "delayed").length,
+    }),
+    [activeWorkflows]
+  );
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -145,7 +232,15 @@ export function PresalesWorkflowsTab() {
         </div>
 
         <div className="grid gap-4">
-          {activeWorkflows.map((workflow) => (
+          {loading && (
+            <p className="text-sm text-muted-foreground py-6 text-center">Loading workflows…</p>
+          )}
+          {!loading && filteredWorkflows.length === 0 && (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No active presales workflows. Start one from a template below.
+            </p>
+          )}
+          {filteredWorkflows.map((workflow) => (
             <div
               key={workflow.id}
               className="glass rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors"
@@ -224,7 +319,7 @@ export function PresalesWorkflowsTab() {
         <Card className="glass border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">12</p>
+              <p className="text-3xl font-bold text-primary">{workflowStats.total}</p>
               <p className="text-sm text-muted-foreground">Active Workflows</p>
             </div>
           </CardContent>
@@ -232,7 +327,7 @@ export function PresalesWorkflowsTab() {
         <Card className="glass border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-green-500">8</p>
+              <p className="text-3xl font-bold text-green-500">{workflowStats.onTrack}</p>
               <p className="text-sm text-muted-foreground">On Track</p>
             </div>
           </CardContent>
@@ -240,7 +335,7 @@ export function PresalesWorkflowsTab() {
         <Card className="glass border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-yellow-500">3</p>
+              <p className="text-3xl font-bold text-yellow-500">{workflowStats.atRisk}</p>
               <p className="text-sm text-muted-foreground">At Risk</p>
             </div>
           </CardContent>
@@ -248,7 +343,7 @@ export function PresalesWorkflowsTab() {
         <Card className="glass border-border">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-red-500">1</p>
+              <p className="text-3xl font-bold text-red-500">{workflowStats.delayed}</p>
               <p className="text-sm text-muted-foreground">Delayed</p>
             </div>
           </CardContent>
