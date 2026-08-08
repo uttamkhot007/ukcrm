@@ -19,6 +19,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  HeartPulse,
+  Gauge,
+  ClipboardCheck,
+  PartyPopper,
+
   Target,
   FileText,
   CreditCard,
