@@ -64,6 +64,9 @@ export function DocumentTemplatesModule() {
   const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<string>('sample-gallery');
+  const [autoFillTemplate, setAutoFillTemplate] = useState<
+    { id: string; name: string; template_type: string } | null
+  >(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
