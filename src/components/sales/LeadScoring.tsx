@@ -24,26 +24,85 @@ interface LeadScore {
   recommended_actions: string[];
 }
 
+type SegmentKey = "hot" | "warm" | "cool" | "unscored";
+
+const SEGMENTS: { key: SegmentKey; label: string; min?: number; max?: number }[] = [
+  { key: "hot", label: "Hot", min: 80 },
+  { key: "warm", label: "Warm", min: 60, max: 80 },
+  { key: "cool", label: "Cool", min: 1, max: 60 },
+  { key: "unscored", label: "Unscored" },
+];
+
+const PAGE_SIZE = 20;
+
+function applySegmentFilter(query: any, segment: SegmentKey) {
+  const def = SEGMENTS.find((s) => s.key === segment)!;
+  if (segment === "unscored") return query.is("lead_score", null);
+  let q = query.gte("lead_score", def.min);
+  if (def.max !== undefined) q = q.lt("lead_score", def.max);
+  return q;
+}
+
 export function LeadScoring() {
   const queryClient = useQueryClient();
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
+  const [segment, setSegment] = useState<SegmentKey>("hot");
+  const [page, setPage] = useState(0);
+
+  const changeSegment = (next: SegmentKey) => {
+    setSegment(next);
+    setPage(0);
+  };
+
+  // Lightweight counts per segment (head-only, no rows transferred)
+  const { data: counts } = useQuery({
+    queryKey: ["lead-score-counts"],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        SEGMENTS.map(async (s) => {
+          const base = supabase.from("leads").select("id", { count: "exact", head: true });
+          const { count, error } = await applySegmentFilter(base, s.key);
+          if (error) throw error;
+          return [s.key, count || 0] as const;
+        })
+      );
+      const total = await supabase.from("leads").select("id", { count: "exact", head: true });
+      return {
+        ...Object.fromEntries(entries),
+        total: total.count || 0,
+      } as Record<SegmentKey | "total", number>;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+  });
 
   const { data: leads, isLoading, isFetching } = useQuery({
-    queryKey: ['leads-with-scores'],
+    queryKey: ['leads-with-scores', segment, page],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const from = page * PAGE_SIZE;
+      const base = supabase
         .from('leads')
         .select('*')
-        .order('lead_score', { ascending: false, nullsFirst: false });
-      
+        .order('lead_score', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      const { data, error } = await applySegmentFilter(base, segment);
+
       if (error) throw error;
-      return data;
+      return data as any[];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
     placeholderData: (prev: any) => prev,
   });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['leads-with-scores'] });
+    queryClient.invalidateQueries({ queryKey: ['lead-score-counts'] });
+  };
 
   const scoreLead = useMutation({
     mutationFn: async (lead: any) => {
@@ -56,7 +115,7 @@ export function LeadScoring() {
       return data as LeadScore;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads-with-scores'] });
+      invalidate();
       toast.success("Lead scored successfully");
     },
     onError: (error) => {
@@ -69,8 +128,14 @@ export function LeadScoring() {
 
   const scoreAllLeads = useMutation({
     mutationFn: async () => {
-      const unscored = leads?.filter(l => !l.lead_score || !l.last_scored_at) || [];
-      for (const lead of unscored.slice(0, 10)) {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .is('lead_score', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      for (const lead of data || []) {
         await scoreLead.mutateAsync(lead);
       }
     },
@@ -116,9 +181,10 @@ export function LeadScoring() {
   }
 
 
-  const hotLeads = leads?.filter(l => (l.lead_score || 0) >= 80) || [];
-  const warmLeads = leads?.filter(l => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80) || [];
-  const unscoredLeads = leads?.filter(l => !l.lead_score) || [];
+  const segmentCount = counts?.[segment] ?? 0;
+  const unscoredCount = counts?.unscored ?? 0;
+  const pageCount = Math.max(1, Math.ceil(segmentCount / PAGE_SIZE));
+
 
   return (
     <div className="space-y-6">
@@ -135,10 +201,10 @@ export function LeadScoring() {
 
         <Button
           onClick={() => scoreAllLeads.mutate()}
-          disabled={scoreAllLeads.isPending || unscoredLeads.length === 0}
+          disabled={scoreAllLeads.isPending || unscoredCount === 0}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
-          Score All Leads ({unscoredLeads.length})
+          Score Next 10 ({unscoredCount})
         </Button>
       </div>
 
@@ -149,7 +215,7 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Hot Leads</p>
-                <p className="text-2xl font-bold text-green-500">{hotLeads.length}</p>
+                <p className="text-2xl font-bold text-green-500">{counts?.hot ?? 0}</p>
               </div>
               <Zap className="h-8 w-8 text-green-500" />
             </div>
@@ -160,7 +226,7 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Warm Leads</p>
-                <p className="text-2xl font-bold text-yellow-500">{warmLeads.length}</p>
+                <p className="text-2xl font-bold text-yellow-500">{counts?.warm ?? 0}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-yellow-500" />
             </div>
@@ -171,7 +237,7 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Leads</p>
-                <p className="text-2xl font-bold">{leads?.length || 0}</p>
+                <p className="text-2xl font-bold">{counts?.total ?? 0}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-primary" />
             </div>
@@ -182,13 +248,30 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Unscored</p>
-                <p className="text-2xl font-bold text-muted-foreground">{unscoredLeads.length}</p>
+                <p className="text-2xl font-bold text-muted-foreground">{unscoredCount}</p>
               </div>
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Segment selector */}
+      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Lead score segments">
+        {SEGMENTS.map((s) => (
+          <Button
+            key={s.key}
+            role="tab"
+            aria-selected={segment === s.key}
+            size="sm"
+            variant={segment === s.key ? "default" : "outline"}
+            onClick={() => changeSegment(s.key)}
+          >
+            {s.label} ({counts?.[s.key] ?? 0})
+          </Button>
+        ))}
+      </div>
+
 
       {/* Lead List */}
       <div className="space-y-4">
@@ -277,7 +360,43 @@ export function LeadScoring() {
             </Card>
           );
         })}
+
+        {(!leads || leads.length === 0) && (
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              No leads in this segment.
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {segmentCount > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, segmentCount)} of {segmentCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0 || isFetching}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">Page {page + 1} of {pageCount}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+              disabled={page >= pageCount - 1 || isFetching}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
