@@ -391,3 +391,32 @@ Breaking API changes are caught before deployment by a generated, committed cont
   that the contract does not declare (and vice versa), assert full CRUD coverage for every owned
   resource, unique `operationId`s, resolvable `$ref`s, auth on every non-public operation, and that
   every consumed domain event has a publisher.
+
+## Distributed Tracing & Observability
+
+Every request is traceable end to end across the gateway and all services.
+
+- **Trace context**: W3C `traceparent` is created at the gateway (or adopted if the
+  caller supplied one) and forwarded on every hop. A human-shareable
+  `x-correlation-id` travels alongside it and is echoed on responses and error
+  payloads, so a support ticket maps to exactly one trace.
+- **Ambient propagation**: `backend/src/platform/tracing.ts` binds the context to
+  the async resource, so `resilientFetch` injects trace headers automatically —
+  callers never forward headers by hand.
+- **Spans**: the gateway emits a `server` span per proxied request, each service
+  emits a `server` span per request plus a `client` span per outbound call
+  (with `peer.service`, HTTP status, retry count and circuit state attributes).
+- **Collector**: services export spans to `POST /internal/traces` on the gateway
+  (`TRACE_COLLECTOR_URL`). The gateway keeps a bounded in-memory ring buffer
+  (`TRACE_BUFFER_SIZE`, default 300 traces) — a live debugging surface, not storage.
+- **APIs**: `GET /api/_traces` (filterable list), `GET /api/_traces/:traceIdOrCorrelationId`
+  (span waterfall), `GET /api/_traces/stats` (golden signals, per-service health,
+  dependency edges), `GET /api/_traces/stream` (SSE live tail). Each service also
+  exposes `GET /debug/traces` for its own process.
+- **Dashboard**: Platform Console → **Observability** (`/admin/platform/observability`)
+  streams the feed over SSE (auto-falls back to polling), showing throughput,
+  error rate, p50/p95/p99, per-service health, the live dependency map and a
+  span waterfall per trace.
+
+Swapping the exporter for OTLP is a single-function change: the IDs are already
+W3C-correct.
