@@ -232,7 +232,7 @@ export function DocumentationModule() {
                 {sopContent ? (
                   <div 
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: sopContent.content }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(sopContent.content) }}
                   />
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
