@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RevalidationBar, RevalidationBadge } from "@/components/shared/RevalidationIndicator";
+import { QuickAddLeadDialog } from "./QuickAddLeadDialog";
 
 import { toast } from "sonner";
-import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap } from "lucide-react";
+import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap, Plus } from "lucide-react";
+
 
 interface LeadScore {
   score: number;
