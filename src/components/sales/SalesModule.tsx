@@ -342,10 +342,15 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           resetKey={currentTab.id}
           onRetry={() => currentTab.preload?.preload() ?? Promise.resolve()}
         >
-          <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
+          <ProgressiveSuspense
+            boundaryKey={currentTab.id}
+            shell={<ModuleShell title={currentTab.label} />}
+            skeleton={<PanelSkeleton />}
+          >
             {currentTab.render()}
             <ModuleSwitchProbe moduleId={`sales:${currentTab.id}`} />
-          </Suspense>
+          </ProgressiveSuspense>
+
         </ModuleErrorBoundary>
       </div>
     </div>
