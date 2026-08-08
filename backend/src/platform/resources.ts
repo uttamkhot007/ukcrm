@@ -6,7 +6,7 @@
  * still served, just by its owner.
  */
 
-import { allRouteConfigs } from '../routes/all-routes.js';
+import { allRouteConfigs } from '../routes/route-table.js';
 import { serviceForTable, type ServiceName } from './manifest.js';
 import type { CrudResource } from './crud.js';
 
