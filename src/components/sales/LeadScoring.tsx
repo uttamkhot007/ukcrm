@@ -24,26 +24,85 @@ interface LeadScore {
   recommended_actions: string[];
 }
 
+type SegmentKey = "hot" | "warm" | "cool" | "unscored";
+
+const SEGMENTS: { key: SegmentKey; label: string; min?: number; max?: number }[] = [
+  { key: "hot", label: "Hot", min: 80 },
+  { key: "warm", label: "Warm", min: 60, max: 80 },
+  { key: "cool", label: "Cool", min: 1, max: 60 },
+  { key: "unscored", label: "Unscored" },
+];
+
+const PAGE_SIZE = 20;
+
+function applySegmentFilter(query: any, segment: SegmentKey) {
+  const def = SEGMENTS.find((s) => s.key === segment)!;
+  if (segment === "unscored") return query.is("lead_score", null);
+  let q = query.gte("lead_score", def.min);
+  if (def.max !== undefined) q = q.lt("lead_score", def.max);
+  return q;
+}
+
 export function LeadScoring() {
   const queryClient = useQueryClient();
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
+  const [segment, setSegment] = useState<SegmentKey>("hot");
+  const [page, setPage] = useState(0);
+
+  const changeSegment = (next: SegmentKey) => {
+    setSegment(next);
+    setPage(0);
+  };
+
+  // Lightweight counts per segment (head-only, no rows transferred)
+  const { data: counts } = useQuery({
+    queryKey: ["lead-score-counts"],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        SEGMENTS.map(async (s) => {
+          const base = supabase.from("leads").select("id", { count: "exact", head: true });
+          const { count, error } = await applySegmentFilter(base, s.key);
+          if (error) throw error;
+          return [s.key, count || 0] as const;
+        })
+      );
+      const total = await supabase.from("leads").select("id", { count: "exact", head: true });
+      return {
+        ...Object.fromEntries(entries),
+        total: total.count || 0,
+      } as Record<SegmentKey | "total", number>;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+  });
 
   const { data: leads, isLoading, isFetching } = useQuery({
-    queryKey: ['leads-with-scores'],
+    queryKey: ['leads-with-scores', segment, page],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const from = page * PAGE_SIZE;
+      const base = supabase
         .from('leads')
         .select('*')
-        .order('lead_score', { ascending: false, nullsFirst: false });
-      
+        .order('lead_score', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      const { data, error } = await applySegmentFilter(base, segment);
+
       if (error) throw error;
-      return data;
+      return data as any[];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
     placeholderData: (prev: any) => prev,
   });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['leads-with-scores'] });
+    queryClient.invalidateQueries({ queryKey: ['lead-score-counts'] });
+  };
 
   const scoreLead = useMutation({
     mutationFn: async (lead: any) => {
@@ -56,7 +115,7 @@ export function LeadScoring() {
       return data as LeadScore;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads-with-scores'] });
+      invalidate();
       toast.success("Lead scored successfully");
     },
     onError: (error) => {
@@ -69,8 +128,14 @@ export function LeadScoring() {
 
   const scoreAllLeads = useMutation({
     mutationFn: async () => {
-      const unscored = leads?.filter(l => !l.lead_score || !l.last_scored_at) || [];
-      for (const lead of unscored.slice(0, 10)) {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .is('lead_score', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      for (const lead of data || []) {
         await scoreLead.mutateAsync(lead);
       }
     },
@@ -116,9 +181,10 @@ export function LeadScoring() {
   }
 
 
-  const hotLeads = leads?.filter(l => (l.lead_score || 0) >= 80) || [];
-  const warmLeads = leads?.filter(l => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80) || [];
-  const unscoredLeads = leads?.filter(l => !l.lead_score) || [];
+  const segmentCount = counts?.[segment] ?? 0;
+  const unscoredCount = counts?.unscored ?? 0;
+  const pageCount = Math.max(1, Math.ceil(segmentCount / PAGE_SIZE));
+
 
   return (
     <div className="space-y-6">
