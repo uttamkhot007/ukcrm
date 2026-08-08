@@ -150,18 +150,25 @@ export default function EmployeeDirectory() {
             </div>
 
             {/* Filters */}
+            <section aria-labelledby="employee-filters-heading">
+            <h2 id="employee-filters-heading" className="sr-only">
+              Search and filter employees
+            </h2>
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                     <Input
+                      type="search"
+                      aria-label="Search employees by name, email, title, or employee code"
                       placeholder="Search by name, email, title, or employee code..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
                     />
                   </div>
+
                   <div className="flex gap-2">
                     <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                       <SelectTrigger className="w-[180px]">
