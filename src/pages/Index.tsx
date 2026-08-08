@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { SalesModule } from "@/components/sales/SalesModule";
@@ -60,7 +61,15 @@ import {
 import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const Index = () => {
-  const [activeModule, setActiveModule] = useState("dashboard");
+  const location = useLocation();
+  // A module can be requested from elsewhere (e.g. the admin shell sidebar)
+  // via router state, or deep-linked with ?module=sales-leads.
+  const requestedModule =
+    (location.state as { module?: string } | null)?.module ??
+    new URLSearchParams(location.search).get("module") ??
+    null;
+
+  const [activeModule, setActiveModule] = useState(requestedModule ?? "dashboard");
   const {
     user,
     isLoading,
@@ -73,6 +82,12 @@ const Index = () => {
   } = useAuth();
   const { isLoading: tenantLoading, tenantMemberships } = useTenant();
   const navigate = useNavigate();
+
+  // Keep in sync when navigated to "/" again with a different module.
+  useEffect(() => {
+    if (requestedModule) setActiveModule(requestedModule);
+  }, [requestedModule]);
+
 
   // Decide what "/" should do once auth + tenant info are resolved.
   //
@@ -110,11 +125,17 @@ const Index = () => {
       return;
     }
 
-    // Admin with a workspace: land on the console the first time only.
-    if (isPlatformAdmin && !sessionStorage.getItem("platform-admin-landed")) {
+    // Admin with a workspace: land on the console the first time only, and
+    // never when a specific module was explicitly requested.
+    if (
+      isPlatformAdmin &&
+      !requestedModule &&
+      !sessionStorage.getItem("platform-admin-landed")
+    ) {
       sessionStorage.setItem("platform-admin-landed", "1");
       navigate("/admin/platform/tenants", { replace: true });
     }
+
   }, [
     isLoading,
     isAuthResolved,
@@ -122,7 +143,9 @@ const Index = () => {
     user,
     isPlatformAdmin,
     hasTenantAccess,
+    requestedModule,
     navigate,
+
   ]);
 
   // Set initial module for customer portal once.

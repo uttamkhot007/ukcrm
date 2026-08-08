@@ -73,14 +73,9 @@ export default function AdminLayout() {
 
   const handleModuleChange = (module: string) => {
     setActiveModule(module);
-    if (module === "dashboard") {
-      // Platform admins should never be sent back to the tenant dashboard.
-      navigate(isPlatformAdmin ? "/admin/platform/tenants" : "/");
-      return;
-    }
+
     if (module.startsWith("admin-center-")) {
-      const subPath = module.replace("admin-center-", "");
-      navigate(`/admin/${subPath}`);
+      navigate(`/admin/${module.replace("admin-center-", "")}`);
       return;
     }
     if (module === "super-admin-tenants" || module === "platform-tenants") {
@@ -88,10 +83,16 @@ export default function AdminLayout() {
       return;
     }
     if (module.startsWith("platform-")) {
-      const subPath = module.replace("platform-", "");
-      navigate(`/admin/platform/${subPath}`);
+      navigate(`/admin/platform/${module.replace("platform-", "")}`);
+      return;
     }
+
+    // Any regular application module (sales, hr, finance, …) lives on "/".
+    // Without this the admin shell kept rendering the platform page no matter
+    // which module was clicked.
+    navigate("/", { state: { module } });
   };
+
 
   return (
     <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
