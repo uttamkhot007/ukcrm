@@ -75,8 +75,14 @@ const Index = () => {
   const navigate = useNavigate();
 
   // Decide what "/" should do once auth + tenant info are resolved.
-  // We do this in a single effect so the decision is deterministic and the
-  // tenant dashboard never flashes for an admin.
+  //
+  // IMPORTANT: platform admins are NOT permanently pinned to the Platform
+  // Console. They are sent there once per browser session (as a convenience
+  // landing page) and only when they have no tenant workspace of their own.
+  // Otherwise "/" renders the normal app so every module and sub-module stays
+  // reachable for admins too.
+  const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
+
   useEffect(() => {
     if (isLoading || !isAuthResolved || tenantLoading) return;
 
@@ -85,25 +91,29 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin) {
-      const target = "/admin/platform/tenants";
-      recordRedirect("/", target);
-      if (shouldForceCleanup("/", target)) {
-        console.warn(
-          "[redirect-loop-guard] Detected repeated /→%s redirects, forcing cache cleanup",
-          target,
-        );
-        forceFreshReload(target);
+    if (!hasTenantAccess) {
+      if (isPlatformAdmin) {
+        const target = "/admin/platform/tenants";
+        recordRedirect("/", target);
+        if (shouldForceCleanup("/", target)) {
+          console.warn(
+            "[redirect-loop-guard] Detected repeated /→%s redirects, forcing cache cleanup",
+            target,
+          );
+          forceFreshReload(target);
+          return;
+        }
+        navigate(target, { replace: true });
         return;
       }
-      console.info("[root-route] platform admin → %s", target);
-      navigate(target, { replace: true });
+      navigate("/workspace/new", { replace: true });
       return;
     }
 
-    const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
-    if (!hasTenantAccess) {
-      navigate("/workspace/new", { replace: true });
+    // Admin with a workspace: land on the console the first time only.
+    if (isPlatformAdmin && !sessionStorage.getItem("platform-admin-landed")) {
+      sessionStorage.setItem("platform-admin-landed", "1");
+      navigate("/admin/platform/tenants", { replace: true });
     }
   }, [
     isLoading,
@@ -111,8 +121,7 @@ const Index = () => {
     tenantLoading,
     user,
     isPlatformAdmin,
-    tenantMemberships,
-    profile?.tenant_id,
+    hasTenantAccess,
     navigate,
   ]);
 
@@ -124,15 +133,15 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // While auth/tenant is loading OR we've decided to redirect an admin away,
-  // never render the tenant dashboard underneath. This is the key guard that
-  // prevents the "old format" flash on refresh.
+  // Only block rendering while we genuinely don't know yet, or while an
+  // unavoidable redirect (no session / no workspace) is in flight.
   const shouldBlockRender =
     isLoading ||
     !isAuthResolved ||
     tenantLoading ||
     !user ||
-    isPlatformAdmin;
+    !hasTenantAccess;
+
 
   if (shouldBlockRender) {
     return (
