@@ -71,6 +71,57 @@ export type Database = {
           },
         ]
       }
+      accountability_commitments: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string
+          id: string
+          owner_id: string
+          priority: string
+          source_module: string | null
+          source_record_id: string | null
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date: string
+          id?: string
+          owner_id: string
+          priority?: string
+          source_module?: string | null
+          source_record_id?: string | null
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          owner_id?: string
+          priority?: string
+          source_module?: string | null
+          source_record_id?: string | null
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       accounts_workflow_stage_completions: {
         Row: {
           completed_at: string | null
@@ -3986,6 +4037,71 @@ export type Database = {
           },
         ]
       }
+      employee_kudos: {
+        Row: {
+          category: string
+          created_at: string
+          from_user_id: string
+          id: string
+          message: string
+          points: number
+          tenant_id: string
+          to_user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          message: string
+          points?: number
+          tenant_id: string
+          to_user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          message?: string
+          points?: number
+          tenant_id?: string
+          to_user_id?: string
+        }
+        Relationships: []
+      }
+      employee_kudos_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          kudos_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          kudos_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          kudos_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_kudos_reactions_kudos_id_fkey"
+            columns: ["kudos_id"]
+            isOneToOne: false
+            referencedRelation: "employee_kudos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_mood_logs: {
         Row: {
           attendance_id: string | null
@@ -4039,6 +4155,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      employee_pulse_checkins: {
+        Row: {
+          ai_sentiment: number | null
+          ai_themes: string[]
+          checkin_date: string
+          created_at: string
+          energy_level: number | null
+          id: string
+          mood_score: number
+          note: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+          workload_level: number | null
+        }
+        Insert: {
+          ai_sentiment?: number | null
+          ai_themes?: string[]
+          checkin_date?: string
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          mood_score: number
+          note?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+          workload_level?: number | null
+        }
+        Update: {
+          ai_sentiment?: number | null
+          ai_themes?: string[]
+          checkin_date?: string
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          mood_score?: number
+          note?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+          workload_level?: number | null
+        }
+        Relationships: []
       }
       employee_requests: {
         Row: {
@@ -4217,6 +4378,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      employee_wellbeing_signals: {
+        Row: {
+          created_at: string
+          factors: Json
+          id: string
+          recommended_action: string | null
+          risk_level: string
+          risk_score: number
+          sentiment_score: number | null
+          signal_date: string
+          source: string
+          summary: string | null
+          tenant_id: string
+          themes: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          factors?: Json
+          id?: string
+          recommended_action?: string | null
+          risk_level?: string
+          risk_score?: number
+          sentiment_score?: number | null
+          signal_date?: string
+          source?: string
+          summary?: string | null
+          tenant_id: string
+          themes?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          factors?: Json
+          id?: string
+          recommended_action?: string | null
+          risk_level?: string
+          risk_score?: number
+          sentiment_score?: number | null
+          signal_date?: string
+          source?: string
+          summary?: string | null
+          tenant_id?: string
+          themes?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       escalation_matrix_templates: {
         Row: {
@@ -14908,6 +15120,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_view_people_intelligence: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_sales_record: {
         Args: { record_creator_id: string }
         Returns: boolean
