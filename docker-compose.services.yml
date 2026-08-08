@@ -71,6 +71,9 @@ services:
     environment:
       <<: *service-env
       PORT: "3000"
+      # The gateway *is* the collector: it keeps its spans in-process.
+      TRACE_COLLECTOR_URL: ""
+
     depends_on:
       identity: { condition: service_started }
       tenancy: { condition: service_started }
