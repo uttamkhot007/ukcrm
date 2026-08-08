@@ -107,12 +107,12 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         icon: TrendingUp,
         tabs: [
           { id: "dashboard", label: "Insights", icon: LayoutDashboard, render: () => <SalesModuleDashboard onNavigate={setActiveTab} /> },
-          { id: "deals", label: "Deals", icon: Handshake, render: () => <DealsView /> },
-          { id: "leads", label: "Leads", icon: Activity, render: () => <LeadsView /> },
-          { id: "contacts", label: "Contacts", icon: Phone, render: () => <ContactsView /> },
-          { id: "my-accounts", label: "Accounts", icon: Building2, render: () => <MyAccountsView /> },
+          { id: "deals", label: "Deals", icon: Handshake, render: () => <DealsView />, preload: DealsView as unknown as PreloadableComponent<never> },
+          { id: "leads", label: "Leads", icon: Activity, render: () => <LeadsView />, preload: LeadsView as unknown as PreloadableComponent<never> },
+          { id: "contacts", label: "Contacts", icon: Phone, render: () => <ContactsView />, preload: ContactsView as unknown as PreloadableComponent<never> },
+          { id: "my-accounts", label: "Accounts", icon: Building2, render: () => <MyAccountsView />, preload: MyAccountsView as unknown as PreloadableComponent<never> },
           { id: "activity", label: "Activity", icon: Timer, render: () => <ActivityWorkspace /> },
-          { id: "rotten-deals", label: "Rotten Deals", icon: Target, render: () => <RottenDeals /> },
+          { id: "rotten-deals", label: "Rotten Deals", icon: Target, render: () => <RottenDeals />, preload: RottenDeals as unknown as PreloadableComponent<never> },
         ],
       },
       {
@@ -120,12 +120,12 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         label: "Tools",
         icon: Package,
         tabs: [
-          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <MEDDICWorkflow /> },
-          { id: "forecasting", label: "Forecasting", icon: BarChart3, render: () => <SalesForecasting /> },
-          { id: "quotations", label: "Quotations", icon: FileText, render: () => <QuotationsView /> },
-          { id: "catalog", label: "Catalog", icon: BookOpen, render: () => <ProductCatalog /> },
-          { id: "lead-scoring", label: "Lead Scoring", icon: Gauge, render: () => <LeadScoring /> },
-          { id: "offerings", label: "Offerings", icon: Package, render: () => <OfferingsModule readOnly /> },
+          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <MEDDICWorkflow />, preload: MEDDICWorkflow as unknown as PreloadableComponent<never> },
+          { id: "forecasting", label: "Forecasting", icon: BarChart3, render: () => <SalesForecasting />, preload: SalesForecasting as unknown as PreloadableComponent<never> },
+          { id: "quotations", label: "Quotations", icon: FileText, render: () => <QuotationsView />, preload: QuotationsView as unknown as PreloadableComponent<never> },
+          { id: "catalog", label: "Catalog", icon: BookOpen, render: () => <ProductCatalog />, preload: ProductCatalog as unknown as PreloadableComponent<never> },
+          { id: "lead-scoring", label: "Lead Scoring", icon: Gauge, render: () => <LeadScoring />, preload: LeadScoring as unknown as PreloadableComponent<never> },
+          { id: "offerings", label: "Offerings", icon: Package, render: () => <OfferingsModule readOnly />, preload: OfferingsModule as unknown as PreloadableComponent<never> },
         ],
       },
       {
@@ -133,10 +133,10 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         label: "Outreach",
         icon: Mail,
         tabs: [
-          { id: "inside-sales", label: "Inside Sales", icon: Users, render: () => <InsideSalesModule initialTab="prospects" /> },
-          { id: "email-sequences", label: "Sequences", icon: Mail, render: () => <EmailSequences /> },
-          { id: "automations", label: "Cadences", icon: Zap, render: () => <SalesAutomations /> },
-          { id: "territory", label: "Territory", icon: Map, render: () => <TerritoryManagement /> },
+          { id: "inside-sales", label: "Inside Sales", icon: Users, render: () => <InsideSalesModule initialTab="prospects" />, preload: InsideSalesModule as unknown as PreloadableComponent<never> },
+          { id: "email-sequences", label: "Sequences", icon: Mail, render: () => <EmailSequences />, preload: EmailSequences as unknown as PreloadableComponent<never> },
+          { id: "automations", label: "Cadences", icon: Zap, render: () => <SalesAutomations />, preload: SalesAutomations as unknown as PreloadableComponent<never> },
+          { id: "territory", label: "Territory", icon: Map, render: () => <TerritoryManagement />, preload: TerritoryManagement as unknown as PreloadableComponent<never> },
         ],
       },
       {
@@ -144,11 +144,11 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         label: "Intelligence",
         icon: Sparkles,
         tabs: [
-          { id: "deal-registration", label: "Deal Reg", icon: FileCheck, render: () => <DealRegistrationModule /> },
-          { id: "reports", label: "Reports", icon: BarChart3, render: () => <SalesReports /> },
-          { id: "sales-ai", label: "Sales AI", icon: Brain, render: () => <SalesAIAssistant /> },
-          { id: "deal-insights", label: "Deal Insights", icon: TrendingUp, render: () => <DealInsights /> },
-          { id: "sops", label: "Sales SOPs", icon: BookOpen, render: () => <DocumentationModule /> },
+          { id: "deal-registration", label: "Deal Reg", icon: FileCheck, render: () => <DealRegistrationModule />, preload: DealRegistrationModule as unknown as PreloadableComponent<never> },
+          { id: "reports", label: "Reports", icon: BarChart3, render: () => <SalesReports />, preload: SalesReports as unknown as PreloadableComponent<never> },
+          { id: "sales-ai", label: "Sales AI", icon: Brain, render: () => <SalesAIAssistant />, preload: SalesAIAssistant as unknown as PreloadableComponent<never> },
+          { id: "deal-insights", label: "Deal Insights", icon: TrendingUp, render: () => <DealInsights />, preload: DealInsights as unknown as PreloadableComponent<never> },
+          { id: "sops", label: "Sales SOPs", icon: BookOpen, render: () => <DocumentationModule />, preload: DocumentationModule as unknown as PreloadableComponent<never> },
         ],
       },
     ],
@@ -235,6 +235,8 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
+              onMouseEnter={() => tab.preload?.preload()}
+              onFocus={() => tab.preload?.preload()}
               className={cn(
                 "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 isActive
@@ -249,7 +251,11 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         })}
       </div>
 
-      <div className="min-w-0">{currentTab.render()}</div>
+      <div className="min-w-0">
+        <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
+          {currentTab.render()}
+        </Suspense>
+      </div>
     </div>
   );
 }
