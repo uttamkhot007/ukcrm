@@ -35,9 +35,12 @@ export function Header({ onAIToggle }: HeaderProps) {
           <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              type="search"
+              aria-label="Search the workspace"
               placeholder="Search anything..."
               className="pl-10 bg-muted/50 border-border focus:border-primary/50 transition-colors"
             />
+
           </div>
         </div>
 
@@ -52,17 +55,19 @@ export function Header({ onAIToggle }: HeaderProps) {
             variant="glass"
             size="icon"
             onClick={onAIToggle}
+            aria-label="Toggle AI assistant"
             className="relative group"
           >
-            <Sparkles className="w-5 h-5 text-primary group-hover:animate-pulse" />
+            <Sparkles className="w-5 h-5 text-primary group-hover:animate-pulse" aria-hidden="true" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
           </Button>
 
           <NotificationsPopover />
 
-          <Button variant="ghost" size="icon">
-            <MessageSquare className="w-5 h-5" />
+          <Button variant="ghost" size="icon" aria-label="Open messages">
+            <MessageSquare className="w-5 h-5" aria-hidden="true" />
           </Button>
+
 
           <div className="flex items-center gap-3 ml-3 pl-3 border-l border-border">
             <div className="text-right">

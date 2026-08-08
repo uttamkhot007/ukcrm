@@ -11,6 +11,8 @@ import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { AuthDiagnosticsPanel } from "@/components/auth/AuthDiagnosticsPanel";
+import { PageSeo } from "@/components/seo/PageSeo";
+
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -148,7 +150,13 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex overflow-hidden">
+      <PageSeo
+        title="Sign in to NexusCRM"
+        description="Access your NexusCRM workspace to manage sales, finance, HR, and operations from one AI-enabled platform."
+        path="/auth"
+      />
       {/* Left Side - Premium Branding */}
+
       <div className="hidden lg:flex lg:w-1/2 relative p-12 flex-col justify-between">
         {/* Animated gradient background */}
         <AnimatedBackground />

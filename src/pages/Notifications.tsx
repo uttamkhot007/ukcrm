@@ -401,10 +401,11 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Link to="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" size="icon" aria-label="Back to dashboard">
+              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
             </Button>
           </Link>
+
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
             <p className="text-muted-foreground text-sm">
@@ -443,9 +444,10 @@ export default function NotificationsPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button variant="ghost" size="sm" onClick={clearSelection}>
-                <X className="w-4 h-4" />
+              <Button variant="ghost" size="sm" onClick={clearSelection} aria-label="Clear selection">
+                <X className="w-4 h-4" aria-hidden="true" />
               </Button>
+
             </div>
           ) : (
             <>
@@ -467,8 +469,9 @@ export default function NotificationsPage() {
             variant={activeView === "preferences" ? "default" : "ghost"}
             size="icon"
             onClick={() => setActiveView(activeView === "preferences" ? "notifications" : "preferences")}
+            aria-label={activeView === "preferences" ? "Back to notifications" : "Open notification preferences"}
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5" aria-hidden="true" />
           </Button>
         </div>
 
@@ -480,11 +483,13 @@ export default function NotificationsPage() {
         {/* Filters */}
         <Card className="mb-6">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Filter className="w-4 h-4" />
+            <h2 className="text-sm font-medium flex items-center gap-2">
+              <Filter className="w-4 h-4" aria-hidden="true" />
               Filters
-            </CardTitle>
+            </h2>
           </CardHeader>
+
+
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[150px]">
@@ -608,7 +613,9 @@ export default function NotificationsPage() {
         )}
 
         {/* Notifications List */}
+        <h2 className="sr-only">Notification list</h2>
         {isLoading ? (
+
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>

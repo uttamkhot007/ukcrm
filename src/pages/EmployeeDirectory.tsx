@@ -150,18 +150,25 @@ export default function EmployeeDirectory() {
             </div>
 
             {/* Filters */}
+            <section aria-labelledby="employee-filters-heading">
+            <h2 id="employee-filters-heading" className="sr-only">
+              Search and filter employees
+            </h2>
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                     <Input
+                      type="search"
+                      aria-label="Search employees by name, email, title, or employee code"
                       placeholder="Search by name, email, title, or employee code..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
                     />
                   </div>
+
                   <div className="flex gap-2">
                     <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                       <SelectTrigger className="w-[180px]">
@@ -193,16 +200,23 @@ export default function EmployeeDirectory() {
                 </div>
               </CardContent>
             </Card>
+            </section>
+
+            <section aria-labelledby="employee-results-heading" className="space-y-6">
+            <h2 id="employee-results-heading" className="sr-only">
+              Employees
+            </h2>
 
             {/* Results count */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="w-4 h-4" />
+              <Filter className="w-4 h-4" aria-hidden="true" />
               <span>
                 Showing {filteredEmployees.length} of {employees.length} employees
               </span>
             </div>
 
             {/* Employee Grid */}
+
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
@@ -302,7 +316,9 @@ export default function EmployeeDirectory() {
                 ))}
               </div>
             )}
+            </section>
           </div>
+
         </main>
       </div>
     </div>

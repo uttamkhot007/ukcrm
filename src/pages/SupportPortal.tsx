@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Headphones, Shield, Mail, Lock } from "lucide-react";
+import { PageSeo } from "@/components/seo/PageSeo";
 
 export default function SupportPortal() {
   const navigate = useNavigate();
@@ -89,13 +90,21 @@ export default function SupportPortal() {
 
       // Update profile to mark as customer
       if (data.user) {
-        await supabase
+        const { error: profileError } = await supabase
           .from("profiles")
           .update({ user_category: "customer", full_name: fullName })
           .eq("user_id", data.user.id);
+
+        if (profileError) {
+          toast.warning(
+            "Account created, but we couldn't finish setting up your profile. Please contact support if you see missing details.",
+          );
+          return;
+        }
       }
 
       toast.success("Account created! Please check your email to verify.");
+
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -105,6 +114,11 @@ export default function SupportPortal() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+      <PageSeo
+        title="Customer Support Center — NexusCRM"
+        description="Sign in or create an account to raise support tickets and track your requests with the NexusCRM support team."
+        path="/support"
+      />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
