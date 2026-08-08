@@ -20,14 +20,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowLeft, Check, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, FileDown, FileText, Loader2, Sparkles } from "lucide-react";
+import { exportAndAttachDocument, loadBranding, type ExportFormat } from "@/lib/document-export";
 
-type SourceType = "deal" | "contact" | "project" | "employee";
+type SourceType = "deal" | "contact" | "project" | "employee" | "ticket";
 
 const SOURCES: { value: SourceType; label: string; table: string; labelColumn: string }[] = [
   { value: "deal", label: "Deal", table: "deals", labelColumn: "title" },
   { value: "contact", label: "Contact", table: "contacts", labelColumn: "name" },
   { value: "project", label: "Project", table: "projects", labelColumn: "name" },
+  { value: "ticket", label: "Support ticket", table: "customer_support_tickets", labelColumn: "title" },
   { value: "employee", label: "Employee", table: "profiles", labelColumn: "full_name" },
 ];
 
