@@ -1,28 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { DealsView } from "./DealsView";
-import { LeadsView } from "./LeadsView";
-import { ContactsView } from "./ContactsView";
-import { QuotationsView } from "./QuotationsView";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { lazyNamed, type PreloadableComponent } from "@/lib/lazy-module";
+import { PanelSkeleton } from "@/components/shared/ModuleSkeleton";
 import { ActivityTimeline } from "./ActivityTimeline";
-import { SalesReports } from "./SalesReports";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
-import { MyAccountsView } from "./MyAccountsView";
-import { DealRegistrationModule } from "./DealRegistrationModule";
-import { LeadScoring } from "./LeadScoring";
-import { DealInsights } from "./DealInsights";
-import { SalesForecasting } from "./SalesForecasting";
-import { EmailSequences } from "./EmailSequences";
-import { SalesAutomations } from "./SalesAutomations";
-import { MEDDICWorkflow } from "./MEDDICWorkflow";
 import { SalesModuleDashboard } from "./SalesModuleDashboard";
-import { ProductCatalog } from "./ProductCatalog";
-import { TerritoryManagement } from "./TerritoryManagement";
-import { RottenDeals } from "./RottenDeals";
-import { InsideSalesModule } from "./InsideSalesModule";
-import { SalesAIAssistant } from "./SalesAIAssistant";
-import { OfferingsModule } from "@/components/admin/OfferingsModule";
-import { DocumentationModule } from "@/components/employee/DocumentationModule";
 import { cn } from "@/lib/utils";
 import {
   TrendingUp,
@@ -47,6 +29,32 @@ import {
   Brain,
   type LucideIcon,
 } from "lucide-react";
+
+
+// Each workspace below is its own chunk. MEDDIC, the deal wizard and the
+// contacts grid are the heaviest screens in the app; loading them only when
+// their tab is opened (and preloading on hover) is what makes the tab switch
+// feel immediate instead of stalling on a large download.
+const DealsView = lazyNamed(() => import("./DealsView"), "DealsView");
+const LeadsView = lazyNamed(() => import("./LeadsView"), "LeadsView");
+const ContactsView = lazyNamed(() => import("./ContactsView"), "ContactsView");
+const QuotationsView = lazyNamed(() => import("./QuotationsView"), "QuotationsView");
+const SalesReports = lazyNamed(() => import("./SalesReports"), "SalesReports");
+const MyAccountsView = lazyNamed(() => import("./MyAccountsView"), "MyAccountsView");
+const DealRegistrationModule = lazyNamed(() => import("./DealRegistrationModule"), "DealRegistrationModule");
+const LeadScoring = lazyNamed(() => import("./LeadScoring"), "LeadScoring");
+const DealInsights = lazyNamed(() => import("./DealInsights"), "DealInsights");
+const SalesForecasting = lazyNamed(() => import("./SalesForecasting"), "SalesForecasting");
+const EmailSequences = lazyNamed(() => import("./EmailSequences"), "EmailSequences");
+const SalesAutomations = lazyNamed(() => import("./SalesAutomations"), "SalesAutomations");
+const MEDDICWorkflow = lazyNamed(() => import("./MEDDICWorkflow"), "MEDDICWorkflow");
+const ProductCatalog = lazyNamed(() => import("./ProductCatalog"), "ProductCatalog");
+const TerritoryManagement = lazyNamed(() => import("./TerritoryManagement"), "TerritoryManagement");
+const RottenDeals = lazyNamed(() => import("./RottenDeals"), "RottenDeals");
+const InsideSalesModule = lazyNamed(() => import("./InsideSalesModule"), "InsideSalesModule");
+const SalesAIAssistant = lazyNamed(() => import("./SalesAIAssistant"), "SalesAIAssistant");
+const OfferingsModule = lazyNamed(() => import("@/components/admin/OfferingsModule"), "OfferingsModule");
+const DocumentationModule = lazyNamed(() => import("@/components/employee/DocumentationModule"), "DocumentationModule");
 
 interface SalesModuleProps {
   initialTab?: string;
