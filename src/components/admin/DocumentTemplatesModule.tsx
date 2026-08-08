@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
+import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
 import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
 import {
   TEMPLATE_LIBRARY,
@@ -64,6 +65,9 @@ export function DocumentTemplatesModule() {
   const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<string>('sample-gallery');
+  const [autoFillTemplate, setAutoFillTemplate] = useState<
+    { id: string; name: string; template_type: string } | null
+  >(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
@@ -536,7 +540,19 @@ export function DocumentTemplatesModule() {
                         Version {template.version} • Updated {new Date(template.updated_at).toLocaleDateString()}
                       </p>
                     </CardContent>
-                    <CardFooter className="pt-2 flex gap-2">
+                    <CardFooter className="pt-2 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 gap-1"
+                        onClick={() => setAutoFillTemplate({
+                          id: template.id,
+                          name: template.name,
+                          template_type: template.template_type,
+                        })}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI auto-fill
+                      </Button>
                       <Button variant="outline" size="sm" className="flex-1" onClick={() => duplicateTemplate(template)}>
                         <Copy className="h-3 w-3 mr-1" />
                         Duplicate
@@ -679,6 +695,12 @@ export function DocumentTemplatesModule() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <TemplateAutoFillDialog
+        open={!!autoFillTemplate}
+        onOpenChange={(open) => !open && setAutoFillTemplate(null)}
+        template={autoFillTemplate}
+      />
     </div>
   );
 }

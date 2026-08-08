@@ -5169,6 +5169,80 @@ export type Database = {
           },
         ]
       }
+      generated_documents: {
+        Row: {
+          ai_fields: Json
+          ai_model: string | null
+          ai_notes: string | null
+          created_at: string
+          created_by: string | null
+          final_fields: Json
+          finalized_at: string | null
+          finalized_by: string | null
+          id: string
+          review_notes: string | null
+          source_id: string | null
+          source_type: string | null
+          status: string
+          template_id: string | null
+          template_name: string | null
+          template_type: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_fields?: Json
+          ai_model?: string | null
+          ai_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          final_fields?: Json
+          finalized_at?: string | null
+          finalized_by?: string | null
+          id?: string
+          review_notes?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          template_id?: string | null
+          template_name?: string | null
+          template_type?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_fields?: Json
+          ai_model?: string | null
+          ai_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          final_fields?: Json
+          finalized_at?: string | null
+          finalized_by?: string | null
+          id?: string
+          review_notes?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          template_id?: string | null
+          template_name?: string | null
+          template_type?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       godowns: {
         Row: {
           address: string | null
