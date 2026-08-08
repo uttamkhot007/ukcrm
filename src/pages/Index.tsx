@@ -220,6 +220,15 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Warm the chunks people reach for most, once the browser is idle. This is
+  // what makes the second and third module click feel instant rather than
+  // paying a fresh download each time.
+  useEffect(() => {
+    if (!user) return;
+    preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
+  }, [user]);
+
+
   // Only block rendering while we genuinely don't know yet, or while an
   // unavoidable redirect (no session / no workspace) is in flight.
   const shouldBlockRender =
