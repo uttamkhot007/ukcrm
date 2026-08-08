@@ -201,14 +201,27 @@ export function LeadScoring() {
           <p className="text-muted-foreground">AI-powered lead scoring to identify hot prospects</p>
         </div>
 
-        <Button
-          onClick={() => scoreAllLeads.mutate()}
-          disabled={scoreAllLeads.isPending || unscoredCount === 0}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
-          Score Next 10 ({unscoredCount})
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setQuickAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add lead
+          </Button>
+          <Button
+            onClick={() => scoreAllLeads.mutate()}
+            disabled={scoreAllLeads.isPending || unscoredCount === 0}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
+            Score Next 10 ({unscoredCount})
+          </Button>
+        </div>
       </div>
+
+      <QuickAddLeadDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        onCreated={() => changeSegment("unscored")}
+      />
+
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
