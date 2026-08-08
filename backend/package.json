@@ -11,7 +11,13 @@
     "start:worker": "node dist/worker.js",
     "migrate": "node dist/db/migrate.js",
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:gateway": "tsx watch src/gateway/index.ts",
+    "dev:service": "tsx watch src/services/main.ts",
+    "start:gateway": "node dist/gateway/index.js",
+    "start:service": "node dist/services/main.js",
+    "check:boundaries": "tsx src/scripts/check-boundaries.ts",
+    "services:up": "docker compose -f ../docker-compose.services.yml up --build"
   },
   "dependencies": {
     "fastify": "^4.28.0",
