@@ -146,11 +146,11 @@ export const auth = {
   },
 
   isAuthenticated(): boolean {
-    return !!accessToken && Date.now() < tokenExpiresAt;
+    return !!tokenStore.get() && !tokenStore.isExpired();
   },
 
   getToken(): string | null {
-    return accessToken;
+    return tokenStore.get();
   },
 
   onAuthChange(callback: (isAuthenticated: boolean) => void) {
