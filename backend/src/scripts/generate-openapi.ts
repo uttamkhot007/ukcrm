@@ -9,12 +9,16 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { buildOpenApiDocument, buildServiceDocument } from '../platform/contract.js';
 import { ROUTABLE_SERVICES } from '../platform/manifest.js';
 
-const here = dirname(fileURLToPath(import.meta.url));
-export const CONTRACTS_DIR = join(here, '../../contracts');
+/** Works whether the command runs from the repo root or from backend/. */
+export function backendRoot(): string {
+  const cwd = process.cwd();
+  return cwd.endsWith('backend') ? cwd : join(cwd, 'backend');
+}
+
+export const CONTRACTS_DIR = join(backendRoot(), 'contracts');
 
 function write(file: string, doc: unknown): void {
   mkdirSync(dirname(file), { recursive: true });
@@ -39,7 +43,7 @@ export function generateContracts(dir = CONTRACTS_DIR): string[] {
   return written;
 }
 
-const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+const invokedDirectly = (process.argv[1] ?? '').includes('generate-openapi');
 if (invokedDirectly) {
   const files = generateContracts();
   // eslint-disable-next-line no-console

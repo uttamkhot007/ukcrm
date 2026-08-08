@@ -443,10 +443,10 @@ export function buildOpenApiDocument(): OpenApiDocument {
         'breaking changes are rejected by the contract tests.',
     },
     servers: [{ url: 'https://api.example.com', description: 'API gateway' }],
-    tags: ROUTABLE_SERVICES.map((s) => ({ name: s.name, description: s.description })).concat({
-      name: 'platform',
-      description: 'Health, readiness and metrics endpoints exposed by every service.',
-    }),
+    tags: [
+      ...ROUTABLE_SERVICES.map((s) => ({ name: String(s.name), description: s.description })),
+      { name: 'platform', description: 'Health, readiness and metrics endpoints exposed by every service.' },
+    ],
     paths,
     components,
   };

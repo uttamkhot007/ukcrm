@@ -11,8 +11,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ROUTE_MODULES,
@@ -26,9 +25,10 @@ import { diffContracts, formatDiff } from '../contract-diff.js';
 import { ROUTABLE_SERVICES, SERVICES, serviceForTable } from '../manifest.js';
 import { ALL_RESOURCES } from '../resources.js';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const SRC_DIR = join(here, '../..');
-const CONTRACTS_DIR = join(here, '../../../contracts');
+const cwd = process.cwd();
+const BACKEND_ROOT = cwd.endsWith('backend') ? cwd : join(cwd, 'backend');
+const SRC_DIR = join(BACKEND_ROOT, 'src');
+const CONTRACTS_DIR = join(BACKEND_ROOT, 'contracts');
 
 const REGENERATE = 'Run `npm run contracts:generate` in backend/ and commit contracts/.';
 
