@@ -206,13 +206,15 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
   // Warm every chunk in the group the user is currently in, once the browser
   // is idle. Hover preloading only helps with a mouse; this makes keyboard and
   // touch navigation between sibling tabs feel instant too.
-  useEffect(() => {
-    preloadWhenIdle(
-      activeGroup.tabs
-        .map((t) => t.preload)
-        .filter((p): p is PreloadableComponent<never> => Boolean(p))
-    );
-  }, [activeGroup]);
+  useEffect(
+    () =>
+      preloadWhenIdle(
+        activeGroup.tabs
+          .map((t) => t.preload)
+          .filter((p): p is PreloadableComponent<never> => Boolean(p))
+      ),
+    [activeGroup]
+  );
 
   const moveFocus = (
     event: React.KeyboardEvent<HTMLDivElement>,
@@ -269,7 +271,10 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
                 aria-selected={isActive}
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => selectTab(group.tabs[0].id)}
-                onMouseEnter={() => group.tabs[0].preload?.warm()}
+                onMouseEnter={() => group.tabs[0].preload?.warm("hover")}
+                onMouseLeave={() => group.tabs[0].preload?.cancelWarm()}
+                onFocus={() => group.tabs[0].preload?.warm("focus")}
+                onBlur={() => group.tabs[0].preload?.cancelWarm()}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
                   focusRing,
@@ -305,9 +310,11 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
               aria-controls="sales-tab-panel"
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
-              onMouseEnter={() => tab.preload?.warm()}
-              onFocus={() => tab.preload?.warm()}
-              onPointerDown={() => tab.preload?.warm()}
+              onMouseEnter={() => tab.preload?.warm("hover")}
+              onMouseLeave={() => tab.preload?.cancelWarm()}
+              onFocus={() => tab.preload?.warm("focus")}
+              onBlur={() => tab.preload?.cancelWarm()}
+              onPointerDown={() => tab.preload?.warm("pointer")}
               className={cn(
                 "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 focusRing,

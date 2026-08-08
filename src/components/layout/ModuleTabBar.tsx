@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useModuleTabs } from "@/contexts/ModuleTabsContext";
-import { preloadModule } from "@/lib/module-preload";
+import { cancelPreloadModule, preloadModule } from "@/lib/module-preload";
 import { cn } from "@/lib/utils";
 
 interface ModuleTabBarProps {
@@ -79,8 +79,10 @@ export function ModuleTabBar({ activeModule, onModuleChange }: ModuleTabBarProps
           aria-selected={isOverviewActive}
           tabIndex={isOverviewActive ? 0 : -1}
           onClick={() => onModuleChange(parentId)}
-          onMouseEnter={() => preloadModule(parentId)}
-          onFocus={() => preloadModule(parentId)}
+          onMouseEnter={() => preloadModule(parentId, "hover")}
+          onMouseLeave={() => cancelPreloadModule(parentId)}
+          onFocus={() => preloadModule(parentId, "focus")}
+          onBlur={() => cancelPreloadModule(parentId)}
           className={tabClass(isOverviewActive)}
         >
           Overview
@@ -96,9 +98,11 @@ export function ModuleTabBar({ activeModule, onModuleChange }: ModuleTabBarProps
               aria-selected={isActive}
               tabIndex={isActive ? 0 : -1}
               onClick={() => handleClick(tab.id)}
-              onMouseEnter={() => preloadModule(tab.id)}
-              onFocus={() => preloadModule(tab.id)}
-              onPointerDown={() => preloadModule(tab.id)}
+              onMouseEnter={() => preloadModule(tab.id, "hover")}
+              onMouseLeave={() => cancelPreloadModule(tab.id)}
+              onFocus={() => preloadModule(tab.id, "focus")}
+              onBlur={() => cancelPreloadModule(tab.id)}
+              onPointerDown={() => preloadModule(tab.id, "pointer")}
               className={tabClass(isActive)}
             >
               <tab.icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
