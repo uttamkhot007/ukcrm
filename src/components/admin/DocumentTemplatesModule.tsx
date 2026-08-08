@@ -18,7 +18,9 @@ import {
   FileText, Plus, Edit, Trash2, Copy, Check, Star, Loader2,
   ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus,
   History,
+  FileDown,
 } from "lucide-react";
+import { GeneratedDocumentsPanel } from "@/components/admin/GeneratedDocumentsPanel";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
 import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
@@ -433,7 +435,15 @@ export function DocumentTemplatesModule() {
             <History className="h-4 w-4" />
             Packs &amp; Versions
           </TabsTrigger>
+          <TabsTrigger value="generated-documents" className="gap-2">
+            <FileDown className="h-4 w-4" />
+            Generated documents
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="generated-documents">
+          <GeneratedDocumentsPanel />
+        </TabsContent>
 
         <TabsContent value="pack-versions">
           <TemplatePackManager templates={templates as any} branding={tenantBranding} />

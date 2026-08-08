@@ -20,14 +20,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowLeft, Check, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, FileDown, FileText, Loader2, Sparkles } from "lucide-react";
+import { exportAndAttachDocument, loadBranding, type ExportFormat } from "@/lib/document-export";
 
-type SourceType = "deal" | "contact" | "project" | "employee";
+type SourceType = "deal" | "contact" | "project" | "employee" | "ticket";
 
 const SOURCES: { value: SourceType; label: string; table: string; labelColumn: string }[] = [
   { value: "deal", label: "Deal", table: "deals", labelColumn: "title" },
   { value: "contact", label: "Contact", table: "contacts", labelColumn: "name" },
   { value: "project", label: "Project", table: "projects", labelColumn: "name" },
+  { value: "ticket", label: "Support ticket", table: "customer_support_tickets", labelColumn: "title" },
   { value: "employee", label: "Employee", table: "profiles", labelColumn: "full_name" },
 ];
 
@@ -119,34 +121,69 @@ export function TemplateAutoFillDialog({ open, onOpenChange, template }: Props) 
     }
   };
 
-  const save = async (status: "draft" | "final") => {
+  const save = async (status: "draft" | "final", exportFormat?: ExportFormat) => {
     if (!template || !currentTenant?.id || !result) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("generated_documents").insert({
-        tenant_id: currentTenant.id,
-        template_id: template.id,
-        template_name: template.name,
-        template_type: template.template_type,
-        title: draftTitle || template.name,
-        source_type: sourceType,
-        source_id: sourceId,
-        ai_fields: result.fields,
-        final_fields: draftFields,
-        ai_notes: result.notes || null,
-        review_notes: reviewNotes || null,
-        ai_model: result.model,
-        status,
-        created_by: user?.id ?? null,
-        finalized_by: status === "final" ? user?.id ?? null : null,
-        finalized_at: status === "final" ? new Date().toISOString() : null,
-      });
+      const { data: inserted, error } = await supabase
+        .from("generated_documents")
+        .insert({
+          tenant_id: currentTenant.id,
+          template_id: template.id,
+          template_name: template.name,
+          template_type: template.template_type,
+          title: draftTitle || template.name,
+          source_type: sourceType,
+          source_id: sourceId,
+          ai_fields: result.fields,
+          final_fields: draftFields,
+          ai_notes: result.notes || null,
+          review_notes: reviewNotes || null,
+          ai_model: result.model,
+          status,
+          created_by: user?.id ?? null,
+          finalized_by: status === "final" ? user?.id ?? null : null,
+          finalized_at: status === "final" ? new Date().toISOString() : null,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+
+      if (exportFormat) {
+        const { data: tpl } = await supabase
+          .from("document_templates")
+          .select("branding")
+          .eq("id", template.id)
+          .maybeSingle();
+        const branding = await loadBranding(currentTenant.id, (tpl?.branding ?? null) as any);
+        const res = await exportAndAttachDocument({
+          tenantId: currentTenant.id,
+          userId: user?.id ?? null,
+          format: exportFormat,
+          branding,
+          doc: {
+            id: inserted.id,
+            title: draftTitle || template.name,
+            templateName: template.name,
+            templateType: template.template_type,
+            fields: draftFields,
+            sourceType,
+            sourceId,
+          },
+        });
+        toast.success(
+          res.attachedTo
+            ? `${exportFormat.toUpperCase()} generated and saved to the ${SOURCES.find((s) => s.value === sourceType)?.label.toLowerCase()} record`
+            : `${exportFormat.toUpperCase()} generated`,
+        );
+      } else {
+        toast.success(status === "final" ? "Document finalised" : "Draft saved for later review");
+      }
+
       queryClient.invalidateQueries({ queryKey: ["generated-documents"] });
-      toast.success(status === "final" ? "Document finalised" : "Draft saved for later review");
       close(false);
     } catch (error: any) {
-      toast.error("Could not save document: " + error.message);
+      toast.error("Could not save document: " + (error?.message ?? "unknown error"));
     } finally {
       setSaving(false);
     }
@@ -285,9 +322,17 @@ export function TemplateAutoFillDialog({ open, onOpenChange, template }: Props) 
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => save("draft")} disabled={saving}>
                   Save as draft
+                </Button>
+                <Button variant="outline" className="gap-1" onClick={() => save("final", "pdf")} disabled={saving}>
+                  <FileDown className="h-4 w-4" />
+                  PDF
+                </Button>
+                <Button variant="outline" className="gap-1" onClick={() => save("final", "docx")} disabled={saving}>
+                  <FileText className="h-4 w-4" />
+                  Word
                 </Button>
                 <Button onClick={() => save("final")} disabled={saving} className="gap-1">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
