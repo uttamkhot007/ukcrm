@@ -11269,6 +11269,54 @@ export type Database = {
           },
         ]
       }
+      software_dependencies: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          language: string
+          license_type: string
+          name: string
+          notes: string
+          risk_level: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          used_in: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language?: string
+          license_type?: string
+          name: string
+          notes?: string
+          risk_level?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          used_in?: string
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language?: string
+          license_type?: string
+          name?: string
+          notes?: string
+          risk_level?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          used_in?: string
+          version?: string
+        }
+        Relationships: []
+      }
       solution_documentation: {
         Row: {
           additional_notes: string | null
