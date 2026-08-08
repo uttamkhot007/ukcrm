@@ -1,10 +1,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { lazyNamed } from "@/lib/lazy-module";
+import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
 import { beginModuleSwitch } from "@/lib/perf-metrics";
-import { shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
 import { cn } from "@/lib/utils";
 import { HeartPulse, Gauge, ClipboardCheck, PartyPopper } from "lucide-react";
 
