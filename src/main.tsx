@@ -20,4 +20,8 @@ console.info(
 document.documentElement.setAttribute("data-react-mounted", "1");
 installPreviewBuildRefreshHook();
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>
+);
