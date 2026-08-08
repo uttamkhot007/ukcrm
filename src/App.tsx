@@ -49,16 +49,10 @@ const SupportPortal = lazyDefault(() => import("./pages/SupportPortal"));
 const SupportDashboard = lazyDefault(() => import("./pages/SupportDashboard"));
 const Tenders = lazyDefault(() => import("./pages/Tenders"));
 
+// A single client whose cache survives reloads, so reopening a module paints
+// from the last known data and revalidates in the background.
 const queryClient = createPersistentQueryClient(__APP_BUILD_TIME__);
 
-const _unusedQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
-  },
-});
 
 // Main application component with providers
 const App = () => (
