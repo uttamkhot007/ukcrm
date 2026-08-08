@@ -35,9 +35,12 @@ export function Header({ onAIToggle }: HeaderProps) {
           <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              type="search"
+              aria-label="Search the workspace"
               placeholder="Search anything..."
               className="pl-10 bg-muted/50 border-border focus:border-primary/50 transition-colors"
             />
+
           </div>
         </div>
 
