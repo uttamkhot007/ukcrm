@@ -1,0 +1,327 @@
+{
+  "components": {
+    "schemas": {
+      "Error": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "statusCode": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "ListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "type": "object"
+      },
+      "Pagination": {
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Aggregate contract for the microservice estate. Generated from the service manifest; breaking changes are rejected by the contract tests.",
+    "title": "NexusCRM workflow service API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/workflows/trigger": {
+      "post": {
+        "operationId": "post_workflows_trigger_workflows",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid credentials"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Trigger a workflow run",
+        "tags": [
+          "workflow"
+        ],
+        "x-module": "workflows",
+        "x-service": "workflow"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Service metadata"
+          }
+        },
+        "security": [],
+        "summary": "Service health and SLO targets",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "health_live",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Process is up"
+          }
+        },
+        "security": [],
+        "summary": "Liveness probe",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "health_ready",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Dependencies are usable"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Dependencies unavailable"
+          }
+        },
+        "security": [],
+        "summary": "Readiness probe",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "metrics",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Metrics"
+          }
+        },
+        "security": [],
+        "summary": "Prometheus metrics exposition",
+        "tags": [
+          "platform"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "workflow service (in-mesh)",
+      "url": "http://workflow:0"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Users, profiles, roles, teams, sessions, authorized domains.",
+      "name": "identity"
+    },
+    {
+      "description": "Tenants, members, modules, licences, plans, data residency, platform status.",
+      "name": "tenancy"
+    },
+    {
+      "description": "Contacts, leads, alliance organisations and everything account-shaped.",
+      "name": "crm"
+    },
+    {
+      "description": "Deals, MEDDIC pipeline, quotations, estimates, targets, territories, forecasts.",
+      "name": "sales"
+    },
+    {
+      "description": "POCs, RFPs, demos, technical assessments, solution documentation.",
+      "name": "presales"
+    },
+    {
+      "description": "Invoices, invoice items, payments, e-invoicing hand-off, order processing.",
+      "name": "billing"
+    },
+    {
+      "description": "Ledgers, vouchers, day book, budgets, fiscal years, bank reconciliation.",
+      "name": "accounting"
+    },
+    {
+      "description": "GST, TDS/TCS, HSN/SAC, e-way bills and statutory returns.",
+      "name": "taxation"
+    },
+    {
+      "description": "Stock, godowns, inventory movements and procurement.",
+      "name": "inventory"
+    },
+    {
+      "description": "Employees, leave, attendance, hiring, onboarding and offboarding.",
+      "name": "hr"
+    },
+    {
+      "description": "Expense reports, expense items, travel requests and bookings.",
+      "name": "expenses"
+    },
+    {
+      "description": "Asset register, categories, assignments and maintenance.",
+      "name": "assets"
+    },
+    {
+      "description": "Projects, phases, tasks, RACI, milestones, time entries.",
+      "name": "projects"
+    },
+    {
+      "description": "Tickets, SLAs, escalation matrices, remote sessions, canned responses.",
+      "name": "support"
+    },
+    {
+      "description": "Frameworks, controls, evidence, legal documents, software licence posture.",
+      "name": "compliance"
+    },
+    {
+      "description": "Campaigns, sequences, journeys, landing pages, PR and content.",
+      "name": "marketing"
+    },
+    {
+      "description": "Chat, notifications, calendar, reminders, learning hub, employee events.",
+      "name": "collaboration"
+    },
+    {
+      "description": "Object storage brokerage: signed uploads, downloads, virus-scan hand-off.",
+      "name": "files"
+    },
+    {
+      "description": "Third-party connectors, OAuth handshakes, outbound webhooks.",
+      "name": "integrations"
+    },
+    {
+      "description": "Model routing, prompt orchestration, embeddings and insight generation.",
+      "name": "ai"
+    },
+    {
+      "description": "Long-running sagas, scheduled jobs, retries and the transactional outbox pump.",
+      "name": "workflow"
+    },
+    {
+      "description": "Health, readiness and metrics endpoints exposed by every service.",
+      "name": "platform"
+    }
+  ]
+}
