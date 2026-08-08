@@ -27,7 +27,11 @@ import {
   httpErrors,
   httpRequests,
   metrics,
+  rumChunkDuration,
+  rumChunkLoads,
+  rumModuleSwitch,
 } from '../platform/telemetry.js';
+import { rumCollector, SWITCH_BUDGET_MS } from '../platform/rum.js';
 import {
   contextFromHeaders,
   enterContext,
@@ -244,6 +248,61 @@ async function main(): Promise<void> {
         ...(q['minDurationMs'] ? { minDurationMs: Number(q['minDurationMs']) } : {}),
       }),
     };
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Real-user frontend performance benchmarks                          */
+  /* ---------------------------------------------------------------- */
+
+  /**
+   * Browser ingest. Called with `navigator.sendBeacon` on page hide, so it must
+   * accept a plain-text body, answer instantly and never fail the caller:
+   * dropping a benchmark sample is always preferable to disturbing a user.
+   */
+  app.post('/api/_rum/module-perf', async (request, reply) => {
+    let payload: unknown = request.body;
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch {
+        return reply.status(202).send({ accepted: 0 });
+      }
+    }
+    const body = payload as { samples?: unknown[] } | undefined;
+    const samples = Array.isArray(body?.samples) ? body!.samples! : [];
+    const accepted = rumCollector.ingest(samples.slice(0, 500));
+
+    // Mirror into Prometheus so the same benchmarks alert through the existing
+    // monitoring stack, not only through the in-app dashboard.
+    for (const raw of samples.slice(0, 500)) {
+      const s = raw as Record<string, unknown>;
+      const module = typeof s['module'] === 'string' ? s['module'].slice(0, 64) : 'unknown';
+      const seconds = Number(s['durationMs']) / 1000;
+      if (!Number.isFinite(seconds)) continue;
+      if (s['kind'] === 'switch') {
+        rumModuleSwitch.observe({ module, warm: String(s['warm'] === true) }, seconds);
+      } else if (s['kind'] === 'chunk') {
+        const labels = {
+          module,
+          source: String(s['source'] ?? 'unknown'),
+          outcome: String(s['outcome'] ?? 'unknown'),
+        };
+        rumChunkLoads.inc(labels);
+        rumChunkDuration.observe({ module, source: labels.source }, seconds);
+      }
+    }
+
+    return reply.status(202).send({ accepted });
+  });
+
+  /** Aggregated benchmarks powering the observability dashboard. */
+  app.get('/api/_rum/module-perf/stats', async (request) => {
+    const q = request.query as Record<string, string | undefined>;
+    return rumCollector.stats({
+      windowMs: Number(q['windowMs'] ?? 15 * 60_000),
+      budgetMs: Number(q['budgetMs'] ?? SWITCH_BUDGET_MS),
+      ...(q['tenantId'] ? { tenantId: q['tenantId'] } : {}),
+    });
   });
 
   app.all('/api/*', async (request, reply) => {
