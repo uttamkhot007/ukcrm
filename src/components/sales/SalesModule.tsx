@@ -339,21 +339,33 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         aria-live="polite"
         aria-label={`${currentTab.label} workspace`}
       >
-        <ModuleErrorBoundary
-          resetKey={currentTab.id}
-          onRetry={() => currentTab.preload?.preload() ?? Promise.resolve()}
-        >
-          <ProgressiveSuspense
-            boundaryKey={currentTab.id}
-            shell={<ModuleShell title={currentTab.label} />}
-            skeleton={<PanelSkeleton />}
-          >
-            {currentTab.render()}
-            <ModuleSwitchProbe moduleId={`sales:${currentTab.id}`} />
-          </ProgressiveSuspense>
-
-        </ModuleErrorBoundary>
+        {/* Visited tabs stay mounted (LRU) so returning to Deals or MEDDIC keeps
+            filters, scroll and already-fetched data instead of reloading. */}
+        <KeepAlive activeKey={currentTab.id} max={4}>
+          {(key) => {
+            const tab = groups.flatMap((g) => g.tabs).find((t) => t.id === key);
+            if (!tab) return null;
+            return (
+              <ModuleErrorBoundary
+                resetKey={tab.id}
+                onRetry={() => tab.preload?.preload() ?? Promise.resolve()}
+              >
+                <ProgressiveSuspense
+                  boundaryKey={tab.id}
+                  shell={<ModuleShell title={tab.label} />}
+                  skeleton={<PanelSkeleton />}
+                >
+                  {tab.render()}
+                  {tab.id === currentTab.id && (
+                    <ModuleSwitchProbe moduleId={`sales:${tab.id}`} />
+                  )}
+                </ProgressiveSuspense>
+              </ModuleErrorBoundary>
+            );
+          }}
+        </KeepAlive>
       </div>
+
     </div>
   );
 }
