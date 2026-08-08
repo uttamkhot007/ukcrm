@@ -1,6 +1,13 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
-import { retryImport, shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
+import { retryImport } from "@/lib/chunk-retry";
 import { measureChunkLoad } from "@/lib/perf-metrics";
+import {
+  cancelPreload,
+  markPreloaded,
+  schedulePreload,
+  schedulePreloadWhenIdle,
+  type PreloadTrigger,
+} from "@/lib/preload-scheduler";
 
 /**
  * A lazily-loaded component that can also be *preloaded* imperatively.
@@ -17,8 +24,14 @@ export type PreloadableComponent<P = Record<string, unknown>> =
   LazyExoticComponent<ComponentType<P>> & {
     /** Load the chunk for real — retried, and errors propagate to the caller. */
     preload: () => Promise<unknown>;
-    /** Speculative warm-up: skipped on slow/metered links, never throws. */
-    warm: () => Promise<unknown>;
+    /**
+     * Speculative warm-up through the preload scheduler: honours the trigger's
+     * dwell delay and the concurrency cap, skipped on slow/metered links, and
+     * never throws.
+     */
+    warm: (trigger?: PreloadTrigger) => void;
+    /** Withdraw a warm-up that hasn't started yet (pointer left, blur). */
+    cancelWarm: () => void;
     /** Chunk name this component reports under in the performance benchmarks. */
     chunkName: string;
   };
@@ -61,9 +74,9 @@ export function lazyNamed<P = Record<string, unknown>>(
   };
 
   const Component = lazy(load) as PreloadableComponent<P>;
-  Component.preload = load;
-  Component.warm = () =>
-    shouldSkipSpeculativePreload() ? Promise.resolve() : load().catch(() => undefined);
+  Component.preload = () => load().then((mod) => (markPreloaded(exportName), mod));
+  Component.warm = (trigger) => schedulePreload(exportName, load, trigger);
+  Component.cancelWarm = () => cancelPreload(exportName);
   Component.chunkName = exportName;
   return Component;
 }
@@ -87,41 +100,26 @@ export function lazyDefault<P = Record<string, unknown>>(
     return promise;
   };
   const Component = lazy(load) as PreloadableComponent<P>;
-  Component.preload = load;
-  Component.warm = () =>
-    shouldSkipSpeculativePreload() ? Promise.resolve() : load().catch(() => undefined);
+  Component.preload = () => load().then((mod) => (markPreloaded(name), mod));
+  Component.warm = (trigger) => schedulePreload(name, load, trigger);
+  Component.cancelWarm = () => cancelPreload(name);
   Component.chunkName = name;
   return Component;
 }
 
 /**
- * Warm a set of chunks when the browser is idle, so common next-steps are
- * already in memory without competing with the current render. Skipped while
- * offline or on a metered/slow connection — speculative traffic is the first
- * thing that should be sacrificed there.
+ * Warm a set of chunks once the browser is idle, so common next-steps are
+ * already in memory without competing with the current render.
+ *
+ * Queued at the lowest priority: any hover, focus or click preempts it, and
+ * the scheduler's concurrency cap keeps the batch from saturating the link.
+ * Returns a cancel function — call it on unmount so warm-ups for a screen the
+ * user has already left are dropped instead of finishing pointlessly.
  */
-export function preloadWhenIdle(components: Array<{ warm: () => Promise<unknown> }>) {
-  if (typeof window === "undefined") return;
-
-  const run = () => {
-    if (shouldSkipSpeculativePreload()) return;
-    for (const component of components) {
-      void component.warm();
-    }
-  };
-
-  const schedule = () => {
-    const idle = (window as unknown as {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    }).requestIdleCallback;
-    if (idle) idle(run, { timeout: 3000 });
-    else window.setTimeout(run, 1200);
-  };
-
-  if (shouldSkipSpeculativePreload()) {
-    // Try again once connectivity comes back rather than dropping the warm-up.
-    window.addEventListener("online", schedule, { once: true });
-    return;
-  }
-  schedule();
+export function preloadWhenIdle(
+  components: Array<{ warm: (trigger?: PreloadTrigger) => void; chunkName: string; preload: () => Promise<unknown> }>,
+): () => void {
+  return schedulePreloadWhenIdle(
+    components.map((component) => ({ key: component.chunkName, loader: component.preload })),
+  );
 }
