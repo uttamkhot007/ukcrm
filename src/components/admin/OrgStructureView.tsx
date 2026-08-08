@@ -24,7 +24,7 @@ const TEAMS: { value: TeamType | "all"; label: string; color: string }[] = [
   { value: "finance", label: "Finance", color: "bg-finance/20 text-finance" },
   { value: "marketing", label: "Marketing", color: "bg-marketing/20 text-marketing" },
   { value: "accounts", label: "Accounts", color: "bg-emerald-500/20 text-emerald-600" },
-  { value: "admin", label: "Admin", color: "bg-slate-500/20 text-slate-600" },
+  { value: "admin", label: "Admin", color: "bg-muted text-muted-foreground" },
   { value: "renewals", label: "Renewals", color: "bg-amber-500/20 text-amber-600" },
 ];
 

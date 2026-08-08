@@ -170,7 +170,7 @@ export function DocumentationModule() {
       sales: "bg-orange-500/10 text-orange-500",
       operations: "bg-cyan-500/10 text-cyan-500",
       security: "bg-red-500/10 text-red-500",
-      general: "bg-gray-500/10 text-gray-500",
+      general: "bg-muted text-muted-foreground",
     };
     return colors[category] || colors.general;
   };
