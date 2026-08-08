@@ -589,10 +589,18 @@ export function DocumentTemplatesModule() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-base">{sample.name}</CardTitle>
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          {typeInfo?.label}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {typeInfo?.label}
+                          </Badge>
+                          {sample.solution && (
+                            <Badge variant="outline" className="text-xs">
+                              {sample.solution}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
+
                       {isAdded && (
                         <Badge variant="outline" className="text-green-600 border-green-600">
                           <Check className="h-3 w-3 mr-1" />
