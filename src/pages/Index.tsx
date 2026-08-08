@@ -125,11 +125,17 @@ const Index = () => {
       return;
     }
 
-    // Admin with a workspace: land on the console the first time only.
-    if (isPlatformAdmin && !sessionStorage.getItem("platform-admin-landed")) {
+    // Admin with a workspace: land on the console the first time only, and
+    // never when a specific module was explicitly requested.
+    if (
+      isPlatformAdmin &&
+      !requestedModule &&
+      !sessionStorage.getItem("platform-admin-landed")
+    ) {
       sessionStorage.setItem("platform-admin-landed", "1");
       navigate("/admin/platform/tenants", { replace: true });
     }
+
   }, [
     isLoading,
     isAuthResolved,
