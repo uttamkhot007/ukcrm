@@ -424,6 +424,17 @@ const Index = () => {
         return <HRModule initialTab="documents" />;
       case "hr-skill-matrix":
         return <SkillMatrixModule viewMode="hr" />;
+
+      // People Intelligence
+      case "people-intel":
+      case "people-intel-wellbeing":
+        return <PeopleIntelligenceModule initialTab="wellbeing" />;
+      case "people-intel-productivity":
+        return <PeopleIntelligenceModule initialTab="productivity" />;
+      case "people-intel-accountability":
+        return <PeopleIntelligenceModule initialTab="accountability" />;
+      case "people-intel-recognition":
+        return <PeopleIntelligenceModule initialTab="recognition" />;
       
       // Finance & Accounting - Unified Module
       // Dashboard
