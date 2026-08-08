@@ -29,6 +29,8 @@ import {
   Flame
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Types for security data
 interface AttackItem {
@@ -75,36 +77,9 @@ interface NewsItem {
   affectedSystems?: string[];
 }
 
-// Curated cybersecurity intelligence feed - sourced from industry advisories
-const topAttacks: AttackItem[] = [
-  { id: "1", name: "Ransomware-as-a-Service", type: "Malware", severity: "critical", count: 2847, trend: "up", description: "RaaS operations increased 45% targeting enterprise environments" },
-  { id: "2", name: "Business Email Compromise", type: "Social Engineering", severity: "high", count: 1923, trend: "up", description: "Executive impersonation attacks targeting finance departments" },
-  { id: "3", name: "Zero-Day Exploits", type: "Exploitation", severity: "critical", count: 847, trend: "stable", description: "Novel vulnerabilities in enterprise software being actively exploited" },
-  { id: "4", name: "Supply Chain Attacks", type: "Advanced Threat", severity: "high", count: 523, trend: "up", description: "Third-party software compromise affecting downstream customers" },
-  { id: "5", name: "Credential Stuffing", type: "Account Takeover", severity: "medium", count: 4521, trend: "down", description: "Automated login attempts using leaked credential databases" },
-  { id: "6", name: "API Abuse", type: "Web Attack", severity: "high", count: 1245, trend: "up", description: "Exploitation of poorly secured API endpoints" },
-];
 
-const securityTrends: TrendItem[] = [
-  { id: "1", title: "AI-Powered Phishing Campaigns", category: "Emerging Threat", impact: "high", description: "Attackers using generative AI to create highly convincing phishing content at scale", date: new Date().toISOString() },
-  { id: "2", title: "Cloud Misconfiguration Exploits", category: "Infrastructure", impact: "high", description: "Exposed cloud storage and databases leading to data breaches", date: new Date(Date.now() - 86400000).toISOString() },
-  { id: "3", title: "IoT Botnet Evolution", category: "Network Security", impact: "medium", description: "New botnet variants targeting smart devices and edge infrastructure", date: new Date(Date.now() - 172800000).toISOString() },
-  { id: "4", title: "Deepfake Social Engineering", category: "Social Engineering", impact: "high", description: "Audio and video deepfakes used for executive impersonation", date: new Date(Date.now() - 259200000).toISOString() },
-  { id: "5", title: "Quantum-Ready Encryption Adoption", category: "Defense", impact: "medium", description: "Organizations beginning post-quantum cryptography transitions", date: new Date(Date.now() - 345600000).toISOString() },
-];
 
-const breachNotifications: BreachNotification[] = [
-  { id: "1", organization: "Major Healthcare Provider", date: new Date().toISOString(), recordsAffected: "5.2M", dataTypes: ["PHI", "SSN", "Financial"], severity: "critical", status: "ongoing", summary: "Ransomware attack compromised patient records across multiple facilities" },
-  { id: "2", organization: "Financial Services Firm", date: new Date(Date.now() - 172800000).toISOString(), recordsAffected: "2.8M", dataTypes: ["Account Details", "Transaction History"], severity: "high", status: "contained", summary: "Unauthorized access via compromised vendor credentials" },
-  { id: "3", organization: "E-commerce Platform", date: new Date(Date.now() - 432000000).toISOString(), recordsAffected: "8.5M", dataTypes: ["Email", "Hashed Passwords", "Purchase History"], severity: "high", status: "resolved", summary: "SQL injection vulnerability exploited in legacy system" },
-  { id: "4", organization: "Government Agency", date: new Date(Date.now() - 604800000).toISOString(), recordsAffected: "1.2M", dataTypes: ["PII", "Employment Records"], severity: "medium", status: "resolved", summary: "Insider threat exfiltrated employee database" },
-];
 
-const cyberSecurityNews: NewsItem[] = [
-  { id: "1", title: "Critical Zero-Day in Popular Enterprise Software", summary: "A critical zero-day vulnerability has been discovered affecting major enterprise applications.", fullContent: "Security researchers have identified a critical zero-day vulnerability (CVE-2024-XXXX) affecting multiple enterprise software solutions. The vulnerability allows remote code execution without authentication.", category: "vulnerability", severity: "critical", date: new Date().toISOString(), source: "Security Advisory", isForTechnicalTeam: true, recommendations: ["Apply vendor patches immediately", "Enable enhanced monitoring on affected systems"], affectedSystems: ["Enterprise CRM", "ERP Systems"] },
-  { id: "2", title: "New Ransomware Variant Targeting Healthcare", summary: "Security researchers have identified a new ransomware strain specifically targeting healthcare organizations.", category: "threat", severity: "high", date: new Date(Date.now() - 86400000).toISOString(), source: "Threat Intelligence", recommendations: ["Ensure offline backups are current", "Review email filtering rules"] },
-  { id: "3", title: "Microsoft Releases Emergency Security Patches", summary: "Microsoft has released out-of-band security updates addressing multiple critical vulnerabilities.", category: "update", severity: "high", date: new Date(Date.now() - 172800000).toISOString(), source: "Vendor Update", recommendations: ["Deploy patches within 24-48 hours", "Test in staging environment first"], affectedSystems: ["Windows Server 2019/2022", "Windows 11"] },
-];
 
 const getSeverityColor = (severity: string) => {
   switch (severity) {
@@ -148,6 +123,92 @@ export function SecurityCenterWidget() {
   const { teams } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("attacks");
+  const [feed, setFeed] = useState<NewsItem[]>([]);
+
+  const loadFeed = useCallback(async () => {
+    const { data } = await supabase
+      .from("cybersecurity_news")
+      .select("id, title, summary, full_content, category, severity, published_at, created_at, source_name, recommendations, affected_systems")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(30);
+
+    setFeed(
+      (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        summary: row.summary ?? "",
+        fullContent: row.full_content ?? undefined,
+        category: (row.category ?? "advisory") as NewsItem["category"],
+        severity: (row.severity ?? undefined) as NewsItem["severity"],
+        date: row.published_at ?? row.created_at,
+        source: row.source_name ?? undefined,
+        recommendations: row.recommendations ?? undefined,
+        affectedSystems: row.affected_systems ?? undefined,
+      }))
+    );
+  }, []);
+
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
+
+  const topAttacks: AttackItem[] = useMemo(
+    () =>
+      feed
+        .filter((n) => n.category === "threat")
+        .slice(0, 6)
+        .map((n) => ({
+          id: n.id,
+          name: n.title,
+          type: n.category,
+          severity: (n.severity && n.severity !== "info" ? n.severity : "medium") as AttackItem["severity"],
+          count: 0,
+          trend: "stable" as const,
+          description: n.summary,
+        })),
+    [feed]
+  );
+
+  const securityTrends: TrendItem[] = useMemo(
+    () =>
+      feed
+        .filter((n) => n.category === "advisory" || n.category === "knowledge" || n.category === "update")
+        .slice(0, 8)
+        .map((n) => ({
+          id: n.id,
+          title: n.title,
+          category: n.category,
+          impact: (n.severity === "critical" || n.severity === "high"
+            ? "high"
+            : n.severity === "medium"
+            ? "medium"
+            : "low") as TrendItem["impact"],
+          description: n.summary,
+          date: n.date,
+        })),
+    [feed]
+  );
+
+  const breachNotifications: BreachNotification[] = useMemo(
+    () =>
+      feed
+        .filter((n) => n.category === "vulnerability")
+        .slice(0, 8)
+        .map((n) => ({
+          id: n.id,
+          organization: n.source ?? "Reported advisory",
+          date: n.date,
+          recordsAffected: "—",
+          dataTypes: n.affectedSystems ?? [],
+          severity: (n.severity === "critical" ? "critical" : n.severity === "high" ? "high" : "medium") as BreachNotification["severity"],
+          status: "ongoing" as const,
+          summary: n.summary,
+        })),
+    [feed]
+  );
+
+  const cyberSecurityNews = feed;
 
   // Check if user is in allowed teams
   const hasSecurityAccess = teams.some(team => 
@@ -162,9 +223,10 @@ export function SecurityCenterWidget() {
     return null;
   }
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    await loadFeed();
+    setIsRefreshing(false);
   };
 
   return (
@@ -222,6 +284,9 @@ export function SecurityCenterWidget() {
                 <Flame className="h-3 w-3" />
                 Top attack vectors this month
               </div>
+              {topAttacks.length === 0 && (
+                <p className="text-xs text-muted-foreground py-6 text-center">No threat advisories published yet.</p>
+              )}
               {topAttacks.map((attack, index) => (
                 <div key={attack.id} className="p-2.5 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors">
                   <div className="flex items-start justify-between gap-2">
@@ -242,10 +307,12 @@ export function SecurityCenterWidget() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5 ml-7">{attack.description}</p>
-                  <div className="flex items-center gap-2 mt-1.5 ml-7">
-                    <span className="text-xs font-medium text-primary">{attack.count.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground">incidents reported</span>
-                  </div>
+                  {attack.count > 0 && (
+                    <div className="flex items-center gap-2 mt-1.5 ml-7">
+                      <span className="text-xs font-medium text-primary">{attack.count.toLocaleString()}</span>
+                      <span className="text-xs text-muted-foreground">incidents reported</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </TabsContent>
@@ -256,6 +323,9 @@ export function SecurityCenterWidget() {
                 <Zap className="h-3 w-3" />
                 Emerging cybersecurity trends
               </div>
+              {securityTrends.length === 0 && (
+                <p className="text-xs text-muted-foreground py-6 text-center">No trend advisories published yet.</p>
+              )}
               {securityTrends.map((trend) => (
                 <div key={trend.id} className="p-2.5 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors">
                   <div className="flex items-start justify-between gap-2">
@@ -283,6 +353,9 @@ export function SecurityCenterWidget() {
                 <Skull className="h-3 w-3" />
                 Recent breach notifications
               </div>
+              {breachNotifications.length === 0 && (
+                <p className="text-xs text-muted-foreground py-6 text-center">No vulnerability disclosures published yet.</p>
+              )}
               {breachNotifications.map((breach) => (
                 <div key={breach.id} className="p-2.5 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors">
                   <div className="flex items-start justify-between gap-2">
@@ -322,6 +395,9 @@ export function SecurityCenterWidget() {
                 <Globe className="h-3 w-3" />
                 Latest security news & advisories
               </div>
+              {cyberSecurityNews.length === 0 && (
+                <p className="text-xs text-muted-foreground py-6 text-center">No security news published yet.</p>
+              )}
               {cyberSecurityNews.map((item) => (
                 <Collapsible key={item.id}>
                   <div className="rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors overflow-hidden">

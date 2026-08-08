@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,18 +54,11 @@ const LICENSE_RISK: Record<string, { level: "low" | "medium" | "high" | "critica
   "Unknown": { level: "critical", description: "License not identified" },
 };
 
-const MOCK_DEPENDENCIES: SoftwareDependency[] = [
-  { id: "1", name: "react", version: "18.3.1", language: "JavaScript", licenseType: "MIT", riskLevel: "low", status: "approved", usedIn: "Frontend", notes: "", addedAt: "2024-01-15" },
-  { id: "2", name: "spring-boot", version: "3.2.0", language: "Java", licenseType: "Apache-2.0", riskLevel: "low", status: "approved", usedIn: "Backend API", notes: "", addedAt: "2024-01-10" },
-  { id: "3", name: "mysql-connector-java", version: "8.0.33", language: "Java", licenseType: "GPL-2.0", riskLevel: "high", status: "review", usedIn: "Database", notes: "Check FOSS exception clause", addedAt: "2024-02-01" },
-  { id: "4", name: "log4j-core", version: "2.17.1", language: "Java", licenseType: "Apache-2.0", riskLevel: "low", status: "approved", usedIn: "Logging", notes: "", addedAt: "2024-01-20" },
-  { id: "5", name: "itext-pdf", version: "5.5.13", language: "Java", licenseType: "AGPL-3.0", riskLevel: "critical", status: "rejected", usedIn: "PDF Generation", notes: "Requires commercial license for proprietary use", addedAt: "2024-02-15" },
-  { id: "6", name: "jackson-databind", version: "2.15.0", language: "Java", licenseType: "Apache-2.0", riskLevel: "low", status: "approved", usedIn: "JSON Processing", notes: "", addedAt: "2024-01-12" },
-  { id: "7", name: "hibernate-core", version: "6.4.0", language: "Java", licenseType: "LGPL-2.1", riskLevel: "medium", status: "approved", usedIn: "ORM", notes: "LGPL allows linking without copyleft", addedAt: "2024-01-18" },
-];
 
 export function SoftwareLicenseCompliance() {
-  const [dependencies, setDependencies] = useState<SoftwareDependency[]>(MOCK_DEPENDENCIES);
+  const { currentTenant } = useTenant();
+  const [dependencies, setDependencies] = useState<SoftwareDependency[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRisk, setFilterRisk] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -76,6 +71,44 @@ export function SoftwareLicenseCompliance() {
     usedIn: "",
     notes: "",
   });
+
+  const loadDependencies = useCallback(async () => {
+    if (!currentTenant?.id) {
+      setDependencies([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("software_dependencies")
+      .select("*")
+      .eq("tenant_id", currentTenant.id)
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error("Failed to load dependencies");
+      setDependencies([]);
+    } else {
+      setDependencies(
+        (data ?? []).map((row) => ({
+          id: row.id,
+          name: row.name,
+          version: row.version ?? "",
+          language: row.language ?? "",
+          licenseType: row.license_type ?? "Unknown",
+          riskLevel: (row.risk_level ?? "critical") as SoftwareDependency["riskLevel"],
+          status: (row.status ?? "review") as SoftwareDependency["status"],
+          usedIn: row.used_in ?? "",
+          notes: row.notes ?? "",
+          addedAt: (row.created_at ?? "").split("T")[0],
+        }))
+      );
+    }
+    setLoading(false);
+  }, [currentTenant?.id]);
+
+  useEffect(() => {
+    loadDependencies();
+  }, [loadDependencies]);
 
   const filteredDeps = dependencies.filter((dep) => {
     const matchesSearch = dep.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,23 +127,42 @@ export function SoftwareLicenseCompliance() {
     high: dependencies.filter((d) => d.riskLevel === "high").length,
   };
 
-  const handleAddDependency = () => {
+  const handleAddDependency = async () => {
+    if (!currentTenant?.id) {
+      toast.error("Select an organization first");
+      return;
+    }
     const riskInfo = LICENSE_RISK[newDep.licenseType] || LICENSE_RISK["Unknown"];
-    const newDependency: SoftwareDependency = {
-      id: Date.now().toString(),
-      ...newDep,
-      riskLevel: riskInfo.level,
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from("software_dependencies").insert({
+      tenant_id: currentTenant.id,
+      name: newDep.name,
+      version: newDep.version,
+      language: newDep.language,
+      license_type: newDep.licenseType,
+      used_in: newDep.usedIn,
+      notes: newDep.notes,
+      risk_level: riskInfo.level,
       status: riskInfo.level === "critical" || riskInfo.level === "high" ? "review" : "approved",
-      addedAt: new Date().toISOString().split("T")[0],
-    };
-    setDependencies([...dependencies, newDependency]);
+      created_by: userData.user?.id ?? null,
+    });
+    if (error) {
+      toast.error("Failed to add dependency");
+      return;
+    }
     setIsAddDialogOpen(false);
     setNewDep({ name: "", version: "", language: "Java", licenseType: "MIT", usedIn: "", notes: "" });
     toast.success("Dependency added successfully");
+    loadDependencies();
   };
 
-  const updateStatus = (id: string, status: "approved" | "review" | "rejected") => {
-    setDependencies(dependencies.map((d) => (d.id === id ? { ...d, status } : d)));
+  const updateStatus = async (id: string, status: "approved" | "review" | "rejected") => {
+    const { error } = await supabase.from("software_dependencies").update({ status }).eq("id", id);
+    if (error) {
+      toast.error("Failed to update status");
+      return;
+    }
+    setDependencies((prev) => prev.map((d) => (d.id === id ? { ...d, status } : d)));
     toast.success(`Status updated to ${status}`);
   };
 
@@ -371,7 +423,22 @@ export function SoftwareLicenseCompliance() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                    Loading dependencies…
+                  </TableCell>
+                </TableRow>
+              )}
+              {!loading && filteredDeps.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                    No dependencies tracked yet. Use “Add Dependency” to start your license register.
+                  </TableCell>
+                </TableRow>
+              )}
               {filteredDeps.map((dep) => (
+
                 <TableRow key={dep.id}>
                   <TableCell>
                     <div>
