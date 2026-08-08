@@ -1,4 +1,8 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
+import {
+  DEFAULT_MODULE_TTL_MS,
+  useStaleRevalidation,
+} from "@/hooks/useStaleRevalidation";
 
 /**
  * Keeps recently visited panes mounted so switching back is instant.
@@ -18,11 +22,21 @@ interface KeepAliveProps {
   activeKey: string;
   /** How many panes to keep mounted, including the active one. */
   max?: number;
+  /**
+   * How stale a kept-alive pane's data may get before it is revalidated
+   * automatically on re-entry (and periodically while visible).
+   */
+  ttlMs?: number;
   /** Renders the content for a pane key. Called once per mounted pane. */
   children: (key: string) => ReactNode;
 }
 
-export function KeepAlive({ activeKey, max = 4, children }: KeepAliveProps) {
+export function KeepAlive({
+  activeKey,
+  max = 4,
+  ttlMs = DEFAULT_MODULE_TTL_MS,
+  children,
+}: KeepAliveProps) {
   const [keys, setKeys] = useState<string[]>([activeKey]);
 
   useEffect(() => {
@@ -41,7 +55,12 @@ export function KeepAlive({ activeKey, max = 4, children }: KeepAliveProps) {
   return (
     <>
       {mounted.map((key) => (
-        <KeepAlivePane key={key} paneKey={key} active={key === activeKey}>
+        <KeepAlivePane
+          key={key}
+          paneKey={key}
+          active={key === activeKey}
+          ttlMs={ttlMs}
+        >
           {children(key)}
         </KeepAlivePane>
       ))}
@@ -52,14 +71,20 @@ export function KeepAlive({ activeKey, max = 4, children }: KeepAliveProps) {
 function KeepAlivePane({
   paneKey,
   active,
+  ttlMs,
   children,
 }: {
   paneKey: string;
   active: boolean;
+  ttlMs: number;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const scrollTop = useRef(0);
+
+  // Mounted-but-hidden panes never re-run React Query's mount refetch, so a
+  // TTL drives revalidation when the user returns to them.
+  useStaleRevalidation({ active, ttlMs });
 
   // Restore the window scroll position the pane was left at, so returning to a
   // long table does not dump the user back at the top.
