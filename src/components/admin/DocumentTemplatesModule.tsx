@@ -16,9 +16,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   FileText, Plus, Edit, Trash2, Copy, Check, Star, Loader2,
-  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus
+  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus,
+  History,
 } from "lucide-react";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
+import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
 import {
   TEMPLATE_LIBRARY,
   TEMPLATE_TYPES,
