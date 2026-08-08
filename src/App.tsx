@@ -43,6 +43,7 @@ const PlatformUsers = lazyDefault(() => import("./pages/admin/platform/PlatformU
 const PlatformLicenses = lazyDefault(() => import("./pages/admin/platform/PlatformLicenses"));
 const PlatformIntegrations = lazyDefault(() => import("./pages/admin/platform/PlatformIntegrations"));
 const PlatformStatus = lazyDefault(() => import("./pages/admin/platform/PlatformStatus"));
+const PlatformObservability = lazyDefault(() => import("./pages/admin/platform/PlatformObservability"));
 const CreateWorkspace = lazyDefault(() => import("./pages/workspace/CreateWorkspace"));
 const SelectWorkspace = lazyDefault(() => import("./pages/workspace/SelectWorkspace"));
 const SupportPortal = lazyDefault(() => import("./pages/SupportPortal"));
@@ -101,6 +102,7 @@ const App = () => (
                     <Route path="licenses" element={<PlatformLicenses />} />
                     <Route path="integrations" element={<PlatformIntegrations />} />
                     <Route path="status" element={<PlatformStatus />} />
+                    <Route path="observability" element={<PlatformObservability />} />
                   </Route>
                   <Route path="health" element={<AdminHealth />} />
                   <Route path="procurement" element={<AdminProcurement />} />
@@ -132,6 +134,11 @@ const App = () => (
                 <Route path="/admin/platform/status" element={<AdminLayout />}>
                   <Route element={<PlatformLayout />}>
                     <Route index element={<PlatformStatus />} />
+                  </Route>
+                </Route>
+                <Route path="/admin/platform/observability" element={<AdminLayout />}>
+                  <Route element={<PlatformLayout />}>
+                    <Route index element={<PlatformObservability />} />
                   </Route>
                 </Route>
                 

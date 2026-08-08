@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
-import { Crown, Building2, Users, KeyRound, Plug, Activity, Loader2, ShieldAlert } from "lucide-react";
+import { Crown, Building2, Users, KeyRound, Plug, Activity, Radar, Loader2, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ const TABS = [
   { to: "/admin/platform/licenses", label: "License Management", icon: KeyRound },
   { to: "/admin/platform/integrations", label: "Integrations", icon: Plug },
   { to: "/admin/platform/status", label: "System Status", icon: Activity },
+  { to: "/admin/platform/observability", label: "Observability", icon: Radar },
 ];
 
 export default function PlatformLayout() {
