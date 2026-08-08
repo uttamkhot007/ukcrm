@@ -423,7 +423,22 @@ export function SoftwareLicenseCompliance() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                    Loading dependencies…
+                  </TableCell>
+                </TableRow>
+              )}
+              {!loading && filteredDeps.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                    No dependencies tracked yet. Use “Add Dependency” to start your license register.
+                  </TableCell>
+                </TableRow>
+              )}
               {filteredDeps.map((dep) => (
+
                 <TableRow key={dep.id}>
                   <TableCell>
                     <div>
