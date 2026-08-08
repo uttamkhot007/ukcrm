@@ -244,7 +244,7 @@ export function MEDDICWorkflow() {
   }, [selectedDeal?.id]);
 
   // Fetch deals with MEDDIC data
-  const { data: deals, isLoading } = useQuery({
+  const { data: deals, isLoading, isFetching } = useQuery({
     queryKey: ['deals-meddic', currentTenant?.id],
     queryFn: async () => {
       let query = supabase
