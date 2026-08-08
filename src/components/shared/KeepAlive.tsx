@@ -45,9 +45,11 @@ export function KeepAlive({
 
   useEffect(() => {
     setKeys((prev) => {
-      if (prev[0] === activeKey) return prev;
-      // A revisit is a cache hit only when the pane survived the LRU.
+      // A revisit is a cache hit only when the pane survived the LRU. This runs
+      // for the initial pane too, so that pane is registered as "seen" and a
+      // later return to it is classified correctly.
       recordPaneActivation(moduleId, activeKey, prev.includes(activeKey));
+      if (prev[0] === activeKey) return prev;
       const next = [activeKey, ...prev.filter((k) => k !== activeKey)].slice(0, max);
       for (const evicted of prev) {
         if (!next.includes(evicted)) recordPaneEviction(moduleId, evicted);
