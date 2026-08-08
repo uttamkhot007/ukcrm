@@ -73,8 +73,9 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
         <div className="hidden md:block sticky top-0 z-50 flex-shrink-0">
           <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
         </div>
-        
+
         <main className="flex-1 overflow-y-auto pb-safe relative page-3d">
+          <ModuleTabBar activeModule={activeModule} onModuleChange={onModuleChange} />
           <div className="animate-fade-in">
             {children}
           </div>
@@ -86,5 +87,6 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
       {/* Deal Won Celebration - Shows on all pages */}
       <DealWonCelebration />
     </div>
+    </ModuleTabsProvider>
   );
 }
