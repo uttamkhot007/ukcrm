@@ -49,24 +49,12 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
   }, [initialTab]);
 
   // Warm sibling chunks once the browser is idle so tab switches feel instant.
-  // Skipped on offline / metered / 2g links, and retried when we come back.
-  useEffect(() => {
-    let idle: number | undefined;
-    const warmAll = () => {
-      if (shouldSkipSpeculativePreload()) return;
-      for (const key of Object.keys(TAB_COMPONENTS) as TabId[]) void TAB_COMPONENTS[key].warm();
-    };
-    const schedule = () => {
-      idle = window.requestIdleCallback?.(warmAll);
-      if (idle === undefined) window.setTimeout(warmAll, 1200);
-    };
-    if (shouldSkipSpeculativePreload()) window.addEventListener("online", schedule, { once: true });
-    else schedule();
-    return () => {
-      window.removeEventListener("online", schedule);
-      if (idle !== undefined) window.cancelIdleCallback?.(idle);
-    };
-  }, []);
+  // The scheduler runs these at the lowest priority behind any hover/click,
+  // caps concurrency, and skips offline / metered / 2g links.
+  useEffect(
+    () => preloadWhenIdle((Object.keys(TAB_COMPONENTS) as TabId[]).map((k) => TAB_COMPONENTS[k])),
+    [],
+  );
 
   /** Tab switch entry point — starts the paint-to-click benchmark. */
   const selectTab = (id: TabId) => {
@@ -115,8 +103,11 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
               aria-controls="people-tabpanel"
               tabIndex={active ? 0 : -1}
               onClick={() => selectTab(t.id)}
-              onMouseEnter={() => void TAB_COMPONENTS[t.id].warm()}
-              onFocus={() => void TAB_COMPONENTS[t.id].warm()}
+              onMouseEnter={() => TAB_COMPONENTS[t.id].warm("hover")}
+              onMouseLeave={() => TAB_COMPONENTS[t.id].cancelWarm()}
+              onFocus={() => TAB_COMPONENTS[t.id].warm("focus")}
+              onBlur={() => TAB_COMPONENTS[t.id].cancelWarm()}
+              onPointerDown={() => TAB_COMPONENTS[t.id].warm("pointer")}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
