@@ -19,6 +19,8 @@ export type PreloadableComponent<P = Record<string, unknown>> =
     preload: () => Promise<unknown>;
     /** Speculative warm-up: skipped on slow/metered links, never throws. */
     warm: () => Promise<unknown>;
+    /** Chunk name this component reports under in the performance benchmarks. */
+    chunkName: string;
   };
 
 /**
@@ -62,6 +64,7 @@ export function lazyNamed<P = Record<string, unknown>>(
   Component.preload = load;
   Component.warm = () =>
     shouldSkipSpeculativePreload() ? Promise.resolve() : load().catch(() => undefined);
+  Component.chunkName = exportName;
   return Component;
 }
 
@@ -87,6 +90,7 @@ export function lazyDefault<P = Record<string, unknown>>(
   Component.preload = load;
   Component.warm = () =>
     shouldSkipSpeculativePreload() ? Promise.resolve() : load().catch(() => undefined);
+  Component.chunkName = name;
   return Component;
 }
 
