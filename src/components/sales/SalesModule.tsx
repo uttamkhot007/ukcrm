@@ -255,7 +255,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
                 aria-selected={isActive}
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveTab(group.tabs[0].id)}
-                onMouseEnter={() => group.tabs[0].preload?.preload()}
+                onMouseEnter={() => group.tabs[0].preload?.warm()}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
                   focusRing,
@@ -291,9 +291,9 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
               aria-controls="sales-tab-panel"
               tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
-              onMouseEnter={() => tab.preload?.preload()}
-              onFocus={() => tab.preload?.preload()}
-              onPointerDown={() => tab.preload?.preload()}
+              onMouseEnter={() => tab.preload?.warm()}
+              onFocus={() => tab.preload?.warm()}
+              onPointerDown={() => tab.preload?.warm()}
               className={cn(
                 "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 focusRing,
