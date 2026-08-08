@@ -352,6 +352,62 @@ export function DocumentTemplatesModule() {
         </Dialog>
       </div>
 
+      {/* Role selector */}
+      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+        {TEMPLATE_ROLES.map((role) => {
+          const total = TEMPLATE_LIBRARY.filter((t) => t.role === role.value).length;
+          const installed = TEMPLATE_LIBRARY.filter(
+            (t) => t.role === role.value && templates.some((e) => e.name === t.name),
+          ).length;
+          const isActive = activeRole === role.value;
+          return (
+            <Card
+              key={role.value}
+              role="button"
+              tabIndex={0}
+              onClick={() => { setActiveRole(isActive ? 'all' : role.value); setActiveType('all'); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveRole(isActive ? 'all' : role.value);
+                  setActiveType('all');
+                }
+              }}
+              className={`cursor-pointer transition-all hover:shadow-md ${isActive ? 'border-primary ring-1 ring-primary' : ''}`}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <role.icon className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm">{role.label}</CardTitle>
+                </div>
+                <CardDescription className="text-xs">{role.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <p className="text-xs text-muted-foreground">
+                  {installed}/{total} installed
+                </p>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-1"
+                  disabled={installingPack === role.value || installed === total}
+                  onClick={(e) => { e.stopPropagation(); installRolePack(role.value); }}
+                >
+                  {installingPack === role.value ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <PackagePlus className="h-3 w-3" />
+                  )}
+                  {installed === total ? 'Pack installed' : 'Install pack'}
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
+
       {/* Main Tabs - My Templates vs Sample Gallery */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
@@ -361,7 +417,7 @@ export function DocumentTemplatesModule() {
           </TabsTrigger>
           <TabsTrigger value="sample-gallery" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Sample Gallery ({SAMPLE_TEMPLATES.length})
+            Template Library ({SAMPLE_TEMPLATES.length})
           </TabsTrigger>
         </TabsList>
 
@@ -374,7 +430,7 @@ export function DocumentTemplatesModule() {
           >
             All Types
           </Button>
-          {TEMPLATE_TYPES.map((type) => (
+          {visibleTypes.map((type) => (
             <Button
               key={type.value}
               variant={activeType === type.value ? 'default' : 'outline'}
@@ -387,6 +443,7 @@ export function DocumentTemplatesModule() {
             </Button>
           ))}
         </div>
+
 
         <TabsContent value="my-templates">
           {/* Templates Grid */}
