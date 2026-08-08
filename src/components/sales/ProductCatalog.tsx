@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RevalidationBar, RevalidationBadge } from "@/components/shared/RevalidationIndicator";
-import { Plus, Search, Edit, Trash2, Package, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, Loader2, UserPlus } from "lucide-react";
+import { QuickAddLeadDialog } from "./QuickAddLeadDialog";
+
 
 import { toast } from "sonner";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
