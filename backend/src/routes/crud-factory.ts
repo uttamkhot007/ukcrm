@@ -74,6 +74,21 @@ export function createCrudRoutes(config: CrudConfig) {
       });
     }
 
+    // Tenant guard: a tenant-scoped table must never be served without a
+    // tenant in the verified token. Without this, a token missing `tenantId`
+    // would fall through the per-operation filters and read every tenant's
+    // rows. Platform admins are the only cross-tenant callers.
+    if (tenantScoped) {
+      app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
+        if (request.user?.tenantId) return;
+        if (await isAdminUser(request)) return;
+        return reply
+          .status(403)
+          .send({ error: 'Forbidden', message: 'No tenant associated with this account' });
+      });
+    }
+
+
 
     // LIST
     app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
