@@ -483,13 +483,12 @@ export default function NotificationsPage() {
         {/* Filters */}
         <Card className="mb-6">
           <CardHeader className="pb-3">
-            <CardTitle asChild>
-              <h2 className="text-sm font-medium flex items-center gap-2">
-                <Filter className="w-4 h-4" aria-hidden="true" />
-                Filters
-              </h2>
-            </CardTitle>
+            <h2 className="text-sm font-medium flex items-center gap-2">
+              <Filter className="w-4 h-4" aria-hidden="true" />
+              Filters
+            </h2>
           </CardHeader>
+
 
           <CardContent>
             <div className="flex flex-wrap gap-4">
