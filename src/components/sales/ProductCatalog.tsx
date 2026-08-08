@@ -274,7 +274,18 @@ export function ProductCatalog() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      <QuickAddLeadDialog
+        key={leadForProduct?.id ?? "generic"}
+        open={quickLeadOpen}
+        onOpenChange={(open) => { setQuickLeadOpen(open); if (!open) setLeadForProduct(null); }}
+        defaultTitle={leadForProduct ? `${leadForProduct.name} opportunity` : ""}
+        defaultSource={leadForProduct ? "Product catalog" : ""}
+        defaultNotes={leadForProduct ? `Interested in ${leadForProduct.name}${leadForProduct.sku ? ` (SKU ${leadForProduct.sku})` : ""}.` : ""}
+      />
+
 
       <Card>
         <CardHeader>
