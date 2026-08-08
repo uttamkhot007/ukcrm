@@ -33,11 +33,16 @@ suite('Database · multitenant isolation', () => {
   const query = async (sql: string): Promise<Row[]> => (await client.query(sql)).rows;
 
   beforeAll(async () => {
+    // Managed Postgres endpoints terminate TLS with a chain the runner does not
+    // ship; the audit reads catalog metadata only, so relaxing verification here
+    // does not weaken anything in the application.
+    const ssl = process.env.PGSSLMODE === 'disable' ? undefined : { rejectUnauthorized: false };
     client = process.env.DATABASE_URL
-      ? new Client({ connectionString: process.env.DATABASE_URL })
-      : new Client();
+      ? new Client({ connectionString: process.env.DATABASE_URL, ssl })
+      : new Client({ ssl });
     await client.connect();
   });
+
 
   afterAll(async () => {
     await client?.end();
