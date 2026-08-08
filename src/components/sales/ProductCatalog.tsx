@@ -35,6 +35,9 @@ export function ProductCatalog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [leadForProduct, setLeadForProduct] = useState<Product | null>(null);
+  const [quickLeadOpen, setQuickLeadOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
