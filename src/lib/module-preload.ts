@@ -21,6 +21,7 @@ const loaders: Record<string, Loader> = {
   tally: () => import("@/components/tally/TallyModule"),
   billing: () => import("@/components/billing/BillingModule"),
   hr: () => import("@/components/hr/HRModule"),
+  "people-intel": () => import("@/components/people/PeopleIntelligenceModule"),
   projects: () => import("@/components/projects/ProjectsModule"),
   marketing: () => import("@/components/marketing/MarketingModule"),
   communications: () => import("@/components/communications/CommunicationsModule"),
