@@ -315,7 +315,6 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         role="tabpanel"
         tabIndex={-1}
         aria-live="polite"
-        aria-busy={undefined}
         aria-label={`${currentTab.label} workspace`}
       >
         <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
