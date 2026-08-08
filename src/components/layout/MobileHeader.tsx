@@ -26,9 +26,10 @@ export function MobileHeader({ onMenuClick, showMenu = true }: MobileHeaderProps
         {/* Left: Menu button */}
         <div className="flex items-center gap-2">
           {showMenu && (
-            <Button variant="ghost" size="icon" onClick={onMenuClick}>
-              <Menu className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={onMenuClick} aria-label="Open navigation menu">
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
+
           )}
           
           {/* Workspace indicator */}
