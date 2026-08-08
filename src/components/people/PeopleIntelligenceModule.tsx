@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ModuleShell, StatsSkeleton, TableSkeleton } from "@/components/shared/ModuleSkeleton";
+import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
