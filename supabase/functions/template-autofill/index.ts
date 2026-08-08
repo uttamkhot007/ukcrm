@@ -61,8 +61,8 @@ Deno.serve(async (req) => {
 
     if (!isUuid(tenantId)) return json({ error: "tenant_id must be a valid id" }, 400);
     if (!isUuid(templateId)) return json({ error: "template_id must be a valid id" }, 400);
-    if (!["deal", "contact", "project", "employee"].includes(sourceType)) {
-      return json({ error: "source_type must be deal, contact, project or employee" }, 400);
+    if (!["deal", "contact", "project", "employee", "ticket"].includes(sourceType)) {
+      return json({ error: "source_type must be deal, contact, project, employee or ticket" }, 400);
     }
     if (!isUuid(sourceId)) return json({ error: "source_id must be a valid id" }, 400);
 
