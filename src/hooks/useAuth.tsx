@@ -3,6 +3,7 @@ import type { User, Session } from "@/integrations/api/aws-types";
 // IMPORTANT: import the real Supabase client (works in the Lovable preview).
 // In the AWS production build, the Vite alias in vite.config.ts rewrites this
 // import to the REST-shim stub, so the same source works in both environments.
+import { clearPersistedQueryCache } from "@/lib/query-persist";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
