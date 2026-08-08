@@ -469,8 +469,9 @@ export default function NotificationsPage() {
             variant={activeView === "preferences" ? "default" : "ghost"}
             size="icon"
             onClick={() => setActiveView(activeView === "preferences" ? "notifications" : "preferences")}
+            aria-label={activeView === "preferences" ? "Back to notifications" : "Open notification preferences"}
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5" aria-hidden="true" />
           </Button>
         </div>
 
@@ -482,11 +483,14 @@ export default function NotificationsPage() {
         {/* Filters */}
         <Card className="mb-6">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
+            <CardTitle asChild>
+              <h2 className="text-sm font-medium flex items-center gap-2">
+                <Filter className="w-4 h-4" aria-hidden="true" />
+                Filters
+              </h2>
             </CardTitle>
           </CardHeader>
+
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[150px]">
