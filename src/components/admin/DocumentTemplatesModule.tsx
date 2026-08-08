@@ -16,8 +16,19 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   FileText, Plus, Edit, Trash2, Copy, Check, Star, Loader2,
-  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles
+  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus
 } from "lucide-react";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import {
+  TEMPLATE_LIBRARY,
+  TEMPLATE_TYPES,
+  TEMPLATE_ROLES,
+  DEFAULT_TEMPLATE_CONTENT,
+  applyTenantBranding,
+  type LibraryTemplate,
+  type TemplateRole,
+} from "@/lib/template-library";
+
 
 interface DocumentTemplate {
   id: string;
@@ -37,336 +48,20 @@ interface DocumentTemplate {
   updated_at: string;
 }
 
-const TEMPLATE_TYPES = [
-  { value: 'poc_plan', label: 'POC Plan', icon: ClipboardList, description: 'Proof of Concept documentation' },
-  { value: 'implementation_plan', label: 'Implementation Plan', icon: FileCheck, description: 'Implementation project documentation' },
-  { value: 'invoice', label: 'Invoice', icon: Receipt, description: 'Billing invoices' },
-  { value: 'quote', label: 'Quote/Quotation', icon: Quote, description: 'Sales quotes and proposals' },
-  { value: 'proposal', label: 'Proposal', icon: FileText, description: 'Business proposals' },
-];
+const SAMPLE_TEMPLATES = TEMPLATE_LIBRARY;
+const DEFAULT_TEMPLATES = DEFAULT_TEMPLATE_CONTENT;
 
-const DEFAULT_TEMPLATES: Record<string, any> = {
-  poc_plan: {
-    sections: [
-      { id: 'overview', title: 'Overview', required: true },
-      { id: 'objectives', title: 'POC Objectives', required: true },
-      { id: 'scope', title: 'Scope', required: true },
-      { id: 'success_criteria', title: 'Success Criteria', required: true },
-      { id: 'timeline', title: 'Timeline', required: true },
-      { id: 'resources', title: 'Resources Required', required: false },
-      { id: 'risks', title: 'Risks & Mitigation', required: false },
-    ],
-  },
-  implementation_plan: {
-    sections: [
-      { id: 'executive_summary', title: 'Executive Summary', required: true },
-      { id: 'customer_environment', title: 'Customer Environment', required: true },
-      { id: 'solution_architecture', title: 'Solution Architecture', required: true },
-      { id: 'implementation_phases', title: 'Implementation Phases', required: true },
-      { id: 'milestones', title: 'Milestones & Timeline', required: true },
-      { id: 'raci_matrix', title: 'RACI Matrix', required: true },
-      { id: 'dependencies', title: 'Dependencies', required: false },
-      { id: 'acceptance_criteria', title: 'Acceptance Criteria', required: true },
-    ],
-  },
-  invoice: {
-    fields: [
-      { id: 'invoice_number', label: 'Invoice Number', type: 'auto' },
-      { id: 'invoice_date', label: 'Invoice Date', type: 'date' },
-      { id: 'due_date', label: 'Due Date', type: 'date' },
-      { id: 'customer_details', label: 'Customer Details', type: 'customer' },
-      { id: 'line_items', label: 'Line Items', type: 'table' },
-      { id: 'subtotal', label: 'Subtotal', type: 'calculated' },
-      { id: 'tax', label: 'Tax', type: 'calculated' },
-      { id: 'total', label: 'Total', type: 'calculated' },
-      { id: 'payment_terms', label: 'Payment Terms', type: 'text' },
-      { id: 'bank_details', label: 'Bank Details', type: 'text' },
-    ],
-  },
-  quote: {
-    fields: [
-      { id: 'quote_number', label: 'Quote Number', type: 'auto' },
-      { id: 'quote_date', label: 'Quote Date', type: 'date' },
-      { id: 'valid_until', label: 'Valid Until', type: 'date' },
-      { id: 'customer_details', label: 'Customer Details', type: 'customer' },
-      { id: 'solution_summary', label: 'Solution Summary', type: 'rich_text' },
-      { id: 'line_items', label: 'Line Items', type: 'table' },
-      { id: 'terms_conditions', label: 'Terms & Conditions', type: 'rich_text' },
-    ],
-  },
-  proposal: {
-    sections: [
-      { id: 'cover', title: 'Cover Page', required: true },
-      { id: 'executive_summary', title: 'Executive Summary', required: true },
-      { id: 'understanding', title: 'Understanding of Requirements', required: true },
-      { id: 'proposed_solution', title: 'Proposed Solution', required: true },
-      { id: 'pricing', title: 'Pricing', required: true },
-      { id: 'timeline', title: 'Timeline', required: true },
-      { id: 'about_us', title: 'About Us', required: false },
-    ],
-  },
-};
-
-// Professional sample templates with different themes
-const SAMPLE_TEMPLATES = [
-  // POC Plans
-  {
-    name: 'Modern POC Template',
-    description: 'Clean, modern design with blue accent colors. Ideal for technology solutions.',
-    template_type: 'poc_plan',
-    content: DEFAULT_TEMPLATES.poc_plan,
-    header_content: { showLogo: true, logoPosition: 'left', showDate: true, showVersion: true },
-    footer_content: { showPageNumbers: true, showConfidential: true, customText: 'Confidential - For Internal Use Only' },
-    branding: {
-      theme: 'modern',
-      primaryColor: '#2563eb',
-      secondaryColor: '#1e40af',
-      accentColor: '#60a5fa',
-      fontFamily: 'Inter',
-      headerFont: 'Inter',
-      headerStyle: 'gradient',
-      borderRadius: '8px',
-      shadowStyle: 'soft',
-    },
-  },
-  {
-    name: 'Enterprise POC Template',
-    description: 'Professional enterprise design with dark theme. Perfect for corporate clients.',
-    template_type: 'poc_plan',
-    content: DEFAULT_TEMPLATES.poc_plan,
-    header_content: { showLogo: true, logoPosition: 'center', showDate: true, showVersion: true },
-    footer_content: { showPageNumbers: true, showConfidential: true, customText: 'Enterprise Confidential' },
-    branding: {
-      theme: 'enterprise',
-      primaryColor: '#1f2937',
-      secondaryColor: '#111827',
-      accentColor: '#f59e0b',
-      fontFamily: 'Source Sans Pro',
-      headerFont: 'Montserrat',
-      headerStyle: 'solid',
-      borderRadius: '4px',
-      shadowStyle: 'sharp',
-    },
-  },
-  // Implementation Plans
-  {
-    name: 'Technical Implementation Blueprint',
-    description: 'Detailed technical template with green theme. Includes environment details and RACI matrix.',
-    template_type: 'implementation_plan',
-    content: {
-      ...DEFAULT_TEMPLATES.implementation_plan,
-      showGanttChart: true,
-      showEnvironmentDiagram: true,
-    },
-    header_content: { showLogo: true, logoPosition: 'left', showProjectName: true, showVersion: true },
-    footer_content: { showPageNumbers: true, showRevisionHistory: true },
-    branding: {
-      theme: 'technical',
-      primaryColor: '#059669',
-      secondaryColor: '#047857',
-      accentColor: '#34d399',
-      fontFamily: 'IBM Plex Sans',
-      headerFont: 'IBM Plex Sans',
-      headerStyle: 'minimal',
-      borderRadius: '6px',
-      shadowStyle: 'none',
-      tableStyle: 'striped',
-    },
-  },
-  {
-    name: 'Executive Implementation Plan',
-    description: 'High-level executive template with purple theme. Focus on milestones and outcomes.',
-    template_type: 'implementation_plan',
-    content: {
-      ...DEFAULT_TEMPLATES.implementation_plan,
-      showExecutiveDashboard: true,
-      showMilestoneTracker: true,
-    },
-    header_content: { showLogo: true, logoPosition: 'right', showDate: true },
-    footer_content: { showPageNumbers: true, showConfidential: true },
-    branding: {
-      theme: 'executive',
-      primaryColor: '#7c3aed',
-      secondaryColor: '#6d28d9',
-      accentColor: '#a78bfa',
-      fontFamily: 'Nunito Sans',
-      headerFont: 'Playfair Display',
-      headerStyle: 'elegant',
-      borderRadius: '12px',
-      shadowStyle: 'elevated',
-    },
-  },
-  // Invoices
-  {
-    name: 'Professional Invoice - Blue',
-    description: 'Clean professional invoice with blue header and organized layout.',
-    template_type: 'invoice',
-    content: DEFAULT_TEMPLATES.invoice,
-    header_content: { showLogo: true, showCompanyAddress: true, invoiceTitle: 'INVOICE' },
-    footer_content: { showBankDetails: true, showPaymentQR: false, thankYouMessage: 'Thank you for your business!' },
-    branding: {
-      theme: 'professional-blue',
-      primaryColor: '#1d4ed8',
-      secondaryColor: '#1e40af',
-      accentColor: '#3b82f6',
-      fontFamily: 'Open Sans',
-      headerFont: 'Roboto',
-      headerStyle: 'boxed',
-      tableHeaderBg: '#1d4ed8',
-      tableHeaderText: '#ffffff',
-      borderRadius: '4px',
-    },
-  },
-  {
-    name: 'Minimal Invoice - Monochrome',
-    description: 'Sleek minimal design with black and white theme. Modern and clean.',
-    template_type: 'invoice',
-    content: DEFAULT_TEMPLATES.invoice,
-    header_content: { showLogo: true, showCompanyAddress: true, invoiceTitle: 'Invoice' },
-    footer_content: { showBankDetails: true, showPaymentQR: false, thankYouMessage: 'We appreciate your trust in us.' },
-    branding: {
-      theme: 'minimal-mono',
-      primaryColor: '#18181b',
-      secondaryColor: '#27272a',
-      accentColor: '#71717a',
-      fontFamily: 'Inter',
-      headerFont: 'Inter',
-      headerStyle: 'line',
-      tableHeaderBg: '#f4f4f5',
-      tableHeaderText: '#18181b',
-      borderRadius: '0px',
-    },
-  },
-  {
-    name: 'Creative Invoice - Gradient',
-    description: 'Eye-catching gradient design. Perfect for creative agencies and startups.',
-    template_type: 'invoice',
-    content: DEFAULT_TEMPLATES.invoice,
-    header_content: { showLogo: true, showCompanyAddress: true, invoiceTitle: 'INVOICE' },
-    footer_content: { showBankDetails: true, showPaymentQR: true, thankYouMessage: 'Thanks for choosing us!' },
-    branding: {
-      theme: 'creative-gradient',
-      primaryColor: '#ec4899',
-      secondaryColor: '#8b5cf6',
-      accentColor: '#f472b6',
-      gradientStart: '#ec4899',
-      gradientEnd: '#8b5cf6',
-      fontFamily: 'Poppins',
-      headerFont: 'Poppins',
-      headerStyle: 'gradient',
-      tableHeaderBg: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
-      tableHeaderText: '#ffffff',
-      borderRadius: '16px',
-    },
-  },
-  // Quotes
-  {
-    name: 'Sales Quote - Professional',
-    description: 'Professional quote template with teal accents. Includes validity period and terms.',
-    template_type: 'quote',
-    content: DEFAULT_TEMPLATES.quote,
-    header_content: { showLogo: true, showQuoteValidity: true, title: 'QUOTATION' },
-    footer_content: { showTerms: true, showSignature: true },
-    branding: {
-      theme: 'sales-pro',
-      primaryColor: '#0d9488',
-      secondaryColor: '#0f766e',
-      accentColor: '#2dd4bf',
-      fontFamily: 'Lato',
-      headerFont: 'Lato',
-      headerStyle: 'modern',
-      highlightColor: '#ccfbf1',
-      borderRadius: '8px',
-    },
-  },
-  {
-    name: 'Quote - Enterprise Dark',
-    description: 'Dark theme quote for enterprise clients. Premium and sophisticated look.',
-    template_type: 'quote',
-    content: DEFAULT_TEMPLATES.quote,
-    header_content: { showLogo: true, showQuoteValidity: true, title: 'Price Quotation' },
-    footer_content: { showTerms: true, showSignature: true, showContactInfo: true },
-    branding: {
-      theme: 'enterprise-dark',
-      primaryColor: '#0f172a',
-      secondaryColor: '#1e293b',
-      accentColor: '#f97316',
-      fontFamily: 'Source Sans Pro',
-      headerFont: 'Montserrat',
-      headerStyle: 'dark',
-      highlightColor: '#fed7aa',
-      borderRadius: '6px',
-      darkMode: true,
-    },
-  },
-  // Proposals
-  {
-    name: 'Business Proposal - Classic',
-    description: 'Traditional business proposal with navy blue theme. Formal and trustworthy.',
-    template_type: 'proposal',
-    content: DEFAULT_TEMPLATES.proposal,
-    header_content: { showLogo: true, showCoverPage: true, showTOC: true },
-    footer_content: { showPageNumbers: true, showCompanyInfo: true },
-    branding: {
-      theme: 'classic-business',
-      primaryColor: '#1e3a5f',
-      secondaryColor: '#0c1f3d',
-      accentColor: '#4a90d9',
-      fontFamily: 'Georgia',
-      headerFont: 'Playfair Display',
-      headerStyle: 'classic',
-      coverStyle: 'centered',
-      borderRadius: '4px',
-    },
-  },
-  {
-    name: 'Modern Proposal - Vibrant',
-    description: 'Contemporary proposal design with vibrant coral theme. Stands out from competition.',
-    template_type: 'proposal',
-    content: DEFAULT_TEMPLATES.proposal,
-    header_content: { showLogo: true, showCoverPage: true, showTOC: true },
-    footer_content: { showPageNumbers: true, showSocialLinks: true },
-    branding: {
-      theme: 'modern-vibrant',
-      primaryColor: '#f43f5e',
-      secondaryColor: '#e11d48',
-      accentColor: '#fb7185',
-      fontFamily: 'Nunito',
-      headerFont: 'Archivo',
-      headerStyle: 'bold',
-      coverStyle: 'fullbleed',
-      borderRadius: '12px',
-      useIcons: true,
-    },
-  },
-  {
-    name: 'Tech Proposal - Futuristic',
-    description: 'Futuristic design for tech companies. Cyan accents with dark elements.',
-    template_type: 'proposal',
-    content: DEFAULT_TEMPLATES.proposal,
-    header_content: { showLogo: true, showCoverPage: true, showTOC: true },
-    footer_content: { showPageNumbers: true, showVersion: true },
-    branding: {
-      theme: 'tech-futuristic',
-      primaryColor: '#06b6d4',
-      secondaryColor: '#0891b2',
-      accentColor: '#22d3ee',
-      fontFamily: 'Space Grotesk',
-      headerFont: 'Orbitron',
-      headerStyle: 'tech',
-      coverStyle: 'geometric',
-      borderRadius: '8px',
-      useAnimations: true,
-    },
-  },
-];
 
 export function DocumentTemplatesModule() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { settings: orgSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
+  const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>('all');
+  const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('my-templates');
+  const [activeTab, setActiveTab] = useState<string>('sample-gallery');
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
   const [loadingSampleId, setLoadingSampleId] = useState<string | null>(null);
@@ -488,29 +183,68 @@ export function DocumentTemplatesModule() {
     await updateMutation.mutateAsync({ id: template.id, data: { is_default: true } });
   };
 
+  // Tenant branding applied to every installed template
+  const tenantBranding = {
+    companyName: (orgSettings as any)?.name || currentTenant?.name || null,
+    logoUrl: (orgSettings as any)?.logo_url || (currentTenant as any)?.logo_url || null,
+    address: (orgSettings as any)?.address || null,
+    email: (orgSettings as any)?.email || null,
+    phone: (orgSettings as any)?.phone || null,
+    website: (orgSettings as any)?.website || null,
+    primaryColor: ((currentTenant as any)?.branding as any)?.primaryColor || null,
+    secondaryColor: ((currentTenant as any)?.branding as any)?.secondaryColor || null,
+    accentColor: ((currentTenant as any)?.branding as any)?.accentColor || null,
+  };
+
+  const buildTemplateRow = (sample: LibraryTemplate) => ({
+    tenant_id: currentTenant?.id,
+    name: sample.name,
+    description: sample.description,
+    template_type: sample.template_type,
+    content: { ...sample.content, role: sample.role, solution: sample.solution ?? null },
+    header_content: sample.header_content,
+    footer_content: sample.footer_content,
+    branding: applyTenantBranding(sample, tenantBranding),
+    is_default: false,
+    created_by: user?.id,
+  });
+
   // Add sample template to database
-  const addSampleTemplate = async (sample: typeof SAMPLE_TEMPLATES[0]) => {
+  const addSampleTemplate = async (sample: LibraryTemplate) => {
     setLoadingSampleId(sample.name);
     try {
-      const { error } = await supabase.from('document_templates').insert({
-        tenant_id: currentTenant?.id,
-        name: sample.name,
-        description: sample.description,
-        template_type: sample.template_type,
-        content: sample.content,
-        header_content: sample.header_content,
-        footer_content: sample.footer_content,
-        branding: sample.branding,
-        is_default: false,
-        created_by: user?.id,
-      });
+      const { error } = await supabase.from('document_templates').insert(buildTemplateRow(sample));
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['document-templates'] });
-      toast.success(`Added "${sample.name}" to your templates`);
+      toast.success(`Added "${sample.name}" with your company branding`);
     } catch (error: any) {
       toast.error('Failed to add template: ' + error.message);
     } finally {
       setLoadingSampleId(null);
+    }
+  };
+
+  // Install every template for a role in one action
+  const installRolePack = async (role: TemplateRole) => {
+    const pending = TEMPLATE_LIBRARY.filter(
+      (t) => t.role === role && !templates.some((existing) => existing.name === t.name),
+    );
+    if (pending.length === 0) {
+      toast.info('All templates for this role are already installed');
+      return;
+    }
+    setInstallingPack(role);
+    try {
+      const { error } = await supabase
+        .from('document_templates')
+        .insert(pending.map(buildTemplateRow));
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['document-templates'] });
+      toast.success(`Installed ${pending.length} branded templates`);
+    } catch (error: any) {
+      toast.error('Failed to install pack: ' + error.message);
+    } finally {
+      setInstallingPack(null);
     }
   };
 
@@ -519,15 +253,25 @@ export function DocumentTemplatesModule() {
     return templates.some(t => t.name === sampleName);
   };
 
-  const filteredTemplates = activeType === 'all' 
-    ? templates 
-    : templates.filter(t => t.template_type === activeType);
+  const roleTypeValues = TEMPLATE_TYPES
+    .filter((t) => activeRole === 'all' || t.role === activeRole)
+    .map((t) => t.value);
 
-  const filteredSamples = activeType === 'all'
-    ? SAMPLE_TEMPLATES
-    : SAMPLE_TEMPLATES.filter(t => t.template_type === activeType);
+  const filteredTemplates = templates.filter(
+    (t) =>
+      (activeType === 'all' ? roleTypeValues.includes(t.template_type) || activeRole === 'all' : t.template_type === activeType),
+  );
+
+  const filteredSamples = SAMPLE_TEMPLATES.filter(
+    (t) =>
+      (activeRole === 'all' || t.role === activeRole) &&
+      (activeType === 'all' || t.template_type === activeType),
+  );
+
+  const visibleTypes = TEMPLATE_TYPES.filter((t) => activeRole === 'all' || t.role === activeRole);
 
   const getTypeInfo = (type: string) => TEMPLATE_TYPES.find(t => t.value === type);
+
 
   return (
     <div className="space-y-6">
@@ -535,9 +279,11 @@ export function DocumentTemplatesModule() {
         <div>
           <h2 className="text-2xl font-bold">Document Templates</h2>
           <p className="text-muted-foreground">
-            Manage templates for POC Plans, Implementation Plans, Invoices, and Quotes
+            Role-based template library for Sales, Presales, Technical, HR and Finance — installed with{' '}
+            {tenantBranding.companyName || 'your organisation'}&apos;s branding.
           </p>
         </div>
+
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -606,6 +352,62 @@ export function DocumentTemplatesModule() {
         </Dialog>
       </div>
 
+      {/* Role selector */}
+      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+        {TEMPLATE_ROLES.map((role) => {
+          const total = TEMPLATE_LIBRARY.filter((t) => t.role === role.value).length;
+          const installed = TEMPLATE_LIBRARY.filter(
+            (t) => t.role === role.value && templates.some((e) => e.name === t.name),
+          ).length;
+          const isActive = activeRole === role.value;
+          return (
+            <Card
+              key={role.value}
+              role="button"
+              tabIndex={0}
+              onClick={() => { setActiveRole(isActive ? 'all' : role.value); setActiveType('all'); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveRole(isActive ? 'all' : role.value);
+                  setActiveType('all');
+                }
+              }}
+              className={`cursor-pointer transition-all hover:shadow-md ${isActive ? 'border-primary ring-1 ring-primary' : ''}`}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <role.icon className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm">{role.label}</CardTitle>
+                </div>
+                <CardDescription className="text-xs">{role.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <p className="text-xs text-muted-foreground">
+                  {installed}/{total} installed
+                </p>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-1"
+                  disabled={installingPack === role.value || installed === total}
+                  onClick={(e) => { e.stopPropagation(); installRolePack(role.value); }}
+                >
+                  {installingPack === role.value ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <PackagePlus className="h-3 w-3" />
+                  )}
+                  {installed === total ? 'Pack installed' : 'Install pack'}
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
+
       {/* Main Tabs - My Templates vs Sample Gallery */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
@@ -615,7 +417,7 @@ export function DocumentTemplatesModule() {
           </TabsTrigger>
           <TabsTrigger value="sample-gallery" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Sample Gallery ({SAMPLE_TEMPLATES.length})
+            Template Library ({SAMPLE_TEMPLATES.length})
           </TabsTrigger>
         </TabsList>
 
@@ -628,7 +430,7 @@ export function DocumentTemplatesModule() {
           >
             All Types
           </Button>
-          {TEMPLATE_TYPES.map((type) => (
+          {visibleTypes.map((type) => (
             <Button
               key={type.value}
               variant={activeType === type.value ? 'default' : 'outline'}
@@ -641,6 +443,7 @@ export function DocumentTemplatesModule() {
             </Button>
           ))}
         </div>
+
 
         <TabsContent value="my-templates">
           {/* Templates Grid */}
@@ -786,10 +589,18 @@ export function DocumentTemplatesModule() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-base">{sample.name}</CardTitle>
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          {typeInfo?.label}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {typeInfo?.label}
+                          </Badge>
+                          {sample.solution && (
+                            <Badge variant="outline" className="text-xs">
+                              {sample.solution}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
+
                       {isAdded && (
                         <Badge variant="outline" className="text-green-600 border-green-600">
                           <Check className="h-3 w-3 mr-1" />
