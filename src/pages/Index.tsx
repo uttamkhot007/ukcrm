@@ -795,9 +795,14 @@ const Index = () => {
 
   return (
     <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
-      {renderContent()}
+      {/* keyed so switching modules shows the skeleton instead of freezing on
+          the previous module while the new chunk downloads */}
+      <Suspense key={activeModule} fallback={<ModuleSkeleton />}>
+        {renderContent()}
+      </Suspense>
     </MainLayout>
   );
+
 };
 
 export default Index;
