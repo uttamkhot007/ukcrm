@@ -86,7 +86,7 @@ export function lazyDefault<P = Record<string, unknown>>(
  * offline or on a metered/slow connection — speculative traffic is the first
  * thing that should be sacrificed there.
  */
-export function preloadWhenIdle(components: Array<PreloadableComponent<never>>) {
+export function preloadWhenIdle(components: Array<{ warm: () => Promise<unknown> }>) {
   if (typeof window === "undefined") return;
 
   const run = () => {
