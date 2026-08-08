@@ -409,7 +409,8 @@ async function attachToRecord(params: {
         .insert({
           ticket_id: doc.sourceId,
           user_id: userId ?? null,
-          comment: `${summary}\n${link}`,
+          content: `${summary}\n${link}`,
+          is_internal: true,
         } as any)
         .select("id")
         .single();
