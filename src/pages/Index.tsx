@@ -1,7 +1,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
-import { moduleFamily } from "@/lib/module-preload";
+import { moduleFamily, loadModule } from "@/lib/module-preload";
 import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import { MainLayout } from "@/components/layout/MainLayout";
