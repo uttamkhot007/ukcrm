@@ -189,6 +189,41 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
 
   const showQuickActions = currentTab.id === "deals";
 
+  // Warm every chunk in the group the user is currently in, once the browser
+  // is idle. Hover preloading only helps with a mouse; this makes keyboard and
+  // touch navigation between sibling tabs feel instant too.
+  useEffect(() => {
+    preloadWhenIdle(
+      activeGroup.tabs
+        .map((t) => t.preload)
+        .filter((p): p is PreloadableComponent<never> => Boolean(p))
+    );
+  }, [activeGroup]);
+
+  const moveFocus = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    selector: string
+  ) => {
+    const keys = ["ArrowRight", "ArrowLeft", "Home", "End"];
+    if (!keys.includes(event.key)) return;
+    const buttons = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>(selector)
+    );
+    if (buttons.length === 0) return;
+    const index = buttons.findIndex((b) => b === document.activeElement);
+    let next = index;
+    if (event.key === "ArrowRight") next = (index + 1) % buttons.length;
+    if (event.key === "ArrowLeft") next = (index - 1 + buttons.length) % buttons.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = buttons.length - 1;
+    if (next < 0) next = 0;
+    event.preventDefault();
+    buttons[next]?.focus();
+  };
+
+  const focusRing =
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -203,22 +238,33 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
 
       {/* Group level */}
       <div className="border-b border-border">
-        <div className="flex items-center gap-1 overflow-x-auto">
+        <div
+          role="tablist"
+          aria-label="Sales sections"
+          onKeyDown={(e) => moveFocus(e, '[data-group-tab="true"]')}
+          className="flex items-center gap-1 overflow-x-auto"
+        >
           {groups.map((group) => {
             const isActive = group.id === activeGroup.id;
             return (
               <button
                 key={group.id}
                 type="button"
+                role="tab"
+                data-group-tab="true"
+                aria-selected={isActive}
+                tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveTab(group.tabs[0].id)}
+                onMouseEnter={() => group.tabs[0].preload?.preload()}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  focusRing,
                   isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
-                <group.icon className="w-4 h-4" />
+                <group.icon className="w-4 h-4" aria-hidden="true" />
                 {group.label}
               </button>
             );
@@ -227,31 +273,51 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
       </div>
 
       {/* Sub level */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div
+        role="tablist"
+        aria-label={`${activeGroup.label} views`}
+        onKeyDown={(e) => moveFocus(e, '[data-sub-tab="true"]')}
+        className="flex items-center gap-2 flex-wrap"
+      >
         {activeGroup.tabs.map((tab) => {
           const isActive = tab.id === currentTab.id;
           return (
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              data-sub-tab="true"
+              aria-selected={isActive}
+              aria-controls="sales-tab-panel"
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
               onMouseEnter={() => tab.preload?.preload()}
               onFocus={() => tab.preload?.preload()}
+              onPointerDown={() => tab.preload?.preload()}
               className={cn(
                 "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                focusRing,
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <tab.icon className="w-3.5 h-3.5" />
+              <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
               {tab.label}
             </button>
           );
         })}
       </div>
 
-      <div className="min-w-0">
+      <div
+        className="min-w-0"
+        id="sales-tab-panel"
+        role="tabpanel"
+        tabIndex={-1}
+        aria-live="polite"
+        aria-busy={undefined}
+        aria-label={`${currentTab.label} workspace`}
+      >
         <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
           {currentTab.render()}
         </Suspense>
