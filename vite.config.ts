@@ -115,5 +115,33 @@ export default defineConfig(async ({ mode }) => {
           }
         : {}),
     },
+    build: {
+      // Modules are split per-screen in application code (React.lazy). Here we
+      // additionally pin the big shared libraries into their own long-lived
+      // chunks so a normal app deploy does not invalidate ~1MB of vendor code
+      // in every user's browser cache.
+      chunkSizeWarningLimit: 900,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return undefined;
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler|react-router)/.test(id)) {
+              return "vendor-react";
+            }
+            if (id.includes("@supabase")) return "vendor-supabase";
+            if (id.includes("@tanstack")) return "vendor-query";
+            if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
+            if (id.includes("@radix-ui")) return "vendor-radix";
+            if (id.includes("date-fns")) return "vendor-date";
+            if (id.includes("lucide-react")) return "vendor-icons";
+            if (id.includes("xlsx") || id.includes("jspdf") || id.includes("html2canvas")) {
+              return "vendor-export";
+            }
+            return "vendor";
+          },
+        },
+      },
+    },
   };
 });
+
