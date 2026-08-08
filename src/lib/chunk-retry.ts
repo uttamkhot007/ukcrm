@@ -116,6 +116,11 @@ export interface RetryImportOptions {
   label?: string;
   /** Set false for speculative preloads that should not reload the page. */
   recoverStaleDeploy?: boolean;
+  /**
+   * Called before every attempt with the 1-based attempt number. Used by the
+   * performance benchmarks to report how many retries a chunk really needed.
+   */
+  onAttempt?: (attempt: number) => void;
 }
 
 /**
@@ -132,6 +137,7 @@ export async function retryImport<T>(
     timeout = 15_000,
     label = "this section",
     recoverStaleDeploy = true,
+    onAttempt,
   } = options;
 
   let lastError: unknown;
@@ -149,6 +155,7 @@ export async function retryImport<T>(
     }
 
     try {
+      onAttempt?.(attempt + 1);
       return await withTimeout(loader(), timeout);
     } catch (error) {
       lastError = error;

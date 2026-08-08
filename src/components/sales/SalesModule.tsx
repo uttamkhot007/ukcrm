@@ -1,6 +1,8 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { lazyNamed, preloadWhenIdle, type PreloadableComponent } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
+import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
+import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { PanelSkeleton } from "@/components/shared/ModuleSkeleton";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
@@ -190,6 +192,17 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
 
   const showQuickActions = currentTab.id === "deals";
 
+  /**
+   * Tab switch entry point. Starts the performance benchmark against the tab's
+   * own chunk, so "warm" reflects whether preloading actually won the race
+   * rather than whether the Sales shell happened to be loaded.
+   */
+  const selectTab = (id: string) => {
+    const target = groups.flatMap((g) => g.tabs).find((t) => t.id === id);
+    beginModuleSwitch(`sales:${id}`, target?.preload?.chunkName ?? "sales");
+    setActiveTab(id);
+  };
+
   // Warm every chunk in the group the user is currently in, once the browser
   // is idle. Hover preloading only helps with a mouse; this makes keyboard and
   // touch navigation between sibling tabs feel instant too.
@@ -255,7 +268,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
                 data-group-tab="true"
                 aria-selected={isActive}
                 tabIndex={isActive ? 0 : -1}
-                onClick={() => setActiveTab(group.tabs[0].id)}
+                onClick={() => selectTab(group.tabs[0].id)}
                 onMouseEnter={() => group.tabs[0].preload?.warm()}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
@@ -291,7 +304,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
               aria-selected={isActive}
               aria-controls="sales-tab-panel"
               tabIndex={isActive ? 0 : -1}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               onMouseEnter={() => tab.preload?.warm()}
               onFocus={() => tab.preload?.warm()}
               onPointerDown={() => tab.preload?.warm()}
@@ -324,6 +337,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         >
           <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
             {currentTab.render()}
+            <ModuleSwitchProbe moduleId={`sales:${currentTab.id}`} />
           </Suspense>
         </ModuleErrorBoundary>
       </div>

@@ -1,5 +1,6 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { retryImport, shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
+import { measureChunkLoad } from "@/lib/perf-metrics";
 
 /**
  * A lazily-loaded component that can also be *preloaded* imperatively.
@@ -18,6 +19,8 @@ export type PreloadableComponent<P = Record<string, unknown>> =
     preload: () => Promise<unknown>;
     /** Speculative warm-up: skipped on slow/metered links, never throws. */
     warm: () => Promise<unknown>;
+    /** Chunk name this component reports under in the performance benchmarks. */
+    chunkName: string;
   };
 
 /**
@@ -35,7 +38,12 @@ export function lazyNamed<P = Record<string, unknown>>(
 
   const load = () => {
     if (!promise) {
-      promise = retryImport(loader, { label: `the ${exportName.replace(/Module$/, "")} section` }).then(
+      promise = measureChunkLoad(exportName, "lazy", (onAttempt) =>
+        retryImport(loader, {
+          label: `the ${exportName.replace(/Module$/, "")} section`,
+          onAttempt,
+        }),
+      ).then(
         (mod) => {
           const component = mod[exportName] ?? (mod as { default?: unknown }).default;
           if (!component) {
@@ -56,17 +64,22 @@ export function lazyNamed<P = Record<string, unknown>>(
   Component.preload = load;
   Component.warm = () =>
     shouldSkipSpeculativePreload() ? Promise.resolve() : load().catch(() => undefined);
+  Component.chunkName = exportName;
   return Component;
 }
 
 /** Wrap a dynamic import of a default export. */
 export function lazyDefault<P = Record<string, unknown>>(
   loader: () => Promise<{ default: ComponentType<P> }>,
+  /** Name used to group this chunk in the performance benchmarks. */
+  name = "route",
 ): PreloadableComponent<P> {
   let promise: Promise<{ default: ComponentType<P> }> | null = null;
   const load = () => {
     if (!promise) {
-      promise = retryImport(loader);
+      promise = measureChunkLoad(name, "lazy", (onAttempt) =>
+        retryImport(loader, { onAttempt }),
+      );
       promise.catch(() => {
         promise = null;
       });
@@ -77,6 +90,7 @@ export function lazyDefault<P = Record<string, unknown>>(
   Component.preload = load;
   Component.warm = () =>
     shouldSkipSpeculativePreload() ? Promise.resolve() : load().catch(() => undefined);
+  Component.chunkName = name;
   return Component;
 }
 

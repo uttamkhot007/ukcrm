@@ -2,6 +2,8 @@ import { Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { lazyNamed } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
+import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
+import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
 import { cn } from "@/lib/utils";
 import { HeartPulse, Gauge, ClipboardCheck, PartyPopper } from "lucide-react";
@@ -66,12 +68,18 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
     };
   }, []);
 
+  /** Tab switch entry point — starts the paint-to-click benchmark. */
+  const selectTab = (id: TabId) => {
+    beginModuleSwitch(`people-intel:${id}`, TAB_COMPONENTS[id].chunkName);
+    setTab(id);
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     const i = TABS.findIndex((t) => t.id === tab);
-    if (e.key === "ArrowRight") setTab(TABS[(i + 1) % TABS.length].id);
-    else if (e.key === "ArrowLeft") setTab(TABS[(i - 1 + TABS.length) % TABS.length].id);
-    else if (e.key === "Home") setTab(TABS[0].id);
-    else if (e.key === "End") setTab(TABS[TABS.length - 1].id);
+    if (e.key === "ArrowRight") selectTab(TABS[(i + 1) % TABS.length].id);
+    else if (e.key === "ArrowLeft") selectTab(TABS[(i - 1 + TABS.length) % TABS.length].id);
+    else if (e.key === "Home") selectTab(TABS[0].id);
+    else if (e.key === "End") selectTab(TABS[TABS.length - 1].id);
     else return;
     e.preventDefault();
   };
@@ -106,7 +114,7 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
               aria-selected={active}
               aria-controls="people-tabpanel"
               tabIndex={active ? 0 : -1}
-              onClick={() => setTab(t.id)}
+              onClick={() => selectTab(t.id)}
               onMouseEnter={() => void TAB_COMPONENTS[t.id].warm()}
               onFocus={() => void TAB_COMPONENTS[t.id].warm()}
               className={cn(
@@ -139,6 +147,7 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
             {tab === "productivity" && <ProductivityCockpitTab />}
             {tab === "accountability" && <AccountabilityTab />}
             {tab === "recognition" && <RecognitionTab />}
+            <ModuleSwitchProbe moduleId={`people-intel:${tab}`} />
           </Suspense>
         </ModuleErrorBoundary>
       </div>

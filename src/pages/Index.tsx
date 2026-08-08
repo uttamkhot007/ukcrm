@@ -2,6 +2,8 @@ import { Suspense, useState, useEffect } from "react";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
 import { moduleFamily, loadModule } from "@/lib/module-preload";
 import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
+import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
+import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -813,6 +815,8 @@ const Index = () => {
       navigate(`/admin/${subPath}`);
       return;
     }
+    // Benchmark starts at the click and ends when the module has painted.
+    beginModuleSwitch(module, moduleFamily(module));
     setActiveModule(module);
   };
 
@@ -829,6 +833,7 @@ const Index = () => {
       >
         <Suspense key={moduleFamily(activeModule)} fallback={<ModuleSkeleton />}>
           {renderContent()}
+          <ModuleSwitchProbe moduleId={activeModule} />
         </Suspense>
       </ModuleErrorBoundary>
     </MainLayout>

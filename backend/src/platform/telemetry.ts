@@ -191,6 +191,22 @@ export const eventsConsumed = metrics.counter('events_consumed_total', 'Domain e
 export const breakerState = metrics.gauge('circuit_breaker_state', 'Circuit breaker state (0 closed, 1 half-open, 2 open)');
 export const sloBudget = metrics.gauge('slo_error_budget_remaining_ratio', 'Remaining error budget for the service SLO');
 
+/* Real-user frontend benchmarks, reported by browsers via the gateway. */
+export const rumModuleSwitch = metrics.histogram(
+  'rum_module_switch_duration_seconds',
+  'Time from sub-module click to painted content, as measured in the browser',
+  [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10],
+);
+export const rumChunkLoads = metrics.counter(
+  'rum_chunk_loads_total',
+  'Dynamic module chunk fetches reported by browsers, by source and outcome',
+);
+export const rumChunkDuration = metrics.histogram(
+  'rum_chunk_load_duration_seconds',
+  'Dynamic module chunk fetch latency measured in the browser',
+  [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10],
+);
+
 /* ------------------------------------------------------------------ */
 /* Logging                                                             */
 /* ------------------------------------------------------------------ */
