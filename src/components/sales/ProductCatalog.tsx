@@ -45,7 +45,7 @@ export function ProductCatalog() {
   const queryClient = useQueryClient();
   const { formatCurrency } = useOrganizationSettings();
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, isFetching } = useQuery({
     queryKey: ["product-catalog"],
     queryFn: async () => {
       const { data, error } = await supabase
