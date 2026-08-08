@@ -124,26 +124,33 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
       </div>
 
       <div id="people-tabpanel" role="tabpanel" aria-labelledby={`people-tab-${tab}`} aria-live="polite">
-        <ModuleErrorBoundary resetKey={tab} onRetry={() => TAB_COMPONENTS[tab].preload()}>
-          <ProgressiveSuspense
-            boundaryKey={tab}
-            shell={<ModuleShell title={TABS.find((t) => t.id === tab)?.label} description={TABS.find((t) => t.id === tab)?.hint} />}
-            skeleton={
-              <div className="space-y-4">
-                <StatsSkeleton count={3} />
-                <TableSkeleton rows={5} />
-              </div>
-            }
-          >
-            {tab === "wellbeing" && <WellbeingTab />}
-            {tab === "productivity" && <ProductivityCockpitTab />}
-            {tab === "accountability" && <AccountabilityTab />}
-            {tab === "recognition" && <RecognitionTab />}
-            <ModuleSwitchProbe moduleId={`people-intel:${tab}`} />
-          </ProgressiveSuspense>
-
-        </ModuleErrorBoundary>
+        <KeepAlive activeKey={tab} max={4}>
+          {(key) => {
+            const meta = TABS.find((t) => t.id === key);
+            return (
+              <ModuleErrorBoundary resetKey={key} onRetry={() => TAB_COMPONENTS[key].preload()}>
+                <ProgressiveSuspense
+                  boundaryKey={key}
+                  shell={<ModuleShell title={meta?.label} description={meta?.hint} />}
+                  skeleton={
+                    <div className="space-y-4">
+                      <StatsSkeleton count={3} />
+                      <TableSkeleton rows={5} />
+                    </div>
+                  }
+                >
+                  {key === "wellbeing" && <WellbeingTab />}
+                  {key === "productivity" && <ProductivityCockpitTab />}
+                  {key === "accountability" && <AccountabilityTab />}
+                  {key === "recognition" && <RecognitionTab />}
+                  {key === tab && <ModuleSwitchProbe moduleId={`people-intel:${key}`} />}
+                </ProgressiveSuspense>
+              </ModuleErrorBoundary>
+            );
+          }}
+        </KeepAlive>
       </div>
+
     </div>
   );
 }
