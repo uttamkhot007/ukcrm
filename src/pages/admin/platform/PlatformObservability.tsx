@@ -44,6 +44,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { ModulePerfBenchmarks } from "@/components/admin/platform/ModulePerfBenchmarks";
 import {
   fetchTraceDetail,
   fetchTraceStats,
@@ -384,6 +385,8 @@ export default function PlatformObservability() {
           Icon={Server}
         />
       </div>
+
+      <ModulePerfBenchmarks windowMs={Number(windowMs)} paused={paused} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
