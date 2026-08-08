@@ -317,9 +317,14 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         aria-live="polite"
         aria-label={`${currentTab.label} workspace`}
       >
-        <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
-          {currentTab.render()}
-        </Suspense>
+        <ModuleErrorBoundary
+          resetKey={currentTab.id}
+          onRetry={() => currentTab.preload?.preload() ?? Promise.resolve()}
+        >
+          <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
+            {currentTab.render()}
+          </Suspense>
+        </ModuleErrorBoundary>
       </div>
     </div>
   );
