@@ -1,21 +1,31 @@
 /**
- * Drop-in alternative to `@/integrations/supabase/client` that talks to the
- * self-hosted Fastify backend (PostgreSQL + Cognito) instead of Supabase.
+ * Data client used across the app.
  *
- * To migrate a file off Supabase, change:
+ * Historically this file always exported the Supabase-compatible REST shim
+ * that talks to the self-hosted Fastify backend. When that backend is not
+ * reachable (e.g. the hosted preview environment), every query 404s and React
+ * Query retries with backoff — which shows up as modules that "never finish
+ * loading".
  *
- *     import { supabase } from "@/integrations/supabase/client";
+ * We now pick the transport at runtime:
+ *   - `VITE_API_URL` configured  -> self-hosted Fastify backend (shim)
+ *   - otherwise                  -> managed backend client
  *
- * to:
- *
- *     import { supabase } from "@/integrations/api/client";
- *
- * The shim implements the most common subset of the Supabase JS API. See
- * `src/integrations/api/supabase-shim.ts` for the supported surface and known
- * limitations (no embedded selects, no realtime, no storage, no edge
- * functions). Calls to unsupported features throw a descriptive error so they
- * surface immediately instead of silently failing.
+ * In the AWS production build, `@/integrations/supabase/client` is aliased to
+ * `./supabase-client-stub.ts` (which re-exports the shim), so the fallback is
+ * always the self-hosted backend there regardless of the branch taken.
  */
-export { supabaseShim as supabase } from "./supabase-shim";
+import { supabaseShim } from "./supabase-shim";
+import { supabase as managedClient } from "@/integrations/supabase/client";
+
+const selfHostedApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+
+export const useSelfHostedBackend = Boolean(selfHostedApiUrl);
+
+export const supabase = (useSelfHostedBackend
+  ? supabaseShim
+  : managedClient) as typeof supabaseShim;
+
+export { supabaseShim };
 export { restClient, restRequest, ApiError, tokenStore } from "./rest-client";
 export type { PostgrestResponse, SupabaseShimClient } from "./supabase-shim";
