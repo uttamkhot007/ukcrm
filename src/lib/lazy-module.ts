@@ -1,5 +1,6 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { retryImport, shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
+import { measureChunkLoad } from "@/lib/perf-metrics";
 
 /**
  * A lazily-loaded component that can also be *preloaded* imperatively.
@@ -35,7 +36,12 @@ export function lazyNamed<P = Record<string, unknown>>(
 
   const load = () => {
     if (!promise) {
-      promise = retryImport(loader, { label: `the ${exportName.replace(/Module$/, "")} section` }).then(
+      promise = measureChunkLoad(exportName, "lazy", (onAttempt) =>
+        retryImport(loader, {
+          label: `the ${exportName.replace(/Module$/, "")} section`,
+          onAttempt,
+        }),
+      ).then(
         (mod) => {
           const component = mod[exportName] ?? (mod as { default?: unknown }).default;
           if (!component) {
@@ -66,7 +72,9 @@ export function lazyDefault<P = Record<string, unknown>>(
   let promise: Promise<{ default: ComponentType<P> }> | null = null;
   const load = () => {
     if (!promise) {
-      promise = retryImport(loader);
+      promise = measureChunkLoad("default", "lazy", (onAttempt) =>
+        retryImport(loader, { onAttempt }),
+      );
       promise.catch(() => {
         promise = null;
       });

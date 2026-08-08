@@ -9,6 +9,7 @@
  */
 
 import { retryImport, shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
+import { markChunkWarm, measureChunkLoad } from "@/lib/perf-metrics";
 
 type Loader = () => Promise<unknown>;
 
@@ -68,15 +69,21 @@ export function preloadModule(moduleId: string) {
   if (!loader || loaded.has(family) || inflight.has(family)) return;
   if (shouldSkipSpeculativePreload()) return;
 
-  const task = retryImport(loader, {
-    // Speculative work gets one cheap retry and a short leash, and must never
-    // trigger a page reload on its own.
-    retries: 1,
-    timeout: 8_000,
-    recoverStaleDeploy: false,
-  })
+  // Measured as `source: "preload"` so the dashboard can report how often
+  // speculative warming actually succeeds before the user clicks.
+  const task = measureChunkLoad(family, "preload", (onAttempt) =>
+    retryImport(loader, {
+      // Speculative work gets one cheap retry and a short leash, and must never
+      // trigger a page reload on its own.
+      retries: 1,
+      timeout: 8_000,
+      recoverStaleDeploy: false,
+      onAttempt,
+    }),
+  )
     .then(() => {
       loaded.add(family);
+      markChunkWarm(family);
     })
     .catch(() => undefined)
     .finally(() => {
@@ -94,8 +101,11 @@ export function loadModule(moduleId: string): Promise<unknown> {
   const family = moduleId.split("-")[0];
   const loader = loaders[family];
   if (!loader) return Promise.resolve();
-  return retryImport(loader, { label: "this section" }).then((mod) => {
+  return measureChunkLoad(family, "navigation", (onAttempt) =>
+    retryImport(loader, { label: "this section", onAttempt }),
+  ).then((mod) => {
     loaded.add(family);
+    markChunkWarm(family);
     return mod;
   });
 }
