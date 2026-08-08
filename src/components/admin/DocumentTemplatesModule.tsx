@@ -55,9 +55,13 @@ const DEFAULT_TEMPLATES = DEFAULT_TEMPLATE_CONTENT;
 export function DocumentTemplatesModule() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { settings: orgSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
+  const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>('all');
+  const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('my-templates');
+  const [activeTab, setActiveTab] = useState<string>('sample-gallery');
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
   const [loadingSampleId, setLoadingSampleId] = useState<string | null>(null);
