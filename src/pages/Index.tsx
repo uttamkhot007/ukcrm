@@ -61,7 +61,15 @@ import {
 import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const Index = () => {
-  const [activeModule, setActiveModule] = useState("dashboard");
+  const location = useLocation();
+  // A module can be requested from elsewhere (e.g. the admin shell sidebar)
+  // via router state, or deep-linked with ?module=sales-leads.
+  const requestedModule =
+    (location.state as { module?: string } | null)?.module ??
+    new URLSearchParams(location.search).get("module") ??
+    null;
+
+  const [activeModule, setActiveModule] = useState(requestedModule ?? "dashboard");
   const {
     user,
     isLoading,
@@ -74,6 +82,12 @@ const Index = () => {
   } = useAuth();
   const { isLoading: tenantLoading, tenantMemberships } = useTenant();
   const navigate = useNavigate();
+
+  // Keep in sync when navigated to "/" again with a different module.
+  useEffect(() => {
+    if (requestedModule) setActiveModule(requestedModule);
+  }, [requestedModule]);
+
 
   // Decide what "/" should do once auth + tenant info are resolved.
   //
