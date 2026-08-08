@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RevalidationBar, RevalidationBadge } from "@/components/shared/RevalidationIndicator";
+
 import { toast } from "sonner";
 import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap } from "lucide-react";
 
