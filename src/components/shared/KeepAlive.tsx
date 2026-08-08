@@ -3,6 +3,7 @@ import {
   DEFAULT_MODULE_TTL_MS,
   useStaleRevalidation,
 } from "@/hooks/useStaleRevalidation";
+import { recordPaneActivation, recordPaneEviction } from "@/lib/cache-metrics";
 
 /**
  * Keeps recently visited panes mounted so switching back is instant.
@@ -27,6 +28,8 @@ interface KeepAliveProps {
    * automatically on re-entry (and periodically while visible).
    */
   ttlMs?: number;
+  /** Module id used to attribute keep-alive hit/miss telemetry. */
+  moduleId?: string;
   /** Renders the content for a pane key. Called once per mounted pane. */
   children: (key: string) => ReactNode;
 }
@@ -35,6 +38,7 @@ export function KeepAlive({
   activeKey,
   max = 4,
   ttlMs = DEFAULT_MODULE_TTL_MS,
+  moduleId = "module",
   children,
 }: KeepAliveProps) {
   const [keys, setKeys] = useState<string[]>([activeKey]);
@@ -42,9 +46,15 @@ export function KeepAlive({
   useEffect(() => {
     setKeys((prev) => {
       if (prev[0] === activeKey) return prev;
-      return [activeKey, ...prev.filter((k) => k !== activeKey)].slice(0, max);
+      // A revisit is a cache hit only when the pane survived the LRU.
+      recordPaneActivation(moduleId, activeKey, prev.includes(activeKey));
+      const next = [activeKey, ...prev.filter((k) => k !== activeKey)].slice(0, max);
+      for (const evicted of prev) {
+        if (!next.includes(evicted)) recordPaneEviction(moduleId, evicted);
+      }
+      return next;
     });
-  }, [activeKey, max]);
+  }, [activeKey, max, moduleId]);
 
   // Render the active pane on the very first frame, before the effect above
   // has had a chance to register it.

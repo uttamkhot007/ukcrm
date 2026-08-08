@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { recordQueryRead } from "@/lib/cache-metrics";
 
 /**
  * Persistent query cache.
@@ -71,6 +72,7 @@ export function createPersistentQueryClient(buildId: string): QueryClient {
 
   restore(client, buildId);
   scheduleWrites(client, buildId);
+  instrumentCacheHits(client);
   return client;
 }
 
@@ -98,6 +100,32 @@ function restore(client: QueryClient, buildId: string) {
       /* ignore */
     }
   }
+}
+
+/**
+ * Classify every query read as a cache hit or miss.
+ *
+ * When a component mounts and subscribes to a query, one of three things
+ * happens: the cache has fresh data (instant paint, no network), it has stale
+ * data (instant paint + background revalidation), or it has nothing (spinner).
+ * That ratio is the single best measure of whether the persisted cache is
+ * actually delivering instant tab switching, so it is counted here — centrally,
+ * for every query in the app, with no per-call instrumentation.
+ */
+function instrumentCacheHits(client: QueryClient) {
+  client.getQueryCache().subscribe((event) => {
+    if (event.type !== "observerAdded") return;
+    const query = event.query;
+    const scope = String((query.queryKey as unknown[])[0] ?? "unknown");
+    const updatedAt = query.state.dataUpdatedAt;
+    const hasData = query.state.data !== undefined && updatedAt > 0;
+    if (!hasData) {
+      recordQueryRead(scope, "miss", 0);
+      return;
+    }
+    const age = Date.now() - updatedAt;
+    recordQueryRead(scope, query.isStale() ? "stale" : "fresh", age);
+  });
 }
 
 function scheduleWrites(client: QueryClient, buildId: string) {
