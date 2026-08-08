@@ -315,7 +315,7 @@ export function ProductCatalog() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setLeadForProduct(product)}
+                          onClick={() => { setLeadForProduct(product); setQuickLeadOpen(true); }}
                           title={`Add lead for ${product.name}`}
                         >
                           <UserPlus className="h-4 w-4 mr-1" />
