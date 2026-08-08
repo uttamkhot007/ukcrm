@@ -258,7 +258,7 @@ export function VendorsManagement() {
                             "text-xs",
                             vendor.status === "active"
                               ? "bg-green-500/20 text-green-600"
-                              : "bg-gray-500/20 text-gray-600"
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           {vendor.status}

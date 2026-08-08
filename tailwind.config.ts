@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+        sans: ['Bai Jamjuree', 'system-ui', 'sans-serif'],
+        display: ['Bai Jamjuree', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

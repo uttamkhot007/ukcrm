@@ -60,7 +60,7 @@ const STATUSES = [
   { value: "in_progress", label: "In Progress", color: "bg-yellow-500/20 text-yellow-600" },
   { value: "pending", label: "Pending", color: "bg-orange-500/20 text-orange-600" },
   { value: "resolved", label: "Resolved", color: "bg-green-500/20 text-green-600" },
-  { value: "closed", label: "Closed", color: "bg-gray-500/20 text-gray-600" },
+  { value: "closed", label: "Closed", color: "bg-muted text-muted-foreground" },
 ];
 
 export function ITSupportTickets() {

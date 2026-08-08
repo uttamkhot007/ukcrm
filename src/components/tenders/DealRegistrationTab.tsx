@@ -36,12 +36,12 @@ const statusConfig = {
   in_progress: { label: "In Progress", icon: AlertCircle, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
   approved: { label: "Approved", icon: CheckCircle2, color: "bg-green-500/10 text-green-500 border-green-500/20" },
   rejected: { label: "Rejected", icon: XCircle, color: "bg-red-500/10 text-red-500 border-red-500/20" },
-  expired: { label: "Expired", icon: Clock, color: "bg-gray-500/10 text-gray-500 border-gray-500/20" },
+  expired: { label: "Expired", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
   closed: { label: "Closed", icon: FileCheck, color: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
 };
 
 const priorityColors = {
-  low: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  low: "bg-muted text-muted-foreground border-border",
   medium: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   high: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   critical: "bg-red-500/10 text-red-500 border-red-500/20",

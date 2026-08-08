@@ -276,7 +276,7 @@ export function DistributorsManagement() {
                             "text-xs",
                             distributor.status === "active"
                               ? "bg-green-500/20 text-green-600"
-                              : "bg-gray-500/20 text-gray-600"
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           {distributor.status}

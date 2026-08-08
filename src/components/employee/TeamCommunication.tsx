@@ -412,7 +412,7 @@ export function TeamCommunication() {
                             <h4 className="font-medium truncate">{otherPerson?.full_name || 'Unknown'}</h4>
                             <Badge variant="outline" className={cn(
                               "text-xs",
-                              call.status === 'ended' && "bg-gray-500/10 text-gray-600",
+                              call.status === 'ended' && "bg-muted text-muted-foreground",
                               call.status === 'missed' && "bg-red-500/10 text-red-600",
                               call.status === 'declined' && "bg-orange-500/10 text-orange-600"
                             )}>

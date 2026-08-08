@@ -56,7 +56,7 @@ const TEAMS: { value: TeamType; label: string; color: string; departments?: stri
   { value: "finance", label: "Finance", color: "bg-finance/20 text-finance border-finance/30", departments: ["Finance"] },
   { value: "marketing", label: "Marketing", color: "bg-marketing/20 text-marketing border-marketing/30", departments: ["Marketing"] },
   { value: "accounts", label: "Accounts", color: "bg-emerald-500/20 text-emerald-600 border-emerald-500/30", departments: ["Accounts", "Finance"] },
-  { value: "admin", label: "Admin", color: "bg-slate-500/20 text-slate-600 border-slate-500/30", departments: ["Admin", "HR"] },
+  { value: "admin", label: "Admin", color: "bg-muted text-muted-foreground border-border", departments: ["Admin", "HR"] },
   { value: "renewals", label: "Renewals", color: "bg-amber-500/20 text-amber-600 border-amber-500/30" },
 ];
 
@@ -92,7 +92,7 @@ const EMPLOYMENT_STATUS = [
   { value: "probation", label: "Probation", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30" },
   { value: "pip", label: "PIP", color: "bg-red-500/20 text-red-600 border-red-500/30" },
   { value: "notice_period", label: "Notice Period", color: "bg-orange-500/20 text-orange-600 border-orange-500/30" },
-  { value: "inactive", label: "Inactive", color: "bg-gray-500/20 text-gray-600 border-gray-500/30" },
+  { value: "inactive", label: "Inactive", color: "bg-muted text-muted-foreground border-border" },
   { value: "terminated", label: "Terminated", color: "bg-destructive/20 text-destructive border-destructive/30" },
 ];
 

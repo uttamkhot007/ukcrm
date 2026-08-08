@@ -36,7 +36,7 @@ export function TenderOpportunitiesTab({
       private: 'bg-purple-100 text-purple-800',
       psu: 'bg-green-100 text-green-800',
       referral: 'bg-orange-100 text-orange-800',
-      portal: 'bg-gray-100 text-gray-800',
+      portal: 'bg-muted text-muted-foreground',
       direct: 'bg-pink-100 text-pink-800',
     };
     return (

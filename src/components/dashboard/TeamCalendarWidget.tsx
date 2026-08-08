@@ -189,7 +189,7 @@ export function TeamCalendarWidget({
                         </div>
                       )}
                     </div>
-                    <Badge className={eventTypeColors[event.event_type] || "bg-gray-100"}>
+                    <Badge className={eventTypeColors[event.event_type] || "bg-muted text-muted-foreground"}>
                       {event.event_type}
                     </Badge>
                   </div>
