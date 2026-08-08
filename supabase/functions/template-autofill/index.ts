@@ -150,6 +150,17 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!project) return json({ error: "Project not found in this workspace" }, 404);
       context.project = project;
+    } else if (sourceType === "ticket") {
+      const { data: ticket } = await admin
+        .from("customer_support_tickets")
+        .select(
+          "id, ticket_number, subject, description, status, priority, severity, ticket_type, category, resolution, created_at",
+        )
+        .eq("id", sourceId)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!ticket) return json({ error: "Ticket not found in this workspace" }, 404);
+      context.ticket = ticket;
     } else {
       const { data: employee } = await admin
         .from("profiles")
