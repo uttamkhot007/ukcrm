@@ -52,8 +52,10 @@ export function createPersistentQueryClient(buildId: string): QueryClient {
         gcTime: 1000 * 60 * 30,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
-        // Serve cached data instantly, revalidate underneath.
-        refetchOnMount: "always",
+        // Serve cached data instantly and only revalidate once it is stale, so
+        // hopping between sub-modules re-uses the cache instead of refetching.
+        refetchOnMount: true,
+
         retry: (failureCount, error) => {
           const status = (error as { status?: number } | null)?.status;
           if (status && status >= 400 && status < 500) return false;
