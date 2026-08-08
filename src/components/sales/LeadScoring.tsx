@@ -26,7 +26,7 @@ export function LeadScoring() {
   const queryClient = useQueryClient();
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
 
-  const { data: leads, isLoading } = useQuery({
+  const { data: leads, isLoading, isFetching } = useQuery({
     queryKey: ['leads-with-scores'],
     queryFn: async () => {
       const { data, error } = await supabase
