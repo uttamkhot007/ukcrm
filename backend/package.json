@@ -17,7 +17,9 @@
     "start:gateway": "node dist/gateway/index.js",
     "start:service": "node dist/services/main.js",
     "check:boundaries": "tsx src/scripts/check-boundaries.ts",
-    "services:up": "docker compose -f ../docker-compose.services.yml up --build"
+    "services:up": "docker compose -f ../docker-compose.services.yml up --build",
+    "contracts:generate": "tsx src/scripts/generate-openapi.ts",
+    "contracts:check": "tsx src/scripts/check-contracts.ts"
   },
   "dependencies": {
     "fastify": "^4.28.0",
