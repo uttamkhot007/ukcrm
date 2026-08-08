@@ -43,6 +43,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 import { MEDDICWizard } from "@/components/sales/MEDDICWizard";
+import { DealWizard } from "@/components/sales/DealWizard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 import { workflows } from "@/lib/workflows";
 
 // MEDDIC Framework Definition
@@ -194,6 +197,8 @@ export function MEDDICWorkflow() {
   // State for MEDDIC wizard
   const [wizardDeal, setWizardDeal] = useState<Deal | null>(null);
   const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
+  // State for new-deal wizard (adds a deal directly into the MEDDIC pipeline)
+  const [isNewDealOpen, setIsNewDealOpen] = useState(false);
 
   // Delete deal mutation with cascade
   const deleteDeal = useMutation({
@@ -240,17 +245,67 @@ export function MEDDICWorkflow() {
 
   // Fetch deals with MEDDIC data
   const { data: deals, isLoading } = useQuery({
-    queryKey: ['deals-meddic'],
+    queryKey: ['deals-meddic', currentTenant?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('deals')
         .select('*')
-        .not('stage', 'in', '("closed_lost")')
-        .order('meddic_score', { ascending: false, nullsFirst: false });
-      
+        .not('stage', 'in', '("closed_lost")');
+      if (currentTenant?.id) query = query.eq('tenant_id', currentTenant.id);
+      const { data, error } = await query.order('meddic_score', { ascending: false, nullsFirst: false });
+
       if (error) throw error;
       return data as Deal[];
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    placeholderData: (prev: Deal[] | undefined) => prev,
+  });
+
+  // Create a new deal straight from the MEDDIC board
+  const createDeal = useMutation({
+    mutationFn: async (data: any) => {
+      const nowIso = new Date().toISOString();
+      const { data: created, error } = await supabase
+        .from('deals')
+        .insert({
+          title: String(data.title || '').trim(),
+          value: parseFloat(data.value) || 0,
+          stage: data.stage || 'pipeline',
+          description: String(data.description || '').trim() || null,
+          expected_close_date: data.expected_close_date || null,
+          probability: parseInt(data.probability) || 10,
+          contact_id: data.contact_id || null,
+          user_id: user!.id,
+          tenant_id: currentTenant?.id,
+          organization_name: String(data.organization_name || '').trim(),
+          problem_requirement: String(data.problem_requirement || '').trim(),
+          deal_type: data.deal_type === 'cross_sale' ? 'replacement' : 'new',
+          existing_solution: data.deal_type === 'cross_sale' ? String(data.existing_solution || '').trim() : null,
+          quantity: parseInt(data.quantity) || 1,
+          buying_timeline: data.buying_timeline || null,
+          is_budgeted: !!data.is_budgeted,
+          tentative_budget: parseFloat(data.tentative_budget) || 0,
+          next_steps: String(data.next_steps || '').trim(),
+          solution_id: data.solution_id || null,
+          alliance_organization_id: data.alliance_organization_id || null,
+          requirement_category: data.requirement_category || null,
+          last_stage_change_at: nowIso,
+        } as any)
+        .select('*')
+        .single();
+      if (error) throw error;
+      return created as Deal;
+    },
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ['deals-meddic'] });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      setIsNewDealOpen(false);
+      setSelectedDeal(created);
+      toast.success('Deal added to MEDDIC pipeline');
+    },
+    onError: (error: any) => toast.error('Failed to create deal: ' + error.message),
   });
 
   // Fetch progression history
@@ -511,6 +566,11 @@ export function MEDDICWorkflow() {
             Qualify deals using MEDDIC methodology with automatic stage progression
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <Button onClick={() => setIsNewDealOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Deal
+        </Button>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -528,7 +588,22 @@ export function MEDDICWorkflow() {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        </div>
       </div>
+
+      {/* New Deal Wizard */}
+      <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Deal to MEDDIC Pipeline</DialogTitle>
+          </DialogHeader>
+          <DealWizard
+            onSubmit={(data) => createDeal.mutate(data)}
+            onCancel={() => setIsNewDealOpen(false)}
+            isSubmitting={createDeal.isPending}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* MEDDIC Score Legend */}
       <Card>
