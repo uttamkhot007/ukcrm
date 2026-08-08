@@ -90,6 +90,9 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
@@ -100,6 +103,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "fastify": "^5.11.3",
     "globals": "^15.15.0",
+    "jsdom": "^30.0.1",
     "lovable-tagger": "^1.1.11",
     "pg": "^8.23.0",
     "postcss": "^8.5.6",
