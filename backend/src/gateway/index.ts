@@ -27,8 +27,21 @@ import {
   httpErrors,
   httpRequests,
   metrics,
-  parseTraceparent,
 } from '../platform/telemetry.js';
+import {
+  contextFromHeaders,
+  enterContext,
+  localCollector,
+  startSpan,
+  type Span,
+} from '../platform/tracing.js';
+
+/**
+ * The gateway doubles as the mesh's trace collector: every service exports its
+ * spans here, so one in-memory buffer can rebuild the full cross-service
+ * waterfall for a request without any external tracing backend.
+ */
+const collector = localCollector;
 
 const logger = createServiceLogger('gateway');
 
@@ -313,6 +326,7 @@ async function main(): Promise<void> {
           message: `${route.service.domain} is temporarily unavailable. Please retry shortly.`,
           service: route.service.name,
           traceId: trace.traceId,
+          correlationId: ctx.correlationId,
         });
       }
       request.log.error({ err, service: route.service.name }, 'Upstream call failed');
@@ -322,6 +336,7 @@ async function main(): Promise<void> {
         message: `${route.service.domain} did not respond in time.`,
         service: route.service.name,
         traceId: trace.traceId,
+        correlationId: ctx.correlationId,
       });
     }
   });
