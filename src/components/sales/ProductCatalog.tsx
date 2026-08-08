@@ -153,21 +153,51 @@ export function ProductCatalog() {
 
   const categories = ["Software", "Hardware", "Services", "Support", "Training", "Consulting"];
 
+  const isRevalidating = isFetching && !isLoading;
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading product catalog">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-52" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-10 w-full max-w-sm" />
+        <div className="rounded-lg border border-border">
+          <div className="border-b border-border p-4">
+            <Skeleton className="h-5 w-40" />
+          </div>
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <span className="sr-only">Loading product catalog…</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <RevalidationBar active={isRevalidating} />
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Product Catalog</h2>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            Product Catalog
+            <RevalidationBadge active={isRevalidating} label="Refreshing catalog…" />
+          </h2>
           <p className="text-muted-foreground">Manage your products and services</p>
         </div>
+
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingProduct(null); resetForm(); } }}>
           <DialogTrigger asChild>
             <Button>
