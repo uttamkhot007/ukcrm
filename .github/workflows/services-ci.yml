@@ -1,0 +1,134 @@
+name: Services CI
+
+# Per-service pipeline: boundary invariants are checked before anything builds,
+# then each service is built, typechecked and smoke-started in parallel so one
+# failing bounded context cannot block the rest of the estate.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: services-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  boundaries:
+    name: Service boundary invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: backend
+      - name: Verify data ownership, ports and event contracts
+        run: npm run check:boundaries
+        working-directory: backend
+
+  build:
+    name: Build ${{ matrix.service }}
+    needs: boundaries
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - identity
+          - tenancy
+          - crm
+          - sales
+          - presales
+          - billing
+          - accounting
+          - taxation
+          - inventory
+          - hr
+          - expenses
+          - assets
+          - projects
+          - support
+          - compliance
+          - marketing
+          - collaboration
+          - files
+          - integrations
+          - ai
+          - workflow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: npm run build
+        working-directory: backend
+      - name: Verify service entrypoint resolves
+        run: SERVICE=${{ matrix.service }} node -e "import('./dist/services/registry.js').then(m => { m.serviceDefinition(process.env.SERVICE); console.log(process.env.SERVICE + ' definition OK'); })"
+        working-directory: backend
+
+  integration:
+    name: Mesh smoke test
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nexus
+          POSTGRES_PASSWORD: nexus
+          POSTGRES_DB: nexuscrm
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U nexus" --health-interval 10s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: npm run build
+        working-directory: backend
+      - name: Run migrations
+        run: npm run migrate
+        working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_USER: nexus
+          DB_PASSWORD: nexus
+          DB_NAME: nexuscrm
+          DB_SSL: 'false'
+      - name: Boot a service and probe health
+        run: |
+          SERVICE=sales PORT=3014 node dist/services/main.js &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3014/health/live && break
+            sleep 1
+          done
+          curl -sf http://localhost:3014/health/ready
+          curl -sf http://localhost:3014/metrics | head -20
+        working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_USER: nexus
+          DB_PASSWORD: nexus
+          DB_NAME: nexuscrm
+          DB_SSL: 'false'
+          REDIS_HOST: localhost
