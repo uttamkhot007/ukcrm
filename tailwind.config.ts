@@ -170,6 +170,10 @@ export default {
           "0%, 100%": { backgroundPosition: "0% 50%" },
           "50%": { backgroundPosition: "100% 50%" },
         },
+        "progress-slide": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(300%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -182,6 +186,8 @@ export default {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "shimmer": "shimmer 3s linear infinite",
         "holographic": "holographic 8s ease infinite",
+        "progress-slide": "progress-slide 1.1s ease-in-out infinite",
+
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",

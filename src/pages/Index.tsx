@@ -2,6 +2,7 @@ import { Suspense, useState, useEffect } from "react";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
 import { moduleFamily, loadModule } from "@/lib/module-preload";
 import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
+import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
 import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
@@ -831,10 +832,14 @@ const Index = () => {
         resetKey={moduleFamily(activeModule)}
         onRetry={() => loadModule(activeModule)}
       >
-        <Suspense key={moduleFamily(activeModule)} fallback={<ModuleSkeleton />}>
+        <ProgressiveSuspense
+          boundaryKey={moduleFamily(activeModule)}
+          skeleton={<ModuleSkeleton />}
+        >
           {renderContent()}
           <ModuleSwitchProbe moduleId={activeModule} />
-        </Suspense>
+        </ProgressiveSuspense>
+
       </ModuleErrorBoundary>
     </MainLayout>
   );

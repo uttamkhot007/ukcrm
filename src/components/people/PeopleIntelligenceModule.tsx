@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ModuleShell, StatsSkeleton, TableSkeleton } from "@/components/shared/ModuleSkeleton";
+import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
@@ -123,13 +124,13 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
 
       <div id="people-tabpanel" role="tabpanel" aria-labelledby={`people-tab-${tab}`} aria-live="polite">
         <ModuleErrorBoundary resetKey={tab} onRetry={() => TAB_COMPONENTS[tab].preload()}>
-          <Suspense
-            key={tab}
-            fallback={
+          <ProgressiveSuspense
+            boundaryKey={tab}
+            shell={<ModuleShell title={TABS.find((t) => t.id === tab)?.label} description={TABS.find((t) => t.id === tab)?.hint} />}
+            skeleton={
               <div className="space-y-4">
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-64 w-full" />
+                <StatsSkeleton count={3} />
+                <TableSkeleton rows={5} />
               </div>
             }
           >
@@ -138,7 +139,8 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
             {tab === "accountability" && <AccountabilityTab />}
             {tab === "recognition" && <RecognitionTab />}
             <ModuleSwitchProbe moduleId={`people-intel:${tab}`} />
-          </Suspense>
+          </ProgressiveSuspense>
+
         </ModuleErrorBoundary>
       </div>
     </div>
