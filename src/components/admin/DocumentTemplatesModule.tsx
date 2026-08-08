@@ -208,6 +208,9 @@ export function DocumentTemplatesModule() {
     header_content: sample.header_content,
     footer_content: sample.footer_content,
     branding: applyTenantBranding(sample, tenantBranding),
+    library_key: sample.key,
+    library_version: TEMPLATE_PACK_VERSIONS[sample.role],
+    pack_role: sample.role,
     is_default: false,
     created_by: user?.id,
   });
