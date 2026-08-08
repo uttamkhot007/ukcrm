@@ -35,6 +35,7 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
   }
 
   return (
+    <ModuleTabsProvider>
     <div className="min-h-screen bg-background perspective-container">
       {/* Ambient Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
