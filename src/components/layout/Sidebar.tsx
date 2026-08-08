@@ -1068,10 +1068,21 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
+      <nav className="flex-1 overflow-y-auto py-4 px-2" aria-label="Main modules">
         {filteredNavItems.map((item) => (
           <div key={item.id} className="mb-2">
             <button
+              type="button"
+              aria-current={
+                activeModule === item.id || activeModule.startsWith(item.id + "-")
+                  ? "page"
+                  : undefined
+              }
+              aria-label={collapsed ? item.label : undefined}
+              title={collapsed ? item.label : undefined}
+              onMouseEnter={() => preloadModule(item.id)}
+              onFocus={() => preloadModule(item.id)}
+              onPointerDown={() => preloadModule(item.id)}
               onClick={() => {
                 if (item.isLink && item.linkPath) {
                   navigate(item.linkPath);
@@ -1081,7 +1092,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group/parent",
-                "hover:shadow-md",
+                "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
                 activeModule === item.id || activeModule.startsWith(item.id + "-")
                   ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50"
@@ -1096,7 +1107,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                     : "bg-sidebar-accent group-hover/parent:bg-sidebar-accent"
                 )}
               >
-                <item.icon className={cn("w-5 h-5", item.color)} />
+                <item.icon className={cn("w-5 h-5", item.color)} aria-hidden="true" />
               </div>
               {!collapsed && (
                 <>

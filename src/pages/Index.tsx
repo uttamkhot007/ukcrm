@@ -1,5 +1,6 @@
 import { Suspense, useState, useEffect } from "react";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
+import { moduleFamily } from "@/lib/module-preload";
 import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -804,9 +805,12 @@ const Index = () => {
 
   return (
     <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
-      {/* keyed so switching modules shows the skeleton instead of freezing on
-          the previous module while the new chunk downloads */}
-      <Suspense key={activeModule} fallback={<ModuleSkeleton />}>
+      {/* Keyed by chunk *family* rather than by module id: switching between
+          sub-modules of the same module (Sales → Leads → Deals) then keeps the
+          already-mounted tree and its cached queries instead of tearing the
+          whole module down and refetching. A different family still shows the
+          skeleton while its chunk downloads. */}
+      <Suspense key={moduleFamily(activeModule)} fallback={<ModuleSkeleton />}>
         {renderContent()}
       </Suspense>
     </MainLayout>
