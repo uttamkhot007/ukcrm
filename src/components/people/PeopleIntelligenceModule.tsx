@@ -2,6 +2,8 @@ import { Suspense, useEffect, useState } from "react";
 import { ModuleShell, StatsSkeleton, TableSkeleton } from "@/components/shared/ModuleSkeleton";
 import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { KeepAlive } from "@/components/shared/KeepAlive";
+import { usePersistentState } from "@/hooks/usePersistentState";
+import { useTenant } from "@/contexts/TenantContext";
 import { ModuleRefreshButton } from "@/components/shared/ModuleRefreshButton";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
@@ -41,8 +43,15 @@ interface PeopleIntelligenceModuleProps {
 }
 
 export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModuleProps) {
-  const [tab, setTab] = useState<TabId>(
+  const { currentTenant } = useTenant();
+  // Restore the last viewed tab after a reload, scoped to the active tenant.
+  const [tab, setTab] = usePersistentState<TabId>(
+    "people-intelligence:active-tab",
     (TABS.find((t) => t.id === initialTab)?.id ?? "wellbeing") as TabId,
+    {
+      scope: currentTenant?.id ?? null,
+      validate: (v): v is TabId => TABS.some((t) => t.id === v),
+    },
   );
 
   useEffect(() => {
