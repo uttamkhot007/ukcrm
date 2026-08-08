@@ -94,14 +94,21 @@ export function PendingApprovalsWidget({ onNavigate }: PendingApprovalsWidgetPro
   });
 
   const { data: stats } = useQuery({
-    queryKey: ["pending-approvals-stats"],
+    queryKey: ["pending-approvals-stats", currentTenant?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("employee_requests")
         .select("status, sla_deadline")
         .in("status", ["pending", "under_review"]);
 
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
+
 
       const overdue = data.filter(r => r.sla_deadline && isPast(new Date(r.sla_deadline))).length;
       
