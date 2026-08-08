@@ -23,15 +23,24 @@ import { registerCrudResource, type CrudResource } from './crud.js';
 import { registerTenantContext } from './tenant-context.js';
 import { breakerSnapshot } from './resilience.js';
 import {
+  annotateContext,
+  contextFromHeaders,
+  enterContext,
+  localCollector,
+  startSpan,
+  type ActiveContext,
+  type SpanHandle,
+} from './tracing.js';
+import {
   createServiceLogger,
   formatTraceparent,
   httpDuration,
   httpErrors,
   httpRequests,
   metrics,
-  parseTraceparent,
   sloBudget,
 } from './telemetry.js';
+
 
 export interface ServiceRuntime {
   app: FastifyInstance;
