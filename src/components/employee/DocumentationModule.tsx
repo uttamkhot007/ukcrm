@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
@@ -232,7 +233,7 @@ export function DocumentationModule() {
                 {sopContent ? (
                   <div 
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: sopContent.content }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(sopContent.content) }}
                   />
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">

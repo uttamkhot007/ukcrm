@@ -12,39 +12,20 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // ============= Token Management =============
-let accessToken: string | null = null;
-let refreshToken: string | null = null;
-let tokenExpiresAt: number = 0;
+// Tokens are held in memory only (see src/lib/token-store.ts). They are never
+// written to localStorage/sessionStorage so an XSS bug cannot exfiltrate them.
+import { tokenStore } from './token-store';
 
 function setTokens(tokens: { accessToken: string; refreshToken?: string; expiresIn?: number }) {
-  accessToken = tokens.accessToken;
-  if (tokens.refreshToken) refreshToken = tokens.refreshToken;
-  tokenExpiresAt = Date.now() + ((tokens.expiresIn || 3600) * 1000);
-  
-  localStorage.setItem('nexuscrm_access_token', tokens.accessToken);
-  if (tokens.refreshToken) localStorage.setItem('nexuscrm_refresh_token', tokens.refreshToken);
-  localStorage.setItem('nexuscrm_token_expires', String(tokenExpiresAt));
+  tokenStore.set(tokens);
 }
 
 function clearTokens() {
-  accessToken = null;
-  refreshToken = null;
-  tokenExpiresAt = 0;
-  localStorage.removeItem('nexuscrm_access_token');
-  localStorage.removeItem('nexuscrm_refresh_token');
-  localStorage.removeItem('nexuscrm_token_expires');
+  tokenStore.clear();
 }
-
-function loadTokens() {
-  accessToken = localStorage.getItem('nexuscrm_access_token');
-  refreshToken = localStorage.getItem('nexuscrm_refresh_token');
-  tokenExpiresAt = parseInt(localStorage.getItem('nexuscrm_token_expires') || '0', 10);
-}
-
-// Load on init
-loadTokens();
 
 function getAuthHeaders(): Record<string, string> {
+  const accessToken = tokenStore.get();
   if (!accessToken) return {};
   return { Authorization: `Bearer ${accessToken}` };
 }
@@ -165,11 +146,11 @@ export const auth = {
   },
 
   isAuthenticated(): boolean {
-    return !!accessToken && Date.now() < tokenExpiresAt;
+    return !!tokenStore.get() && !tokenStore.isExpired();
   },
 
   getToken(): string | null {
-    return accessToken;
+    return tokenStore.get();
   },
 
   onAuthChange(callback: (isAuthenticated: boolean) => void) {

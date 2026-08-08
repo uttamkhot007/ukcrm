@@ -19,6 +19,38 @@ interface CrudConfig {
   userField?: string;
 }
 
+/**
+ * Tables where every operation (read included) requires an admin.
+ * These control authorization itself, so exposing them through the generic
+ * CRUD factory to any authenticated user is a privilege-escalation path.
+ */
+const ADMIN_ONLY_TABLES = new Set(['user_roles', 'user_teams']);
+
+/** Tables readable by any authenticated user but only mutable by admins. */
+const ADMIN_MUTATE_TABLES = new Set(['tenants', 'tenant_members', 'tenant_licenses', 'tenant_modules']);
+
+const ADMIN_GROUPS = ['admin', 'super_admin', 'platform_admin'];
+
+/**
+ * Server-side role check. Cognito groups are trusted only because they come
+ * from a verified JWT; the database `user_roles` table is the fallback source
+ * of truth. Never trust a role supplied in the request body.
+ */
+async function isAdminUser(request: FastifyRequest): Promise<boolean> {
+  const user = request.user;
+  if (!user?.id) return false;
+  if (user.groups?.some((g) => ADMIN_GROUPS.includes(g))) return true;
+  try {
+    const row = await db('user_roles')
+      .where({ user_id: user.id })
+      .whereIn('role', ['admin'])
+      .first();
+    return !!row;
+  } catch {
+    return false;
+  }
+}
+
 export function createCrudRoutes(config: CrudConfig) {
   const {
     tableName,
@@ -28,7 +60,21 @@ export function createCrudRoutes(config: CrudConfig) {
     userField = 'user_id',
   } = config;
 
+  const adminOnly = ADMIN_ONLY_TABLES.has(tableName);
+  const adminMutate = adminOnly || ADMIN_MUTATE_TABLES.has(tableName);
+
   return async function (app: FastifyInstance) {
+    // Role-based authorization guard for sensitive tables.
+    if (adminMutate) {
+      app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
+        const isMutation = request.method !== 'GET' && request.method !== 'HEAD';
+        if (!adminOnly && !isMutation) return;
+        if (await isAdminUser(request)) return;
+        return reply.status(403).send({ error: 'Forbidden', message: 'Admin role required' });
+      });
+    }
+
+
     // LIST
     app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
       const parsed = listSchema.safeParse(request.query);

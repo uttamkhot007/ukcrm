@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -854,7 +855,7 @@ export function LearningHubModule() {
                 
                 {selectedCourse.content ? (
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <div dangerouslySetInnerHTML={{ __html: selectedCourse.content }} />
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedCourse.content) }} />
                   </div>
                 ) : (
                   <p className="text-muted-foreground">No content available for this course yet.</p>
