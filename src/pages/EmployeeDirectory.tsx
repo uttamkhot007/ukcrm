@@ -316,7 +316,9 @@ export default function EmployeeDirectory() {
                 ))}
               </div>
             )}
+            </section>
           </div>
+
         </main>
       </div>
     </div>
