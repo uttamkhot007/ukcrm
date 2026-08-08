@@ -148,7 +148,13 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex overflow-hidden">
+      <PageSeo
+        title="Sign in to NexusCRM"
+        description="Access your NexusCRM workspace to manage sales, finance, HR, and operations from one AI-enabled platform."
+        path="/auth"
+      />
       {/* Left Side - Premium Branding */}
+
       <div className="hidden lg:flex lg:w-1/2 relative p-12 flex-col justify-between">
         {/* Animated gradient background */}
         <AnimatedBackground />
