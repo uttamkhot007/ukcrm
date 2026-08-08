@@ -1133,12 +1133,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                     {item.label}
                   </span>
                   {item.children && (
-                    <ChevronRight
-                      className={cn(
-                        "w-4 h-4 transition-transform duration-300",
-                        expandedItems.includes(item.id) && "rotate-90"
-                      )}
-                    />
+                    <ChevronRight className="w-4 h-4 opacity-50" />
                   )}
                 </>
               )}
