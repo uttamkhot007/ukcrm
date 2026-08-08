@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RevalidationBar, RevalidationBadge } from "@/components/shared/RevalidationIndicator";
+
 import { toast } from "sonner";
 import { Brain, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Zap } from "lucide-react";
 
@@ -26,7 +28,7 @@ export function LeadScoring() {
   const queryClient = useQueryClient();
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
 
-  const { data: leads, isLoading } = useQuery({
+  const { data: leads, isLoading, isFetching } = useQuery({
     queryKey: ['leads-with-scores'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -91,15 +93,28 @@ export function LeadScoring() {
     return { label: "Cold", variant: "destructive" as const, icon: AlertCircle };
   };
 
+  const isRevalidating = isFetching && !isLoading;
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading lead scores">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-32 w-full" />
         ))}
+        <span className="sr-only">Loading lead scores…</span>
       </div>
     );
   }
+
 
   const hotLeads = leads?.filter(l => (l.lead_score || 0) >= 80) || [];
   const warmLeads = leads?.filter(l => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80) || [];
@@ -107,14 +122,17 @@ export function LeadScoring() {
 
   return (
     <div className="space-y-6">
+      <RevalidationBar active={isRevalidating} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Brain className="h-6 w-6 text-primary" />
             AI Lead Scoring
+            <RevalidationBadge active={isRevalidating} label="Refreshing scores…" />
           </h2>
           <p className="text-muted-foreground">AI-powered lead scoring to identify hot prospects</p>
         </div>
+
         <Button
           onClick={() => scoreAllLeads.mutate()}
           disabled={scoreAllLeads.isPending || unscoredLeads.length === 0}

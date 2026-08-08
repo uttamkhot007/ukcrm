@@ -128,6 +128,11 @@ export default {
         "glass-lg": "30px",
       },
       keyframes: {
+        indeterminate: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
+
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -176,6 +181,8 @@ export default {
         },
       },
       animation: {
+        indeterminate: "indeterminate 1.1s ease-in-out infinite",
+
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out forwards",
