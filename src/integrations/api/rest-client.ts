@@ -13,8 +13,9 @@ const API_URL: string =
 
 // Tokens live in memory only — never in localStorage/sessionStorage — so an
 // XSS bug cannot read or exfiltrate them.
+import { tokenStore } from "@/lib/token-store";
 export type { AuthTokens } from "@/lib/token-store";
-export { tokenStore } from "@/lib/token-store";
+export { tokenStore };
 
 export class ApiError extends Error {
   constructor(message: string, public status: number, public details?: unknown) {
