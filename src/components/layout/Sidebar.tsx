@@ -21,8 +21,7 @@ import {
   Sparkles,
   HeartPulse,
   Gauge,
-  ClipboardCheck,
-  PartyPopper,
+
 
   Target,
   FileText,
