@@ -199,7 +199,7 @@ const Index = () => {
       case "sales-meddic-workflow":
         return <SalesModule initialTab="meddic-workflow" />;
       case "sales-ai-assistant":
-        return <SalesAIAssistant />;
+        return <SalesModule initialTab="sales-ai" />;
       case "sales-quotations":
         return <SalesModule initialTab="quotations" />;
       case "sales-leads":
@@ -211,11 +211,11 @@ const Index = () => {
       case "sales-team-contacts":
         return <SalesModule initialTab="team-contacts" />;
       case "sales-offerings":
-        return <OfferingsModule readOnly />;
+        return <SalesModule initialTab="offerings" />;
       case "sales-deal-registration":
         return <SalesModule initialTab="deal-registration" />;
       case "sales-documentation":
-        return <DocumentationModule />;
+        return <SalesModule initialTab="sops" />;
       
       // Inside Sales with sub-routes
       case "inside-sales":

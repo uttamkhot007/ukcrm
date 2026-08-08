@@ -21,6 +21,8 @@ import { TerritoryManagement } from "./TerritoryManagement";
 import { RottenDeals } from "./RottenDeals";
 import { InsideSalesModule } from "./InsideSalesModule";
 import { SalesAIAssistant } from "./SalesAIAssistant";
+import { OfferingsModule } from "@/components/admin/OfferingsModule";
+import { DocumentationModule } from "@/components/employee/DocumentationModule";
 import { cn } from "@/lib/utils";
 import {
   TrendingUp,
@@ -112,6 +114,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           { id: "quotations", label: "Quotations", icon: FileText, render: () => <QuotationsView /> },
           { id: "catalog", label: "Catalog", icon: BookOpen, render: () => <ProductCatalog /> },
           { id: "lead-scoring", label: "Lead Scoring", icon: Gauge, render: () => <LeadScoring /> },
+          { id: "offerings", label: "Offerings", icon: Package, render: () => <OfferingsModule readOnly /> },
         ],
       },
       {
@@ -134,6 +137,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           { id: "reports", label: "Reports", icon: BarChart3, render: () => <SalesReports /> },
           { id: "sales-ai", label: "Sales AI", icon: Brain, render: () => <SalesAIAssistant /> },
           { id: "deal-insights", label: "Deal Insights", icon: TrendingUp, render: () => <DealInsights /> },
+          { id: "sops", label: "Sales SOPs", icon: BookOpen, render: () => <DocumentationModule /> },
         ],
       },
     ],
@@ -142,7 +146,22 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
 
   // Legacy tab ids that used to be passed in from the sidebar / Index router.
   const aliases: Record<string, string> = useMemo(
-    () => ({ "team-contacts": "contacts", "meddic": "meddic-workflow", "product-catalog": "catalog" }),
+    () => ({
+      "team-contacts": "contacts",
+      meddic: "meddic-workflow",
+      "product-catalog": "catalog",
+      // Legacy sidebar module ids
+      "sales-meddic-workflow": "meddic-workflow",
+      "sales-quotations": "quotations",
+      "sales-leads": "leads",
+      "sales-my-accounts": "my-accounts",
+      "sales-contacts": "contacts",
+      "sales-team-contacts": "contacts",
+      "sales-offerings": "offerings",
+      "sales-documentation": "sops",
+      "sales-deal-registration": "deal-registration",
+      "sales-ai-assistant": "sales-ai",
+    }),
     []
   );
 
