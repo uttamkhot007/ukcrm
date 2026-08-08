@@ -1,0 +1,181 @@
+# Microservice topology (local + CI)
+#
+#   docker compose -f docker-compose.services.yml up
+#
+# Each service is an independent container from the same image, selected by the
+# SERVICE variable, with its own database, port, health check and scaling knobs.
+# In production the same topology is expressed as one ECS service per entry.
+
+x-service-base: &service-base
+  build:
+    context: ./backend
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  env_file: ./backend/.env
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  environment: &service-env
+    NODE_ENV: ${NODE_ENV:-development}
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_SSL: "false"
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://localhost:'+(process.env.PORT||3000)+'/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    interval: 15s
+    timeout: 5s
+    retries: 5
+    start_period: 20s
+  deploy:
+    resources:
+      limits:
+        cpus: "1.0"
+        memory: 1G
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-nexus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nexus}
+      POSTGRES_DB: ${DB_NAME:-nexuscrm}
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/init-service-schemas.sql:/docker-entrypoint-initdb.d/10-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nexus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports: ["6379:6379"]
+    volumes: [redisdata:/data]
+
+  gateway:
+    <<: *service-base
+    command: ["node", "dist/gateway/index.js"]
+    ports: ["3000:3000"]
+    environment:
+      <<: *service-env
+      PORT: "3000"
+    depends_on:
+      identity: { condition: service_started }
+      tenancy: { condition: service_started }
+
+  identity:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: identity, PORT: "3011", DB_SCHEMA_IDENTITY: identity }
+
+  tenancy:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: tenancy, PORT: "3012", DB_SCHEMA_TENANCY: tenancy }
+
+  crm:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: crm, PORT: "3013", DB_SCHEMA_CRM: crm }
+
+  sales:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: sales, PORT: "3014", DB_SCHEMA_SALES: sales }
+
+  presales:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: presales, PORT: "3015", DB_SCHEMA_PRESALES: presales }
+
+  billing:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: billing, PORT: "3016", DB_SCHEMA_BILLING: billing }
+
+  accounting:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: accounting, PORT: "3017", DB_SCHEMA_ACCOUNTING: accounting }
+
+  taxation:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: taxation, PORT: "3018", DB_SCHEMA_TAXATION: taxation }
+
+  inventory:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: inventory, PORT: "3019", DB_SCHEMA_INVENTORY: inventory }
+
+  hr:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: hr, PORT: "3020", DB_SCHEMA_HR: hr }
+
+  expenses:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: expenses, PORT: "3021", DB_SCHEMA_EXPENSES: expenses }
+
+  assets:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: assets, PORT: "3022", DB_SCHEMA_ASSETS: assets }
+
+  projects:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: projects, PORT: "3023", DB_SCHEMA_PROJECTS: projects }
+
+  support:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: support, PORT: "3024", DB_SCHEMA_SUPPORT: support }
+
+  compliance:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: compliance, PORT: "3025", DB_SCHEMA_COMPLIANCE: compliance }
+
+  marketing:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: marketing, PORT: "3026", DB_SCHEMA_MARKETING: marketing }
+
+  collaboration:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: collaboration, PORT: "3027", DB_SCHEMA_COLLABORATION: collaboration }
+
+  files:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: files, PORT: "3028", DB_SCHEMA_FILES: files }
+
+  integrations:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: integrations, PORT: "3029", DB_SCHEMA_INTEGRATIONS: integrations }
+
+  ai:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: ai, PORT: "3030", DB_SCHEMA_AI: ai }
+
+  workflow:
+    <<: *service-base
+    command: ["node", "dist/services/main.js"]
+    environment: { <<: *service-env, SERVICE: workflow, PORT: "3031", DB_SCHEMA_WORKFLOW: workflow }
+
+volumes:
+  pgdata:
+  redisdata:
