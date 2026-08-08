@@ -201,10 +201,10 @@ export function LeadScoring() {
 
         <Button
           onClick={() => scoreAllLeads.mutate()}
-          disabled={scoreAllLeads.isPending || unscoredLeads.length === 0}
+          disabled={scoreAllLeads.isPending || unscoredCount === 0}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${scoreAllLeads.isPending ? 'animate-spin' : ''}`} />
-          Score All Leads ({unscoredLeads.length})
+          Score Next 10 ({unscoredCount})
         </Button>
       </div>
 
@@ -215,7 +215,7 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Hot Leads</p>
-                <p className="text-2xl font-bold text-green-500">{hotLeads.length}</p>
+                <p className="text-2xl font-bold text-green-500">{counts?.hot ?? 0}</p>
               </div>
               <Zap className="h-8 w-8 text-green-500" />
             </div>
@@ -226,7 +226,7 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Warm Leads</p>
-                <p className="text-2xl font-bold text-yellow-500">{warmLeads.length}</p>
+                <p className="text-2xl font-bold text-yellow-500">{counts?.warm ?? 0}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-yellow-500" />
             </div>
@@ -237,7 +237,7 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Leads</p>
-                <p className="text-2xl font-bold">{leads?.length || 0}</p>
+                <p className="text-2xl font-bold">{counts?.total ?? 0}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-primary" />
             </div>
@@ -248,13 +248,30 @@ export function LeadScoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Unscored</p>
-                <p className="text-2xl font-bold text-muted-foreground">{unscoredLeads.length}</p>
+                <p className="text-2xl font-bold text-muted-foreground">{unscoredCount}</p>
               </div>
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Segment selector */}
+      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Lead score segments">
+        {SEGMENTS.map((s) => (
+          <Button
+            key={s.key}
+            role="tab"
+            aria-selected={segment === s.key}
+            size="sm"
+            variant={segment === s.key ? "default" : "outline"}
+            onClick={() => changeSegment(s.key)}
+          >
+            {s.label} ({counts?.[s.key] ?? 0})
+          </Button>
+        ))}
+      </div>
+
 
       {/* Lead List */}
       <div className="space-y-4">
