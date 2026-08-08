@@ -149,10 +149,14 @@ export default defineConfig(async ({ mode }) => {
             if (id.includes("xlsx") || id.includes("jspdf") || id.includes("html2canvas")) {
               return "vendor-export";
             }
-            // Everything else is deliberately left to Rollup: it then attaches
-            // each library to the module chunks that actually use it, instead
-            // of forcing one oversized shared vendor bundle onto every page.
-            return undefined;
+            // Every remaining dependency gets a chunk named after its own
+            // package. Leaving them unassigned lets Rollup park a shared
+            // utility inside a large feature chunk (charts, exports), which
+            // silently drags that whole chunk into the first page load.
+            const match = id.split(/node_modules[\\/]/).pop() ?? "";
+            const parts = match.split(/[\\/]/);
+            const pkg = parts[0].startsWith("@") ? `${parts[0]}/${parts[1]}` : parts[0];
+            return `pkg-${pkg.replace(/[@/]/g, "-")}`;
           },
         },
       },
