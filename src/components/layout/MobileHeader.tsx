@@ -46,14 +46,15 @@ export function MobileHeader({ onMenuClick, showMenu = true }: MobileHeaderProps
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="View notifications">
+            <Bell className="h-5 w-5" aria-hidden="true" />
           </Button>
 
           {/* User menu / Tenant switcher */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Open account menu">
+
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs">
