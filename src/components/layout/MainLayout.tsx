@@ -1,5 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ModuleTabBar } from "@/components/layout/ModuleTabBar";
+import { ModuleTabsProvider } from "@/contexts/ModuleTabsContext";
 import { Header } from "@/components/layout/Header";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
@@ -33,6 +35,7 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
   }
 
   return (
+    <ModuleTabsProvider>
     <div className="min-h-screen bg-background perspective-container">
       {/* Ambient Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -70,8 +73,9 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
         <div className="hidden md:block sticky top-0 z-50 flex-shrink-0">
           <Header onAIToggle={() => setIsAIOpen(!isAIOpen)} />
         </div>
-        
+
         <main className="flex-1 overflow-y-auto pb-safe relative page-3d">
+          <ModuleTabBar activeModule={activeModule} onModuleChange={onModuleChange} />
           <div className="animate-fade-in">
             {children}
           </div>
@@ -83,5 +87,6 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
       {/* Deal Won Celebration - Shows on all pages */}
       <DealWonCelebration />
     </div>
+    </ModuleTabsProvider>
   );
 }
