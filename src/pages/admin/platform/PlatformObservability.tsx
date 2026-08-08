@@ -45,6 +45,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { ModulePerfBenchmarks } from "@/components/admin/platform/ModulePerfBenchmarks";
+import { CacheEffectivenessPanel } from "@/components/admin/platform/CacheEffectivenessPanel";
 import {
   fetchTraceDetail,
   fetchTraceStats,
@@ -387,6 +388,8 @@ export default function PlatformObservability() {
       </div>
 
       <ModulePerfBenchmarks windowMs={Number(windowMs)} paused={paused} />
+
+      <CacheEffectivenessPanel windowMs={Number(windowMs)} paused={paused} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

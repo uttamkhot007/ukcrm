@@ -136,7 +136,7 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
       </div>
 
       <div id="people-tabpanel" role="tabpanel" aria-labelledby={`people-tab-${tab}`} aria-live="polite">
-        <KeepAlive activeKey={tab} max={4}>
+        <KeepAlive activeKey={tab} max={4} moduleId="people-intelligence">
           {(key) => {
             const meta = TABS.find((t) => t.id === key);
             return (

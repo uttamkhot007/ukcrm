@@ -361,7 +361,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
       >
         {/* Visited tabs stay mounted (LRU) so returning to Deals or MEDDIC keeps
             filters, scroll and already-fetched data instead of reloading. */}
-        <KeepAlive activeKey={currentTab.id} max={4}>
+        <KeepAlive activeKey={currentTab.id} max={4} moduleId="sales">
           {(key) => {
             const tab = groups.flatMap((g) => g.tabs).find((t) => t.id === key);
             if (!tab) return null;
