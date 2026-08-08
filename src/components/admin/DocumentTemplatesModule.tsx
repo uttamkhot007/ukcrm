@@ -183,29 +183,68 @@ export function DocumentTemplatesModule() {
     await updateMutation.mutateAsync({ id: template.id, data: { is_default: true } });
   };
 
+  // Tenant branding applied to every installed template
+  const tenantBranding = {
+    companyName: (orgSettings as any)?.name || currentTenant?.name || null,
+    logoUrl: (orgSettings as any)?.logo_url || (currentTenant as any)?.logo_url || null,
+    address: (orgSettings as any)?.address || null,
+    email: (orgSettings as any)?.email || null,
+    phone: (orgSettings as any)?.phone || null,
+    website: (orgSettings as any)?.website || null,
+    primaryColor: ((currentTenant as any)?.branding as any)?.primaryColor || null,
+    secondaryColor: ((currentTenant as any)?.branding as any)?.secondaryColor || null,
+    accentColor: ((currentTenant as any)?.branding as any)?.accentColor || null,
+  };
+
+  const buildTemplateRow = (sample: LibraryTemplate) => ({
+    tenant_id: currentTenant?.id,
+    name: sample.name,
+    description: sample.description,
+    template_type: sample.template_type,
+    content: { ...sample.content, role: sample.role, solution: sample.solution ?? null },
+    header_content: sample.header_content,
+    footer_content: sample.footer_content,
+    branding: applyTenantBranding(sample, tenantBranding),
+    is_default: false,
+    created_by: user?.id,
+  });
+
   // Add sample template to database
-  const addSampleTemplate = async (sample: typeof SAMPLE_TEMPLATES[0]) => {
+  const addSampleTemplate = async (sample: LibraryTemplate) => {
     setLoadingSampleId(sample.name);
     try {
-      const { error } = await supabase.from('document_templates').insert({
-        tenant_id: currentTenant?.id,
-        name: sample.name,
-        description: sample.description,
-        template_type: sample.template_type,
-        content: sample.content,
-        header_content: sample.header_content,
-        footer_content: sample.footer_content,
-        branding: sample.branding,
-        is_default: false,
-        created_by: user?.id,
-      });
+      const { error } = await supabase.from('document_templates').insert(buildTemplateRow(sample));
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['document-templates'] });
-      toast.success(`Added "${sample.name}" to your templates`);
+      toast.success(`Added "${sample.name}" with your company branding`);
     } catch (error: any) {
       toast.error('Failed to add template: ' + error.message);
     } finally {
       setLoadingSampleId(null);
+    }
+  };
+
+  // Install every template for a role in one action
+  const installRolePack = async (role: TemplateRole) => {
+    const pending = TEMPLATE_LIBRARY.filter(
+      (t) => t.role === role && !templates.some((existing) => existing.name === t.name),
+    );
+    if (pending.length === 0) {
+      toast.info('All templates for this role are already installed');
+      return;
+    }
+    setInstallingPack(role);
+    try {
+      const { error } = await supabase
+        .from('document_templates')
+        .insert(pending.map(buildTemplateRow));
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['document-templates'] });
+      toast.success(`Installed ${pending.length} branded templates`);
+    } catch (error: any) {
+      toast.error('Failed to install pack: ' + error.message);
+    } finally {
+      setInstallingPack(null);
     }
   };
 
@@ -214,15 +253,25 @@ export function DocumentTemplatesModule() {
     return templates.some(t => t.name === sampleName);
   };
 
-  const filteredTemplates = activeType === 'all' 
-    ? templates 
-    : templates.filter(t => t.template_type === activeType);
+  const roleTypeValues = TEMPLATE_TYPES
+    .filter((t) => activeRole === 'all' || t.role === activeRole)
+    .map((t) => t.value);
 
-  const filteredSamples = activeType === 'all'
-    ? SAMPLE_TEMPLATES
-    : SAMPLE_TEMPLATES.filter(t => t.template_type === activeType);
+  const filteredTemplates = templates.filter(
+    (t) =>
+      (activeType === 'all' ? roleTypeValues.includes(t.template_type) || activeRole === 'all' : t.template_type === activeType),
+  );
+
+  const filteredSamples = SAMPLE_TEMPLATES.filter(
+    (t) =>
+      (activeRole === 'all' || t.role === activeRole) &&
+      (activeType === 'all' || t.template_type === activeType),
+  );
+
+  const visibleTypes = TEMPLATE_TYPES.filter((t) => activeRole === 'all' || t.role === activeRole);
 
   const getTypeInfo = (type: string) => TEMPLATE_TYPES.find(t => t.value === type);
+
 
   return (
     <div className="space-y-6">
