@@ -1,5 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ModuleTabBar } from "@/components/layout/ModuleTabBar";
+import { ModuleTabsProvider } from "@/contexts/ModuleTabsContext";
 import { Header } from "@/components/layout/Header";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
