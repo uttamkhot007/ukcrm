@@ -2,53 +2,57 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Suspense } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createPersistentQueryClient } from "@/lib/query-persist";
+import { lazyDefault } from "@/lib/lazy-module";
+import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthDiagnosticsGate } from "@/components/auth/AuthDiagnosticsGate";
 import { BuildVersionBadge } from "@/components/system/BuildVersionBadge";
-import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Notifications from "./pages/Notifications";
-import EmployeeDirectory from "./pages/EmployeeDirectory";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminOrganization from "./pages/admin/AdminOrganization";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminIntegrations from "./pages/admin/AdminIntegrations";
-import AdminDocumentation from "./pages/admin/AdminDocumentation";
 
-import AdminHealth from "./pages/admin/AdminHealth";
-import AdminTenants from "./pages/admin/AdminTenants";
-import AdminAlliance from "./pages/admin/AdminAlliance";
-import AdminOfferings from "./pages/admin/AdminOfferings";
-import AdminProcurement from "./pages/admin/AdminProcurement";
-import AdminSupportManagement from "./pages/admin/AdminSupportManagement";
-import AdminDocumentTemplates from "./pages/admin/AdminDocumentTemplates";
-import AdminWhitelabel from "./pages/admin/AdminWhitelabel";
-import AdminAuthorizedDomains from "./pages/admin/AdminAuthorizedDomains";
-import PlatformLayout from "./pages/admin/platform/PlatformLayout";
-import PlatformTenants from "./pages/admin/platform/PlatformTenants";
-import PlatformUsers from "./pages/admin/platform/PlatformUsers";
-import PlatformLicenses from "./pages/admin/platform/PlatformLicenses";
-import PlatformIntegrations from "./pages/admin/platform/PlatformIntegrations";
-import PlatformStatus from "./pages/admin/platform/PlatformStatus";
-import CreateWorkspace from "./pages/workspace/CreateWorkspace";
-import SelectWorkspace from "./pages/workspace/SelectWorkspace";
-import SupportPortal from "./pages/SupportPortal";
-import SupportDashboard from "./pages/SupportDashboard";
-import Tenders from "./pages/Tenders";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
-  },
-});
+
+// Route-level code splitting: the admin/platform console, support portal and
+// tender screens no longer ship inside the initial bundle.
+const Index = lazyDefault(() => import("./pages/Index"));
+const Notifications = lazyDefault(() => import("./pages/Notifications"));
+const EmployeeDirectory = lazyDefault(() => import("./pages/EmployeeDirectory"));
+const AdminLayout = lazyDefault(() => import("./pages/admin/AdminLayout"));
+const AdminOrganization = lazyDefault(() => import("./pages/admin/AdminOrganization"));
+const AdminUsers = lazyDefault(() => import("./pages/admin/AdminUsers"));
+const AdminIntegrations = lazyDefault(() => import("./pages/admin/AdminIntegrations"));
+const AdminDocumentation = lazyDefault(() => import("./pages/admin/AdminDocumentation"));
+const AdminHealth = lazyDefault(() => import("./pages/admin/AdminHealth"));
+const AdminTenants = lazyDefault(() => import("./pages/admin/AdminTenants"));
+const AdminAlliance = lazyDefault(() => import("./pages/admin/AdminAlliance"));
+const AdminOfferings = lazyDefault(() => import("./pages/admin/AdminOfferings"));
+const AdminProcurement = lazyDefault(() => import("./pages/admin/AdminProcurement"));
+const AdminSupportManagement = lazyDefault(() => import("./pages/admin/AdminSupportManagement"));
+const AdminDocumentTemplates = lazyDefault(() => import("./pages/admin/AdminDocumentTemplates"));
+const AdminWhitelabel = lazyDefault(() => import("./pages/admin/AdminWhitelabel"));
+const AdminAuthorizedDomains = lazyDefault(() => import("./pages/admin/AdminAuthorizedDomains"));
+const PlatformLayout = lazyDefault(() => import("./pages/admin/platform/PlatformLayout"));
+const PlatformTenants = lazyDefault(() => import("./pages/admin/platform/PlatformTenants"));
+const PlatformUsers = lazyDefault(() => import("./pages/admin/platform/PlatformUsers"));
+const PlatformLicenses = lazyDefault(() => import("./pages/admin/platform/PlatformLicenses"));
+const PlatformIntegrations = lazyDefault(() => import("./pages/admin/platform/PlatformIntegrations"));
+const PlatformStatus = lazyDefault(() => import("./pages/admin/platform/PlatformStatus"));
+const CreateWorkspace = lazyDefault(() => import("./pages/workspace/CreateWorkspace"));
+const SelectWorkspace = lazyDefault(() => import("./pages/workspace/SelectWorkspace"));
+const SupportPortal = lazyDefault(() => import("./pages/SupportPortal"));
+const SupportDashboard = lazyDefault(() => import("./pages/SupportDashboard"));
+const Tenders = lazyDefault(() => import("./pages/Tenders"));
+
+// A single client whose cache survives reloads, so reopening a module paints
+// from the last known data and revalidates in the background.
+const queryClient = createPersistentQueryClient(__APP_BUILD_TIME__);
+
 
 // Main application component with providers
 const App = () => (
@@ -60,6 +64,7 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <Suspense fallback={<ModuleSkeleton />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
@@ -133,6 +138,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
               <AuthDiagnosticsGate />
               <BuildVersionBadge />
             </TooltipProvider>

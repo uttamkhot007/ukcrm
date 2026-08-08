@@ -3,6 +3,7 @@ import type { User, Session } from "@/integrations/api/aws-types";
 // IMPORTANT: import the real Supabase client (works in the Lovable preview).
 // In the AWS production build, the Vite alias in vite.config.ts rewrites this
 // import to the REST-shim stub, so the same source works in both environments.
+import { clearPersistedQueryCache } from "@/lib/query-persist";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
@@ -423,6 +424,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // The query cache is persisted to disk for fast reopens — it must never
+    // outlive the session, or the next user could see the previous tenant's data.
+    clearPersistedQueryCache();
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -430,6 +434,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTeams([]);
     setPortalMode("admin");
   };
+
 
   const hasSalesAccess = role === "admin" || teams.some(t => SALES_TEAMS.includes(t));
   const isManagement = teams.includes("management") || role === "admin";

@@ -1,56 +1,9 @@
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
+import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Dashboard } from "@/components/dashboard/Dashboard";
-import { SalesModule } from "@/components/sales/SalesModule";
-import { SalesAIAssistant } from "@/components/sales/SalesAIAssistant";
-import { LegalModule } from "@/components/legal/LegalModule";
-import { RenewalsWrapper } from "@/components/renewals/RenewalsWrapper";
-import { InsideSalesModule } from "@/components/sales/InsideSalesModule";
-import { RequestsModule } from "@/components/employee/RequestsModule";
-import { EmployeeAIAssistant } from "@/components/employee/EmployeeAIAssistant";
-import { RequestApprovalModule } from "@/components/employee/RequestApprovalModule";
-import { EmployeeEventsModule } from "@/components/employee/EmployeeEventsModule";
-import { AttendanceModule } from "@/components/employee/AttendanceModule";
-import { AttendanceReports } from "@/components/employee/AttendanceReports";
-import { DocumentationModule } from "@/components/employee/DocumentationModule";
-import { MyOrganization } from "@/components/employee/MyOrganization";
-import { EmployeeWorkflowsModule } from "@/components/employee/EmployeeWorkflowsModule";
-import { EmployeeBenefitsModule } from "@/components/employee/EmployeeBenefitsModule";
-import { EmployeeProfileModule } from "@/components/employee/EmployeeProfileModule";
-import { EmployeeResourcesModule } from "@/components/employee/EmployeeResourcesModule";
-import { TicketingModule } from "@/components/ticketing/TicketingModule";
-import { EmployeeTicketSection } from "@/components/ticketing/EmployeeTicketSection";
-import { BillingModule } from "@/components/billing/BillingModule";
-import { ComplianceModule } from "@/components/compliance/ComplianceModule";
-import { HRModule } from "@/components/hr/HRModule";
-import { AccountsModule } from "@/components/accounts/AccountsModule";
-import { ProcurementInventoryModule } from "@/components/accounts/ProcurementInventoryModule";
-import { TallyModule } from "@/components/tally/TallyModule";
-import { SolutionEngineeringModule } from "@/components/presales/SolutionEngineeringModule";
-import { CustomerPortal } from "@/components/customer/CustomerPortal";
-import { AllianceModule } from "@/components/admin/AllianceModule";
-import { OfferingsModule } from "@/components/admin/OfferingsModule";
-import { DocumentTemplatesModule } from "@/components/admin/DocumentTemplatesModule";
-import { ExpenseModule } from "@/components/expenses/ExpenseModule";
-import { AssetsModule } from "@/components/assets/AssetsModule";
-import { ProjectsModule } from "@/components/projects/ProjectsModule";
-import { ITModule } from "@/components/it/ITModule";
-import { ManagementAnalyticsModule } from "@/components/analytics/ManagementAnalyticsModule";
-import { VCFODashboard } from "@/components/dashboard/VCFODashboard";
-import { VCISODashboard } from "@/components/dashboard/VCISODashboard";
-import { VCRODashboard } from "@/components/dashboard/VCRODashboard";
-import { TechnicalModule } from "@/components/technical/TechnicalModule";
-import { DailyActivityTracker } from "@/components/employee/DailyActivityTracker";
-import { DealDeskModule } from "@/components/tenders/DealDeskModule";
-import { MarketingModule } from "@/components/marketing/MarketingModule";
-import { CommunicationsModule } from "@/components/communications/CommunicationsModule";
-import { PublicRelationsModule } from "@/components/pr/PublicRelationsModule";
-import { TeamCommunication } from "@/components/employee/TeamCommunication";
-import { LearningHubModule } from "@/components/employee/LearningHubModule";
-import { RemoteSessionsModule } from "@/components/remote-sessions/RemoteSessionsModule";
-import { SkillMatrixModule } from "@/components/employee/SkillMatrixModule";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
@@ -59,6 +12,117 @@ import {
   shouldForceCleanup,
 } from "@/lib/redirect-loop-guard";
 import { forceFreshReload } from "@/lib/cache-cleanup";
+
+
+// ---------------------------------------------------------------------------
+// Every module is a separate chunk.
+//
+// Previously all 49 modules were imported eagerly, so opening the app parsed
+// several megabytes of JavaScript before anything could paint and every click
+// competed with that work. Now a module's code is fetched only when it is
+// first opened, and preloaded on hover so the click itself feels instant.
+// ---------------------------------------------------------------------------
+const Dashboard = lazyNamed(() => import("@/components/dashboard/Dashboard"), "Dashboard");
+const SalesModule = lazyNamed(() => import("@/components/sales/SalesModule"), "SalesModule");
+const SalesAIAssistant = lazyNamed(() => import("@/components/sales/SalesAIAssistant"), "SalesAIAssistant");
+const LegalModule = lazyNamed(() => import("@/components/legal/LegalModule"), "LegalModule");
+const RenewalsWrapper = lazyNamed(() => import("@/components/renewals/RenewalsWrapper"), "RenewalsWrapper");
+const InsideSalesModule = lazyNamed(() => import("@/components/sales/InsideSalesModule"), "InsideSalesModule");
+const RequestsModule = lazyNamed(() => import("@/components/employee/RequestsModule"), "RequestsModule");
+const EmployeeAIAssistant = lazyNamed(() => import("@/components/employee/EmployeeAIAssistant"), "EmployeeAIAssistant");
+const RequestApprovalModule = lazyNamed(() => import("@/components/employee/RequestApprovalModule"), "RequestApprovalModule");
+const EmployeeEventsModule = lazyNamed(() => import("@/components/employee/EmployeeEventsModule"), "EmployeeEventsModule");
+const AttendanceModule = lazyNamed(() => import("@/components/employee/AttendanceModule"), "AttendanceModule");
+const AttendanceReports = lazyNamed(() => import("@/components/employee/AttendanceReports"), "AttendanceReports");
+const DocumentationModule = lazyNamed(() => import("@/components/employee/DocumentationModule"), "DocumentationModule");
+const MyOrganization = lazyNamed(() => import("@/components/employee/MyOrganization"), "MyOrganization");
+const EmployeeWorkflowsModule = lazyNamed(() => import("@/components/employee/EmployeeWorkflowsModule"), "EmployeeWorkflowsModule");
+const EmployeeBenefitsModule = lazyNamed(() => import("@/components/employee/EmployeeBenefitsModule"), "EmployeeBenefitsModule");
+const EmployeeProfileModule = lazyNamed(() => import("@/components/employee/EmployeeProfileModule"), "EmployeeProfileModule");
+const EmployeeResourcesModule = lazyNamed(() => import("@/components/employee/EmployeeResourcesModule"), "EmployeeResourcesModule");
+const TicketingModule = lazyNamed(() => import("@/components/ticketing/TicketingModule"), "TicketingModule");
+const EmployeeTicketSection = lazyNamed(() => import("@/components/ticketing/EmployeeTicketSection"), "EmployeeTicketSection");
+const BillingModule = lazyNamed(() => import("@/components/billing/BillingModule"), "BillingModule");
+const ComplianceModule = lazyNamed(() => import("@/components/compliance/ComplianceModule"), "ComplianceModule");
+const HRModule = lazyNamed(() => import("@/components/hr/HRModule"), "HRModule");
+const AccountsModule = lazyNamed(() => import("@/components/accounts/AccountsModule"), "AccountsModule");
+const ProcurementInventoryModule = lazyNamed(() => import("@/components/accounts/ProcurementInventoryModule"), "ProcurementInventoryModule");
+const TallyModule = lazyNamed(() => import("@/components/tally/TallyModule"), "TallyModule");
+const SolutionEngineeringModule = lazyNamed(() => import("@/components/presales/SolutionEngineeringModule"), "SolutionEngineeringModule");
+const CustomerPortal = lazyNamed(() => import("@/components/customer/CustomerPortal"), "CustomerPortal");
+const AllianceModule = lazyNamed(() => import("@/components/admin/AllianceModule"), "AllianceModule");
+const OfferingsModule = lazyNamed(() => import("@/components/admin/OfferingsModule"), "OfferingsModule");
+const DocumentTemplatesModule = lazyNamed(() => import("@/components/admin/DocumentTemplatesModule"), "DocumentTemplatesModule");
+const ExpenseModule = lazyNamed(() => import("@/components/expenses/ExpenseModule"), "ExpenseModule");
+const AssetsModule = lazyNamed(() => import("@/components/assets/AssetsModule"), "AssetsModule");
+const ProjectsModule = lazyNamed(() => import("@/components/projects/ProjectsModule"), "ProjectsModule");
+const ITModule = lazyNamed(() => import("@/components/it/ITModule"), "ITModule");
+const ManagementAnalyticsModule = lazyNamed(() => import("@/components/analytics/ManagementAnalyticsModule"), "ManagementAnalyticsModule");
+const VCFODashboard = lazyNamed(() => import("@/components/dashboard/VCFODashboard"), "VCFODashboard");
+const VCISODashboard = lazyNamed(() => import("@/components/dashboard/VCISODashboard"), "VCISODashboard");
+const VCRODashboard = lazyNamed(() => import("@/components/dashboard/VCRODashboard"), "VCRODashboard");
+const TechnicalModule = lazyNamed(() => import("@/components/technical/TechnicalModule"), "TechnicalModule");
+const DailyActivityTracker = lazyNamed(() => import("@/components/employee/DailyActivityTracker"), "DailyActivityTracker");
+const DealDeskModule = lazyNamed(() => import("@/components/tenders/DealDeskModule"), "DealDeskModule");
+const MarketingModule = lazyNamed(() => import("@/components/marketing/MarketingModule"), "MarketingModule");
+const CommunicationsModule = lazyNamed(() => import("@/components/communications/CommunicationsModule"), "CommunicationsModule");
+const PublicRelationsModule = lazyNamed(() => import("@/components/pr/PublicRelationsModule"), "PublicRelationsModule");
+const TeamCommunication = lazyNamed(() => import("@/components/employee/TeamCommunication"), "TeamCommunication");
+const LearningHubModule = lazyNamed(() => import("@/components/employee/LearningHubModule"), "LearningHubModule");
+const RemoteSessionsModule = lazyNamed(() => import("@/components/remote-sessions/RemoteSessionsModule"), "RemoteSessionsModule");
+const SkillMatrixModule = lazyNamed(() => import("@/components/employee/SkillMatrixModule"), "SkillMatrixModule");
+
+export const MODULE_COMPONENTS = {
+  Dashboard,
+  SalesModule,
+  SalesAIAssistant,
+  LegalModule,
+  RenewalsWrapper,
+  InsideSalesModule,
+  RequestsModule,
+  EmployeeAIAssistant,
+  RequestApprovalModule,
+  EmployeeEventsModule,
+  AttendanceModule,
+  AttendanceReports,
+  DocumentationModule,
+  MyOrganization,
+  EmployeeWorkflowsModule,
+  EmployeeBenefitsModule,
+  EmployeeProfileModule,
+  EmployeeResourcesModule,
+  TicketingModule,
+  EmployeeTicketSection,
+  BillingModule,
+  ComplianceModule,
+  HRModule,
+  AccountsModule,
+  ProcurementInventoryModule,
+  TallyModule,
+  SolutionEngineeringModule,
+  CustomerPortal,
+  AllianceModule,
+  OfferingsModule,
+  DocumentTemplatesModule,
+  ExpenseModule,
+  AssetsModule,
+  ProjectsModule,
+  ITModule,
+  ManagementAnalyticsModule,
+  VCFODashboard,
+  VCISODashboard,
+  VCRODashboard,
+  TechnicalModule,
+  DailyActivityTracker,
+  DealDeskModule,
+  MarketingModule,
+  CommunicationsModule,
+  PublicRelationsModule,
+  TeamCommunication,
+  LearningHubModule,
+  RemoteSessionsModule,
+  SkillMatrixModule,
+};
 
 const Index = () => {
   const location = useLocation();
@@ -155,6 +219,15 @@ const Index = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Warm the chunks people reach for most, once the browser is idle. This is
+  // what makes the second and third module click feel instant rather than
+  // paying a fresh download each time.
+  useEffect(() => {
+    if (!user) return;
+    preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
+  }, [user]);
+
 
   // Only block rendering while we genuinely don't know yet, or while an
   // unavoidable redirect (no session / no workspace) is in flight.
@@ -731,9 +804,14 @@ const Index = () => {
 
   return (
     <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
-      {renderContent()}
+      {/* keyed so switching modules shows the skeleton instead of freezing on
+          the previous module while the new chunk downloads */}
+      <Suspense key={activeModule} fallback={<ModuleSkeleton />}>
+        {renderContent()}
+      </Suspense>
     </MainLayout>
   );
+
 };
 
 export default Index;
