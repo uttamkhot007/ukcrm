@@ -130,7 +130,9 @@ export default defineConfig(async ({ mode }) => {
             }
             if (id.includes("@supabase")) return "vendor-supabase";
             if (id.includes("@tanstack")) return "vendor-query";
-            if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
+            if (/node_modules[\\/](recharts|victory-vendor|d3-[a-z]+)[\\/]/.test(id)) {
+              return "vendor-charts";
+            }
             if (id.includes("@radix-ui")) return "vendor-radix";
             if (id.includes("date-fns")) return "vendor-date";
             if (id.includes("lucide-react")) return "vendor-icons";
