@@ -5174,8 +5174,15 @@ export type Database = {
           ai_fields: Json
           ai_model: string | null
           ai_notes: string | null
+          attached_record_id: string | null
+          attached_record_table: string | null
           created_at: string
           created_by: string | null
+          exported_at: string | null
+          file_format: string | null
+          file_name: string | null
+          file_path: string | null
+          file_url: string | null
           final_fields: Json
           finalized_at: string | null
           finalized_by: string | null
@@ -5195,8 +5202,15 @@ export type Database = {
           ai_fields?: Json
           ai_model?: string | null
           ai_notes?: string | null
+          attached_record_id?: string | null
+          attached_record_table?: string | null
           created_at?: string
           created_by?: string | null
+          exported_at?: string | null
+          file_format?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_url?: string | null
           final_fields?: Json
           finalized_at?: string | null
           finalized_by?: string | null
@@ -5216,8 +5230,15 @@ export type Database = {
           ai_fields?: Json
           ai_model?: string | null
           ai_notes?: string | null
+          attached_record_id?: string | null
+          attached_record_table?: string | null
           created_at?: string
           created_by?: string | null
+          exported_at?: string | null
+          file_format?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_url?: string | null
           final_fields?: Json
           finalized_at?: string | null
           finalized_by?: string | null
