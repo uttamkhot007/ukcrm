@@ -1,0 +1,26 @@
+{
+  "_comment": "Known cross-tenant readable policies on tables that carry tenant_id. These are pre-existing debt: each entry is a policy that allows any authenticated user to read another tenant's rows. The audit test fails if ANY new entry appears. Remove entries here as the policies are tightened.",
+  "permissiveTenantTablePolicies": [
+    "contact_lifecycle_stages::Authenticated users can view lifecycle stages",
+    "deal_activities::Users can view deal activities",
+    "email_templates::Authenticated users can view email templates",
+    "hr_checklists::Authenticated users can view checklists",
+    "job_postings::Authenticated users can view job postings",
+    "landing_pages::Authenticated users can view landing pages",
+    "leave_policies::Authenticated users can view leave policies",
+    "marketing_journeys::Authenticated users can view marketing journeys",
+    "order_processing_requests::Users can view all order processing requests",
+    "organization_settings::Everyone can view org settings",
+    "poc_requests::Users can view all POC requests",
+    "product_catalog::Authenticated users can view products",
+    "profiles::Users can view all profiles",
+    "quotations::Users can view all quotations",
+    "renewals::Users can view all renewals",
+    "rfp_responses::Users can view all RFP responses",
+    "rotten_deal_settings::Authenticated users can view rotten deal settings",
+    "sales_territories::Authenticated users can view territories",
+    "technical_assessments::Users can view all assessments",
+    "tickets::Users can view all tickets",
+    "vendors::Everyone can view vendors"
+  ]
+}

@@ -44,7 +44,33 @@ export interface PublishInput<T = unknown> {
   traceId?: string;
 }
 
+/**
+ * Wraps a consumer so it can only ever observe events belonging to the tenant
+ * it was created for. Streams are shared across tenants, so every subscriber
+ * that touches tenant data must go through this guard: an event with a
+ * different tenant (or with no tenant at all) is dropped, never handled.
+ */
+export function tenantScopedHandler(
+  tenantId: string,
+  handler: (event: DomainEvent) => Promise<void>,
+  onDropped?: (event: DomainEvent) => void,
+): (event: DomainEvent) => Promise<void> {
+  return async (event: DomainEvent) => {
+    if (!event.tenantId || event.tenantId !== tenantId) {
+      onDropped?.(event);
+      return;
+    }
+    await handler(event);
+  };
+}
+
+/** True when the event may be handled inside the given tenant's context. */
+export function isEventVisibleToTenant(event: DomainEvent, tenantId: string): boolean {
+  return event.tenantId === tenantId;
+}
+
 export class EventBus {
+
   private readonly redis: Redis;
   private consumers: Array<{ stop: () => void }> = [];
 
