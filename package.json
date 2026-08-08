@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:isolation": "vitest run tests/tenant-isolation.db.test.ts backend/src/routes/__tests__/crud-factory.tenant-isolation.test.ts backend/src/platform/__tests__/events.tenant-isolation.test.ts",
-    "test:contract": "vitest run backend/src/platform/__tests__/contract.test.ts"
+    "test:contract": "vitest run backend/src/platform/__tests__/contract.test.ts",
+    "predev": "bunx tsx scripts/generate-sitemap.ts",
+    "prebuild": "bunx tsx scripts/generate-sitemap.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
