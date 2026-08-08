@@ -419,7 +419,15 @@ export function DocumentTemplatesModule() {
             <Sparkles className="h-4 w-4" />
             Template Library ({SAMPLE_TEMPLATES.length})
           </TabsTrigger>
+          <TabsTrigger value="pack-versions" className="gap-2">
+            <History className="h-4 w-4" />
+            Packs &amp; Versions
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pack-versions">
+          <TemplatePackManager templates={templates as any} branding={tenantBranding} />
+        </TabsContent>
 
         {/* Type Filter */}
         <div className="flex gap-2 flex-wrap mb-4">
