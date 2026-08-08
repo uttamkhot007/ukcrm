@@ -16,9 +16,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   FileText, Plus, Edit, Trash2, Copy, Check, Star, Loader2,
-  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus
+  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus,
+  History,
 } from "lucide-react";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
+import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
 import {
   TEMPLATE_LIBRARY,
   TEMPLATE_TYPES,
@@ -205,6 +208,9 @@ export function DocumentTemplatesModule() {
     header_content: sample.header_content,
     footer_content: sample.footer_content,
     branding: applyTenantBranding(sample, tenantBranding),
+    library_key: sample.key,
+    library_version: TEMPLATE_PACK_VERSIONS[sample.role],
+    pack_role: sample.role,
     is_default: false,
     created_by: user?.id,
   });
@@ -419,7 +425,15 @@ export function DocumentTemplatesModule() {
             <Sparkles className="h-4 w-4" />
             Template Library ({SAMPLE_TEMPLATES.length})
           </TabsTrigger>
+          <TabsTrigger value="pack-versions" className="gap-2">
+            <History className="h-4 w-4" />
+            Packs &amp; Versions
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pack-versions">
+          <TemplatePackManager templates={templates as any} branding={tenantBranding} />
+        </TabsContent>
 
         {/* Type Filter */}
         <div className="flex gap-2 flex-wrap mb-4">
