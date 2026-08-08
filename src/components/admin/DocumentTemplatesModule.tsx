@@ -694,6 +694,12 @@ export function DocumentTemplatesModule() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <TemplateAutoFillDialog
+        open={!!autoFillTemplate}
+        onOpenChange={(open) => !open && setAutoFillTemplate(null)}
+        template={autoFillTemplate}
+      />
     </div>
   );
 }
