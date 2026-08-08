@@ -401,10 +401,11 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Link to="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" size="icon" aria-label="Back to dashboard">
+              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
             </Button>
           </Link>
+
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
             <p className="text-muted-foreground text-sm">
