@@ -143,7 +143,9 @@ const Index = () => {
     user,
     isPlatformAdmin,
     hasTenantAccess,
+    requestedModule,
     navigate,
+
   ]);
 
   // Set initial module for customer portal once.
