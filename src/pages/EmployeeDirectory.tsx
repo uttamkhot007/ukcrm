@@ -200,16 +200,23 @@ export default function EmployeeDirectory() {
                 </div>
               </CardContent>
             </Card>
+            </section>
+
+            <section aria-labelledby="employee-results-heading" className="space-y-6">
+            <h2 id="employee-results-heading" className="sr-only">
+              Employees
+            </h2>
 
             {/* Results count */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="w-4 h-4" />
+              <Filter className="w-4 h-4" aria-hidden="true" />
               <span>
                 Showing {filteredEmployees.length} of {employees.length} employees
               </span>
             </div>
 
             {/* Employee Grid */}
+
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
