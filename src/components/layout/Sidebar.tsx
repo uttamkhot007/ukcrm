@@ -257,7 +257,7 @@ const superAdminItems: NavItem[] = [
 
 export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
+  const { publishModuleTabs } = useModuleTabs();
   const { role, signOut, profile, portalMode, hasSalesAccess, isManagement, isAdminMode, teams, hasModuleAccess, consoleAccess, isSuperAdmin, user } = useAuth();
   const { currentTenant, tenantMemberships } = useTenant();
   const navigate = useNavigate();
