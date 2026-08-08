@@ -994,6 +994,26 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
   const filteredNavItems = getNavItems();
 
+  // Publish the active main module's sub-modules so they render as a
+  // horizontal tab strip in the content area instead of nesting here.
+  const activeParent = filteredNavItems.find(
+    (item) =>
+      item.children &&
+      (activeModule === item.id ||
+        activeModule.startsWith(item.id + "-") ||
+        item.children.some((child) => child.id === activeModule))
+  );
+
+  useEffect(() => {
+    publishModuleTabs(
+      activeParent?.id ?? null,
+      activeParent?.label ?? null,
+      activeParent?.children ?? []
+    );
+  }, [activeParent?.id, activeParent?.label, activeParent?.children, publishModuleTabs]);
+
+
+
   const getRoleBadgeColor = () => {
     switch (role) {
       case "admin":
