@@ -369,3 +369,25 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<auto-configured>
 ---
 
 *Generated for Vinca ERP - Enterprise Resource Planning System*
+
+## API Contract Testing
+
+Breaking API changes are caught before deployment by a generated, committed contract.
+
+- **Source of truth**: `backend/src/platform/contract.ts` builds an OpenAPI 3.1 document from the
+  service manifest, the CRUD resource table (`backend/src/routes/route-table.ts`) and the declared
+  custom route modules. Every operation carries `x-service` / `x-table`, so routing ownership is
+  part of the contract.
+- **Committed baseline**: `backend/contracts/openapi.json` (aggregate, served by the gateway) plus
+  `backend/contracts/services/<service>.json` (per-service surface). Regenerate with
+  `npm run contracts:generate` in `backend/` and commit the result.
+- **CI gate**: `npm run contracts:check` (backend) fails on any breaking change and on a stale
+  baseline. `npm run test:contract` (root) runs the same checks in Vitest.
+- **Breaking rules** (`backend/src/platform/contract-diff.ts`): removed path/operation, changed
+  owning service, removed success response or response schema, removed/newly-required parameter,
+  new required request field, changed parameter type, lost enum value, a public route becoming
+  authenticated, and removed required properties on shared schemas. Everything else is additive.
+- **Truthfulness checks**: the tests statically scan each route module and fail if a handler exists
+  that the contract does not declare (and vice versa), assert full CRUD coverage for every owned
+  resource, unique `operationId`s, resolvable `$ref`s, auth on every non-public operation, and that
+  every consumed domain event has a publisher.
