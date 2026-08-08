@@ -91,15 +91,28 @@ export function LeadScoring() {
     return { label: "Cold", variant: "destructive" as const, icon: AlertCircle };
   };
 
+  const isRevalidating = isFetching && !isLoading;
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading lead scores">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-32 w-full" />
         ))}
+        <span className="sr-only">Loading lead scores…</span>
       </div>
     );
   }
+
 
   const hotLeads = leads?.filter(l => (l.lead_score || 0) >= 80) || [];
   const warmLeads = leads?.filter(l => (l.lead_score || 0) >= 60 && (l.lead_score || 0) < 80) || [];
