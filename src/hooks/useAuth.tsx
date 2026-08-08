@@ -4,6 +4,7 @@ import type { User, Session } from "@/integrations/api/aws-types";
 // In the AWS production build, the Vite alias in vite.config.ts rewrites this
 // import to the REST-shim stub, so the same source works in both environments.
 import { clearPersistedQueryCache } from "@/lib/query-persist";
+import { clearPersistedUiState } from "@/hooks/usePersistentState";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
@@ -427,6 +428,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // The query cache is persisted to disk for fast reopens — it must never
     // outlive the session, or the next user could see the previous tenant's data.
     clearPersistedQueryCache();
+    // Saved tabs/filters are per-account UI state and must not follow the next
+    // person who signs in on this browser.
+    clearPersistedUiState();
     setUser(null);
     setSession(null);
     setProfile(null);

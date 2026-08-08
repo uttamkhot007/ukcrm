@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { lazyNamed, preloadWhenIdle, type PreloadableComponent } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
@@ -6,6 +6,8 @@ import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { PanelSkeleton, ModuleShell } from "@/components/shared/ModuleSkeleton";
 import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { KeepAlive } from "@/components/shared/KeepAlive";
+import { usePersistentState } from "@/hooks/usePersistentState";
+import { useTenant } from "@/contexts/TenantContext";
 import { ModuleRefreshButton } from "@/components/shared/ModuleRefreshButton";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
@@ -103,7 +105,17 @@ function ActivityWorkspace() {
 }
 
 export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
-  const [activeTab, setActiveTab] = useState(initialTab);
+  // The last visited sub-tab is restored across reloads (scoped per tenant), so
+  // a refresh does not dump the user back on the Insights dashboard.
+  const { currentTenant } = useTenant();
+  const [activeTab, setActiveTab] = usePersistentState<string>(
+    "sales:active-tab",
+    initialTab,
+    {
+      scope: currentTenant?.id ?? null,
+      validate: (v): v is string => typeof v === "string" && v.length > 0,
+    },
+  );
 
   const groups: SalesGroup[] = useMemo(
     () => [
