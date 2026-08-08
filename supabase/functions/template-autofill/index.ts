@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       const { data: ticket } = await admin
         .from("customer_support_tickets")
         .select(
-          "id, ticket_number, subject, description, status, priority, severity, ticket_type, category, resolution, created_at",
+          "id, ticket_number, title, description, status, severity, ticket_type, created_at",
         )
         .eq("id", sourceId)
         .eq("tenant_id", tenantId)
