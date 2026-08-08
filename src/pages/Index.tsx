@@ -46,6 +46,7 @@ const EmployeeTicketSection = lazyNamed(() => import("@/components/ticketing/Emp
 const BillingModule = lazyNamed(() => import("@/components/billing/BillingModule"), "BillingModule");
 const ComplianceModule = lazyNamed(() => import("@/components/compliance/ComplianceModule"), "ComplianceModule");
 const HRModule = lazyNamed(() => import("@/components/hr/HRModule"), "HRModule");
+const PeopleIntelligenceModule = lazyNamed(() => import("@/components/people/PeopleIntelligenceModule"), "PeopleIntelligenceModule");
 const AccountsModule = lazyNamed(() => import("@/components/accounts/AccountsModule"), "AccountsModule");
 const ProcurementInventoryModule = lazyNamed(() => import("@/components/accounts/ProcurementInventoryModule"), "ProcurementInventoryModule");
 const TallyModule = lazyNamed(() => import("@/components/tally/TallyModule"), "TallyModule");
