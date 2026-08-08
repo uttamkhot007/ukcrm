@@ -437,6 +437,20 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         ],
       });
 
+      // People Intelligence
+      items.push({
+        id: "people-intel",
+        label: "People Intelligence",
+        icon: HeartPulse,
+        color: "text-hr",
+        children: [
+          { id: "people-intel-wellbeing", label: "Wellbeing & Sentiment", icon: HeartPulse },
+          { id: "people-intel-productivity", label: "Productivity Cockpit", icon: Gauge },
+          { id: "people-intel-accountability", label: "Accountability", icon: Target },
+          { id: "people-intel-recognition", label: "Recognition Wall", icon: Award },
+        ],
+      });
+
       // Technical Module
       items.push({
         id: "tech",
