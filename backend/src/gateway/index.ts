@@ -1,0 +1,244 @@
+/**
+ * API gateway — the single public entrypoint.
+ *
+ * Responsibilities:
+ *  - terminate client requests and attach trace context
+ *  - route each path prefix to the owning service
+ *  - protect callers with per-tenant rate limiting, circuit breakers,
+ *    bulkheads, timeouts and safe retries
+ *  - shed load and degrade gracefully instead of cascading failures
+ *  - expose aggregate health of the mesh for load balancers and dashboards
+ *
+ * The gateway holds no business logic and no database.
+ */
+
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import { config } from '../config/index.js';
+import { ROUTABLE_SERVICES, type ServiceDefinition } from '../platform/manifest.js';
+import { ALL_RESOURCES } from '../platform/resources.js';
+import { breakerSnapshot, CircuitOpenError, resilientFetch } from '../platform/resilience.js';
+import {
+  createServiceLogger,
+  formatTraceparent,
+  httpDuration,
+  httpErrors,
+  httpRequests,
+  metrics,
+  parseTraceparent,
+} from '../platform/telemetry.js';
+
+const logger = createServiceLogger('gateway');
+
+/** Where each service can be reached. Overridable per environment. */
+function upstreamFor(service: ServiceDefinition): string {
+  const key = `SERVICE_URL_${service.name.toUpperCase()}`;
+  return process.env[key] ?? `http://${service.name}:${service.port}`;
+}
+
+interface Route {
+  prefix: string;
+  service: ServiceDefinition;
+}
+
+/**
+ * Build the routing table from the manifest: every CRUD resource maps to its
+ * owning service, plus the custom route prefixes each service declares.
+ */
+function buildRoutingTable(): Route[] {
+  const routes: Route[] = [];
+  const seen = new Set<string>();
+
+  for (const resource of ALL_RESOURCES) {
+    const owner = ROUTABLE_SERVICES.find((s) => s.owns.some((re) => re.test(resource.table)));
+    if (!owner) continue;
+    const prefix = `/api/${resource.path}`;
+    if (seen.has(prefix)) continue;
+    seen.add(prefix);
+    routes.push({ prefix, service: owner });
+  }
+
+  for (const service of ROUTABLE_SERVICES) {
+    for (const custom of service.customRoutes) {
+      const prefix = `/api/${custom}`;
+      if (seen.has(prefix)) continue;
+      seen.add(prefix);
+      routes.push({ prefix, service });
+    }
+    // Extended (non-CRUD) surfaces registered by the owning service.
+    for (const custom of service.customRoutes) {
+      const prefix = `/api/${custom}-ext`;
+      if (seen.has(prefix)) continue;
+      seen.add(prefix);
+      routes.push({ prefix, service });
+    }
+  }
+
+  routes.push({ prefix: '/api/realtime', service: ROUTABLE_SERVICES.find((s) => s.name === 'collaboration')! });
+  routes.push({ prefix: '/api/platform', service: ROUTABLE_SERVICES.find((s) => s.name === 'tenancy')! });
+  routes.push({ prefix: '/api/admin', service: ROUTABLE_SERVICES.find((s) => s.name === 'identity')! });
+
+  // Longest prefix wins so `/api/deal-registrations` never gets eaten by `/api/deals`.
+  return routes.sort((a, b) => b.prefix.length - a.prefix.length);
+}
+
+const routingTable = buildRoutingTable();
+
+function resolve(pathname: string): Route | undefined {
+  return routingTable.find((r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`));
+}
+
+async function main(): Promise<void> {
+  const app = Fastify({
+    loggerInstance: logger as never,
+    trustProxy: true,
+    disableRequestLogging: true,
+    bodyLimit: Number(process.env['BODY_LIMIT_BYTES'] ?? 25 * 1024 * 1024),
+  });
+
+  await app.register(helmet, { contentSecurityPolicy: false });
+  await app.register(cors, {
+    origin: config.corsOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'traceparent', 'X-Tenant-Id', 'Idempotency-Key'],
+    exposedHeaders: ['traceparent', 'x-service'],
+  });
+  await app.register(rateLimit, {
+    max: Number(process.env['GATEWAY_RATE_LIMIT_MAX'] ?? config.rateLimitMax * 5),
+    timeWindow: config.rateLimitWindowMs,
+    keyGenerator: (req) => (req.headers['x-forwarded-for'] as string) ?? req.ip,
+  });
+
+  app.get('/health', async () => ({ status: 'ok', service: 'gateway', routes: routingTable.length }));
+  app.get('/health/live', async () => ({ status: 'ok' }));
+
+  /** Readiness of the whole mesh, used by dashboards and smoke tests. */
+  app.get('/health/ready', async (_req, reply) => {
+    const results = await Promise.all(
+      ROUTABLE_SERVICES.map(async (service) => {
+        try {
+          const res = await resilientFetch(`${upstreamFor(service)}/health/ready`, {
+            timeoutMs: 2_000,
+            retries: 0,
+            target: service.name,
+          });
+          return { service: service.name, status: res.ok ? 'ready' : 'degraded' };
+        } catch {
+          return { service: service.name, status: 'unreachable' };
+        }
+      }),
+    );
+    const unhealthy = results.filter((r) => r.status !== 'ready');
+    return reply.status(unhealthy.length === 0 ? 200 : 503).send({
+      status: unhealthy.length === 0 ? 'ready' : 'degraded',
+      services: results,
+      breakers: breakerSnapshot(),
+    });
+  });
+
+  app.get('/metrics', async (_req, reply) =>
+    reply.header('content-type', 'text/plain; version=0.0.4').send(metrics.render()),
+  );
+
+  /** Topology introspection: which service owns which surface. */
+  app.get('/api/_topology', async () => ({
+    services: ROUTABLE_SERVICES.map((s) => ({
+      name: s.name,
+      domain: s.domain,
+      description: s.description,
+      database: s.database,
+      scaling: s.scaling,
+      slo: s.slo,
+      publishes: s.publishes,
+      consumes: s.consumes,
+      routes: routingTable.filter((r) => r.service.name === s.name).map((r) => r.prefix),
+    })),
+  }));
+
+  app.all('/api/*', async (request, reply) => {
+    const started = process.hrtime.bigint();
+    const url = new URL(request.url, 'http://gateway.local');
+    const route = resolve(url.pathname);
+
+    const trace = parseTraceparent(request.headers['traceparent'] as string | undefined);
+    reply.header('traceparent', formatTraceparent(trace));
+
+    if (!route) {
+      return reply.status(404).send({ error: 'Not Found', message: `No service owns ${url.pathname}` });
+    }
+
+    const target = `${upstreamFor(route.service)}${request.url}`;
+    const headers: Record<string, string> = {
+      traceparent: formatTraceparent(trace),
+      'x-forwarded-for': (request.headers['x-forwarded-for'] as string) ?? request.ip,
+      'x-request-id': request.id,
+    };
+    for (const key of ['authorization', 'content-type', 'accept', 'x-tenant-id', 'idempotency-key', 'x-all-tenants']) {
+      const value = request.headers[key];
+      if (typeof value === 'string') headers[key] = value;
+    }
+
+    try {
+      const upstream = await resilientFetch(target, {
+        method: request.method,
+        headers,
+        body: ['GET', 'HEAD'].includes(request.method) ? undefined : JSON.stringify(request.body ?? {}),
+        timeoutMs: Number(process.env['GATEWAY_TIMEOUT_MS'] ?? 15_000),
+        retries: 1,
+        target: route.service.name,
+      });
+
+      const payload = await upstream.text();
+      const contentType = upstream.headers.get('content-type') ?? 'application/json';
+      httpRequests.inc({ service: 'gateway', route: route.prefix, status: upstream.status });
+      httpDuration.observe(
+        { service: 'gateway', route: route.prefix },
+        Number(process.hrtime.bigint() - started) / 1e9,
+      );
+      return reply
+        .status(upstream.status)
+        .header('content-type', contentType)
+        .header('x-upstream-service', route.service.name)
+        .send(payload);
+    } catch (err) {
+      httpErrors.inc({ service: 'gateway', route: route.prefix });
+      if (err instanceof CircuitOpenError) {
+        request.log.warn({ target: route.service.name }, 'Shedding request: circuit open');
+        return reply.status(503).send({
+          error: 'Service Unavailable',
+          message: `${route.service.domain} is temporarily unavailable. Please retry shortly.`,
+          service: route.service.name,
+          traceId: trace.traceId,
+        });
+      }
+      request.log.error({ err, service: route.service.name }, 'Upstream call failed');
+      const status = (err as { statusCode?: number }).statusCode ?? 502;
+      return reply.status(status >= 500 ? status : 502).send({
+        error: 'Bad Gateway',
+        message: `${route.service.domain} did not respond in time.`,
+        service: route.service.name,
+        traceId: trace.traceId,
+      });
+    }
+  });
+
+  const port = Number(process.env['PORT'] ?? 3000);
+  await app.listen({ port, host: config.host });
+  logger.info({ port, routes: routingTable.length }, 'API gateway listening');
+
+  const shutdown = async () => {
+    logger.info('Gateway draining');
+    await app.close();
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => void shutdown());
+  process.on('SIGINT', () => void shutdown());
+}
+
+void main().catch((err) => {
+  logger.error({ err }, 'Gateway failed to start');
+  process.exit(1);
+});
