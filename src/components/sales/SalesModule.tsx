@@ -6,6 +6,7 @@ import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { PanelSkeleton, ModuleShell } from "@/components/shared/ModuleSkeleton";
 import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { KeepAlive } from "@/components/shared/KeepAlive";
+import { ModuleRefreshButton } from "@/components/shared/ModuleRefreshButton";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
@@ -294,12 +295,14 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
       </div>
 
       {/* Sub level */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
       <div
         role="tablist"
         aria-label={`${activeGroup.label} views`}
         onKeyDown={(e) => moveFocus(e, '[data-sub-tab="true"]')}
         className="flex items-center gap-2 flex-wrap"
       >
+
         {activeGroup.tabs.map((tab) => {
           const isActive = tab.id === currentTab.id;
           return (
@@ -331,6 +334,10 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           );
         })}
       </div>
+        {/* Kept-alive panes serve cached data; this forces a live re-fetch. */}
+        <ModuleRefreshButton className="shrink-0" />
+      </div>
+
 
       <div
         className="min-w-0"
