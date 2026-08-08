@@ -279,9 +279,11 @@ export function DocumentTemplatesModule() {
         <div>
           <h2 className="text-2xl font-bold">Document Templates</h2>
           <p className="text-muted-foreground">
-            Manage templates for POC Plans, Implementation Plans, Invoices, and Quotes
+            Role-based template library for Sales, Presales, Technical, HR and Finance — installed with{' '}
+            {tenantBranding.companyName || 'your organisation'}&apos;s branding.
           </p>
         </div>
+
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
