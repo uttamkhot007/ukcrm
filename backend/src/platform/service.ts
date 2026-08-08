@@ -99,17 +99,41 @@ export async function createService(options: CreateServiceOptions): Promise<Serv
     keyGenerator: (req) => req.tenant?.tenantId ?? (req.headers['x-forwarded-for'] as string) ?? req.ip,
   });
 
-  // Trace context in, trace context out.
+  // Trace context in, trace context out. The context is bound to the async
+  // resource so any downstream call (resilientFetch, event publish) inherits
+  // the same trace and correlation id without threading arguments around.
   app.addHook('onRequest', async (request, reply) => {
-    const ctx = parseTraceparent(request.headers['traceparent'] as string | undefined);
-    (request as { trace?: unknown }).trace = ctx;
-    reply.header('traceparent', formatTraceparent(ctx));
+    const ctx = contextFromHeaders(definition.name, request.headers as Record<string, string | undefined>);
+    enterContext(ctx);
+    (request as { traceCtx?: ActiveContext }).traceCtx = ctx;
+    (request as { trace?: unknown }).trace = ctx.trace;
+    (request as { correlationId?: string }).correlationId = ctx.correlationId;
+    reply.header('traceparent', formatTraceparent(ctx.trace));
+    reply.header('x-correlation-id', ctx.correlationId);
     reply.header('x-service', definition.name);
     (request as { startedAt?: bigint }).startedAt = process.hrtime.bigint();
+    (request as { span?: SpanHandle }).span = startSpan(`${request.method} ${request.url.split('?')[0]}`, {
+      kind: 'server',
+      service: definition.name,
+      context: ctx,
+      attributes: {
+        'http.method': request.method,
+        'http.target': request.url.split('?')[0] ?? request.url,
+        'service.domain': definition.domain,
+      },
+    });
   });
 
   await app.register(authPlugin);
   registerTenantContext(app, { router: db, publicPaths, crossTenant: options.crossTenant });
+
+  // Once auth/tenant resolution has run, enrich the trace so the dashboard can
+  // filter traces per tenant without any extra plumbing.
+  app.addHook('preHandler', async (request) => {
+    if (request.tenant) {
+      annotateContext({ tenantId: request.tenant.tenantId, userId: request.tenant.userId });
+    }
+  });
 
   // Structured access log + RED metrics + rolling error budget.
   let requestCount = 0;
@@ -133,20 +157,34 @@ export async function createService(options: CreateServiceOptions): Promise<Serv
       Math.max(0, 1 - observedRatio / definition.slo.errorRatio),
     );
 
-    const trace = (request as { trace?: { traceId: string } }).trace;
+    const ctx = (request as { traceCtx?: ActiveContext }).traceCtx;
+    (request as { span?: SpanHandle }).span?.end({
+      status: reply.statusCode >= 500 ? 'error' : 'ok',
+      attributes: { 'http.status_code': reply.statusCode, 'http.route': route },
+    });
+
     request.log.info(
       {
         method: request.method,
         route,
         status: reply.statusCode,
         durationMs: Math.round(seconds * 1000),
-        traceId: trace?.traceId,
+        traceId: ctx?.trace.traceId,
+        correlationId: ctx?.correlationId,
         tenantId: request.tenant?.tenantId,
         userId: request.tenant?.userId,
       },
       'request',
     );
   });
+
+  // Local trace introspection for a single service instance (kubectl/curl).
+  app.get('/debug/traces', async (request) => {
+    const query = request.query as { limit?: string; traceId?: string };
+    if (query.traceId) return localCollector.get(query.traceId) ?? { error: 'not_found' };
+    return { traces: localCollector.list({ limit: Number(query.limit ?? 50) }) };
+  });
+
 
   // Liveness: process is up. Readiness: dependencies are usable.
   app.get('/health/live', async () => ({ status: 'ok', service: definition.name }));
