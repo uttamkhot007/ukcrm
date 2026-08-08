@@ -5,6 +5,8 @@
  */
 
 import { breakerState } from './telemetry.js';
+import { propagationHeaders, startSpan } from './tracing.js';
+
 
 export type BreakerState = 'closed' | 'half-open' | 'open';
 
