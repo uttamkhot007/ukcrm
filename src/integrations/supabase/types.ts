@@ -3387,6 +3387,71 @@ export type Database = {
           },
         ]
       }
+      document_template_versions: {
+        Row: {
+          branding: Json
+          change_note: string | null
+          content: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          footer_content: Json
+          header_content: Json
+          id: string
+          library_key: string | null
+          library_version: string | null
+          name: string
+          template_id: string
+          template_type: string
+          tenant_id: string
+          version: string
+        }
+        Insert: {
+          branding?: Json
+          change_note?: string | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          footer_content?: Json
+          header_content?: Json
+          id?: string
+          library_key?: string | null
+          library_version?: string | null
+          name: string
+          template_id: string
+          template_type: string
+          tenant_id: string
+          version?: string
+        }
+        Update: {
+          branding?: Json
+          change_note?: string | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          footer_content?: Json
+          header_content?: Json
+          id?: string
+          library_key?: string | null
+          library_version?: string | null
+          name?: string
+          template_id?: string
+          template_type?: string
+          tenant_id?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_templates: {
         Row: {
           branding: Json | null
@@ -3399,7 +3464,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          library_key: string | null
+          library_version: string | null
           name: string
+          pack_role: string | null
           template_type: string
           tenant_id: string | null
           updated_at: string
@@ -3416,7 +3484,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          library_key?: string | null
+          library_version?: string | null
           name: string
+          pack_role?: string | null
           template_type: string
           tenant_id?: string | null
           updated_at?: string
@@ -3433,7 +3504,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          library_key?: string | null
+          library_version?: string | null
           name?: string
+          pack_role?: string | null
           template_type?: string
           tenant_id?: string | null
           updated_at?: string
@@ -12654,6 +12728,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      template_pack_installations: {
+        Row: {
+          action: string
+          created_at: string
+          created_template_ids: string[]
+          id: string
+          installed_by: string | null
+          is_rolled_back: boolean
+          pack_role: string
+          pack_version: string
+          previous_version: string | null
+          snapshot: Json
+          template_count: number
+          tenant_id: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          created_template_ids?: string[]
+          id?: string
+          installed_by?: string | null
+          is_rolled_back?: boolean
+          pack_role: string
+          pack_version: string
+          previous_version?: string | null
+          snapshot?: Json
+          template_count?: number
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_template_ids?: string[]
+          id?: string
+          installed_by?: string | null
+          is_rolled_back?: boolean
+          pack_role?: string
+          pack_version?: string
+          previous_version?: string | null
+          snapshot?: Json
+          template_count?: number
+          tenant_id?: string
+        }
+        Relationships: []
       }
       tenant_ai_configs: {
         Row: {
