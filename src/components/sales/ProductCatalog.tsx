@@ -307,10 +307,20 @@ export function ProductCatalog() {
                     <TableCell><Badge variant={product.is_active ? "default" : "secondary"}>{product.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setLeadForProduct(product)}
+                          title={`Add lead for ${product.name}`}
+                        >
+                          <UserPlus className="h-4 w-4 mr-1" />
+                          Add lead
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(product)}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(product.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
