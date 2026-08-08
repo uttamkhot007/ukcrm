@@ -16,8 +16,19 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   FileText, Plus, Edit, Trash2, Copy, Check, Star, Loader2,
-  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles
+  ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus
 } from "lucide-react";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import {
+  TEMPLATE_LIBRARY,
+  TEMPLATE_TYPES,
+  TEMPLATE_ROLES,
+  DEFAULT_TEMPLATE_CONTENT,
+  applyTenantBranding,
+  type LibraryTemplate,
+  type TemplateRole,
+} from "@/lib/template-library";
+
 
 interface DocumentTemplate {
   id: string;
