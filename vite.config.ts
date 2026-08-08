@@ -137,7 +137,10 @@ export default defineConfig(async ({ mode }) => {
             if (id.includes("xlsx") || id.includes("jspdf") || id.includes("html2canvas")) {
               return "vendor-export";
             }
-            return "vendor";
+            // Everything else is deliberately left to Rollup: it then attaches
+            // each library to the module chunks that actually use it, instead
+            // of forcing one oversized shared vendor bundle onto every page.
+            return undefined;
           },
         },
       },
