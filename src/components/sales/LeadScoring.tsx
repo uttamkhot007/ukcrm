@@ -360,7 +360,43 @@ export function LeadScoring() {
             </Card>
           );
         })}
+
+        {(!leads || leads.length === 0) && (
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              No leads in this segment.
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {segmentCount > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, segmentCount)} of {segmentCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0 || isFetching}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">Page {page + 1} of {pageCount}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+              disabled={page >= pageCount - 1 || isFetching}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
