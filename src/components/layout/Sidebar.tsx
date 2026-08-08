@@ -1144,52 +1144,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               )}
             </button>
 
-            {/* Premium 3D Card Children */}
-            {!collapsed && item.children && expandedItems.includes(item.id) && (
-              <div className="ml-2 mt-2 space-y-1.5 animate-fade-in">
-                {item.children.map((child, index) => (
-                  <button
-                    key={child.id}
-                    onClick={() => {
-                      // Handle admin-center children navigation
-                      if (child.id.startsWith("admin-center-")) {
-                        const path = child.id.replace("admin-center-", "");
-                        navigate(`/admin/${path}`);
-                      }
-                      // Handle Platform Console children
-                      if (child.id.startsWith("platform-")) {
-                        const path = child.id.replace("platform-", "");
-                        navigate(`/admin/platform/${path}`);
-                      }
-                      onModuleChange(child.id);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 text-sm group/child",
-                      "bg-sidebar-accent/30 hover:bg-sidebar-accent/60",
-                      "border border-transparent hover:border-sidebar-border/50",
-                      "hover:shadow-md hover:-translate-y-0.5",
-                      activeModule === child.id
-                        ? "bg-primary/15 border-primary/30 text-primary shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                        "transition-all duration-300 group-hover/child:scale-110 group-hover/child:rotate-3",
-                        activeModule === child.id
-                          ? "bg-primary/20 text-primary"
-                          : "bg-sidebar-accent text-muted-foreground group-hover/child:bg-primary/10 group-hover/child:text-primary"
-                      )}
-                    >
-                      <child.icon className="w-4 h-4" />
-                    </div>
-                    <span className="flex-1 text-left font-medium">{child.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Sub-modules now render horizontally via <ModuleTabBar /> */}
           </div>
         ))}
       </nav>
