@@ -1,5 +1,7 @@
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
+
 import "./index.css";
 import { BUILD_VERSION, BUILD_TIME, BUILD_COMMIT } from "./lib/build-info";
 import { installPreviewBuildRefreshHook } from "./lib/preview-build-refresh";
