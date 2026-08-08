@@ -333,6 +333,10 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           );
         })}
       </div>
+        {/* Kept-alive panes serve cached data; this forces a live re-fetch. */}
+        <ModuleRefreshButton className="shrink-0" />
+      </div>
+
 
       <div
         className="min-w-0"
