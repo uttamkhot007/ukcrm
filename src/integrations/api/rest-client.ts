@@ -11,53 +11,10 @@ const API_URL: string =
   (import.meta.env.VITE_API_URL as string | undefined) ||
   (typeof window !== "undefined" ? window.location.origin : "http://localhost:3001");
 
-const ACCESS_TOKEN_KEY = "nexuscrm_access_token";
-const REFRESH_TOKEN_KEY = "nexuscrm_refresh_token";
-const TOKEN_EXPIRES_KEY = "nexuscrm_token_expires";
-
-export interface AuthTokens {
-  accessToken: string;
-  idToken?: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-export const tokenStore = {
-  get(): string | null {
-    try {
-      return localStorage.getItem(ACCESS_TOKEN_KEY);
-    } catch {
-      return null;
-    }
-  },
-  set(t: AuthTokens) {
-    try {
-      localStorage.setItem(ACCESS_TOKEN_KEY, t.accessToken);
-      if (t.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, t.refreshToken);
-      const exp = Date.now() + (t.expiresIn ?? 3600) * 1000;
-      localStorage.setItem(TOKEN_EXPIRES_KEY, String(exp));
-    } catch {
-      /* ignore */
-    }
-  },
-  clear() {
-    try {
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-      localStorage.removeItem(TOKEN_EXPIRES_KEY);
-    } catch {
-      /* ignore */
-    }
-  },
-  isExpired(): boolean {
-    try {
-      const exp = parseInt(localStorage.getItem(TOKEN_EXPIRES_KEY) || "0", 10);
-      return !exp || Date.now() >= exp;
-    } catch {
-      return true;
-    }
-  },
-};
+// Tokens live in memory only — never in localStorage/sessionStorage — so an
+// XSS bug cannot read or exfiltrate them.
+export type { AuthTokens } from "@/lib/token-store";
+export { tokenStore } from "@/lib/token-store";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number, public details?: unknown) {
