@@ -11,6 +11,8 @@ import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { AuthDiagnosticsPanel } from "@/components/auth/AuthDiagnosticsPanel";
+import { PageSeo } from "@/components/seo/PageSeo";
+
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
