@@ -18,7 +18,9 @@ import {
   FileText, Plus, Edit, Trash2, Copy, Check, Star, Loader2,
   ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus,
   History,
+  FileDown,
 } from "lucide-react";
+import { GeneratedDocumentsPanel } from "@/components/admin/GeneratedDocumentsPanel";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
 import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
