@@ -1098,9 +1098,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                   navigate(item.linkPath);
                   return;
                 }
-                if (item.children) {
-                  toggleExpand(item.id);
-                }
                 onModuleChange(item.id);
               }}
               className={cn(
