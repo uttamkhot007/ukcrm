@@ -68,11 +68,13 @@ export function lazyNamed<P = Record<string, unknown>>(
 /** Wrap a dynamic import of a default export. */
 export function lazyDefault<P = Record<string, unknown>>(
   loader: () => Promise<{ default: ComponentType<P> }>,
+  /** Name used to group this chunk in the performance benchmarks. */
+  name = "route",
 ): PreloadableComponent<P> {
   let promise: Promise<{ default: ComponentType<P> }> | null = null;
   const load = () => {
     if (!promise) {
-      promise = measureChunkLoad("default", "lazy", (onAttempt) =>
+      promise = measureChunkLoad(name, "lazy", (onAttempt) =>
         retryImport(loader, { onAttempt }),
       );
       promise.catch(() => {
