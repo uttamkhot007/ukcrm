@@ -536,7 +536,19 @@ export function DocumentTemplatesModule() {
                         Version {template.version} • Updated {new Date(template.updated_at).toLocaleDateString()}
                       </p>
                     </CardContent>
-                    <CardFooter className="pt-2 flex gap-2">
+                    <CardFooter className="pt-2 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 gap-1"
+                        onClick={() => setAutoFillTemplate({
+                          id: template.id,
+                          name: template.name,
+                          template_type: template.template_type,
+                        })}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI auto-fill
+                      </Button>
                       <Button variant="outline" size="sm" className="flex-1" onClick={() => duplicateTemplate(template)}>
                         <Copy className="h-3 w-3 mr-1" />
                         Duplicate
