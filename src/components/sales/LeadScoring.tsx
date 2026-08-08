@@ -50,6 +50,8 @@ export function LeadScoring() {
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
   const [segment, setSegment] = useState<SegmentKey>("hot");
   const [page, setPage] = useState(0);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+
 
   const changeSegment = (next: SegmentKey) => {
     setSegment(next);
