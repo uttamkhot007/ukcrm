@@ -125,6 +125,16 @@ export default defineConfig(async ({ mode }) => {
         output: {
           manualChunks(id: string) {
             if (!id.includes("node_modules")) return undefined;
+            // Tiny utilities used by *every* screen. Pinning them here keeps
+            // Rollup from parking them inside a large feature-only chunk
+            // (e.g. charts), which would drag that chunk into the first load.
+            if (
+              /node_modules[\\/](clsx|tailwind-merge|class-variance-authority|lodash|lodash-es)[\\/]/.test(
+                id,
+              )
+            ) {
+              return "vendor-utils";
+            }
             if (/[\\/]node_modules[\\/](react|react-dom|scheduler|react-router)/.test(id)) {
               return "vendor-react";
             }
