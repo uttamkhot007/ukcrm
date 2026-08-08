@@ -65,7 +65,10 @@ interface SalesTab {
   label: string;
   icon: LucideIcon;
   render: () => JSX.Element;
+  /** Chunk to warm when the user hovers or focuses this tab. */
+  preload?: PreloadableComponent<never>;
 }
+
 
 interface SalesGroup {
   id: string;
