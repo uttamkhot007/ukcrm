@@ -89,13 +89,21 @@ export default function SupportPortal() {
 
       // Update profile to mark as customer
       if (data.user) {
-        await supabase
+        const { error: profileError } = await supabase
           .from("profiles")
           .update({ user_category: "customer", full_name: fullName })
           .eq("user_id", data.user.id);
+
+        if (profileError) {
+          toast.warning(
+            "Account created, but we couldn't finish setting up your profile. Please contact support if you see missing details.",
+          );
+          return;
+        }
       }
 
       toast.success("Account created! Please check your email to verify.");
+
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
