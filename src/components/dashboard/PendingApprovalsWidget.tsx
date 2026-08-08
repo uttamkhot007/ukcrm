@@ -54,16 +54,24 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 export function PendingApprovalsWidget({ onNavigate }: PendingApprovalsWidgetProps) {
   const { isAdmin, isManager } = useAuth();
+  const { currentTenant } = useTenant();
 
   const { data: requests, isLoading } = useQuery({
-    queryKey: ["pending-approvals-widget"],
+    queryKey: ["pending-approvals-widget", currentTenant?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("employee_requests")
         .select("*")
         .in("status", ["pending", "under_review"])
         .order("sla_deadline", { ascending: true })
         .limit(5);
+
+      if (currentTenant?.id) {
+        query = query.eq("tenant_id", currentTenant.id);
+      }
+
+      const { data, error } = await query;
+
 
       if (error) throw error;
 
