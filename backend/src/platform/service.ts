@@ -88,7 +88,7 @@ export async function createService(options: CreateServiceOptions): Promise<Serv
     origin: config.corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'traceparent', 'X-Tenant-Id', 'Idempotency-Key'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'traceparent', 'X-Correlation-Id', 'X-Tenant-Id', 'Idempotency-Key'],
   });
 
   // Rate limit per tenant when known, per IP otherwise, so one noisy tenant

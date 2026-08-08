@@ -116,8 +116,8 @@ async function main(): Promise<void> {
     origin: config.corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'traceparent', 'X-Tenant-Id', 'Idempotency-Key'],
-    exposedHeaders: ['traceparent', 'x-service'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'traceparent', 'X-Correlation-Id', 'X-Tenant-Id', 'Idempotency-Key'],
+    exposedHeaders: ['traceparent', 'x-correlation-id', 'x-service', 'x-upstream-service'],
   });
   await app.register(rateLimit, {
     max: Number(process.env['GATEWAY_RATE_LIMIT_MAX'] ?? config.rateLimitMax * 5),
