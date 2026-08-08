@@ -86,7 +86,9 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
             Sentiment, output and ownership in one place — so managers act on signal, not hunches.
           </p>
         </div>
+        <ModuleRefreshButton className="ml-auto shrink-0" />
       </div>
+
 
       <div
         role="tablist"
