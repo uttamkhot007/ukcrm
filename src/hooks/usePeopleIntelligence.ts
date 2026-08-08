@@ -70,7 +70,7 @@ export function useTenantPeople() {
     queryFn: async (): Promise<TenantPerson[]> => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, full_name, department, designation, avatar_url")
+        .select("user_id, full_name, department, avatar_url")
         .eq("tenant_id", currentTenant!.id)
         .not("user_id", "is", null);
       if (error) throw error;
@@ -78,7 +78,7 @@ export function useTenantPeople() {
         user_id: p.user_id as string,
         full_name: p.full_name ?? "Unnamed",
         department: p.department ?? null,
-        designation: (p as { designation?: string | null }).designation ?? null,
+        designation: null,
         avatar_url: p.avatar_url ?? null,
       }));
     },

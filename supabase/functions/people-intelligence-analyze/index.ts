@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     const projectIds = (projectRows ?? []).map((r: Row) => r.id as string);
 
     const [profilesRes, pulseRes, attendanceRes, tasksRes] = await Promise.all([
-      admin.from("profiles").select("user_id, full_name, department, designation").eq("tenant_id", tenantId).not("user_id", "is", null),
+      admin.from("profiles").select("user_id, full_name, department").eq("tenant_id", tenantId).not("user_id", "is", null),
       admin
         .from("employee_pulse_checkins")
         .select("user_id, checkin_date, mood_score, energy_level, workload_level, note")
