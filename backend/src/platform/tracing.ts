@@ -65,6 +65,15 @@ export function runWithContext<T>(ctx: ActiveContext, fn: () => T): T {
   return storage.run(ctx, fn);
 }
 
+/**
+ * Bind the context to the current async resource. Used by Fastify hooks, where
+ * the rest of the request lifecycle runs outside the hook's callback.
+ */
+export function enterContext(ctx: ActiveContext): void {
+  storage.enterWith(ctx);
+}
+
+
 /** Attach tenant/user to the ambient context once auth has resolved. */
 export function annotateContext(fields: Partial<Pick<ActiveContext, 'tenantId' | 'userId'>>): void {
   const ctx = storage.getStore();
