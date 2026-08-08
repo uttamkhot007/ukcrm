@@ -36,7 +36,11 @@ export function LeadScoring() {
       
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    placeholderData: (prev: any) => prev,
   });
 
   const scoreLead = useMutation({

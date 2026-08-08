@@ -52,6 +52,10 @@ export function ProductCatalog() {
       if (error) throw error;
       return data as Product[];
     },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    placeholderData: (prev: Product[] | undefined) => prev,
   });
 
   const createMutation = useMutation({
