@@ -444,9 +444,10 @@ export default function NotificationsPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button variant="ghost" size="sm" onClick={clearSelection}>
-                <X className="w-4 h-4" />
+              <Button variant="ghost" size="sm" onClick={clearSelection} aria-label="Clear selection">
+                <X className="w-4 h-4" aria-hidden="true" />
               </Button>
+
             </div>
           ) : (
             <>
