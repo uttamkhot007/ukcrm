@@ -1,16 +1,27 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { lazyNamed } from "@/lib/lazy-module";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
+import { shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
 import { cn } from "@/lib/utils";
 import { HeartPulse, Gauge, ClipboardCheck, PartyPopper } from "lucide-react";
 
-const WellbeingTab = lazy(() => import("./WellbeingTab").then((m) => ({ default: m.WellbeingTab })));
-const ProductivityCockpitTab = lazy(() =>
-  import("./ProductivityCockpitTab").then((m) => ({ default: m.ProductivityCockpitTab })),
+// lazyNamed retries with backoff, waits out offline periods and recovers from
+// stale deploys, so a dropped connection is a delay rather than a blank tab.
+const WellbeingTab = lazyNamed(() => import("./WellbeingTab"), "WellbeingTab");
+const ProductivityCockpitTab = lazyNamed(
+  () => import("./ProductivityCockpitTab"),
+  "ProductivityCockpitTab",
 );
-const AccountabilityTab = lazy(() =>
-  import("./AccountabilityTab").then((m) => ({ default: m.AccountabilityTab })),
-);
-const RecognitionTab = lazy(() => import("./RecognitionTab").then((m) => ({ default: m.RecognitionTab })));
+const AccountabilityTab = lazyNamed(() => import("./AccountabilityTab"), "AccountabilityTab");
+const RecognitionTab = lazyNamed(() => import("./RecognitionTab"), "RecognitionTab");
+
+const TAB_COMPONENTS = {
+  wellbeing: WellbeingTab,
+  productivity: ProductivityCockpitTab,
+  accountability: AccountabilityTab,
+  recognition: RecognitionTab,
+} as const;
 
 const TABS = [
   { id: "wellbeing", label: "Wellbeing", icon: HeartPulse, hint: "How people feel" },
@@ -20,13 +31,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
-
-const preloaders: Record<TabId, () => Promise<unknown>> = {
-  wellbeing: () => import("./WellbeingTab"),
-  productivity: () => import("./ProductivityCockpitTab"),
-  accountability: () => import("./AccountabilityTab"),
-  recognition: () => import("./RecognitionTab"),
-};
 
 interface PeopleIntelligenceModuleProps {
   initialTab?: string;
@@ -43,11 +47,21 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
   }, [initialTab]);
 
   // Warm sibling chunks once the browser is idle so tab switches feel instant.
+  // Skipped on offline / metered / 2g links, and retried when we come back.
   useEffect(() => {
-    const idle = window.requestIdleCallback?.(() => {
-      for (const key of Object.keys(preloaders) as TabId[]) void preloaders[key]().catch(() => {});
-    });
+    let idle: number | undefined;
+    const warmAll = () => {
+      if (shouldSkipSpeculativePreload()) return;
+      for (const key of Object.keys(TAB_COMPONENTS) as TabId[]) void TAB_COMPONENTS[key].warm();
+    };
+    const schedule = () => {
+      idle = window.requestIdleCallback?.(warmAll);
+      if (idle === undefined) window.setTimeout(warmAll, 1200);
+    };
+    if (shouldSkipSpeculativePreload()) window.addEventListener("online", schedule, { once: true });
+    else schedule();
     return () => {
+      window.removeEventListener("online", schedule);
       if (idle !== undefined) window.cancelIdleCallback?.(idle);
     };
   }, []);
@@ -93,8 +107,8 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
               aria-controls="people-tabpanel"
               tabIndex={active ? 0 : -1}
               onClick={() => setTab(t.id)}
-              onMouseEnter={() => void preloaders[t.id]().catch(() => {})}
-              onFocus={() => void preloaders[t.id]().catch(() => {})}
+              onMouseEnter={() => void TAB_COMPONENTS[t.id].warm()}
+              onFocus={() => void TAB_COMPONENTS[t.id].warm()}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -110,20 +124,23 @@ export function PeopleIntelligenceModule({ initialTab }: PeopleIntelligenceModul
       </div>
 
       <div id="people-tabpanel" role="tabpanel" aria-labelledby={`people-tab-${tab}`} aria-live="polite">
-        <Suspense
-          fallback={
-            <div className="space-y-4">
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          }
-        >
-          {tab === "wellbeing" && <WellbeingTab />}
-          {tab === "productivity" && <ProductivityCockpitTab />}
-          {tab === "accountability" && <AccountabilityTab />}
-          {tab === "recognition" && <RecognitionTab />}
-        </Suspense>
+        <ModuleErrorBoundary resetKey={tab} onRetry={() => TAB_COMPONENTS[tab].preload()}>
+          <Suspense
+            key={tab}
+            fallback={
+              <div className="space-y-4">
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            }
+          >
+            {tab === "wellbeing" && <WellbeingTab />}
+            {tab === "productivity" && <ProductivityCockpitTab />}
+            {tab === "accountability" && <AccountabilityTab />}
+            {tab === "recognition" && <RecognitionTab />}
+          </Suspense>
+        </ModuleErrorBoundary>
       </div>
     </div>
   );
