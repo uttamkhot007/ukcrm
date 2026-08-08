@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { lazyNamed, preloadWhenIdle, type PreloadableComponent } from "@/lib/lazy-module";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { PanelSkeleton } from "@/components/shared/ModuleSkeleton";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
@@ -255,7 +256,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
                 aria-selected={isActive}
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveTab(group.tabs[0].id)}
-                onMouseEnter={() => group.tabs[0].preload?.preload()}
+                onMouseEnter={() => group.tabs[0].preload?.warm()}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
                   focusRing,
@@ -291,9 +292,9 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
               aria-controls="sales-tab-panel"
               tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
-              onMouseEnter={() => tab.preload?.preload()}
-              onFocus={() => tab.preload?.preload()}
-              onPointerDown={() => tab.preload?.preload()}
+              onMouseEnter={() => tab.preload?.warm()}
+              onFocus={() => tab.preload?.warm()}
+              onPointerDown={() => tab.preload?.warm()}
               className={cn(
                 "flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 focusRing,
@@ -317,9 +318,14 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         aria-live="polite"
         aria-label={`${currentTab.label} workspace`}
       >
-        <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
-          {currentTab.render()}
-        </Suspense>
+        <ModuleErrorBoundary
+          resetKey={currentTab.id}
+          onRetry={() => currentTab.preload?.preload() ?? Promise.resolve()}
+        >
+          <Suspense key={currentTab.id} fallback={<PanelSkeleton />}>
+            {currentTab.render()}
+          </Suspense>
+        </ModuleErrorBoundary>
       </div>
     </div>
   );

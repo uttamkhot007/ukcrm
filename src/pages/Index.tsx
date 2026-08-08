@@ -1,7 +1,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { lazyNamed, preloadWhenIdle } from "@/lib/lazy-module";
-import { moduleFamily } from "@/lib/module-preload";
+import { moduleFamily, loadModule } from "@/lib/module-preload";
 import { ModuleSkeleton } from "@/components/shared/ModuleSkeleton";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -822,9 +823,14 @@ const Index = () => {
           already-mounted tree and its cached queries instead of tearing the
           whole module down and refetching. A different family still shows the
           skeleton while its chunk downloads. */}
-      <Suspense key={moduleFamily(activeModule)} fallback={<ModuleSkeleton />}>
-        {renderContent()}
-      </Suspense>
+      <ModuleErrorBoundary
+        resetKey={moduleFamily(activeModule)}
+        onRetry={() => loadModule(activeModule)}
+      >
+        <Suspense key={moduleFamily(activeModule)} fallback={<ModuleSkeleton />}>
+          {renderContent()}
+        </Suspense>
+      </ModuleErrorBoundary>
     </MainLayout>
   );
 

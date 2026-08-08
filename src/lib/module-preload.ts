@@ -8,6 +8,8 @@
  * instant instead of showing a skeleton.
  */
 
+import { retryImport, shouldSkipSpeculativePreload } from "@/lib/chunk-retry";
+
 type Loader = () => Promise<unknown>;
 
 const loaders: Record<string, Loader> = {
@@ -49,17 +51,52 @@ const loaders: Record<string, Loader> = {
   customer: () => import("@/components/customer/CustomerPortal"),
 };
 
-const started = new Set<string>();
+const inflight = new Map<string, Promise<unknown>>();
+const loaded = new Set<string>();
 
-/** Warm the chunk backing a module id (e.g. "sales-leads" → the Sales chunk). */
+/**
+ * Warm the chunk backing a module id (e.g. "sales-leads" → the Sales chunk).
+ *
+ * This is speculative: it is skipped entirely while offline or on a metered /
+ * 2g connection so hovering a menu never competes with the work the user
+ * actually asked for. Failures are swallowed and the family is left unmarked,
+ * so the real navigation retries from scratch.
+ */
 export function preloadModule(moduleId: string) {
   const family = moduleId.split("-")[0];
   const loader = loaders[family];
-  if (!loader || started.has(family)) return;
-  started.add(family);
-  void loader().catch(() => {
-    // Allow a retry if the network dropped mid-chunk.
-    started.delete(family);
+  if (!loader || loaded.has(family) || inflight.has(family)) return;
+  if (shouldSkipSpeculativePreload()) return;
+
+  const task = retryImport(loader, {
+    // Speculative work gets one cheap retry and a short leash, and must never
+    // trigger a page reload on its own.
+    retries: 1,
+    timeout: 8_000,
+    recoverStaleDeploy: false,
+  })
+    .then(() => {
+      loaded.add(family);
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      inflight.delete(family);
+    });
+
+  inflight.set(family, task);
+}
+
+/**
+ * Load the chunk for a module id and surface failures to the caller.
+ * Used when the user has actually committed to opening the module.
+ */
+export function loadModule(moduleId: string): Promise<unknown> {
+  const family = moduleId.split("-")[0];
+  const loader = loaders[family];
+  if (!loader) return Promise.resolve();
+  return retryImport(loader, { label: "this section" }).then((mod) => {
+    loaded.add(family);
+    return mod;
   });
 }
 
