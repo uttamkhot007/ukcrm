@@ -5,6 +5,7 @@ import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
 import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { PanelSkeleton, ModuleShell } from "@/components/shared/ModuleSkeleton";
 import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
+import { KeepAlive } from "@/components/shared/KeepAlive";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
 import { SalesQuickActions } from "./SalesQuickActions";
