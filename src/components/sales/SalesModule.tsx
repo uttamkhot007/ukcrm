@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { lazyNamed, preloadWhenIdle, type PreloadableComponent } from "@/lib/lazy-module";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { PanelSkeleton } from "@/components/shared/ModuleSkeleton";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { LogActivitySection } from "./LogActivitySection";
