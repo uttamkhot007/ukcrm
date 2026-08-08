@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { lazyNamed, preloadWhenIdle, type PreloadableComponent } from "@/lib/lazy-module";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";

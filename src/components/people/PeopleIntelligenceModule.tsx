@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import { ModuleShell, StatsSkeleton, TableSkeleton } from "@/components/shared/ModuleSkeleton";
 import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { KeepAlive } from "@/components/shared/KeepAlive";
