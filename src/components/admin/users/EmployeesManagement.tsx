@@ -395,7 +395,7 @@ export function EmployeesManagement() {
       );
 
 
-    if (error) {
+    if (error || sensitiveError) {
       toast({
         title: "Error",
         description: "Failed to update employee",
