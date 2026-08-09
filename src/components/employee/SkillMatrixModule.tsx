@@ -547,23 +547,42 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     reader.readAsText(file);
   };
 
-  const handleImportConfirm = () => {
+  const handleImportConfirm = async () => {
     if (importPreview.length === 0) {
       toast.error("No data to import");
       return;
     }
-    
+    if (!currentTenant?.id) {
+      toast.error("No active workspace");
+      return;
+    }
+
     setIsImporting(true);
-    
-    // Add imported members to the team
-    setTeamMembers(prev => [...prev, ...importPreview]);
-    
+    const { error } = await supabase.from("employee_skill_matrix").insert(
+      importPreview.map((m) => ({
+        tenant_id: currentTenant.id,
+        name: m.name,
+        role: m.role,
+        department: m.department,
+        skills: m.skills as unknown as never,
+        overall_score: computeOverallScore(m.skills),
+      })),
+    );
     setIsImporting(false);
+
+    if (error) {
+      console.error("[skill-matrix] import failed", error);
+      toast.error("Failed to import employees");
+      return;
+    }
+
     setIsImportDialogOpen(false);
     setImportFile(null);
     setImportPreview([]);
     toast.success(`Successfully imported ${importPreview.length} employees`);
+    void loadMembers();
   };
+
 
   const handleImportCancel = () => {
     setIsImportDialogOpen(false);
