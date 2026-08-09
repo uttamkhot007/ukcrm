@@ -170,7 +170,11 @@ export function TemplatePackManager({ templates, branding }: Props) {
                   size="sm"
                   variant="outline"
                   className="flex-1 gap-1"
-                  disabled={busyRole === role.value || (!needsUpdate && installedRows.length === libs.length)}
+                  disabled={
+                    busyRole === role.value ||
+                    !canInstall(role.value) ||
+                    (!needsUpdate && installedRows.length === libs.length)
+                  }
                   onClick={() => runInstall(role.value)}
                 >
                   {busyRole === role.value ? (
@@ -178,13 +182,20 @@ export function TemplatePackManager({ templates, branding }: Props) {
                   ) : (
                     <PackagePlus className="h-3 w-3" />
                   )}
-                  {installedRows.length === 0 ? "Install pack" : needsUpdate ? "Update pack" : "Up to date"}
+                  {!canInstall(role.value)
+                    ? "No install access"
+                    : installedRows.length === 0
+                      ? "Install pack"
+                      : needsUpdate
+                        ? "Update pack"
+                        : "Up to date"}
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="gap-1"
-                  disabled={!lastInstall || busyRollback === lastInstall?.id}
+                  disabled={!lastInstall || busyRollback === lastInstall?.id || !canApprove(role.value)}
+                  title={!canApprove(role.value) ? "Rollback requires approval permission" : undefined}
                   onClick={() => lastInstall && runRollback(lastInstall)}
                 >
                   {busyRollback === lastInstall?.id ? (
