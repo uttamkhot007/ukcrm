@@ -396,7 +396,7 @@ export default function NotificationsPage() {
   const uniqueTypes = [...new Set(notifications.map((n) => n.type))];
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       <div className="container max-w-4xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -738,6 +738,6 @@ export default function NotificationsPage() {
         </>
         )}
       </div>
-    </div>
+    </main>
   );
 }
