@@ -20,13 +20,10 @@ const NotFound = () => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (!PLATFORM_ROUTES.has(location.pathname)) return;
-    const key = `not-found-recovered:${location.pathname}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-    void hardReloadLatestBuild(location.pathname + location.search);
-  }, [location.pathname, location.search]);
+  // NOTE: no automatic hard reload here. Auto-reloading on a 404 repeatedly
+  // bounced users onto cached documents instead of the current build. The
+  // manual "Hard reload latest build" button below stays available.
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
