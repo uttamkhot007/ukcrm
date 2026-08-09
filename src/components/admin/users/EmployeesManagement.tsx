@@ -366,23 +366,34 @@ export function EmployeesManagement() {
         employment_status: (editForm.employment_status || "active") as any,
         sales_sub_team: (editForm.sales_sub_team || null) as any,
         manager_id: editForm.manager_id || null,
-        // Bank details
-        bank_name: editForm.bank_name || null,
-        bank_account_number: editForm.bank_account_number || null,
-        bank_ifsc_code: editForm.bank_ifsc_code || null,
-        bank_branch: editForm.bank_branch || null,
-        // ESI details
-        esi_number: editForm.esi_number || null,
-        esi_dispensary: editForm.esi_dispensary || null,
-        // PF details
-        pf_number: editForm.pf_number || null,
-        uan_number: editForm.uan_number || null,
-        // Gratuity details
-        gratuity_nomination_name: editForm.gratuity_nomination_name || null,
-        gratuity_nomination_relation: editForm.gratuity_nomination_relation || null,
-        gratuity_nomination_percentage: editForm.gratuity_nomination_percentage || null,
       })
       .eq("user_id", editingEmployee.user_id);
+
+    const { error: sensitiveError } = await supabase
+      .from("employee_sensitive_details")
+      .upsert(
+        {
+          user_id: editingEmployee.user_id,
+          tenant_id: currentTenant?.id ?? null,
+          // Bank details
+          bank_name: editForm.bank_name || null,
+          bank_account_number: editForm.bank_account_number || null,
+          bank_ifsc_code: editForm.bank_ifsc_code || null,
+          bank_branch: editForm.bank_branch || null,
+          // ESI details
+          esi_number: editForm.esi_number || null,
+          esi_dispensary: editForm.esi_dispensary || null,
+          // PF details
+          pf_number: editForm.pf_number || null,
+          uan_number: editForm.uan_number || null,
+          // Gratuity details
+          gratuity_nomination_name: editForm.gratuity_nomination_name || null,
+          gratuity_nomination_relation: editForm.gratuity_nomination_relation || null,
+          gratuity_nomination_percentage: editForm.gratuity_nomination_percentage || null,
+        },
+        { onConflict: "user_id" },
+      );
+
 
     if (error) {
       toast({
