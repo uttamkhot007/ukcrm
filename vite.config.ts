@@ -113,6 +113,14 @@ export default defineConfig(async ({ mode }) => {
       chunkSizeWarningLimit: 900,
       rollupOptions: {
         output: {
+          // Content-hashed filenames: every deploy produces new URLs for the
+          // files that actually changed, so browsers can cache assets hard
+          // while a hard refresh (HTML is no-store) always picks up the new
+          // set immediately.
+          entryFileNames: "assets/[name]-[hash].js",
+          chunkFileNames: "assets/[name]-[hash].js",
+          assetFileNames: "assets/[name]-[hash][extname]",
+
           manualChunks(id: string) {
             if (!id.includes("node_modules")) return undefined;
             // Tiny utilities used by *every* screen. Pinning them here keeps

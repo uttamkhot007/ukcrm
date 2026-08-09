@@ -5,7 +5,9 @@ import App from "./App.tsx";
 import "./index.css";
 import { BUILD_VERSION, BUILD_TIME, BUILD_COMMIT } from "./lib/build-info";
 import { installPreviewBuildRefreshHook } from "./lib/preview-build-refresh";
+import { installBuildCacheStrategy } from "./lib/build-cache-strategy";
 import { isStaleDeployError, recoverFromStaleDeploy } from "./lib/chunk-retry";
+
 
 // Log build identity to console so it's easy to confirm which bundle
 // the browser is actually running.
@@ -20,6 +22,10 @@ console.info(
 // boot and the static "html · <build-time>" badge stays visible.
 document.documentElement.setAttribute("data-react-mounted", "1");
 installPreviewBuildRefreshHook();
+// Purge build-scoped caches when the bundle changes and keep watching the
+// deployed build so returning visitors never sit on a stale shell.
+installBuildCacheStrategy();
+
 
 // Vite fires this when a preloaded module chunk cannot be fetched — almost
 // always a dropped connection or a build that was replaced mid-session. We
