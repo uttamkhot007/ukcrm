@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Tag, RefreshCw, Copy, X, ChevronUp } from "lucide-react";
+import { Tag, RefreshCw, Copy, X, ChevronUp, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   BUILD_VERSION,
