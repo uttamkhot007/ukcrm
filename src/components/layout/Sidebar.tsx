@@ -1023,6 +1023,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     );
   }, [activeParent?.id, activeParent?.label, activeParent?.children, publishModuleTabs]);
 
+  const isItemActive = (item: NavItem) =>
+    activeModule === item.id || activeParent?.id === item.id;
 
 
   const getRoleBadgeColor = () => {
