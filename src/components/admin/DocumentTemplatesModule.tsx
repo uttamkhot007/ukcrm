@@ -421,11 +421,11 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
               key={role.value}
               role="button"
               tabIndex={0}
-              onClick={() => { setActiveRole(isActive ? 'all' : role.value); setActiveType('all'); }}
+              onClick={() => { setActiveRole(roleScope ? role.value : (isActive ? 'all' : role.value)); setActiveType('all'); }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  setActiveRole(isActive ? 'all' : role.value);
+                  setActiveRole(roleScope ? role.value : (isActive ? 'all' : role.value));
                   setActiveType('all');
                 }
               }}
@@ -495,11 +495,11 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
         <TabsList className="mb-4">
           <TabsTrigger value="my-templates" className="gap-2">
             <FileText className="h-4 w-4" />
-            My Templates ({templates.length})
+            My Templates ({scopedTemplates.length})
           </TabsTrigger>
           <TabsTrigger value="sample-gallery" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Template Library ({SAMPLE_TEMPLATES.length})
+            Template Library ({scopedSamples.length})
           </TabsTrigger>
           <TabsTrigger value="pack-versions" className="gap-2">
             <History className="h-4 w-4" />
@@ -509,7 +509,7 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
             <FileDown className="h-4 w-4" />
             Generated documents
           </TabsTrigger>
-          {canManagePermissions && (
+          {canManagePermissions && !roleScope && (
             <TabsTrigger value="permissions" className="gap-2">
               <FileCheck className="h-4 w-4" />
               Permissions
