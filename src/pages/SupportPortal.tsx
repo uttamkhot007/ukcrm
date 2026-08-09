@@ -254,6 +254,6 @@ export default function SupportPortal() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
