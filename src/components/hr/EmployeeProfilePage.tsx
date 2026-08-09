@@ -109,6 +109,21 @@ export function EmployeeProfilePage({
     enabled: !!employee?.manager_id,
   });
 
+  // Emergency contact lives in the access-restricted sensitive details table
+  const { data: sensitiveDetails } = useQuery({
+    queryKey: ["employee-sensitive-details", employee?.user_id],
+    queryFn: async () => {
+      if (!employee?.user_id) return null;
+      const { data } = await supabase
+        .from("employee_sensitive_details")
+        .select("emergency_contact_name, emergency_contact_phone, emergency_contact_relationship")
+        .eq("user_id", employee.user_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!employee?.user_id,
+  });
+
   // Fetch attendance data
   const { data: attendance = [] } = useQuery({
     queryKey: ["employee-attendance", employee?.user_id],
