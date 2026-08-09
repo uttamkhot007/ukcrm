@@ -22,6 +22,10 @@ console.info(
 // boot and the static "html · <build-time>" badge stays visible.
 document.documentElement.setAttribute("data-react-mounted", "1");
 installPreviewBuildRefreshHook();
+// Purge build-scoped caches when the bundle changes and keep watching the
+// deployed build so returning visitors never sit on a stale shell.
+installBuildCacheStrategy();
+
 
 // Vite fires this when a preloaded module chunk cannot be fetched — almost
 // always a dropped connection or a build that was replaced mid-session. We
