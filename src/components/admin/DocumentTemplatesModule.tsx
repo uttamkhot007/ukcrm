@@ -19,11 +19,13 @@ import {
   ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus,
   History,
   FileDown,
+  Eye,
 } from "lucide-react";
 import { GeneratedDocumentsPanel } from "@/components/admin/GeneratedDocumentsPanel";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
 import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
+import { TemplatePreviewDialog } from "@/components/admin/TemplatePreviewDialog";
 import { TemplatePermissionsPanel } from "@/components/admin/TemplatePermissionsPanel";
 import { useTemplatePermissions } from "@/hooks/useTemplatePermissions";
 import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
