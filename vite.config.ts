@@ -51,8 +51,11 @@ export default defineConfig(async ({ mode }) => {
         transformIndexHtml: {
           order: "pre" as const,
           handler(html: string) {
-            return html.replace(/__INDEX_HTML_BUILT__/g, BUILD_TIME);
+            return html
+              .replace(/__INDEX_HTML_BUILT__/g, BUILD_TIME)
+              .replace(/__INDEX_HTML_COMMIT__/g, BUILD_COMMIT);
           },
+
         },
       },
     ].filter(Boolean),

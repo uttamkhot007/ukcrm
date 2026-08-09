@@ -12,6 +12,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
+import { logRedirect, logNoRedirect } from "@/lib/route-diagnostics";
 
 
 // ---------------------------------------------------------------------------
@@ -167,19 +168,32 @@ const Index = () => {
     if (isLoading || !isAuthResolved || tenantLoading) return;
 
     if (!user) {
+      logRedirect("Index", location.pathname, "/auth", "no authenticated user");
       navigate("/auth", { replace: true });
       return;
     }
 
     if (isPlatformAdmin && (!requestedModule || !isExplicitAdminModuleNavigation)) {
+      logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
+        requestedModule: requestedModule ?? null,
+        isExplicitAdminModuleNavigation,
+      });
       navigate("/admin/platform/tenants", { replace: true });
       return;
     }
 
     if (!hasTenantAccess) {
+      logRedirect("Index", location.pathname, "/workspace/new", "user has no tenant membership");
       navigate("/workspace/new", { replace: true });
       return;
     }
+
+    logNoRedirect("Index", location.pathname, "rendering workspace shell", {
+      isPlatformAdmin,
+      requestedModule: requestedModule ?? null,
+      isExplicitAdminModuleNavigation,
+      hasTenantAccess,
+    });
 
   }, [
     isLoading,

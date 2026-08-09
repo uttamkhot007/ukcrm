@@ -13,6 +13,8 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthDiagnosticsGate } from "@/components/auth/AuthDiagnosticsGate";
 import { BuildVersionBadge } from "@/components/system/BuildVersionBadge";
+import { RouteDiagnosticsTracker } from "@/components/system/RouteDiagnosticsTracker";
+
 import Auth from "./pages/Auth";
 
 import NotFound from "./pages/NotFound";
@@ -44,6 +46,8 @@ const PlatformLicenses = lazyDefault(() => import("./pages/admin/platform/Platfo
 const PlatformIntegrations = lazyDefault(() => import("./pages/admin/platform/PlatformIntegrations"));
 const PlatformStatus = lazyDefault(() => import("./pages/admin/platform/PlatformStatus"));
 const PlatformObservability = lazyDefault(() => import("./pages/admin/platform/PlatformObservability"));
+const PlatformDiagnostics = lazyDefault(() => import("./pages/admin/platform/PlatformDiagnostics"));
+
 const CreateWorkspace = lazyDefault(() => import("./pages/workspace/CreateWorkspace"));
 const SelectWorkspace = lazyDefault(() => import("./pages/workspace/SelectWorkspace"));
 const SupportPortal = lazyDefault(() => import("./pages/SupportPortal"));
@@ -103,6 +107,8 @@ const App = () => (
                     <Route path="integrations" element={<PlatformIntegrations />} />
                     <Route path="status" element={<PlatformStatus />} />
                     <Route path="observability" element={<PlatformObservability />} />
+                    <Route path="diagnostics" element={<PlatformDiagnostics />} />
+
                   </Route>
                   <Route path="health" element={<AdminHealth />} />
                   <Route path="procurement" element={<AdminProcurement />} />
@@ -116,6 +122,8 @@ const App = () => (
               </Suspense>
               <AuthDiagnosticsGate />
               <BuildVersionBadge />
+              <RouteDiagnosticsTracker />
+
             </TooltipProvider>
           </TenantProvider>
         </AuthProvider>
