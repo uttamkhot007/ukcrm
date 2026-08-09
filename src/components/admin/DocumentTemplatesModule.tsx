@@ -24,6 +24,8 @@ import { GeneratedDocumentsPanel } from "@/components/admin/GeneratedDocumentsPa
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
 import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
+import { TemplatePermissionsPanel } from "@/components/admin/TemplatePermissionsPanel";
+import { useTemplatePermissions } from "@/hooks/useTemplatePermissions";
 import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
 import {
   TEMPLATE_LIBRARY,
