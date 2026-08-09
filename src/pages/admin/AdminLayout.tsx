@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
+import { logRedirect, logNoRedirect } from "@/lib/route-diagnostics";
 import { BuildStatusIndicator } from "@/components/system/BuildStatusIndicator";
 
 
@@ -50,14 +51,19 @@ export default function AdminLayout() {
     if (!isAuthResolved || tenantLoading) return;
 
     if (!user) {
+      logRedirect("AdminLayout", location.pathname, "/auth", "no authenticated user");
       navigate("/auth", { replace: true });
       return;
     }
 
     if (!isPlatformAdmin) {
       console.info("[admin-guard] non-admin on %s → /", location.pathname);
+      logRedirect("AdminLayout", location.pathname, "/", "user is not a platform admin");
       navigate("/", { replace: true });
+      return;
     }
+
+    logNoRedirect("AdminLayout", location.pathname, "admin shell allowed", { isPlatformAdmin: true });
   }, [user, isAuthResolved, tenantLoading, isPlatformAdmin, navigate, location.pathname]);
 
   if (!isAuthResolved || tenantLoading) {
