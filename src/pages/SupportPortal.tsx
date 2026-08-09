@@ -113,7 +113,7 @@ export default function SupportPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <main className="min-h-dvh bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <PageSeo
         title="Customer Support Center — NexusCRM"
         description="Sign in or create an account to raise support tickets and track your requests with the NexusCRM support team."
