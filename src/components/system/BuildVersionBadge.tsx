@@ -36,6 +36,8 @@ export function BuildVersionBadge() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [badgeNonce, setBadgeNonce] = useState(0);
+  const [liveBuild, setLiveBuild] = useState<LiveBuildResult | null>(null);
+  const [checkingLive, setCheckingLive] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -43,6 +45,52 @@ export function BuildVersionBadge() {
     window.addEventListener("nexus:build-info-updated", rerender);
     return () => window.removeEventListener("nexus:build-info-updated", rerender);
   }, []);
+
+  // Pre-flight: compare the published site's build with this one.
+  useEffect(() => {
+    let cancelled = false;
+    checkLiveBuild()
+      .then((result) => {
+        if (cancelled) return;
+        setLiveBuild(result);
+        if (result.status === "stale") {
+          toast({
+            title: "Live site is running an older build",
+            description: `${LIVE_SITE_URL} is ${formatBehind(result.behindMs)} this preview. Publish → Update before relying on the live URL.`,
+            variant: "destructive",
+          });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const runLiveCheck = async () => {
+    setCheckingLive(true);
+    try {
+      const result = await checkLiveBuild({ force: true });
+      setLiveBuild(result);
+      toast({
+        title:
+          result.status === "stale"
+            ? "Live site is behind"
+            : result.status === "fresh"
+              ? "Live site is up to date"
+              : "Live build could not be verified",
+        description:
+          result.status === "stale"
+            ? `${formatBehind(result.behindMs)} — publish to update it.`
+            : result.reason ?? `Live build: ${result.liveBuildTime}`,
+        variant: result.status === "stale" ? "destructive" : "default",
+      });
+    } finally {
+      setCheckingLive(false);
+    }
+  };
+
+
 
   const handleHardReload = async () => {
     setBusy(true);
