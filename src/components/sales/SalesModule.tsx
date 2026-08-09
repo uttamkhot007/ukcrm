@@ -63,6 +63,7 @@ const InsideSalesModule = lazyNamed(() => import("./InsideSalesModule"), "Inside
 const SalesAIAssistant = lazyNamed(() => import("./SalesAIAssistant"), "SalesAIAssistant");
 const OfferingsModule = lazyNamed(() => import("@/components/admin/OfferingsModule"), "OfferingsModule");
 const DocumentationModule = lazyNamed(() => import("@/components/employee/DocumentationModule"), "DocumentationModule");
+const DocumentTemplatesModule = lazyNamed(() => import("@/components/admin/DocumentTemplatesModule"), "DocumentTemplatesModule");
 
 interface SalesModuleProps {
   initialTab?: string;
@@ -144,6 +145,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           { id: "catalog", label: "Catalog", icon: BookOpen, render: () => <ProductCatalog />, preload: ProductCatalog as unknown as PreloadableComponent<never> },
           { id: "lead-scoring", label: "Lead Scoring", icon: Gauge, render: () => <LeadScoring />, preload: LeadScoring as unknown as PreloadableComponent<never> },
           { id: "offerings", label: "Offerings", icon: Package, render: () => <OfferingsModule readOnly />, preload: OfferingsModule as unknown as PreloadableComponent<never> },
+          { id: "templates", label: "Templates", icon: FileText, render: () => <DocumentTemplatesModule roleScope="sales" />, preload: DocumentTemplatesModule as unknown as PreloadableComponent<never> },
         ],
       },
       {
@@ -190,6 +192,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
       "sales-documentation": "sops",
       "sales-deal-registration": "deal-registration",
       "sales-ai-assistant": "sales-ai",
+      "sales-templates": "templates",
     }),
     []
   );
