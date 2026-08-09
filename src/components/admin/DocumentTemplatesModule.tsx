@@ -76,6 +76,7 @@ export function DocumentTemplatesModule() {
   const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<string>('sample-gallery');
+  const [searchQuery, setSearchQuery] = useState('');
   const [autoFillTemplate, setAutoFillTemplate] = useState<
     { id: string; name: string; template_type: string } | null
   >(null);
@@ -283,16 +284,25 @@ export function DocumentTemplatesModule() {
     .filter((t) => activeRole === 'all' || t.role === activeRole)
     .map((t) => t.value);
 
+  const q = searchQuery.trim().toLowerCase();
+  const matchesQuery = (t: { name?: string | null; description?: string | null; template_type?: string | null }) =>
+    !q ||
+    [t.name, t.description, t.template_type, TEMPLATE_TYPES.find((x) => x.value === t.template_type)?.label]
+      .some((v) => (v ?? '').toLowerCase().includes(q));
+
   const filteredTemplates = templates.filter(
     (t) =>
+      matchesQuery(t) &&
       (activeType === 'all' ? roleTypeValues.includes(t.template_type) || activeRole === 'all' : t.template_type === activeType),
   );
 
   const filteredSamples = SAMPLE_TEMPLATES.filter(
     (t) =>
-      (activeRole === 'all' || t.role === activeRole) &&
-      (activeType === 'all' || t.template_type === activeType),
+      matchesQuery(t) &&
+      (q ? true : activeRole === 'all' || t.role === activeRole) &&
+      (q ? true : activeType === 'all' || t.template_type === activeType),
   );
+
 
   const visibleTypes = TEMPLATE_TYPES.filter((t) => activeRole === 'all' || t.role === activeRole);
 
@@ -441,6 +451,23 @@ export function DocumentTemplatesModule() {
             </Card>
           );
         })}
+      </div>
+
+      {/* Search across installed templates and the full library */}
+      <div className="relative mb-4">
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search templates — e.g. quotation, POC, implementation, invoice, offer letter"
+          aria-label="Search templates"
+          className="pl-3"
+        />
+        {searchQuery && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {filteredSamples.length} library {filteredSamples.length === 1 ? 'template' : 'templates'} and{' '}
+            {filteredTemplates.length} of yours match “{searchQuery}”. Role/type filters are ignored while searching.
+          </p>
+        )}
       </div>
 
       {/* Main Tabs - My Templates vs Sample Gallery */}
