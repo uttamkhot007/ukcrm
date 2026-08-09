@@ -96,9 +96,11 @@ export default function AdminLayout() {
 
   return (
     <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
-      <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative">
+      <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative space-y-4">
+        <BuildStatusIndicator />
         <Outlet />
       </div>
+
     </MainLayout>
   );
 }
