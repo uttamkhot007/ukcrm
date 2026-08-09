@@ -61,6 +61,11 @@ const DEFAULT_TEMPLATES = DEFAULT_TEMPLATE_CONTENT;
 export function DocumentTemplatesModule() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { canInstall, canEdit, canApprove, canManagePermissions } = useTemplatePermissions();
+  const scopeOf = (t: { content?: Record<string, any> | null; pack_role?: string | null }) => ({
+    packRole: (t.content?.role as string) ?? t.pack_role ?? null,
+    solution: (t.content?.solution as string) ?? null,
+  });
   const { settings: orgSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
   const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>('all');
