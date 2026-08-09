@@ -120,6 +120,8 @@ const App = () => (
               </Suspense>
               <AuthDiagnosticsGate />
               <BuildVersionBadge />
+              <RouteDiagnosticsTracker />
+
             </TooltipProvider>
           </TenantProvider>
         </AuthProvider>
