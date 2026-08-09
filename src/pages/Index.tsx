@@ -133,6 +133,8 @@ const Index = () => {
     (location.state as { module?: string } | null)?.module ??
     new URLSearchParams(location.search).get("module") ??
     null;
+  const isExplicitAdminModuleNavigation =
+    (location.state as { fromAdminNavigation?: boolean } | null)?.fromAdminNavigation === true;
 
   const [activeModule, setActiveModule] = useState(requestedModule ?? "dashboard");
   const {
@@ -169,7 +171,7 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin && !requestedModule) {
+    if (isPlatformAdmin && (!requestedModule || !isExplicitAdminModuleNavigation)) {
       navigate("/admin/platform/tenants", { replace: true });
       return;
     }
@@ -187,6 +189,7 @@ const Index = () => {
     isPlatformAdmin,
     hasTenantAccess,
     requestedModule,
+    isExplicitAdminModuleNavigation,
     navigate,
 
   ]);
@@ -216,7 +219,7 @@ const Index = () => {
     tenantLoading ||
     !user ||
     !hasTenantAccess ||
-    (isPlatformAdmin && !requestedModule);
+    (isPlatformAdmin && (!requestedModule || !isExplicitAdminModuleNavigation));
 
 
   if (shouldBlockRender) {
