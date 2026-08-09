@@ -551,9 +551,11 @@ export default function AdminTenants() {
                     <Label>Subscription Tier</Label>
                     <Select
                       value={selectedTenant?.tier}
+                      disabled={risky.disabled}
                       onValueChange={(value: TenantTier) => selectedTenant && handleUpdateTier(selectedTenant.id, value)}
                     >
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1" title={risky.reason ?? undefined}>
+
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
