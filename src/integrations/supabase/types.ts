@@ -12869,6 +12869,51 @@ export type Database = {
         }
         Relationships: []
       }
+      template_permissions: {
+        Row: {
+          can_approve: boolean
+          can_edit: boolean
+          can_install: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          pack_role: string
+          solution: string
+          subject_type: string
+          subject_value: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          can_approve?: boolean
+          can_edit?: boolean
+          can_install?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pack_role?: string
+          solution?: string
+          subject_type: string
+          subject_value: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          can_approve?: boolean
+          can_edit?: boolean
+          can_install?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pack_role?: string
+          solution?: string
+          subject_type?: string
+          subject_value?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenant_ai_configs: {
         Row: {
           ai_model: string | null

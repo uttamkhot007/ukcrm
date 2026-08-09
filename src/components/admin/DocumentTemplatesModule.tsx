@@ -24,6 +24,8 @@ import { GeneratedDocumentsPanel } from "@/components/admin/GeneratedDocumentsPa
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
 import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
+import { TemplatePermissionsPanel } from "@/components/admin/TemplatePermissionsPanel";
+import { useTemplatePermissions } from "@/hooks/useTemplatePermissions";
 import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
 import {
   TEMPLATE_LIBRARY,
@@ -61,6 +63,11 @@ const DEFAULT_TEMPLATES = DEFAULT_TEMPLATE_CONTENT;
 export function DocumentTemplatesModule() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { canInstall, canEdit, canApprove, canManagePermissions } = useTemplatePermissions();
+  const scopeOf = (t: { content?: Record<string, any> | null; pack_role?: string | null }) => ({
+    packRole: (t.content?.role as string) ?? t.pack_role ?? null,
+    solution: (t.content?.solution as string) ?? null,
+  });
   const { settings: orgSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
   const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>('all');
@@ -404,7 +411,12 @@ export function DocumentTemplatesModule() {
                   size="sm"
                   variant="outline"
                   className="w-full gap-1"
-                  disabled={installingPack === role.value || installed === total}
+                  disabled={
+                    installingPack === role.value ||
+                    installed === total ||
+                    !canInstall(role.value)
+                  }
+                  title={!canInstall(role.value) ? 'You do not have permission to install this pack' : undefined}
                   onClick={(e) => { e.stopPropagation(); installRolePack(role.value); }}
                 >
                   {installingPack === role.value ? (
@@ -412,7 +424,11 @@ export function DocumentTemplatesModule() {
                   ) : (
                     <PackagePlus className="h-3 w-3" />
                   )}
-                  {installed === total ? 'Pack installed' : 'Install pack'}
+                  {installed === total
+                    ? 'Pack installed'
+                    : !canInstall(role.value)
+                      ? 'No install access'
+                      : 'Install pack'}
                 </Button>
               </CardFooter>
             </Card>
@@ -439,7 +455,17 @@ export function DocumentTemplatesModule() {
             <FileDown className="h-4 w-4" />
             Generated documents
           </TabsTrigger>
+          {canManagePermissions && (
+            <TabsTrigger value="permissions" className="gap-2">
+              <FileCheck className="h-4 w-4" />
+              Permissions
+            </TabsTrigger>
+          )}
         </TabsList>
+
+        <TabsContent value="permissions">
+          <TemplatePermissionsPanel />
+        </TabsContent>
 
         <TabsContent value="generated-documents">
           <GeneratedDocumentsPanel />
@@ -558,23 +584,30 @@ export function DocumentTemplatesModule() {
                           id: template.id,
                           name: template.name,
                           template_type: template.template_type,
+                          ...scopeOf(template as any),
                         })}
                       >
                         <Sparkles className="h-3 w-3" />
                         AI auto-fill
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1" onClick={() => duplicateTemplate(template)}>
-                        <Copy className="h-3 w-3 mr-1" />
-                        Duplicate
-                      </Button>
-                      {!template.is_default && (
-                        <Button variant="outline" size="sm" onClick={() => setAsDefault(template)}>
-                          <Star className="h-3 w-3" />
-                        </Button>
+                      {canEdit(scopeOf(template as any).packRole, scopeOf(template as any).solution) ? (
+                        <>
+                          <Button variant="outline" size="sm" className="flex-1" onClick={() => duplicateTemplate(template)}>
+                            <Copy className="h-3 w-3 mr-1" />
+                            Duplicate
+                          </Button>
+                          {!template.is_default && (
+                            <Button variant="outline" size="sm" onClick={() => setAsDefault(template)}>
+                              <Star className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(template.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Badge variant="outline" className="text-xs self-center">View only</Badge>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(template.id)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
                     </CardFooter>
                   </Card>
                 );
@@ -682,9 +715,9 @@ export function DocumentTemplatesModule() {
                     <Button 
                       className="w-full"
                       variant={isAdded ? 'outline' : 'default'}
-                      disabled={isAdded || isLoading}
+                      disabled={isAdded || isLoading || !canInstall(sample.role, sample.solution ?? null)}
                       onClick={() => addSampleTemplate(sample)}
-                      style={!isAdded ? { 
+                      style={!isAdded && canInstall(sample.role, sample.solution ?? null) ? { 
                         backgroundColor: sample.branding.primaryColor,
                         borderColor: sample.branding.primaryColor 
                       } : {}}
@@ -696,7 +729,11 @@ export function DocumentTemplatesModule() {
                       ) : (
                         <Download className="h-4 w-4 mr-2" />
                       )}
-                      {isAdded ? 'Already Added' : 'Add to My Templates'}
+                      {isAdded
+                        ? 'Already Added'
+                        : !canInstall(sample.role, sample.solution ?? null)
+                          ? 'No install access'
+                          : 'Add to My Templates'}
                     </Button>
                   </CardFooter>
                 </Card>
