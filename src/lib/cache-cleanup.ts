@@ -99,25 +99,17 @@ export async function clearAllAppCaches(): Promise<void> {
 
 export async function forceFreshReload(targetPath?: string): Promise<void> {
   await clearAllAppCaches();
-  const path =
-    targetPath ?? window.location.pathname + window.location.search;
-  const sep = path.includes("?") ? "&" : "?";
-  const url = `${path}${sep}fresh=${Date.now()}`;
-  window.location.replace(url);
+  // Deliberately no `?fresh=`/`?assetBust=` query params: every unique URL got
+  // its own HTTP cache entry, so "fresh" reloads kept resurrecting old
+  // snapshots. A plain navigation/reload after cache cleanup is enough.
+  if (targetPath && targetPath !== window.location.pathname + window.location.search) {
+    window.location.replace(targetPath);
+    return;
+  }
+  window.location.reload();
 }
 
 export async function hardReloadLatestBuild(targetPath?: string): Promise<void> {
-  const assetBust = `${BUILD_VERSION}-${Date.now()}`;
-  addCacheBustToKnownAssetUrls(assetBust);
-  await clearAllAppCaches();
-
-  if (typeof window.__NEXUS_HARD_RELOAD_LATEST__ === "function") {
-    window.__NEXUS_HARD_RELOAD_LATEST__();
-    return;
-  }
-
-  const url = new URL(targetPath ?? window.location.href, window.location.href);
-  url.searchParams.set("fresh", String(Date.now()));
-  url.searchParams.set(ASSET_BUST_PARAM, assetBust);
-  window.location.replace(url.toString());
+  rerenderBuildBadgeNow(`${BUILD_VERSION}-${Date.now()}`);
+  await forceFreshReload(targetPath);
 }
