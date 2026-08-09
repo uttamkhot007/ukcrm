@@ -13,6 +13,8 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthDiagnosticsGate } from "@/components/auth/AuthDiagnosticsGate";
 import { BuildVersionBadge } from "@/components/system/BuildVersionBadge";
+import { RouteDiagnosticsTracker } from "@/components/system/RouteDiagnosticsTracker";
+
 import Auth from "./pages/Auth";
 
 import NotFound from "./pages/NotFound";
