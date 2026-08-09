@@ -14,6 +14,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { useTenant, TenantTier, Tenant } from '@/contexts/TenantContext';
+import { useRiskyAction } from '@/contexts/StaleBuildGuardContext';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -49,6 +51,9 @@ interface ModuleDefinition {
 
 export default function AdminTenants() {
   const { isSuperAdmin, refetchTenants } = useTenant();
+  // Risky writes are blocked while the published site is behind this build.
+  const risky = useRiskyAction();
+
   const location = useLocation();
   const [tenants, setTenants] = useState<any[]>([]);
   const [modules, setModules] = useState<ModuleDefinition[]>([]);
@@ -190,7 +195,12 @@ export default function AdminTenants() {
   // Create new tenant
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     setIsCreating(true);
+
 
     try {
       const { data, error } = await supabase
@@ -225,7 +235,12 @@ export default function AdminTenants() {
 
   // Update tenant tier
   const handleUpdateTier = async (tenantId: string, tier: TenantTier) => {
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     try {
+
       const { error } = await supabase
         .from('tenants')
         .update({ tier })
@@ -246,7 +261,12 @@ export default function AdminTenants() {
 
   // Toggle module for tenant
   const handleToggleModule = async (tenantId: string, moduleKey: string, currentState: boolean) => {
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     try {
+
       const existingModule = tenantModules.find(m => m.module_key === moduleKey);
 
       if (existingModule) {
@@ -278,7 +298,12 @@ export default function AdminTenants() {
 
   // Update member role
   const handleUpdateMemberRole = async (memberId: string, newRole: 'owner' | 'admin' | 'member') => {
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     try {
+
       const { error } = await supabase
         .from('tenant_members')
         .update({ role: newRole })
@@ -338,7 +363,7 @@ export default function AdminTenants() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={risky.disabled} title={risky.reason ?? undefined}>
               <Plus className="mr-2 h-4 w-4" />
               New Tenant
             </Button>
@@ -398,7 +423,7 @@ export default function AdminTenants() {
                 <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isCreating}>
+                <Button type="submit" disabled={isCreating || risky.disabled} title={risky.reason ?? undefined}>
                   {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Tenant
                 </Button>
@@ -526,9 +551,11 @@ export default function AdminTenants() {
                     <Label>Subscription Tier</Label>
                     <Select
                       value={selectedTenant?.tier}
+                      disabled={risky.disabled}
                       onValueChange={(value: TenantTier) => selectedTenant && handleUpdateTier(selectedTenant.id, value)}
                     >
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1" title={risky.reason ?? undefined}>
+
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -575,9 +602,11 @@ export default function AdminTenants() {
                         </div>
                         <Switch
                           checked={isEnabled}
-                          disabled={!canEnable}
+                          disabled={!canEnable || risky.disabled}
+                          title={risky.reason ?? undefined}
                           onCheckedChange={() => selectedTenant && handleToggleModule(selectedTenant.id, module.key, isEnabled)}
                         />
+
                       </div>
                     );
                   })}
@@ -615,9 +644,11 @@ export default function AdminTenants() {
                       </div>
                       <Select
                         value={member.role}
+                        disabled={risky.disabled}
                         onValueChange={(value: 'owner' | 'admin' | 'member') => handleUpdateMemberRole(member.id, value)}
                       >
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-[120px]" title={risky.reason ?? undefined}>
+
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

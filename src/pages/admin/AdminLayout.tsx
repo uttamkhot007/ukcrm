@@ -6,6 +6,9 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
 import { logRedirect, logNoRedirect } from "@/lib/route-diagnostics";
 import { BuildStatusIndicator } from "@/components/system/BuildStatusIndicator";
+import { StaleBuildBanner } from "@/components/system/StaleBuildBanner";
+import { StaleBuildGuardProvider } from "@/contexts/StaleBuildGuardContext";
+
 
 
 export default function AdminLayout() {
@@ -103,12 +106,15 @@ export default function AdminLayout() {
 
 
   return (
-    <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
-      <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative space-y-4">
-        <BuildStatusIndicator />
-        <Outlet />
-      </div>
-
-    </MainLayout>
+    <StaleBuildGuardProvider>
+      <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
+        <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative space-y-4">
+          <StaleBuildBanner />
+          <BuildStatusIndicator />
+          <Outlet />
+        </div>
+      </MainLayout>
+    </StaleBuildGuardProvider>
   );
 }
+
