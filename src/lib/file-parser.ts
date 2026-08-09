@@ -175,8 +175,11 @@ export async function parsePDFFile(file: File): Promise<string[][]> {
   // Use pdf.js to extract text from PDF
   const pdfjsLib = await import('pdfjs-dist');
   
-  // Set worker source
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  // Set worker source (bundled locally so it always matches the library version)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
   
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
