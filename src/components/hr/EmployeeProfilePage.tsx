@@ -109,6 +109,21 @@ export function EmployeeProfilePage({
     enabled: !!employee?.manager_id,
   });
 
+  // Emergency contact lives in the access-restricted sensitive details table
+  const { data: sensitiveDetails } = useQuery({
+    queryKey: ["employee-sensitive-details", employee?.user_id],
+    queryFn: async () => {
+      if (!employee?.user_id) return null;
+      const { data } = await supabase
+        .from("employee_sensitive_details")
+        .select("emergency_contact_name, emergency_contact_phone, emergency_contact_relationship")
+        .eq("user_id", employee.user_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!employee?.user_id,
+  });
+
   // Fetch attendance data
   const { data: attendance = [] } = useQuery({
     queryKey: ["employee-attendance", employee?.user_id],
@@ -491,21 +506,21 @@ export function EmployeeProfilePage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {employee.emergency_contact_name ? (
+                  {sensitiveDetails?.emergency_contact_name ? (
                     <>
                       <div className="flex items-center gap-3 text-sm">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{employee.emergency_contact_name}</span>
-                        {employee.emergency_contact_relationship && (
+                        <span>{sensitiveDetails.emergency_contact_name}</span>
+                        {sensitiveDetails.emergency_contact_relationship && (
                           <Badge variant="outline" className="text-xs">
-                            {employee.emergency_contact_relationship}
+                            {sensitiveDetails.emergency_contact_relationship}
                           </Badge>
                         )}
                       </div>
-                      {employee.emergency_contact_phone && (
+                      {sensitiveDetails.emergency_contact_phone && (
                         <div className="flex items-center gap-3 text-sm">
                           <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{employee.emergency_contact_phone}</span>
+                          <span>{sensitiveDetails.emergency_contact_phone}</span>
                         </div>
                       )}
                     </>

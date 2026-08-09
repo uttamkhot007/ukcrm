@@ -177,11 +177,16 @@ export function EmployeesManagement() {
     const tenantUserIds = tenantMembersResult.data.map(m => m.user_id);
 
     // Filter employees strictly by tenant_id for proper data isolation
-    const [profilesResult, userTeamsResult, salesTeamsResult] = await Promise.all([
+    const [profilesResult, userTeamsResult, salesTeamsResult, sensitiveResult] = await Promise.all([
       supabase.from("profiles_safe").select("*").eq("tenant_id", currentTenant.id),
       supabase.from("user_teams").select("*"),
       supabase.from("sales_teams").select("*"),
+      supabase.from("employee_sensitive_details").select("*").in("user_id", tenantUserIds),
     ]);
+
+    const sensitiveByUser = new Map<string, Record<string, any>>(
+      (sensitiveResult.data ?? []).map((row: any) => [row.user_id, row]),
+    );
 
     if (profilesResult.error) {
       toast({
@@ -215,6 +220,7 @@ export function EmployeesManagement() {
         const teams = userTeamsResult.data
           .filter((t) => t.user_id === profile.user_id)
           .map((t) => t.team as TeamType);
+        const sensitive = sensitiveByUser.get(profile.user_id) ?? {};
         return {
           id: profile.id,
           user_id: profile.user_id,
@@ -232,20 +238,20 @@ export function EmployeesManagement() {
           sales_sub_team: profile.sales_sub_team,
           teams,
           // Bank details
-          bank_name: profile.bank_name,
-          bank_account_number: profile.bank_account_number,
-          bank_ifsc_code: profile.bank_ifsc_code,
-          bank_branch: profile.bank_branch,
+          bank_name: sensitive.bank_name ?? null,
+          bank_account_number: sensitive.bank_account_number ?? null,
+          bank_ifsc_code: sensitive.bank_ifsc_code ?? null,
+          bank_branch: sensitive.bank_branch ?? null,
           // ESI details
-          esi_number: profile.esi_number,
-          esi_dispensary: profile.esi_dispensary,
+          esi_number: sensitive.esi_number ?? null,
+          esi_dispensary: sensitive.esi_dispensary ?? null,
           // PF details
-          pf_number: profile.pf_number,
-          uan_number: profile.uan_number,
+          pf_number: sensitive.pf_number ?? null,
+          uan_number: sensitive.uan_number ?? null,
           // Gratuity details
-          gratuity_nomination_name: profile.gratuity_nomination_name,
-          gratuity_nomination_relation: profile.gratuity_nomination_relation,
-          gratuity_nomination_percentage: profile.gratuity_nomination_percentage,
+          gratuity_nomination_name: sensitive.gratuity_nomination_name ?? null,
+          gratuity_nomination_relation: sensitive.gratuity_nomination_relation ?? null,
+          gratuity_nomination_percentage: sensitive.gratuity_nomination_percentage ?? null,
         };
       });
 
@@ -360,25 +366,36 @@ export function EmployeesManagement() {
         employment_status: (editForm.employment_status || "active") as any,
         sales_sub_team: (editForm.sales_sub_team || null) as any,
         manager_id: editForm.manager_id || null,
-        // Bank details
-        bank_name: editForm.bank_name || null,
-        bank_account_number: editForm.bank_account_number || null,
-        bank_ifsc_code: editForm.bank_ifsc_code || null,
-        bank_branch: editForm.bank_branch || null,
-        // ESI details
-        esi_number: editForm.esi_number || null,
-        esi_dispensary: editForm.esi_dispensary || null,
-        // PF details
-        pf_number: editForm.pf_number || null,
-        uan_number: editForm.uan_number || null,
-        // Gratuity details
-        gratuity_nomination_name: editForm.gratuity_nomination_name || null,
-        gratuity_nomination_relation: editForm.gratuity_nomination_relation || null,
-        gratuity_nomination_percentage: editForm.gratuity_nomination_percentage || null,
       })
       .eq("user_id", editingEmployee.user_id);
 
-    if (error) {
+    const { error: sensitiveError } = await supabase
+      .from("employee_sensitive_details")
+      .upsert(
+        {
+          user_id: editingEmployee.user_id,
+          tenant_id: currentTenant?.id ?? null,
+          // Bank details
+          bank_name: editForm.bank_name || null,
+          bank_account_number: editForm.bank_account_number || null,
+          bank_ifsc_code: editForm.bank_ifsc_code || null,
+          bank_branch: editForm.bank_branch || null,
+          // ESI details
+          esi_number: editForm.esi_number || null,
+          esi_dispensary: editForm.esi_dispensary || null,
+          // PF details
+          pf_number: editForm.pf_number || null,
+          uan_number: editForm.uan_number || null,
+          // Gratuity details
+          gratuity_nomination_name: editForm.gratuity_nomination_name || null,
+          gratuity_nomination_relation: editForm.gratuity_nomination_relation || null,
+          gratuity_nomination_percentage: editForm.gratuity_nomination_percentage || null,
+        },
+        { onConflict: "user_id" },
+      );
+
+
+    if (error || sensitiveError) {
       toast({
         title: "Error",
         description: "Failed to update employee",
