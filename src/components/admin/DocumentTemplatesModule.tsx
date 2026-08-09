@@ -409,8 +409,8 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
       </div>
 
       {/* Role selector */}
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-        {TEMPLATE_ROLES.map((role) => {
+      <div className={roleScope ? "grid gap-3 md:grid-cols-1" : "grid gap-3 md:grid-cols-3 lg:grid-cols-5"}>
+        {TEMPLATE_ROLES.filter((r) => !roleScope || r.value === roleScope).map((role) => {
           const total = TEMPLATE_LIBRARY.filter((t) => t.role === role.value).length;
           const installed = TEMPLATE_LIBRARY.filter(
             (t) => t.role === role.value && templates.some((e) => e.name === t.name),
