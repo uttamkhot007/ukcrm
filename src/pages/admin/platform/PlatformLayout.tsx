@@ -34,8 +34,7 @@ export default function PlatformLayout() {
       const target = "/admin/platform/tenants";
       recordRedirect(location.pathname, target);
       if (shouldForceCleanup(location.pathname, target)) {
-        console.warn("[redirect-loop-guard] Loop on PlatformLayout, forcing cleanup");
-        forceFreshReload(target);
+        console.warn("[redirect-loop-guard] Loop on PlatformLayout, halting redirect");
         return;
       }
       navigate(target, { replace: true });

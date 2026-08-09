@@ -4400,6 +4400,63 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_skill_matrix: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string
+          id: string
+          name: string
+          overall_score: number
+          profile_id: string | null
+          role: string
+          skills: Json
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          id?: string
+          name: string
+          overall_score?: number
+          profile_id?: string | null
+          role?: string
+          skills?: Json
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          id?: string
+          name?: string
+          overall_score?: number
+          profile_id?: string | null
+          role?: string
+          skills?: Json
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_skill_matrix_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_skill_matrix_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_verifications: {
         Row: {
           ai_analysis: Json | null

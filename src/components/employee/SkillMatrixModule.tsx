@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,153 +70,6 @@ interface TeamMember {
   isDemoData?: boolean;
 }
 
-// Comprehensive demo data with realistic Indian names and cybersecurity roles
-const generateDemoTeamMembers = (): TeamMember[] => [
-  {
-    id: "demo-1",
-    name: "Rajesh Kumar",
-    role: "Senior Security Engineer",
-    department: "Technical",
-    overallScore: 92,
-    isDemoData: true,
-    skills: [
-      { id: "s1", name: "SIEM Administration", category: "Security", level: 5, lastAssessed: "2024-11-15", certifications: ["Splunk Certified Admin"] },
-      { id: "s2", name: "Threat Intelligence", category: "Security", level: 5, lastAssessed: "2024-11-10" },
-      { id: "s3", name: "Python", category: "Languages", level: 4, lastAssessed: "2024-10-20", certifications: ["PCAP"] },
-      { id: "s4", name: "AWS Security", category: "Cloud", level: 4, lastAssessed: "2024-10-05", certifications: ["AWS Security Specialty"] },
-      { id: "s5", name: "Incident Response", category: "Security", level: 5, lastAssessed: "2024-11-12", certifications: ["GCIH"] },
-    ],
-  },
-  {
-    id: "demo-2",
-    name: "Priya Sharma",
-    role: "SOC Analyst L2",
-    department: "Technical",
-    overallScore: 78,
-    isDemoData: true,
-    skills: [
-      { id: "s6", name: "SIEM Monitoring", category: "Security", level: 4, lastAssessed: "2024-11-18" },
-      { id: "s7", name: "Malware Analysis", category: "Security", level: 3, lastAssessed: "2024-11-05" },
-      { id: "s8", name: "Log Analysis", category: "Security", level: 4, lastAssessed: "2024-11-15" },
-      { id: "s9", name: "PowerShell", category: "Languages", level: 3, lastAssessed: "2024-10-25" },
-    ],
-  },
-  {
-    id: "demo-3",
-    name: "Amit Patel",
-    role: "Cloud Security Specialist",
-    department: "Technical",
-    overallScore: 85,
-    isDemoData: true,
-    skills: [
-      { id: "s10", name: "Azure Security", category: "Cloud", level: 5, lastAssessed: "2024-11-10", certifications: ["AZ-500", "AZ-104"] },
-      { id: "s11", name: "Kubernetes Security", category: "Cloud", level: 4, lastAssessed: "2024-11-08" },
-      { id: "s12", name: "Terraform", category: "IaC", level: 4, lastAssessed: "2024-10-20" },
-      { id: "s13", name: "Docker Security", category: "DevOps", level: 4, lastAssessed: "2024-10-15" },
-      { id: "s14", name: "GCP Security", category: "Cloud", level: 3, lastAssessed: "2024-09-28" },
-    ],
-  },
-  {
-    id: "demo-4",
-    name: "Sneha Reddy",
-    role: "Solution Architect",
-    department: "Presales",
-    overallScore: 88,
-    isDemoData: true,
-    skills: [
-      { id: "s15", name: "Security Architecture", category: "Security", level: 5, lastAssessed: "2024-11-12", certifications: ["CISSP", "TOGAF"] },
-      { id: "s16", name: "Risk Assessment", category: "Compliance", level: 4, lastAssessed: "2024-11-05" },
-      { id: "s17", name: "AWS Security", category: "Cloud", level: 4, lastAssessed: "2024-10-28" },
-      { id: "s18", name: "Technical Presentations", category: "Other", level: 5, lastAssessed: "2024-11-15" },
-    ],
-  },
-  {
-    id: "demo-5",
-    name: "Vikram Singh",
-    role: "Penetration Tester",
-    department: "Technical",
-    overallScore: 90,
-    isDemoData: true,
-    skills: [
-      { id: "s19", name: "Penetration Testing", category: "Security", level: 5, lastAssessed: "2024-11-18", certifications: ["OSCP", "CEH", "GPEN"] },
-      { id: "s20", name: "Web App Security", category: "Security", level: 5, lastAssessed: "2024-11-15" },
-      { id: "s21", name: "Network Security", category: "Security", level: 4, lastAssessed: "2024-11-10" },
-      { id: "s22", name: "Python", category: "Languages", level: 4, lastAssessed: "2024-10-20" },
-      { id: "s23", name: "Bash Scripting", category: "Languages", level: 4, lastAssessed: "2024-10-15" },
-    ],
-  },
-  {
-    id: "demo-6",
-    name: "Ananya Gupta",
-    role: "Technical Support Lead",
-    department: "Support",
-    overallScore: 82,
-    isDemoData: true,
-    skills: [
-      { id: "s24", name: "Cynet Administration", category: "Security", level: 5, lastAssessed: "2024-11-15", certifications: ["Cynet Certified Expert"] },
-      { id: "s25", name: "Customer Communication", category: "Other", level: 5, lastAssessed: "2024-11-12" },
-      { id: "s26", name: "Incident Management", category: "Security", level: 4, lastAssessed: "2024-11-08" },
-      { id: "s27", name: "Troubleshooting", category: "Other", level: 4, lastAssessed: "2024-11-05" },
-    ],
-  },
-  {
-    id: "demo-7",
-    name: "Karthik Menon",
-    role: "DevSecOps Engineer",
-    department: "Technical",
-    overallScore: 86,
-    isDemoData: true,
-    skills: [
-      { id: "s28", name: "CI/CD Security", category: "DevOps", level: 5, lastAssessed: "2024-11-15" },
-      { id: "s29", name: "Kubernetes", category: "DevOps", level: 4, lastAssessed: "2024-11-10", certifications: ["CKA", "CKS"] },
-      { id: "s30", name: "SAST/DAST Tools", category: "Security", level: 4, lastAssessed: "2024-11-08" },
-      { id: "s31", name: "GitOps", category: "DevOps", level: 4, lastAssessed: "2024-10-28" },
-      { id: "s32", name: "Python", category: "Languages", level: 3, lastAssessed: "2024-10-20" },
-    ],
-  },
-  {
-    id: "demo-8",
-    name: "Deepika Nair",
-    role: "Pre-sales Consultant",
-    department: "Presales",
-    overallScore: 80,
-    isDemoData: true,
-    skills: [
-      { id: "s33", name: "Solution Design", category: "Other", level: 4, lastAssessed: "2024-11-12" },
-      { id: "s34", name: "Product Demos", category: "Other", level: 5, lastAssessed: "2024-11-18" },
-      { id: "s35", name: "Competitive Analysis", category: "Other", level: 4, lastAssessed: "2024-11-05" },
-      { id: "s36", name: "SIEM Concepts", category: "Security", level: 3, lastAssessed: "2024-10-25" },
-    ],
-  },
-  {
-    id: "demo-9",
-    name: "Rahul Verma",
-    role: "Incident Response Analyst",
-    department: "Technical",
-    overallScore: 84,
-    isDemoData: true,
-    skills: [
-      { id: "s37", name: "Incident Response", category: "Security", level: 5, lastAssessed: "2024-11-18", certifications: ["GCIH", "GCIA"] },
-      { id: "s38", name: "Forensics", category: "Security", level: 4, lastAssessed: "2024-11-12" },
-      { id: "s39", name: "Malware Analysis", category: "Security", level: 4, lastAssessed: "2024-11-08" },
-      { id: "s40", name: "SIEM", category: "Security", level: 4, lastAssessed: "2024-11-05" },
-    ],
-  },
-  {
-    id: "demo-10",
-    name: "Meera Iyer",
-    role: "Customer Success Manager",
-    department: "Support",
-    overallScore: 75,
-    isDemoData: true,
-    skills: [
-      { id: "s41", name: "Customer Relationship", category: "Other", level: 5, lastAssessed: "2024-11-15" },
-      { id: "s42", name: "Security Awareness", category: "Security", level: 3, lastAssessed: "2024-11-10" },
-      { id: "s43", name: "Product Knowledge", category: "Other", level: 4, lastAssessed: "2024-11-05" },
-      { id: "s44", name: "Reporting & Analytics", category: "Other", level: 4, lastAssessed: "2024-10-28" },
-    ],
-  },
-];
 
 const skillCategories = [
   "Frontend",
@@ -254,29 +109,40 @@ interface SkillMatrixModuleProps {
   viewMode?: "employee" | "hr";
 }
 
-const STORAGE_KEY = "skill_matrix_data";
-const DEMO_CLEARED_KEY = "skill_matrix_demo_cleared";
+type SkillMatrixRow = {
+  id: string;
+  name: string;
+  role: string | null;
+  department: string | null;
+  skills: unknown;
+  overall_score: number | null;
+};
+
+function rowToMember(row: SkillMatrixRow): TeamMember {
+  const skills = Array.isArray(row.skills) ? (row.skills as Skill[]) : [];
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role ?? "",
+    department: row.department ?? "",
+    skills,
+    overallScore: Number(row.overall_score ?? 0),
+  };
+}
+
+function computeOverallScore(skills: Skill[]): number {
+  if (!skills.length) return 0;
+  const avg = skills.reduce((sum, s) => sum + (Number(s.level) || 0), 0) / skills.length;
+  return Math.round(avg * 20);
+}
 
 export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModuleProps) {
+  const { currentTenant } = useTenant();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
-    // Check if we have stored data
-    const storedData = localStorage.getItem(STORAGE_KEY);
-    if (storedData) {
-      try {
-        return JSON.parse(storedData);
-      } catch {
-        // If parsing fails, check if demo was cleared
-        const demoCleared = localStorage.getItem(DEMO_CLEARED_KEY);
-        return demoCleared === "true" ? [] : generateDemoTeamMembers();
-      }
-    }
-    // Check if demo data was previously cleared
-    const demoCleared = localStorage.getItem(DEMO_CLEARED_KEY);
-    return demoCleared === "true" ? [] : generateDemoTeamMembers();
-  });
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -285,14 +151,32 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
   const [importPreview, setImportPreview] = useState<TeamMember[]>([]);
   const [isImporting, setIsImporting] = useState(false);
 
-  // Persist team members to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(teamMembers));
-  }, [teamMembers]);
+  // Skill matrix now lives in the database (employee_skill_matrix), scoped to
+  // the active tenant. localStorage is no longer used as a data store.
+  const loadMembers = useCallback(async () => {
+    if (!currentTenant?.id) return;
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("employee_skill_matrix")
+      .select("id,name,role,department,skills,overall_score")
+      .eq("tenant_id", currentTenant.id)
+      .order("name", { ascending: true });
+    if (error) {
+      console.error("[skill-matrix] load failed", error);
+      toast.error("Failed to load skill matrix");
+    } else {
+      setTeamMembers((data ?? []).map((r) => rowToMember(r as SkillMatrixRow)));
+    }
+    setIsLoading(false);
+  }, [currentTenant?.id]);
 
-  // Check if demo data exists
-  const hasDemoData = teamMembers.some(m => m.isDemoData);
-  const demoDataCount = teamMembers.filter(m => m.isDemoData).length;
+  useEffect(() => {
+    void loadMembers();
+  }, [loadMembers]);
+
+  const hasDemoData = false;
+  const demoDataCount = 0;
+
 
   // New skill form state
   const [newSkill, setNewSkill] = useState({
@@ -379,42 +263,54 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     toast.success("Skill matrix exported successfully");
   };
 
-  const handleAddSkill = () => {
+  const handleAddSkill = async () => {
     if (!selectedMember || !newSkill.name) return;
 
-    const updatedMembers = teamMembers.map(member => {
-      if (member.id === selectedMember.id) {
-        return {
-          ...member,
-          skills: [
-            ...member.skills,
-            {
-              id: `s${Date.now()}`,
-              name: newSkill.name,
-              category: newSkill.category,
-              level: newSkill.level,
-              lastAssessed: new Date().toISOString().split('T')[0],
-            },
-          ],
-        };
-      }
-      return member;
-    });
+    const skills: Skill[] = [
+      ...selectedMember.skills,
+      {
+        id: `s${Date.now()}`,
+        name: newSkill.name,
+        category: newSkill.category,
+        level: newSkill.level,
+        lastAssessed: new Date().toISOString().split("T")[0],
+      },
+    ];
 
-    setTeamMembers(updatedMembers);
+    const { error } = await supabase
+      .from("employee_skill_matrix")
+      .update({ skills: skills as unknown as never, overall_score: computeOverallScore(skills) })
+      .eq("id", selectedMember.id);
+
+    if (error) {
+      console.error("[skill-matrix] add skill failed", error);
+      toast.error("Failed to save skill");
+      return;
+    }
+
     setNewSkill({ name: "", category: "Security", level: 3 });
     setIsAddDialogOpen(false);
     toast.success("Skill added successfully");
+    void loadMembers();
   };
 
-  const handleClearDemoData = () => {
-    const realData = teamMembers.filter(m => !m.isDemoData);
-    setTeamMembers(realData);
-    localStorage.setItem(DEMO_CLEARED_KEY, "true");
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(realData));
+  // Removes every skill-matrix row for the active tenant from the database.
+  const handleClearDemoData = async () => {
+    if (!currentTenant?.id) return;
+    const { error } = await supabase
+      .from("employee_skill_matrix")
+      .delete()
+      .eq("tenant_id", currentTenant.id);
+    if (error) {
+      console.error("[skill-matrix] clear failed", error);
+      toast.error("Failed to clear entries");
+      return;
+    }
     setIsClearDialogOpen(false);
-    toast.success("Demo data cleared successfully. You can now add real employee data.");
+    toast.success("Entries cleared");
+    void loadMembers();
   };
+
 
   const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -504,23 +400,42 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     reader.readAsText(file);
   };
 
-  const handleImportConfirm = () => {
+  const handleImportConfirm = async () => {
     if (importPreview.length === 0) {
       toast.error("No data to import");
       return;
     }
-    
+    if (!currentTenant?.id) {
+      toast.error("No active workspace");
+      return;
+    }
+
     setIsImporting(true);
-    
-    // Add imported members to the team
-    setTeamMembers(prev => [...prev, ...importPreview]);
-    
+    const { error } = await supabase.from("employee_skill_matrix").insert(
+      importPreview.map((m) => ({
+        tenant_id: currentTenant.id,
+        name: m.name,
+        role: m.role,
+        department: m.department,
+        skills: m.skills as unknown as never,
+        overall_score: computeOverallScore(m.skills),
+      })),
+    );
     setIsImporting(false);
+
+    if (error) {
+      console.error("[skill-matrix] import failed", error);
+      toast.error("Failed to import employees");
+      return;
+    }
+
     setIsImportDialogOpen(false);
     setImportFile(null);
     setImportPreview([]);
     toast.success(`Successfully imported ${importPreview.length} employees`);
+    void loadMembers();
   };
+
 
   const handleImportCancel = () => {
     setIsImportDialogOpen(false);
@@ -820,6 +735,13 @@ Jane Smith,SOC Analyst,Technical,Threat Intelligence,Security,4`;
               </TableRow>
             </TableHeader>
             <TableBody>
+              {(isLoading || filteredMembers.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={viewMode === "hr" ? 6 : 5} className="text-center text-muted-foreground py-8">
+                    {isLoading ? "Loading skill matrix…" : "No employees yet. Import a CSV to get started."}
+                  </TableCell>
+                </TableRow>
+              )}
               {filteredMembers.map((member) => (
                 <TableRow key={member.id} className={member.isDemoData ? "bg-amber-500/5" : ""}>
                   <TableCell className="font-medium">
