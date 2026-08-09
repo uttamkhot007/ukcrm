@@ -333,6 +333,20 @@ const Index = () => {
       // Document Templates module
       case "admin-center-document-templates":
         return <DocumentTemplatesModule />;
+
+      // Module-scoped template libraries (Admin Center stays tenant-admin only)
+      case "sales-templates":
+        return <DocumentTemplatesModule roleScope="sales" />;
+      case "presales-templates":
+        return <DocumentTemplatesModule roleScope="presales" />;
+      case "technical-templates":
+      case "projects-templates":
+        return <DocumentTemplatesModule roleScope="technical" />;
+      case "hr-templates":
+        return <DocumentTemplatesModule roleScope="hr" />;
+      case "finance-templates":
+        return <DocumentTemplatesModule roleScope="finance" />;
+
       
       // Legal module
       case "legal":
