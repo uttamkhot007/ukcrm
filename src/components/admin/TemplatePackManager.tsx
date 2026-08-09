@@ -267,7 +267,13 @@ export function TemplatePackManager({ templates, branding }: Props) {
                         {v.change_note ? ` · ${v.change_note}` : ""}
                       </p>
                     </div>
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => runRestore(v)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={!canEdit((historyTemplate?.pack_role as string) ?? null)}
+                      onClick={() => runRestore(v)}
+                    >
                       <RotateCcw className="h-3 w-3" />
                       Restore
                     </Button>
