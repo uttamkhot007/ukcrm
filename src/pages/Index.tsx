@@ -12,11 +12,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
-import {
-  recordRedirect,
-  shouldForceCleanup,
-} from "@/lib/redirect-loop-guard";
-import { forceFreshReload } from "@/lib/cache-cleanup";
 
 
 // ---------------------------------------------------------------------------
@@ -161,11 +156,9 @@ const Index = () => {
 
   // Decide what "/" should do once auth + tenant info are resolved.
   //
-  // IMPORTANT: platform admins are NOT permanently pinned to the Platform
-  // Console. They are sent there once per browser session (as a convenience
-  // landing page) and only when they have no tenant workspace of their own.
-  // Otherwise "/" renders the normal app so every module and sub-module stays
-  // reachable for admins too.
+  // A plain "/" is a deterministic landing route. Platform admins always land
+  // in the Platform Console; workspace modules remain reachable when the
+  // sidebar explicitly navigates here with a requested module.
   const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
 
   useEffect(() => {
@@ -176,35 +169,14 @@ const Index = () => {
       return;
     }
 
-    if (!hasTenantAccess) {
-      if (isPlatformAdmin) {
-        const target = "/admin/platform/tenants";
-        recordRedirect("/", target);
-        if (shouldForceCleanup("/", target)) {
-          // Loop detected: stop redirecting instead of hard-reloading. The old
-          // forceFreshReload here re-entered the same loop from a cached doc.
-          console.warn(
-            "[redirect-loop-guard] Detected repeated /→%s redirects, staying on /",
-            target,
-          );
-          return;
-        }
-        navigate(target, { replace: true });
-        return;
-      }
-      navigate("/workspace/new", { replace: true });
+    if (isPlatformAdmin && !requestedModule) {
+      navigate("/admin/platform/tenants", { replace: true });
       return;
     }
 
-    // Admin with a workspace: land on the console the first time only, and
-    // never when a specific module was explicitly requested.
-    if (
-      isPlatformAdmin &&
-      !requestedModule &&
-      !sessionStorage.getItem("platform-admin-landed")
-    ) {
-      sessionStorage.setItem("platform-admin-landed", "1");
-      navigate("/admin/platform/tenants", { replace: true });
+    if (!hasTenantAccess) {
+      navigate("/workspace/new", { replace: true });
+      return;
     }
 
   }, [
@@ -243,7 +215,8 @@ const Index = () => {
     !isAuthResolved ||
     tenantLoading ||
     !user ||
-    !hasTenantAccess;
+    !hasTenantAccess ||
+    (isPlatformAdmin && !requestedModule);
 
 
   if (shouldBlockRender) {
