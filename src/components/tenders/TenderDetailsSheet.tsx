@@ -100,7 +100,11 @@ export function TenderDetailsSheet({ tender, open, onOpenChange, onRefresh }: Te
     try {
       setUploading(true);
       const fileExt = file.name.split('.').pop();
-      const filePath = `${tender.id}/${Date.now()}.${fileExt}`;
+      if (!currentTenant?.id) {
+        toast.error('No active workspace selected');
+        return;
+      }
+      const filePath = `${currentTenant.id}/${tender.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('tender-documents')

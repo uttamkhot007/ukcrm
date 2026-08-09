@@ -126,7 +126,8 @@ export function EmployeeVerificationsTab({ employee }: EmployeeVerificationsTabP
   const uploadDocumentMutation = useMutation({
     mutationFn: async ({ file, documentType, verificationId }: { file: File; documentType: string; verificationId?: string }) => {
       const fileExt = file.name.split(".").pop();
-      const filePath = `${employee.id}/${activeTab}/${Date.now()}.${fileExt}`;
+      if (!employee.tenant_id) throw new Error("Employee has no workspace assigned");
+      const filePath = `${employee.tenant_id}/${employee.id}/${activeTab}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("verification-documents")
