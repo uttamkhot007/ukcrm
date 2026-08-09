@@ -6,6 +6,9 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
 import { logRedirect, logNoRedirect } from "@/lib/route-diagnostics";
 import { BuildStatusIndicator } from "@/components/system/BuildStatusIndicator";
+import { StaleBuildBanner } from "@/components/system/StaleBuildBanner";
+import { StaleBuildGuardProvider } from "@/contexts/StaleBuildGuardContext";
+
 
 
 export default function AdminLayout() {
