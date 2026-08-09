@@ -574,23 +574,30 @@ export function DocumentTemplatesModule() {
                           id: template.id,
                           name: template.name,
                           template_type: template.template_type,
+                          ...scopeOf(template as any),
                         })}
                       >
                         <Sparkles className="h-3 w-3" />
                         AI auto-fill
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1" onClick={() => duplicateTemplate(template)}>
-                        <Copy className="h-3 w-3 mr-1" />
-                        Duplicate
-                      </Button>
-                      {!template.is_default && (
-                        <Button variant="outline" size="sm" onClick={() => setAsDefault(template)}>
-                          <Star className="h-3 w-3" />
-                        </Button>
+                      {canEdit(scopeOf(template as any).packRole, scopeOf(template as any).solution) ? (
+                        <>
+                          <Button variant="outline" size="sm" className="flex-1" onClick={() => duplicateTemplate(template)}>
+                            <Copy className="h-3 w-3 mr-1" />
+                            Duplicate
+                          </Button>
+                          {!template.is_default && (
+                            <Button variant="outline" size="sm" onClick={() => setAsDefault(template)}>
+                              <Star className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(template.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Badge variant="outline" className="text-xs self-center">View only</Badge>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(template.id)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
                     </CardFooter>
                   </Card>
                 );
