@@ -19,11 +19,13 @@ import {
   ClipboardList, Receipt, Quote, FileCheck, Palette, Download, Sparkles, PackagePlus,
   History,
   FileDown,
+  Eye,
 } from "lucide-react";
 import { GeneratedDocumentsPanel } from "@/components/admin/GeneratedDocumentsPanel";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { TemplatePackManager } from "@/components/admin/TemplatePackManager";
 import { TemplateAutoFillDialog } from "@/components/admin/TemplateAutoFillDialog";
+import { TemplatePreviewDialog } from "@/components/admin/TemplatePreviewDialog";
 import { TemplatePermissionsPanel } from "@/components/admin/TemplatePermissionsPanel";
 import { useTemplatePermissions } from "@/hooks/useTemplatePermissions";
 import { TEMPLATE_PACK_VERSIONS } from "@/lib/template-packs";
@@ -81,6 +83,7 @@ export function DocumentTemplatesModule() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
   const [loadingSampleId, setLoadingSampleId] = useState<string | null>(null);
+  const [previewSample, setPreviewSample] = useState<LibraryTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -229,13 +232,17 @@ export function DocumentTemplatesModule() {
   });
 
   // Add sample template to database
-  const addSampleTemplate = async (sample: LibraryTemplate) => {
+  const addSampleTemplate = async (
+    sample: LibraryTemplate,
+    options: { closePreview?: boolean } = {},
+  ) => {
     setLoadingSampleId(sample.name);
     try {
       const { error } = await supabase.from('document_templates').insert(buildTemplateRow(sample));
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['document-templates'] });
       toast.success(`Added "${sample.name}" with your company branding`);
+      if (options.closePreview) setPreviewSample(null);
     } catch (error: any) {
       toast.error('Failed to add template: ' + error.message);
     } finally {
@@ -711,7 +718,7 @@ export function DocumentTemplatesModule() {
                     </div>
                   </CardContent>
                   
-                  <CardFooter className="pt-2">
+                  <CardFooter className="pt-2 flex flex-col gap-2">
                     <Button 
                       className="w-full"
                       variant={isAdded ? 'outline' : 'default'}
@@ -735,6 +742,15 @@ export function DocumentTemplatesModule() {
                           ? 'No install access'
                           : 'Add to My Templates'}
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1"
+                      onClick={() => setPreviewSample(sample)}
+                    >
+                      <Eye className="h-3 w-3" />
+                      Preview &amp; edit
+                    </Button>
                   </CardFooter>
                 </Card>
               );
@@ -747,6 +763,18 @@ export function DocumentTemplatesModule() {
         open={!!autoFillTemplate}
         onOpenChange={(open) => !open && setAutoFillTemplate(null)}
         template={autoFillTemplate}
+      />
+
+      <TemplatePreviewDialog
+        open={!!previewSample}
+        onOpenChange={(open) => !open && setPreviewSample(null)}
+        template={previewSample}
+        branding={tenantBranding}
+        installing={loadingSampleId === previewSample?.name}
+        canInstall={
+          !!previewSample && canInstall(previewSample.role, previewSample.solution ?? null)
+        }
+        onInstall={(edited) => addSampleTemplate(edited, { closePreview: true })}
       />
     </div>
   );
