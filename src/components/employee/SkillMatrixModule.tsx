@@ -254,29 +254,40 @@ interface SkillMatrixModuleProps {
   viewMode?: "employee" | "hr";
 }
 
-const STORAGE_KEY = "skill_matrix_data";
-const DEMO_CLEARED_KEY = "skill_matrix_demo_cleared";
+type SkillMatrixRow = {
+  id: string;
+  name: string;
+  role: string | null;
+  department: string | null;
+  skills: unknown;
+  overall_score: number | null;
+};
+
+function rowToMember(row: SkillMatrixRow): TeamMember {
+  const skills = Array.isArray(row.skills) ? (row.skills as Skill[]) : [];
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role ?? "",
+    department: row.department ?? "",
+    skills,
+    overallScore: Number(row.overall_score ?? 0),
+  };
+}
+
+function computeOverallScore(skills: Skill[]): number {
+  if (!skills.length) return 0;
+  const avg = skills.reduce((sum, s) => sum + (Number(s.level) || 0), 0) / skills.length;
+  return Math.round(avg * 20);
+}
 
 export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModuleProps) {
+  const { currentTenant } = useTenant();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
-    // Check if we have stored data
-    const storedData = localStorage.getItem(STORAGE_KEY);
-    if (storedData) {
-      try {
-        return JSON.parse(storedData);
-      } catch {
-        // If parsing fails, check if demo was cleared
-        const demoCleared = localStorage.getItem(DEMO_CLEARED_KEY);
-        return demoCleared === "true" ? [] : generateDemoTeamMembers();
-      }
-    }
-    // Check if demo data was previously cleared
-    const demoCleared = localStorage.getItem(DEMO_CLEARED_KEY);
-    return demoCleared === "true" ? [] : generateDemoTeamMembers();
-  });
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -285,14 +296,32 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
   const [importPreview, setImportPreview] = useState<TeamMember[]>([]);
   const [isImporting, setIsImporting] = useState(false);
 
-  // Persist team members to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(teamMembers));
-  }, [teamMembers]);
+  // Skill matrix now lives in the database (employee_skill_matrix), scoped to
+  // the active tenant. localStorage is no longer used as a data store.
+  const loadMembers = useCallback(async () => {
+    if (!currentTenant?.id) return;
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("employee_skill_matrix")
+      .select("id,name,role,department,skills,overall_score")
+      .eq("tenant_id", currentTenant.id)
+      .order("name", { ascending: true });
+    if (error) {
+      console.error("[skill-matrix] load failed", error);
+      toast.error("Failed to load skill matrix");
+    } else {
+      setTeamMembers((data ?? []).map((r) => rowToMember(r as SkillMatrixRow)));
+    }
+    setIsLoading(false);
+  }, [currentTenant?.id]);
 
-  // Check if demo data exists
-  const hasDemoData = teamMembers.some(m => m.isDemoData);
-  const demoDataCount = teamMembers.filter(m => m.isDemoData).length;
+  useEffect(() => {
+    void loadMembers();
+  }, [loadMembers]);
+
+  const hasDemoData = false;
+  const demoDataCount = 0;
+
 
   // New skill form state
   const [newSkill, setNewSkill] = useState({
