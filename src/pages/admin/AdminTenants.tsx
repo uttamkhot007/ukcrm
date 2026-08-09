@@ -261,7 +261,12 @@ export default function AdminTenants() {
 
   // Toggle module for tenant
   const handleToggleModule = async (tenantId: string, moduleKey: string, currentState: boolean) => {
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     try {
+
       const existingModule = tenantModules.find(m => m.module_key === moduleKey);
 
       if (existingModule) {
