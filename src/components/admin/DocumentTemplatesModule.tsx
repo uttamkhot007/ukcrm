@@ -284,16 +284,25 @@ export function DocumentTemplatesModule() {
     .filter((t) => activeRole === 'all' || t.role === activeRole)
     .map((t) => t.value);
 
+  const q = searchQuery.trim().toLowerCase();
+  const matchesQuery = (t: { name?: string | null; description?: string | null; template_type?: string | null }) =>
+    !q ||
+    [t.name, t.description, t.template_type, TEMPLATE_TYPES.find((x) => x.value === t.template_type)?.label]
+      .some((v) => (v ?? '').toLowerCase().includes(q));
+
   const filteredTemplates = templates.filter(
     (t) =>
+      matchesQuery(t) &&
       (activeType === 'all' ? roleTypeValues.includes(t.template_type) || activeRole === 'all' : t.template_type === activeType),
   );
 
   const filteredSamples = SAMPLE_TEMPLATES.filter(
     (t) =>
-      (activeRole === 'all' || t.role === activeRole) &&
-      (activeType === 'all' || t.template_type === activeType),
+      matchesQuery(t) &&
+      (q ? true : activeRole === 'all' || t.role === activeRole) &&
+      (q ? true : activeType === 'all' || t.template_type === activeType),
   );
+
 
   const visibleTypes = TEMPLATE_TYPES.filter((t) => activeRole === 'all' || t.role === activeRole);
 
