@@ -411,7 +411,12 @@ export function DocumentTemplatesModule() {
                   size="sm"
                   variant="outline"
                   className="w-full gap-1"
-                  disabled={installingPack === role.value || installed === total}
+                  disabled={
+                    installingPack === role.value ||
+                    installed === total ||
+                    !canInstall(role.value)
+                  }
+                  title={!canInstall(role.value) ? 'You do not have permission to install this pack' : undefined}
                   onClick={(e) => { e.stopPropagation(); installRolePack(role.value); }}
                 >
                   {installingPack === role.value ? (
@@ -419,7 +424,11 @@ export function DocumentTemplatesModule() {
                   ) : (
                     <PackagePlus className="h-3 w-3" />
                   )}
-                  {installed === total ? 'Pack installed' : 'Install pack'}
+                  {installed === total
+                    ? 'Pack installed'
+                    : !canInstall(role.value)
+                      ? 'No install access'
+                      : 'Install pack'}
                 </Button>
               </CardFooter>
             </Card>
