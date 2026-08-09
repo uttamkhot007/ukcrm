@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Tag, RefreshCw, Copy, X, ChevronUp } from "lucide-react";
+import { Tag, RefreshCw, Copy, X, ChevronUp, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   BUILD_VERSION,
@@ -15,6 +15,12 @@ import {
   clearRedirectHistory,
 } from "@/lib/redirect-loop-guard";
 import { toast } from "@/hooks/use-toast";
+import {
+  checkLiveBuild,
+  formatBehind,
+  LIVE_SITE_URL,
+  type LiveBuildResult,
+} from "@/lib/live-build-check";
 
 /**
  * Floating bottom-left badge showing the current frontend build version.
@@ -30,6 +36,8 @@ export function BuildVersionBadge() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [badgeNonce, setBadgeNonce] = useState(0);
+  const [liveBuild, setLiveBuild] = useState<LiveBuildResult | null>(null);
+  const [checkingLive, setCheckingLive] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -37,6 +45,52 @@ export function BuildVersionBadge() {
     window.addEventListener("nexus:build-info-updated", rerender);
     return () => window.removeEventListener("nexus:build-info-updated", rerender);
   }, []);
+
+  // Pre-flight: compare the published site's build with this one.
+  useEffect(() => {
+    let cancelled = false;
+    checkLiveBuild()
+      .then((result) => {
+        if (cancelled) return;
+        setLiveBuild(result);
+        if (result.status === "stale") {
+          toast({
+            title: "Live site is running an older build",
+            description: `${LIVE_SITE_URL} is ${formatBehind(result.behindMs)} this preview. Publish → Update before relying on the live URL.`,
+            variant: "destructive",
+          });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const runLiveCheck = async () => {
+    setCheckingLive(true);
+    try {
+      const result = await checkLiveBuild({ force: true });
+      setLiveBuild(result);
+      toast({
+        title:
+          result.status === "stale"
+            ? "Live site is behind"
+            : result.status === "fresh"
+              ? "Live site is up to date"
+              : "Live build could not be verified",
+        description:
+          result.status === "stale"
+            ? `${formatBehind(result.behindMs)} — publish to update it.`
+            : result.reason ?? `Live build: ${result.liveBuildTime}`,
+        variant: result.status === "stale" ? "destructive" : "default",
+      });
+    } finally {
+      setCheckingLive(false);
+    }
+  };
+
+
 
   const handleHardReload = async () => {
     setBusy(true);
@@ -108,20 +162,31 @@ export function BuildVersionBadge() {
 
   const recents = getRecentRedirects(5);
 
+  const liveStale = liveBuild?.status === "stale";
+
   if (!open) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Show build info"
-        className="fixed bottom-3 left-3 z-[60] flex items-center gap-1.5 rounded-full border bg-card/80 px-2.5 py-1 text-[10px] font-mono text-muted-foreground shadow-sm backdrop-blur hover:bg-card hover:text-foreground transition-colors"
+        title={
+          liveStale
+            ? "Live site is serving an older build — click for details"
+            : "Show build info"
+        }
+        className={`fixed bottom-3 left-3 z-[60] flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-mono shadow-sm backdrop-blur transition-colors ${
+          liveStale
+            ? "border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20"
+            : "bg-card/80 text-muted-foreground hover:bg-card hover:text-foreground"
+        }`}
       >
-        <Tag className="w-3 h-3" />
+        {liveStale ? <AlertTriangle className="w-3 h-3" /> : <Tag className="w-3 h-3" />}
         {formatBuildLabel()}
-        {badgeNonce > 0 ? " · fresh" : ""}
+        {liveStale ? " · live stale" : badgeNonce > 0 ? " · fresh" : ""}
       </button>
     );
   }
+
 
   return (
     <div className="fixed bottom-3 left-3 z-[60] w-[320px] max-w-[calc(100vw-1.5rem)] rounded-2xl border bg-card/95 shadow-2xl backdrop-blur">
@@ -159,6 +224,52 @@ export function BuildVersionBadge() {
             <span className="text-primary">{location.pathname}</span>
           </div>
         </div>
+
+        {/* Live-site pre-flight check */}
+        <div
+          className={`rounded-lg border p-2 text-[11px] space-y-1.5 ${
+            liveStale
+              ? "border-destructive/40 bg-destructive/5"
+              : liveBuild?.status === "fresh"
+                ? "border-emerald-500/30 bg-emerald-500/5"
+                : "border-border bg-muted/30"
+          }`}
+        >
+          <div className="flex items-center gap-1.5 font-semibold">
+            {liveStale ? (
+              <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+            ) : (
+              <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
+            <span>Live site pre-flight</span>
+          </div>
+          <p className="text-muted-foreground leading-snug">
+            {liveStale
+              ? `The published site is ${formatBehind(liveBuild?.behindMs ?? null)} this build. Publish → Update before relying on it.`
+              : liveBuild?.status === "fresh"
+                ? "Published site matches this build."
+                : liveBuild?.status === "same-origin"
+                  ? "You are viewing the published site."
+                  : (liveBuild?.reason ?? "Checking published build…")}
+          </p>
+          {liveBuild?.liveBuildTime && (
+            <div className="font-mono text-[10px] text-muted-foreground">
+              live · {liveBuild.liveBuildTime}
+            </div>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 w-full text-[11px]"
+            onClick={runLiveCheck}
+            disabled={checkingLive}
+          >
+            <RefreshCw className={`w-3 h-3 mr-1 ${checkingLive ? "animate-spin" : ""}`} />
+            Re-check live build
+          </Button>
+        </div>
+
+
 
         {recents.length > 0 && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[10px] font-mono">
