@@ -568,7 +568,11 @@ export function TemplateSelector({
                           <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                             {template.description || 'No description'}
                           </p>
+                          <Badge variant="outline" className="mt-2 text-[10px] capitalize">
+                            {String(template.template_type).replace(/_/g, ' ')}
+                          </Badge>
                         </CardContent>
+
                       </Card>
                     );
                   })}
