@@ -643,6 +643,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "projects-tasks", label: "Tasks", icon: ListTodo },
             { id: "projects-milestones", label: "Milestones", icon: Milestone },
             { id: "projects-timesheet", label: "Timesheets", icon: Timer },
+            { id: "projects-templates", label: "Templates", icon: FileText },
           ],
         });
       }
