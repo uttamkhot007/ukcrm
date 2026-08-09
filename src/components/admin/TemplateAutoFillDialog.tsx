@@ -327,22 +327,30 @@ export function TemplateAutoFillDialog({ open, onOpenChange, template }: Props) 
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" onClick={() => save("draft")} disabled={saving}>
                   Save as draft
                 </Button>
-                <Button variant="outline" className="gap-1" onClick={() => save("final", "pdf")} disabled={saving}>
-                  <FileDown className="h-4 w-4" />
-                  PDF
-                </Button>
-                <Button variant="outline" className="gap-1" onClick={() => save("final", "docx")} disabled={saving}>
-                  <FileText className="h-4 w-4" />
-                  Word
-                </Button>
-                <Button onClick={() => save("final")} disabled={saving} className="gap-1">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  Approve &amp; finalise
-                </Button>
+                {mayApprove ? (
+                  <>
+                    <Button variant="outline" className="gap-1" onClick={() => save("final", "pdf")} disabled={saving}>
+                      <FileDown className="h-4 w-4" />
+                      PDF
+                    </Button>
+                    <Button variant="outline" className="gap-1" onClick={() => save("final", "docx")} disabled={saving}>
+                      <FileText className="h-4 w-4" />
+                      Word
+                    </Button>
+                    <Button onClick={() => save("final")} disabled={saving} className="gap-1">
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      Approve &amp; finalise
+                    </Button>
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Approval required — you can only save a draft
+                  </Badge>
+                )}
               </div>
             </DialogFooter>
           </div>
