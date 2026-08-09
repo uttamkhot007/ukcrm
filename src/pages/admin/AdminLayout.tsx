@@ -90,7 +90,7 @@ export default function AdminLayout() {
     // Any regular application module (sales, hr, finance, …) lives on "/".
     // Without this the admin shell kept rendering the platform page no matter
     // which module was clicked.
-    navigate("/", { state: { module } });
+    navigate("/", { state: { module, fromAdminNavigation: true } });
   };
 
 
