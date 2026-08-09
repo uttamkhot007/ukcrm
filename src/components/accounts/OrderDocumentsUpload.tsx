@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ export function OrderDocumentsUpload({
   onUploadComplete,
 }: OrderDocumentsUploadProps) {
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState<DocumentType | null>(null);
@@ -49,12 +51,13 @@ export function OrderDocumentsUpload({
 
   const uploadDocument = async (file: File, type: DocumentType) => {
     if (!user?.id) throw new Error("Not authenticated");
+    if (!currentTenant?.id) throw new Error("No active workspace selected");
 
     setUploading(type);
 
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${orderRequestId}/${type}_${Date.now()}.${fileExt}`;
+      const fileName = `${currentTenant.id}/${orderRequestId}/${type}_${Date.now()}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
