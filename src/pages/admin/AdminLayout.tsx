@@ -4,6 +4,8 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
+import { BuildStatusIndicator } from "@/components/system/BuildStatusIndicator";
+
 
 export default function AdminLayout() {
   const { user, isAuthResolved, isPlatformAdmin } = useAuth();
@@ -96,9 +98,11 @@ export default function AdminLayout() {
 
   return (
     <MainLayout activeModule={activeModule} onModuleChange={handleModuleChange}>
-      <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative">
+      <div className="p-6 overflow-auto min-h-[calc(100vh-4rem)] relative space-y-4">
+        <BuildStatusIndicator />
         <Outlet />
       </div>
+
     </MainLayout>
   );
 }
