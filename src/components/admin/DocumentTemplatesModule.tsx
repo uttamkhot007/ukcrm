@@ -455,7 +455,17 @@ export function DocumentTemplatesModule() {
             <FileDown className="h-4 w-4" />
             Generated documents
           </TabsTrigger>
+          {canManagePermissions && (
+            <TabsTrigger value="permissions" className="gap-2">
+              <FileCheck className="h-4 w-4" />
+              Permissions
+            </TabsTrigger>
+          )}
         </TabsList>
+
+        <TabsContent value="permissions">
+          <TemplatePermissionsPanel />
+        </TabsContent>
 
         <TabsContent value="generated-documents">
           <GeneratedDocumentsPanel />
