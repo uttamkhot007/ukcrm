@@ -328,10 +328,15 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Document Templates</h2>
+          <h2 className="text-2xl font-bold">
+            {roleScope
+              ? `${TEMPLATE_ROLES.find((r) => r.value === roleScope)?.label ?? roleScope} Templates`
+              : 'Document Templates'}
+          </h2>
           <p className="text-muted-foreground">
-            Role-based template library for Sales, Presales, Technical, HR and Finance — installed with{' '}
-            {tenantBranding.companyName || 'your organisation'}&apos;s branding.
+            {roleScope
+              ? `${TEMPLATE_ROLES.find((r) => r.value === roleScope)?.description ?? ''} — installed with ${tenantBranding.companyName || 'your organisation'}'s branding.`
+              : `Role-based template library for Sales, Presales, Technical, HR and Finance — installed with ${tenantBranding.companyName || 'your organisation'}'s branding.`}
           </p>
         </div>
 
