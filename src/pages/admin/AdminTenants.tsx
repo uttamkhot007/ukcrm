@@ -195,7 +195,12 @@ export default function AdminTenants() {
   // Create new tenant
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     setIsCreating(true);
+
 
     try {
       const { data, error } = await supabase
