@@ -760,6 +760,18 @@ export function DocumentTemplatesModule() {
         onOpenChange={(open) => !open && setAutoFillTemplate(null)}
         template={autoFillTemplate}
       />
+
+      <TemplatePreviewDialog
+        open={!!previewSample}
+        onOpenChange={(open) => !open && setPreviewSample(null)}
+        template={previewSample}
+        branding={tenantBranding}
+        installing={loadingSampleId === previewSample?.name}
+        canInstall={
+          !!previewSample && canInstall(previewSample.role, previewSample.solution ?? null)
+        }
+        onInstall={(edited) => addSampleTemplate(edited, { closePreview: true })}
+      />
     </div>
   );
 }
