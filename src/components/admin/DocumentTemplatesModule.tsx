@@ -711,7 +711,7 @@ export function DocumentTemplatesModule() {
                     </div>
                   </CardContent>
                   
-                  <CardFooter className="pt-2">
+                  <CardFooter className="pt-2 flex flex-col gap-2">
                     <Button 
                       className="w-full"
                       variant={isAdded ? 'outline' : 'default'}
@@ -734,6 +734,15 @@ export function DocumentTemplatesModule() {
                         : !canInstall(sample.role, sample.solution ?? null)
                           ? 'No install access'
                           : 'Add to My Templates'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1"
+                      onClick={() => setPreviewSample(sample)}
+                    >
+                      <Eye className="h-3 w-3" />
+                      Preview &amp; edit
                     </Button>
                   </CardFooter>
                 </Card>
