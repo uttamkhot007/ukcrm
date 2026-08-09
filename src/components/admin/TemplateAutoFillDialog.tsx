@@ -44,13 +44,17 @@ interface AutoFillResult {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template: { id: string; name: string; template_type: string } | null;
+  template:
+    | { id: string; name: string; template_type: string; packRole?: string | null; solution?: string | null }
+    | null;
 }
 
 export function TemplateAutoFillDialog({ open, onOpenChange, template }: Props) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { canApprove } = useTemplatePermissions();
+  const mayApprove = canApprove(template?.packRole ?? null, template?.solution ?? null);
 
   const [sourceType, setSourceType] = useState<SourceType>("deal");
   const [sourceId, setSourceId] = useState<string>("");
