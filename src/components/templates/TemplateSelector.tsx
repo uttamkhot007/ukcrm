@@ -295,6 +295,8 @@ interface TemplateSelectorProps {
   onSelect: (template: DocumentTemplate | null, isBuiltIn?: boolean, builtInIndex?: number) => void;
   triggerLabel?: string;
   showPreview?: boolean;
+  /** Additional template_type values from the tenant library to include (e.g. proposal for quotes) */
+  relatedTypes?: string[];
 }
 
 export function TemplateSelector({
@@ -303,22 +305,26 @@ export function TemplateSelector({
   onSelect,
   triggerLabel = "Choose Template",
   showPreview = true,
+  relatedTypes = [],
 }: TemplateSelectorProps) {
   const { currentTenant } = useTenant();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'built-in' | 'custom'>('built-in');
+  const [search, setSearch] = useState("");
   const [selectedBuiltInIndex, setSelectedBuiltInIndex] = useState<number | null>(0);
 
+  const wantedTypes = [templateType, ...relatedTypes];
+
   // Fetch custom templates from database
-  const { data: customTemplates = [] } = useQuery({
-    queryKey: ['document-templates', currentTenant?.id, templateType],
+  const { data: allCustomTemplates = [] } = useQuery({
+    queryKey: ['document-templates', currentTenant?.id, wantedTypes.join(',')],
     queryFn: async () => {
       if (!currentTenant?.id) return [];
       const { data, error } = await supabase
         .from('document_templates')
         .select('*')
         .eq('tenant_id', currentTenant.id)
-        .eq('template_type', templateType)
+        .in('template_type', wantedTypes)
         .eq('is_active', true)
         .order('is_default', { ascending: false })
         .order('name');
@@ -327,6 +333,18 @@ export function TemplateSelector({
     },
     enabled: !!currentTenant?.id,
   });
+
+  const q = search.trim().toLowerCase();
+  const customTemplates = q
+    ? allCustomTemplates.filter((t) =>
+        [t.name, t.description, t.template_type].filter(Boolean).join(' ').toLowerCase().includes(q))
+    : allCustomTemplates;
+
+  // Default to the tenant's own library when templates are installed
+  useEffect(() => {
+    if (isOpen && allCustomTemplates.length > 0) setActiveTab('custom');
+  }, [isOpen, allCustomTemplates.length]);
+
 
   const builtInTemplates = BUILTIN_TEMPLATES[templateType] || [];
 
