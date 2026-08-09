@@ -735,6 +735,13 @@ Jane Smith,SOC Analyst,Technical,Threat Intelligence,Security,4`;
               </TableRow>
             </TableHeader>
             <TableBody>
+              {(isLoading || filteredMembers.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={viewMode === "hr" ? 6 : 5} className="text-center text-muted-foreground py-8">
+                    {isLoading ? "Loading skill matrix…" : "No employees yet. Import a CSV to get started."}
+                  </TableCell>
+                </TableRow>
+              )}
               {filteredMembers.map((member) => (
                 <TableRow key={member.id} className={member.isDemoData ? "bg-amber-500/5" : ""}>
                   <TableCell className="font-medium">
