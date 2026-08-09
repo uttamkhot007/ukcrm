@@ -181,11 +181,12 @@ const Index = () => {
         const target = "/admin/platform/tenants";
         recordRedirect("/", target);
         if (shouldForceCleanup("/", target)) {
+          // Loop detected: stop redirecting instead of hard-reloading. The old
+          // forceFreshReload here re-entered the same loop from a cached doc.
           console.warn(
-            "[redirect-loop-guard] Detected repeated /→%s redirects, forcing cache cleanup",
+            "[redirect-loop-guard] Detected repeated /→%s redirects, staying on /",
             target,
           );
-          forceFreshReload(target);
           return;
         }
         navigate(target, { replace: true });
