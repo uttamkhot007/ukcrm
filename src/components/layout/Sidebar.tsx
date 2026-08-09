@@ -417,6 +417,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "finance-procurement", label: "Procurement & Inventory", icon: Package },
           { id: "finance-quotation-approvals", label: "Quotation → Invoice", icon: FileText },
           { id: "finance-sla-reminders", label: "SLA & Reminders", icon: Bell },
+          { id: "finance-templates", label: "Templates", icon: FileText },
         ],
       });
 
@@ -434,6 +435,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
           { id: "hr-compliance", label: "Legal & Compliance", icon: Scale },
           { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
+          { id: "hr-templates", label: "Templates", icon: FileText },
         ],
       });
 
@@ -593,6 +595,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           { id: "presales-rfp", label: "RFP/RFI", icon: FileText },
           { id: "presales-recommendations", label: "Recommendations", icon: BookOpen },
           { id: "presales-poc-plans", label: "POC Plans", icon: FileText },
+          { id: "presales-templates", label: "Templates", icon: FileText },
         ],
       });
 
@@ -761,6 +764,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "presales-assessments", label: "Assessments", icon: ClipboardCheck },
             { id: "presales-rfp", label: "RFP/RFI", icon: FileText },
             { id: "presales-recommendations", label: "Recommendations", icon: BookOpen },
+            { id: "presales-templates", label: "Templates", icon: FileText },
           ],
         });
       }
@@ -790,6 +794,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "hr-salary", label: "Salary & Benefits", icon: Briefcase },
             { id: "hr-compliance", label: "Legal & Compliance", icon: Scale },
             { id: "hr-onboarding", label: "Onboarding", icon: Calendar },
+          { id: "hr-templates", label: "Templates", icon: FileText },
           ],
         });
       }
@@ -829,6 +834,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "finance-contracts", label: "Contracts", icon: FileText },
             { id: "finance-ar-aging", label: "AR Aging", icon: Clock },
             { id: "finance-procurement", label: "Procurement & Inventory", icon: Package },
+            { id: "finance-templates", label: "Templates", icon: FileText },
           ],
         });
       }
