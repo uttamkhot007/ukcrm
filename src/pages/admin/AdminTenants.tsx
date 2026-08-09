@@ -49,6 +49,9 @@ interface ModuleDefinition {
 
 export default function AdminTenants() {
   const { isSuperAdmin, refetchTenants } = useTenant();
+  // Risky writes are blocked while the published site is behind this build.
+  const risky = useRiskyAction();
+
   const location = useLocation();
   const [tenants, setTenants] = useState<any[]>([]);
   const [modules, setModules] = useState<ModuleDefinition[]>([]);
