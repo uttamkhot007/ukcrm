@@ -4,6 +4,8 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Loader2 } from "lucide-react";
+import { BuildStatusIndicator } from "@/components/system/BuildStatusIndicator";
+
 
 export default function AdminLayout() {
   const { user, isAuthResolved, isPlatformAdmin } = useAuth();
