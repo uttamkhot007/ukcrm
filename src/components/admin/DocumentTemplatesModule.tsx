@@ -83,6 +83,7 @@ export function DocumentTemplatesModule() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
   const [loadingSampleId, setLoadingSampleId] = useState<string | null>(null);
+  const [previewSample, setPreviewSample] = useState<LibraryTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
