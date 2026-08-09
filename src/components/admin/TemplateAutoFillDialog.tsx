@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { AlertTriangle, ArrowLeft, Check, FileDown, FileText, Loader2, Sparkles } from "lucide-react";
 import { exportAndAttachDocument, loadBranding, type ExportFormat } from "@/lib/document-export";
+import { useTemplatePermissions } from "@/hooks/useTemplatePermissions";
 
 type SourceType = "deal" | "contact" | "project" | "employee" | "ticket";
 
