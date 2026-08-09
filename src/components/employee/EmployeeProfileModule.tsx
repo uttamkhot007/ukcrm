@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { mergeSensitiveDetails, splitSensitiveFields } from "@/lib/employee-sensitive";
 import { 
   User, MapPin, Phone, Heart, FileText, Upload, 
   Trash2, Check, X, Shield, Loader2, Building2, Landmark, Wallet, Award
