@@ -4400,6 +4400,84 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_sensitive_details: {
+        Row: {
+          address: string | null
+          bank_account_number: string | null
+          bank_branch: string | null
+          bank_ifsc_code: string | null
+          bank_name: string | null
+          created_at: string
+          current_address: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          emergency_contact_relationship: string | null
+          esi_dispensary: string | null
+          esi_number: string | null
+          gratuity_nomination_name: string | null
+          gratuity_nomination_percentage: number | null
+          gratuity_nomination_relation: string | null
+          id: string
+          pf_number: string | null
+          postal_code: string | null
+          tenant_id: string | null
+          uan_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
+          created_at?: string
+          current_address?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          emergency_contact_relationship?: string | null
+          esi_dispensary?: string | null
+          esi_number?: string | null
+          gratuity_nomination_name?: string | null
+          gratuity_nomination_percentage?: number | null
+          gratuity_nomination_relation?: string | null
+          id?: string
+          pf_number?: string | null
+          postal_code?: string | null
+          tenant_id?: string | null
+          uan_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_ifsc_code?: string | null
+          bank_name?: string | null
+          created_at?: string
+          current_address?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          emergency_contact_relationship?: string | null
+          esi_dispensary?: string | null
+          esi_number?: string | null
+          gratuity_nomination_name?: string | null
+          gratuity_nomination_percentage?: number | null
+          gratuity_nomination_relation?: string | null
+          id?: string
+          pf_number?: string | null
+          postal_code?: string | null
+          tenant_id?: string | null
+          uan_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       employee_skill_matrix: {
         Row: {
           created_at: string
@@ -9803,38 +9881,23 @@ export type Database = {
       }
       profiles: {
         Row: {
-          address: string | null
           anniversary_date: string | null
           avatar_config: Json | null
           avatar_style: string | null
           avatar_url: string | null
-          bank_account_number: string | null
-          bank_branch: string | null
-          bank_ifsc_code: string | null
-          bank_name: string | null
           bio: string | null
           birth_date: string | null
           city: string | null
           country: string | null
           created_at: string
-          current_address: string | null
           department: string | null
           email: string | null
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
-          emergency_contact_relation: string | null
-          emergency_contact_relationship: string | null
           employee_code: string | null
           employment_status:
             | Database["public"]["Enums"]["employment_status"]
             | null
-          esi_dispensary: string | null
-          esi_number: string | null
           full_name: string | null
           github_url: string | null
-          gratuity_nomination_name: string | null
-          gratuity_nomination_percentage: number | null
-          gratuity_nomination_relation: string | null
           hire_date: string | null
           hobbies: string[] | null
           id: string
@@ -9843,52 +9906,34 @@ export type Database = {
           linkedin_url: string | null
           location: string | null
           manager_id: string | null
-          pf_number: string | null
           phone: string | null
-          postal_code: string | null
           responsibilities: string[] | null
           sales_sub_team: Database["public"]["Enums"]["sales_sub_team"] | null
           state: string | null
           tenant_id: string | null
           twitter_url: string | null
-          uan_number: string | null
           updated_at: string
           user_category: Database["public"]["Enums"]["user_category"] | null
           user_id: string
         }
         Insert: {
-          address?: string | null
           anniversary_date?: string | null
           avatar_config?: Json | null
           avatar_style?: string | null
           avatar_url?: string | null
-          bank_account_number?: string | null
-          bank_branch?: string | null
-          bank_ifsc_code?: string | null
-          bank_name?: string | null
           bio?: string | null
           birth_date?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
-          current_address?: string | null
           department?: string | null
           email?: string | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
-          emergency_contact_relation?: string | null
-          emergency_contact_relationship?: string | null
           employee_code?: string | null
           employment_status?:
             | Database["public"]["Enums"]["employment_status"]
             | null
-          esi_dispensary?: string | null
-          esi_number?: string | null
           full_name?: string | null
           github_url?: string | null
-          gratuity_nomination_name?: string | null
-          gratuity_nomination_percentage?: number | null
-          gratuity_nomination_relation?: string | null
           hire_date?: string | null
           hobbies?: string[] | null
           id?: string
@@ -9897,52 +9942,34 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           manager_id?: string | null
-          pf_number?: string | null
           phone?: string | null
-          postal_code?: string | null
           responsibilities?: string[] | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
           state?: string | null
           tenant_id?: string | null
           twitter_url?: string | null
-          uan_number?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id: string
         }
         Update: {
-          address?: string | null
           anniversary_date?: string | null
           avatar_config?: Json | null
           avatar_style?: string | null
           avatar_url?: string | null
-          bank_account_number?: string | null
-          bank_branch?: string | null
-          bank_ifsc_code?: string | null
-          bank_name?: string | null
           bio?: string | null
           birth_date?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
-          current_address?: string | null
           department?: string | null
           email?: string | null
-          emergency_contact_name?: string | null
-          emergency_contact_phone?: string | null
-          emergency_contact_relation?: string | null
-          emergency_contact_relationship?: string | null
           employee_code?: string | null
           employment_status?:
             | Database["public"]["Enums"]["employment_status"]
             | null
-          esi_dispensary?: string | null
-          esi_number?: string | null
           full_name?: string | null
           github_url?: string | null
-          gratuity_nomination_name?: string | null
-          gratuity_nomination_percentage?: number | null
-          gratuity_nomination_relation?: string | null
           hire_date?: string | null
           hobbies?: string[] | null
           id?: string
@@ -9951,15 +9978,12 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           manager_id?: string | null
-          pf_number?: string | null
           phone?: string | null
-          postal_code?: string | null
           responsibilities?: string[] | null
           sales_sub_team?: Database["public"]["Enums"]["sales_sub_team"] | null
           state?: string | null
           tenant_id?: string | null
           twitter_url?: string | null
-          uan_number?: string | null
           updated_at?: string
           user_category?: Database["public"]["Enums"]["user_category"] | null
           user_id?: string
