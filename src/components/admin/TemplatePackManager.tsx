@@ -23,6 +23,7 @@ import {
   type PackInstallation,
   type TemplateVersionRow,
 } from "@/lib/template-packs";
+import { useTemplatePermissions } from "@/hooks/useTemplatePermissions";
 
 interface Props {
   templates: InstalledTemplateRow[];
@@ -32,6 +33,7 @@ interface Props {
 export function TemplatePackManager({ templates, branding }: Props) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { canInstall, canEdit, canApprove } = useTemplatePermissions();
   const queryClient = useQueryClient();
   const [busyRole, setBusyRole] = useState<string | null>(null);
   const [busyRollback, setBusyRollback] = useState<string | null>(null);
