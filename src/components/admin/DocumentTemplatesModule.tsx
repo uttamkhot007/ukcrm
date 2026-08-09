@@ -232,13 +232,17 @@ export function DocumentTemplatesModule() {
   });
 
   // Add sample template to database
-  const addSampleTemplate = async (sample: LibraryTemplate) => {
+  const addSampleTemplate = async (
+    sample: LibraryTemplate,
+    options: { closePreview?: boolean } = {},
+  ) => {
     setLoadingSampleId(sample.name);
     try {
       const { error } = await supabase.from('document_templates').insert(buildTemplateRow(sample));
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['document-templates'] });
       toast.success(`Added "${sample.name}" with your company branding`);
+      if (options.closePreview) setPreviewSample(null);
     } catch (error: any) {
       toast.error('Failed to add template: ' + error.message);
     } finally {
