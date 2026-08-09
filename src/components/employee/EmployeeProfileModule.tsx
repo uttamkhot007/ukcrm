@@ -72,9 +72,19 @@ export function EmployeeProfileModule() {
         .select('*')
         .eq('id', user.id)
         .single();
-      
+
       if (error) throw error;
-      return data;
+
+      const { data: sensitive } = await supabase
+        .from('employee_sensitive_details')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return mergeSensitiveDetails(
+        data as unknown as Record<string, unknown>,
+        sensitive as Record<string, unknown> | null,
+      );
     },
     enabled: !!user?.id
   });
@@ -98,12 +108,27 @@ export function EmployeeProfileModule() {
   const updateProfile = useMutation({
     mutationFn: async (updates: ProfileData) => {
       if (!user?.id) throw new Error("Not authenticated");
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates as Record<string, unknown>)
-        .eq('id', user.id);
-      
-      if (error) throw error;
+      const { profile: profileUpdates, sensitive } = splitSensitiveFields(
+        updates as Record<string, unknown>,
+      );
+
+      if (Object.keys(profileUpdates).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', user.id);
+        if (error) throw error;
+      }
+
+      if (Object.keys(sensitive).length > 0) {
+        const { error: sensitiveError } = await supabase
+          .from('employee_sensitive_details')
+          .upsert(
+            { user_id: user.id, ...sensitive },
+            { onConflict: 'user_id' },
+          );
+        if (sensitiveError) throw sensitiveError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-profile'] });
