@@ -644,9 +644,11 @@ export default function AdminTenants() {
                       </div>
                       <Select
                         value={member.role}
+                        disabled={risky.disabled}
                         onValueChange={(value: 'owner' | 'admin' | 'member') => handleUpdateMemberRole(member.id, value)}
                       >
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-[120px]" title={risky.reason ?? undefined}>
+
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
