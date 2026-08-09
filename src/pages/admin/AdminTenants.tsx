@@ -298,7 +298,12 @@ export default function AdminTenants() {
 
   // Update member role
   const handleUpdateMemberRole = async (memberId: string, newRole: 'owner' | 'admin' | 'member') => {
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     try {
+
       const { error } = await supabase
         .from('tenant_members')
         .update({ role: newRole })
