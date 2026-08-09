@@ -363,7 +363,7 @@ export default function AdminTenants() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={risky.disabled} title={risky.reason ?? undefined}>
               <Plus className="mr-2 h-4 w-4" />
               New Tenant
             </Button>
