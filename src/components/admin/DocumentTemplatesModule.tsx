@@ -62,7 +62,12 @@ const SAMPLE_TEMPLATES = TEMPLATE_LIBRARY;
 const DEFAULT_TEMPLATES = DEFAULT_TEMPLATE_CONTENT;
 
 
-export function DocumentTemplatesModule() {
+interface DocumentTemplatesModuleProps {
+  /** Restrict the module to a single role pack (e.g. inside the Sales module). */
+  roleScope?: TemplateRole;
+}
+
+export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModuleProps = {}) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const { canInstall, canEdit, canApprove, canManagePermissions } = useTemplatePermissions();
@@ -72,7 +77,7 @@ export function DocumentTemplatesModule() {
   });
   const { settings: orgSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
-  const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>('all');
+  const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>(roleScope ?? 'all');
   const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<string>('sample-gallery');
@@ -280,6 +285,10 @@ export function DocumentTemplatesModule() {
     return templates.some(t => t.name === sampleName);
   };
 
+  const scopedTypeValues = roleScope
+    ? TEMPLATE_TYPES.filter((t) => t.role === roleScope).map((t) => t.value)
+    : null;
+
   const roleTypeValues = TEMPLATE_TYPES
     .filter((t) => activeRole === 'all' || t.role === activeRole)
     .map((t) => t.value);
@@ -290,13 +299,19 @@ export function DocumentTemplatesModule() {
     [t.name, t.description, t.template_type, TEMPLATE_TYPES.find((x) => x.value === t.template_type)?.label]
       .some((v) => (v ?? '').toLowerCase().includes(q));
 
-  const filteredTemplates = templates.filter(
+  const inScope = (templateType?: string | null, role?: string | null) =>
+    !scopedTypeValues || (role ? role === roleScope : scopedTypeValues.includes(templateType ?? ''));
+
+  const scopedTemplates = templates.filter((t) => inScope(t.template_type, (t.content?.role as string) ?? null));
+  const scopedSamples = SAMPLE_TEMPLATES.filter((t) => inScope(t.template_type, t.role));
+
+  const filteredTemplates = scopedTemplates.filter(
     (t) =>
       matchesQuery(t) &&
       (activeType === 'all' ? roleTypeValues.includes(t.template_type) || activeRole === 'all' : t.template_type === activeType),
   );
 
-  const filteredSamples = SAMPLE_TEMPLATES.filter(
+  const filteredSamples = scopedSamples.filter(
     (t) =>
       matchesQuery(t) &&
       (q ? true : activeRole === 'all' || t.role === activeRole) &&
@@ -313,10 +328,15 @@ export function DocumentTemplatesModule() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Document Templates</h2>
+          <h2 className="text-2xl font-bold">
+            {roleScope
+              ? `${TEMPLATE_ROLES.find((r) => r.value === roleScope)?.label ?? roleScope} Templates`
+              : 'Document Templates'}
+          </h2>
           <p className="text-muted-foreground">
-            Role-based template library for Sales, Presales, Technical, HR and Finance — installed with{' '}
-            {tenantBranding.companyName || 'your organisation'}&apos;s branding.
+            {roleScope
+              ? `${TEMPLATE_ROLES.find((r) => r.value === roleScope)?.description ?? ''} — installed with ${tenantBranding.companyName || 'your organisation'}'s branding.`
+              : `Role-based template library for Sales, Presales, Technical, HR and Finance — installed with ${tenantBranding.companyName || 'your organisation'}'s branding.`}
           </p>
         </div>
 
@@ -389,8 +409,8 @@ export function DocumentTemplatesModule() {
       </div>
 
       {/* Role selector */}
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-        {TEMPLATE_ROLES.map((role) => {
+      <div className={roleScope ? "grid gap-3 md:grid-cols-1" : "grid gap-3 md:grid-cols-3 lg:grid-cols-5"}>
+        {TEMPLATE_ROLES.filter((r) => !roleScope || r.value === roleScope).map((role) => {
           const total = TEMPLATE_LIBRARY.filter((t) => t.role === role.value).length;
           const installed = TEMPLATE_LIBRARY.filter(
             (t) => t.role === role.value && templates.some((e) => e.name === t.name),
@@ -401,11 +421,11 @@ export function DocumentTemplatesModule() {
               key={role.value}
               role="button"
               tabIndex={0}
-              onClick={() => { setActiveRole(isActive ? 'all' : role.value); setActiveType('all'); }}
+              onClick={() => { setActiveRole(roleScope ? role.value : (isActive ? 'all' : role.value)); setActiveType('all'); }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  setActiveRole(isActive ? 'all' : role.value);
+                  setActiveRole(roleScope ? role.value : (isActive ? 'all' : role.value));
                   setActiveType('all');
                 }
               }}
@@ -475,11 +495,11 @@ export function DocumentTemplatesModule() {
         <TabsList className="mb-4">
           <TabsTrigger value="my-templates" className="gap-2">
             <FileText className="h-4 w-4" />
-            My Templates ({templates.length})
+            My Templates ({scopedTemplates.length})
           </TabsTrigger>
           <TabsTrigger value="sample-gallery" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            Template Library ({SAMPLE_TEMPLATES.length})
+            Template Library ({scopedSamples.length})
           </TabsTrigger>
           <TabsTrigger value="pack-versions" className="gap-2">
             <History className="h-4 w-4" />
@@ -489,7 +509,7 @@ export function DocumentTemplatesModule() {
             <FileDown className="h-4 w-4" />
             Generated documents
           </TabsTrigger>
-          {canManagePermissions && (
+          {canManagePermissions && !roleScope && (
             <TabsTrigger value="permissions" className="gap-2">
               <FileCheck className="h-4 w-4" />
               Permissions
