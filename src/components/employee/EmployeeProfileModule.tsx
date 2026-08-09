@@ -85,7 +85,7 @@ export function EmployeeProfileModule() {
       return mergeSensitiveDetails(
         data as unknown as Record<string, unknown>,
         sensitive as Record<string, unknown> | null,
-      );
+      ) as unknown as ProfileData;
     },
     enabled: !!user?.id
   });
