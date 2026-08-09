@@ -62,7 +62,12 @@ const SAMPLE_TEMPLATES = TEMPLATE_LIBRARY;
 const DEFAULT_TEMPLATES = DEFAULT_TEMPLATE_CONTENT;
 
 
-export function DocumentTemplatesModule() {
+interface DocumentTemplatesModuleProps {
+  /** Restrict the module to a single role pack (e.g. inside the Sales module). */
+  roleScope?: TemplateRole;
+}
+
+export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModuleProps = {}) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const { canInstall, canEdit, canApprove, canManagePermissions } = useTemplatePermissions();
@@ -72,7 +77,7 @@ export function DocumentTemplatesModule() {
   });
   const { settings: orgSettings } = useOrganizationSettings();
   const queryClient = useQueryClient();
-  const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>('all');
+  const [activeRole, setActiveRole] = useState<TemplateRole | 'all'>(roleScope ?? 'all');
   const [installingPack, setInstallingPack] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<string>('sample-gallery');
