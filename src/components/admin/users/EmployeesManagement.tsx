@@ -220,6 +220,7 @@ export function EmployeesManagement() {
         const teams = userTeamsResult.data
           .filter((t) => t.user_id === profile.user_id)
           .map((t) => t.team as TeamType);
+        const sensitive = sensitiveByUser.get(profile.user_id) ?? {};
         return {
           id: profile.id,
           user_id: profile.user_id,
@@ -237,20 +238,20 @@ export function EmployeesManagement() {
           sales_sub_team: profile.sales_sub_team,
           teams,
           // Bank details
-          bank_name: profile.bank_name,
-          bank_account_number: profile.bank_account_number,
-          bank_ifsc_code: profile.bank_ifsc_code,
-          bank_branch: profile.bank_branch,
+          bank_name: sensitive.bank_name ?? null,
+          bank_account_number: sensitive.bank_account_number ?? null,
+          bank_ifsc_code: sensitive.bank_ifsc_code ?? null,
+          bank_branch: sensitive.bank_branch ?? null,
           // ESI details
-          esi_number: profile.esi_number,
-          esi_dispensary: profile.esi_dispensary,
+          esi_number: sensitive.esi_number ?? null,
+          esi_dispensary: sensitive.esi_dispensary ?? null,
           // PF details
-          pf_number: profile.pf_number,
-          uan_number: profile.uan_number,
+          pf_number: sensitive.pf_number ?? null,
+          uan_number: sensitive.uan_number ?? null,
           // Gratuity details
-          gratuity_nomination_name: profile.gratuity_nomination_name,
-          gratuity_nomination_relation: profile.gratuity_nomination_relation,
-          gratuity_nomination_percentage: profile.gratuity_nomination_percentage,
+          gratuity_nomination_name: sensitive.gratuity_nomination_name ?? null,
+          gratuity_nomination_relation: sensitive.gratuity_nomination_relation ?? null,
+          gratuity_nomination_percentage: sensitive.gratuity_nomination_percentage ?? null,
         };
       });
 
