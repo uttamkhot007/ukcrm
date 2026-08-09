@@ -453,6 +453,23 @@ export function DocumentTemplatesModule() {
         })}
       </div>
 
+      {/* Search across installed templates and the full library */}
+      <div className="relative mb-4">
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search templates — e.g. quotation, POC, implementation, invoice, offer letter"
+          aria-label="Search templates"
+          className="pl-3"
+        />
+        {searchQuery && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {filteredSamples.length} library {filteredSamples.length === 1 ? 'template' : 'templates'} and{' '}
+            {filteredTemplates.length} of yours match “{searchQuery}”. Role/type filters are ignored while searching.
+          </p>
+        )}
+      </div>
+
       {/* Main Tabs - My Templates vs Sample Gallery */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
