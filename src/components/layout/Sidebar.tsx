@@ -1000,13 +1000,20 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
   // Publish the active main module's sub-modules so they render as a
   // horizontal tab strip in the content area instead of nesting here.
-  const activeParent = filteredNavItems.find(
-    (item) =>
-      item.children &&
-      (activeModule === item.id ||
-        activeModule.startsWith(item.id + "-") ||
-        item.children.some((child) => child.id === activeModule))
-  );
+  // Resolve the owning module. Exact child match wins first, then the longest
+  // matching id prefix — otherwise "admin-center-organization" is wrongly
+  // claimed by the "admin" (Administration) module.
+  const activeParent =
+    filteredNavItems.find(
+      (item) => item.children?.some((child) => child.id === activeModule)
+    ) ??
+    filteredNavItems
+      .filter(
+        (item) =>
+          item.children &&
+          (activeModule === item.id || activeModule.startsWith(item.id + "-"))
+      )
+      .sort((a, b) => b.id.length - a.id.length)[0];
 
   useEffect(() => {
     publishModuleTabs(
