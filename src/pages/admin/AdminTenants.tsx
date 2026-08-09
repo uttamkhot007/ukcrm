@@ -235,7 +235,12 @@ export default function AdminTenants() {
 
   // Update tenant tier
   const handleUpdateTier = async (tenantId: string, tier: TenantTier) => {
+    if (risky.disabled) {
+      risky.run(() => undefined);
+      return;
+    }
     try {
+
       const { error } = await supabase
         .from('tenants')
         .update({ tier })
