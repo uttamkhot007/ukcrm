@@ -177,11 +177,16 @@ export function EmployeesManagement() {
     const tenantUserIds = tenantMembersResult.data.map(m => m.user_id);
 
     // Filter employees strictly by tenant_id for proper data isolation
-    const [profilesResult, userTeamsResult, salesTeamsResult] = await Promise.all([
+    const [profilesResult, userTeamsResult, salesTeamsResult, sensitiveResult] = await Promise.all([
       supabase.from("profiles_safe").select("*").eq("tenant_id", currentTenant.id),
       supabase.from("user_teams").select("*"),
       supabase.from("sales_teams").select("*"),
+      supabase.from("employee_sensitive_details").select("*").in("user_id", tenantUserIds),
     ]);
+
+    const sensitiveByUser = new Map<string, Record<string, any>>(
+      (sensitiveResult.data ?? []).map((row: any) => [row.user_id, row]),
+    );
 
     if (profilesResult.error) {
       toast({
