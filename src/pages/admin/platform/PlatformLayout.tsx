@@ -1,13 +1,10 @@
-import { useEffect } from "react";
-import { Outlet, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/contexts/TenantContext";
 import { Crown, Building2, Users, KeyRound, Plug, Activity, Radar, Loader2, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { recordRedirect, shouldForceCleanup } from "@/lib/redirect-loop-guard";
-import { forceFreshReload } from "@/lib/cache-cleanup";
 
 const TABS = [
   { to: "/admin/platform/tenants", label: "Tenants", icon: Building2 },
@@ -21,25 +18,6 @@ const TABS = [
 export default function PlatformLayout() {
   const { user, isAuthResolved, isPlatformAdmin, isSuperAdmin } = useAuth();
   const { isLoading: tenantLoading } = useTenant();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (isAuthResolved && !user) navigate("/auth", { replace: true });
-  }, [user, isAuthResolved, navigate]);
-
-  // Redirect bare /admin/platform → tenants
-  useEffect(() => {
-    if (location.pathname === "/admin/platform" || location.pathname === "/admin/platform/") {
-      const target = "/admin/platform/tenants";
-      recordRedirect(location.pathname, target);
-      if (shouldForceCleanup(location.pathname, target)) {
-        console.warn("[redirect-loop-guard] Loop on PlatformLayout, halting redirect");
-        return;
-      }
-      navigate(target, { replace: true });
-    }
-  }, [location.pathname, navigate]);
 
   if (!isAuthResolved || tenantLoading) {
     return (
@@ -49,7 +27,7 @@ export default function PlatformLayout() {
     );
   }
 
-  if (!isPlatformAdmin) {
+  if (!user || !isPlatformAdmin) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Card className="max-w-md">
