@@ -602,9 +602,11 @@ export default function AdminTenants() {
                         </div>
                         <Switch
                           checked={isEnabled}
-                          disabled={!canEnable}
+                          disabled={!canEnable || risky.disabled}
+                          title={risky.reason ?? undefined}
                           onCheckedChange={() => selectedTenant && handleToggleModule(selectedTenant.id, module.key, isEnabled)}
                         />
+
                       </div>
                     );
                   })}
