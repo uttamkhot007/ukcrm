@@ -441,6 +441,23 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     void loadMembers();
   };
 
+  // Removes every skill-matrix row for the active tenant from the database.
+  const handleClearDemoData = async () => {
+    if (!currentTenant?.id) return;
+    const { error } = await supabase
+      .from("employee_skill_matrix")
+      .delete()
+      .eq("tenant_id", currentTenant.id);
+    if (error) {
+      console.error("[skill-matrix] clear failed", error);
+      toast.error("Failed to clear entries");
+      return;
+    }
+    setIsClearDialogOpen(false);
+    toast.success("Entries cleared");
+    void loadMembers();
+  };
+
 
   const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
