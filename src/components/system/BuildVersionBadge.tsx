@@ -225,6 +225,52 @@ export function BuildVersionBadge() {
           </div>
         </div>
 
+        {/* Live-site pre-flight check */}
+        <div
+          className={`rounded-lg border p-2 text-[11px] space-y-1.5 ${
+            liveStale
+              ? "border-destructive/40 bg-destructive/5"
+              : liveBuild?.status === "fresh"
+                ? "border-emerald-500/30 bg-emerald-500/5"
+                : "border-border bg-muted/30"
+          }`}
+        >
+          <div className="flex items-center gap-1.5 font-semibold">
+            {liveStale ? (
+              <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+            ) : (
+              <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
+            <span>Live site pre-flight</span>
+          </div>
+          <p className="text-muted-foreground leading-snug">
+            {liveStale
+              ? `The published site is ${formatBehind(liveBuild?.behindMs ?? null)} this build. Publish → Update before relying on it.`
+              : liveBuild?.status === "fresh"
+                ? "Published site matches this build."
+                : liveBuild?.status === "same-origin"
+                  ? "You are viewing the published site."
+                  : (liveBuild?.reason ?? "Checking published build…")}
+          </p>
+          {liveBuild?.liveBuildTime && (
+            <div className="font-mono text-[10px] text-muted-foreground">
+              live · {liveBuild.liveBuildTime}
+            </div>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 w-full text-[11px]"
+            onClick={runLiveCheck}
+            disabled={checkingLive}
+          >
+            <RefreshCw className={`w-3 h-3 mr-1 ${checkingLive ? "animate-spin" : ""}`} />
+            Re-check live build
+          </Button>
+        </div>
+
+
+
         {recents.length > 0 && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[10px] font-mono">
             <div className="flex items-center gap-1 text-amber-600 dark:text-amber-300 mb-1 font-sans font-semibold text-[11px]">
