@@ -1000,13 +1000,20 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
 
   // Publish the active main module's sub-modules so they render as a
   // horizontal tab strip in the content area instead of nesting here.
-  const activeParent = filteredNavItems.find(
-    (item) =>
-      item.children &&
-      (activeModule === item.id ||
-        activeModule.startsWith(item.id + "-") ||
-        item.children.some((child) => child.id === activeModule))
-  );
+  // Resolve the owning module. Exact child match wins first, then the longest
+  // matching id prefix — otherwise "admin-center-organization" is wrongly
+  // claimed by the "admin" (Administration) module.
+  const activeParent =
+    filteredNavItems.find(
+      (item) => item.children?.some((child) => child.id === activeModule)
+    ) ??
+    filteredNavItems
+      .filter(
+        (item) =>
+          item.children &&
+          (activeModule === item.id || activeModule.startsWith(item.id + "-"))
+      )
+      .sort((a, b) => b.id.length - a.id.length)[0];
 
   useEffect(() => {
     publishModuleTabs(
@@ -1016,6 +1023,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
     );
   }, [activeParent?.id, activeParent?.label, activeParent?.children, publishModuleTabs]);
 
+  const isItemActive = (item: NavItem) =>
+    activeModule === item.id || activeParent?.id === item.id;
 
 
   const getRoleBadgeColor = () => {
@@ -1107,7 +1116,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             <button
               type="button"
               aria-current={
-                activeModule === item.id || activeModule.startsWith(item.id + "-")
+                isItemActive(item)
                   ? "page"
                   : undefined
               }
@@ -1128,7 +1137,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 group/parent",
                 "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
-                activeModule === item.id || activeModule.startsWith(item.id + "-")
+                isItemActive(item)
                   ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50"
               )}
@@ -1137,7 +1146,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
                 className={cn(
                   "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
                   "transition-all duration-300 group-hover/parent:scale-110 group-hover/parent:rotate-3",
-                  activeModule === item.id || activeModule.startsWith(item.id + "-")
+                  isItemActive(item)
                     ? "bg-primary/20"
                     : "bg-sidebar-accent group-hover/parent:bg-sidebar-accent"
                 )}
