@@ -285,6 +285,10 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
     return templates.some(t => t.name === sampleName);
   };
 
+  const scopedTypeValues = roleScope
+    ? TEMPLATE_TYPES.filter((t) => t.role === roleScope).map((t) => t.value)
+    : null;
+
   const roleTypeValues = TEMPLATE_TYPES
     .filter((t) => activeRole === 'all' || t.role === activeRole)
     .map((t) => t.value);
@@ -295,13 +299,19 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
     [t.name, t.description, t.template_type, TEMPLATE_TYPES.find((x) => x.value === t.template_type)?.label]
       .some((v) => (v ?? '').toLowerCase().includes(q));
 
-  const filteredTemplates = templates.filter(
+  const inScope = (templateType?: string | null, role?: string | null) =>
+    !scopedTypeValues || (role ? role === roleScope : scopedTypeValues.includes(templateType ?? ''));
+
+  const scopedTemplates = templates.filter((t) => inScope(t.template_type, (t.content?.role as string) ?? null));
+  const scopedSamples = SAMPLE_TEMPLATES.filter((t) => inScope(t.template_type, t.role));
+
+  const filteredTemplates = scopedTemplates.filter(
     (t) =>
       matchesQuery(t) &&
       (activeType === 'all' ? roleTypeValues.includes(t.template_type) || activeRole === 'all' : t.template_type === activeType),
   );
 
-  const filteredSamples = SAMPLE_TEMPLATES.filter(
+  const filteredSamples = scopedSamples.filter(
     (t) =>
       matchesQuery(t) &&
       (q ? true : activeRole === 'all' || t.role === activeRole) &&
