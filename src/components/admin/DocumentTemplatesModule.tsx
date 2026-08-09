@@ -715,9 +715,9 @@ export function DocumentTemplatesModule() {
                     <Button 
                       className="w-full"
                       variant={isAdded ? 'outline' : 'default'}
-                      disabled={isAdded || isLoading}
+                      disabled={isAdded || isLoading || !canInstall(sample.role, sample.solution ?? null)}
                       onClick={() => addSampleTemplate(sample)}
-                      style={!isAdded ? { 
+                      style={!isAdded && canInstall(sample.role, sample.solution ?? null) ? { 
                         backgroundColor: sample.branding.primaryColor,
                         borderColor: sample.branding.primaryColor 
                       } : {}}
@@ -729,7 +729,11 @@ export function DocumentTemplatesModule() {
                       ) : (
                         <Download className="h-4 w-4 mr-2" />
                       )}
-                      {isAdded ? 'Already Added' : 'Add to My Templates'}
+                      {isAdded
+                        ? 'Already Added'
+                        : !canInstall(sample.role, sample.solution ?? null)
+                          ? 'No install access'
+                          : 'Add to My Templates'}
                     </Button>
                   </CardFooter>
                 </Card>
