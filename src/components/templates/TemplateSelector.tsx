@@ -403,16 +403,29 @@ export function TemplateSelector({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="built-in" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Built-in Templates ({builtInTemplates.length})
-            </TabsTrigger>
-            <TabsTrigger value="custom" className="flex items-center gap-2">
-              <Star className="h-4 w-4" />
-              Custom Templates ({customTemplates.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList>
+              <TabsTrigger value="custom" className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                My Templates ({allCustomTemplates.length})
+              </TabsTrigger>
+              <TabsTrigger value="built-in" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Built-in Designs ({builtInTemplates.length})
+              </TabsTrigger>
+            </TabsList>
+            {activeTab === 'custom' && (
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search templates..."
+                className="sm:max-w-xs"
+                aria-label="Search templates"
+              />
+            )}
+          </div>
+
+
 
           <ScrollArea className="h-[60vh]">
             <TabsContent value="built-in" className="mt-0">
