@@ -105,6 +105,8 @@ const App = () => (
                     <Route path="integrations" element={<PlatformIntegrations />} />
                     <Route path="status" element={<PlatformStatus />} />
                     <Route path="observability" element={<PlatformObservability />} />
+                    <Route path="diagnostics" element={<PlatformDiagnostics />} />
+
                   </Route>
                   <Route path="health" element={<AdminHealth />} />
                   <Route path="procurement" element={<AdminProcurement />} />
