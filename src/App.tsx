@@ -44,6 +44,8 @@ const PlatformLicenses = lazyDefault(() => import("./pages/admin/platform/Platfo
 const PlatformIntegrations = lazyDefault(() => import("./pages/admin/platform/PlatformIntegrations"));
 const PlatformStatus = lazyDefault(() => import("./pages/admin/platform/PlatformStatus"));
 const PlatformObservability = lazyDefault(() => import("./pages/admin/platform/PlatformObservability"));
+const PlatformDiagnostics = lazyDefault(() => import("./pages/admin/platform/PlatformDiagnostics"));
+
 const CreateWorkspace = lazyDefault(() => import("./pages/workspace/CreateWorkspace"));
 const SelectWorkspace = lazyDefault(() => import("./pages/workspace/SelectWorkspace"));
 const SupportPortal = lazyDefault(() => import("./pages/SupportPortal"));
