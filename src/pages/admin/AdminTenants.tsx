@@ -54,24 +54,10 @@ export default function AdminTenants() {
   const [modules, setModules] = useState<ModuleDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Self-recover from a stale bundle: if we're on /admin/platform/tenants but
-  // the PlatformLayout shell isn't in the DOM, the user is running an old
-  // bundle that didn't have the platform wrapper yet. Force a fresh reload.
-  useEffect(() => {
-    if (location.pathname.startsWith('/admin/platform/')) {
-      // Defer one tick so the shell has a chance to render.
-      const id = window.setTimeout(() => {
-        const hasShell = !!document.querySelector('[data-platform-shell="1"]');
-        const alreadyRecovered = sessionStorage.getItem('stale-shell:recovered') === '1';
-        if (!hasShell && !alreadyRecovered) {
-          sessionStorage.setItem('stale-shell:recovered', '1');
-          console.warn('[stale-shell] PlatformLayout shell missing — forcing fresh reload');
-          forceFreshReload('/admin/platform/tenants');
-        }
-      }, 250);
-      return () => window.clearTimeout(id);
-    }
-  }, [location.pathname]);
+  // NOTE: the old "stale shell" watchdog that force-reloaded when the
+  // PlatformLayout wrapper was missing has been removed — it fired on normal
+  // renders and threw users back onto cached bundles.
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
