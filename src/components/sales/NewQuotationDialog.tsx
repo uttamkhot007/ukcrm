@@ -190,6 +190,7 @@ export function NewQuotationDialog({ open, onOpenChange, onSuccess, useWizard = 
                   templateType="quote"
                   selectedTemplateId={selectedTemplate?.id}
                   onSelect={handleTemplateSelect}
+                  relatedTypes={["proposal", "rfp_response"]}
                 />
               </div>
               <SolutionServiceSelector
