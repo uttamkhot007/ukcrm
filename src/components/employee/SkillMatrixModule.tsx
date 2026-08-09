@@ -408,42 +408,37 @@ export function SkillMatrixModule({ viewMode = "employee" }: SkillMatrixModulePr
     toast.success("Skill matrix exported successfully");
   };
 
-  const handleAddSkill = () => {
+  const handleAddSkill = async () => {
     if (!selectedMember || !newSkill.name) return;
 
-    const updatedMembers = teamMembers.map(member => {
-      if (member.id === selectedMember.id) {
-        return {
-          ...member,
-          skills: [
-            ...member.skills,
-            {
-              id: `s${Date.now()}`,
-              name: newSkill.name,
-              category: newSkill.category,
-              level: newSkill.level,
-              lastAssessed: new Date().toISOString().split('T')[0],
-            },
-          ],
-        };
-      }
-      return member;
-    });
+    const skills: Skill[] = [
+      ...selectedMember.skills,
+      {
+        id: `s${Date.now()}`,
+        name: newSkill.name,
+        category: newSkill.category,
+        level: newSkill.level,
+        lastAssessed: new Date().toISOString().split("T")[0],
+      },
+    ];
 
-    setTeamMembers(updatedMembers);
+    const { error } = await supabase
+      .from("employee_skill_matrix")
+      .update({ skills: skills as unknown as never, overall_score: computeOverallScore(skills) })
+      .eq("id", selectedMember.id);
+
+    if (error) {
+      console.error("[skill-matrix] add skill failed", error);
+      toast.error("Failed to save skill");
+      return;
+    }
+
     setNewSkill({ name: "", category: "Security", level: 3 });
     setIsAddDialogOpen(false);
     toast.success("Skill added successfully");
+    void loadMembers();
   };
 
-  const handleClearDemoData = () => {
-    const realData = teamMembers.filter(m => !m.isDemoData);
-    setTeamMembers(realData);
-    localStorage.setItem(DEMO_CLEARED_KEY, "true");
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(realData));
-    setIsClearDialogOpen(false);
-    toast.success("Demo data cleared successfully. You can now add real employee data.");
-  };
 
   const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
