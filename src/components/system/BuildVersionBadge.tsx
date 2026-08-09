@@ -162,20 +162,31 @@ export function BuildVersionBadge() {
 
   const recents = getRecentRedirects(5);
 
+  const liveStale = liveBuild?.status === "stale";
+
   if (!open) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Show build info"
-        className="fixed bottom-3 left-3 z-[60] flex items-center gap-1.5 rounded-full border bg-card/80 px-2.5 py-1 text-[10px] font-mono text-muted-foreground shadow-sm backdrop-blur hover:bg-card hover:text-foreground transition-colors"
+        title={
+          liveStale
+            ? "Live site is serving an older build — click for details"
+            : "Show build info"
+        }
+        className={`fixed bottom-3 left-3 z-[60] flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-mono shadow-sm backdrop-blur transition-colors ${
+          liveStale
+            ? "border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20"
+            : "bg-card/80 text-muted-foreground hover:bg-card hover:text-foreground"
+        }`}
       >
-        <Tag className="w-3 h-3" />
+        {liveStale ? <AlertTriangle className="w-3 h-3" /> : <Tag className="w-3 h-3" />}
         {formatBuildLabel()}
-        {badgeNonce > 0 ? " · fresh" : ""}
+        {liveStale ? " · live stale" : badgeNonce > 0 ? " · fresh" : ""}
       </button>
     );
   }
+
 
   return (
     <div className="fixed bottom-3 left-3 z-[60] w-[320px] max-w-[calc(100vw-1.5rem)] rounded-2xl border bg-card/95 shadow-2xl backdrop-blur">
