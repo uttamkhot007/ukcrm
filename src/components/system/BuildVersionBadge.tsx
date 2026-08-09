@@ -15,6 +15,12 @@ import {
   clearRedirectHistory,
 } from "@/lib/redirect-loop-guard";
 import { toast } from "@/hooks/use-toast";
+import {
+  checkLiveBuild,
+  formatBehind,
+  LIVE_SITE_URL,
+  type LiveBuildResult,
+} from "@/lib/live-build-check";
 
 /**
  * Floating bottom-left badge showing the current frontend build version.
