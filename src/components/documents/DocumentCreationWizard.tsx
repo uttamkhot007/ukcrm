@@ -328,16 +328,18 @@ export function DocumentCreationWizard({
         return (
           <div className="space-y-6">
             <div>
-              <Label className="text-base font-medium">Choose Template Design</Label>
+              <Label className="text-base font-medium">Choose Template</Label>
               <p className="text-sm text-muted-foreground mb-4">
-                Select a template that best fits your brand and document purpose
+                Pick one of your installed templates, or a built-in design
               </p>
               <TemplateSelector
                 templateType={documentType}
                 selectedTemplateId={selectedTemplate?.id}
                 onSelect={handleTemplateSelect}
+                relatedTypes={documentType === 'quote' ? ['proposal', 'rfp_response'] : []}
               />
             </div>
+
 
             <div className="space-y-4">
               <Label className="text-base font-medium">Solutions & Services (Optional)</Label>
