@@ -423,7 +423,7 @@ export default function AdminTenants() {
                 <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isCreating}>
+                <Button type="submit" disabled={isCreating || risky.disabled} title={risky.reason ?? undefined}>
                   {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Tenant
                 </Button>
