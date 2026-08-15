@@ -73,6 +73,7 @@ const TeamCommunication = lazyNamed(() => import("@/components/employee/TeamComm
 const LearningHubModule = lazyNamed(() => import("@/components/employee/LearningHubModule"), "LearningHubModule");
 const RemoteSessionsModule = lazyNamed(() => import("@/components/remote-sessions/RemoteSessionsModule"), "RemoteSessionsModule");
 const SkillMatrixModule = lazyNamed(() => import("@/components/employee/SkillMatrixModule"), "SkillMatrixModule");
+const EmployeePortalModule = lazyNamed(() => import("@/components/employee/EmployeePortalModule"), "EmployeePortalModule");
 
 export const MODULE_COMPONENTS = {
   Dashboard,
@@ -576,9 +577,6 @@ const Index = () => {
       case "tech-remote-sessions":
         return <TechnicalModule initialTab="remote-sessions" />;
       
-      // Activity Tracker
-      case "employee-activity-tracker":
-        return <DailyActivityTracker />;
       
       // Solution Engineering / Presales modules
       case "presales":
