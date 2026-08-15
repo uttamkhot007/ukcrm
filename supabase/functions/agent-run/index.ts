@@ -189,6 +189,41 @@ function toolSchemas(tables: string[], extra: string[]) {
     },
   ];
 
+  // Always available: the agent may come back to the user for the details it
+  // cannot infer. The run pauses and the UI renders these as a form.
+  tools.push({
+    type: "function",
+    function: {
+      name: "ask_user",
+      description:
+        "Pause and ask the user for the details you are missing. Ask for everything you need in ONE call. " +
+        "Use it before creating any record when required fields are unknown.",
+      parameters: {
+        type: "object",
+        properties: {
+          reason: { type: "string", description: "One line explaining why you need these details" },
+          questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "Short field key, e.g. deal_size" },
+                label: { type: "string" },
+                help: { type: "string", description: "Hint, e.g. what was found in the workspace" },
+                type: { type: "string", description: "text, number, date, select or textarea" },
+                options: { type: "array", items: { type: "string" } },
+                required: { type: "boolean" },
+                suggestion: { type: "string", description: "Pre-filled value if you have a good guess" },
+              },
+              required: ["id", "label"],
+            },
+          },
+        },
+        required: ["questions"],
+      },
+    },
+  });
+
   if (extra.includes("list_templates")) {
     tools.push({
       type: "function",
@@ -212,8 +247,98 @@ function toolSchemas(tables: string[], extra: string[]) {
       },
     });
   }
+  if (extra.includes("create_account")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_account",
+        description: "Create a customer account (organization) when it does not already exist.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            industry: { type: "string" },
+            website: { type: "string" },
+            description: { type: "string" },
+          },
+          required: ["name"],
+        },
+      },
+    });
+  }
+  if (extra.includes("create_contact")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_contact",
+        description: "Create a contact person on an account when they do not already exist.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            company: { type: "string", description: "Account / organization name" },
+            email: { type: "string" },
+            phone: { type: "string" },
+            designation: { type: "string" },
+            alliance_organization_id: { type: "string" },
+          },
+          required: ["name"],
+        },
+      },
+    });
+  }
+  if (extra.includes("create_product")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_product",
+        description: "Add a product or service to the catalog when the proposed solution does not exist yet.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            category: { type: "string", description: "product or service category" },
+            description: { type: "string" },
+            unit_price: { type: "number" },
+          },
+          required: ["name"],
+        },
+      },
+    });
+  }
+  if (extra.includes("create_deal")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_deal",
+        description:
+          "Create a deal in the sales pipeline. Only call this once every required detail is known " +
+          "(account, deal type, proposed solution, quantity, value, expected close date, contact).",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            organization_name: { type: "string" },
+            alliance_organization_id: { type: "string" },
+            contact_id: { type: "string" },
+            deal_type: { type: "string" },
+            proposed_solution: { type: "string", description: "Product or service being proposed" },
+            product_id: { type: "string", description: "product_catalog id, if it exists" },
+            quantity: { type: "number" },
+            value: { type: "number", description: "Deal size in INR" },
+            expected_close_date: { type: "string", description: "YYYY-MM-DD" },
+            stage: { type: "string", description: "pipeline, qualified, proposal, negotiation" },
+            description: { type: "string" },
+            problem_requirement: { type: "string" },
+          },
+          required: ["title", "organization_name", "value"],
+        },
+      },
+    });
+  }
   return tools;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -351,8 +476,147 @@ Deno.serve(async (req) => {
         return { template: data ?? null };
       }
 
+      // ---- write tools (only reachable when the agent whitelists them) ----
+      const canWrite = (t: string) => agent!.tools.includes(t);
+
+      if (name === "create_account") {
+        if (!canWrite(name)) return { error: "This agent cannot create accounts." };
+        const accountName = String(args.name ?? "").trim();
+        if (!accountName) return { error: "An account name is required." };
+        const { data: existing } = await admin
+          .from("alliance_organizations")
+          .select("id,name")
+          .eq("tenant_id", tenantId)
+          .ilike("name", accountName)
+          .maybeSingle();
+        if (existing) return { created: false, account: existing, note: "Account already existed." };
+        const { data, error } = await admin
+          .from("alliance_organizations")
+          .insert({
+            tenant_id: tenantId,
+            name: accountName,
+            industry: args.industry ?? null,
+            website: args.website ?? null,
+            description: args.description ?? null,
+            organization_type: "customer",
+            status: "active",
+            created_by: user.id,
+          })
+          .select("id,name")
+          .single();
+        if (error) return { error: error.message };
+        return { created: true, account: data };
+      }
+
+      if (name === "create_contact") {
+        if (!canWrite(name)) return { error: "This agent cannot create contacts." };
+        const contactName = String(args.name ?? "").trim();
+        if (!contactName) return { error: "A contact name is required." };
+        const { data, error } = await admin
+          .from("contacts")
+          .insert({
+            tenant_id: tenantId,
+            user_id: user.id,
+            created_by: user.id,
+            name: contactName,
+            company: args.company ?? null,
+            email: args.email ?? null,
+            phone: args.phone ?? null,
+            designation: args.designation ?? null,
+            alliance_organization_id: args.alliance_organization_id ?? null,
+            source_type: "agent",
+          })
+          .select("id,name,company")
+          .single();
+        if (error) return { error: error.message };
+        return { created: true, contact: data };
+      }
+
+      if (name === "create_product") {
+        if (!canWrite(name)) return { error: "This agent cannot create products." };
+        const productName = String(args.name ?? "").trim();
+        if (!productName) return { error: "A product name is required." };
+        const { data: existing } = await admin
+          .from("product_catalog")
+          .select("id,name")
+          .eq("tenant_id", tenantId)
+          .ilike("name", productName)
+          .maybeSingle();
+        if (existing) return { created: false, product: existing, note: "Product already existed." };
+        const { data, error } = await admin
+          .from("product_catalog")
+          .insert({
+            tenant_id: tenantId,
+            name: productName,
+            category: args.category ?? null,
+            description: args.description ?? null,
+            unit_price: Number(args.unit_price) || 0,
+            currency: "INR",
+            is_active: true,
+            created_by: user.id,
+          })
+          .select("id,name")
+          .single();
+        if (error) return { error: error.message };
+        return { created: true, product: data };
+      }
+
+      if (name === "create_deal") {
+        if (!canWrite(name)) return { error: "This agent cannot create deals." };
+        const title = String(args.title ?? "").trim();
+        const orgName = String(args.organization_name ?? "").trim();
+        const value = Number(args.value);
+        const missing: string[] = [];
+        if (!title) missing.push("title");
+        if (!orgName) missing.push("organization_name");
+        if (!Number.isFinite(value) || value <= 0) missing.push("value");
+        if (missing.length) {
+          return { error: `Missing required deal details: ${missing.join(", ")}. Ask the user with ask_user.` };
+        }
+        const quantity = Number(args.quantity);
+        const { data: deal, error } = await admin
+          .from("deals")
+          .insert({
+            tenant_id: tenantId,
+            user_id: user.id,
+            created_by: user.id,
+            assigned_to: user.id,
+            title,
+            organization_name: orgName,
+            alliance_organization_id: args.alliance_organization_id ?? null,
+            contact_id: args.contact_id ?? null,
+            deal_type: args.deal_type ?? null,
+            existing_solution: args.proposed_solution ?? null,
+            description: args.description ?? args.proposed_solution ?? null,
+            problem_requirement: args.problem_requirement ?? null,
+            quantity: Number.isFinite(quantity) && quantity > 0 ? Math.round(quantity) : 1,
+            value,
+            expected_close_date: args.expected_close_date ?? null,
+            stage: ["pipeline", "qualified", "proposal", "negotiation"].includes(String(args.stage))
+              ? String(args.stage)
+              : "pipeline",
+          })
+          .select("id,title,value,stage,expected_close_date,organization_name")
+          .single();
+        if (error) return { error: error.message };
+
+        if (args.product_id) {
+          const qty = Number.isFinite(quantity) && quantity > 0 ? Math.round(quantity) : 1;
+          const unit = qty > 0 ? value / qty : value;
+          await admin.from("deal_products").insert({
+            deal_id: deal.id,
+            product_id: String(args.product_id),
+            quantity: qty,
+            unit_price: unit,
+            total_price: value,
+          });
+        }
+        return { created: true, deal, where: "Sales → Deals" };
+      }
+
       return { error: `Unknown tool ${name}` };
     }
+
 
     // ---------- conversation ----------
     const contextLines = Object.entries(context)
@@ -367,17 +631,34 @@ Deno.serve(async (req) => {
           `${agent.prompt}\n\nToday is ${new Date().toISOString().slice(0, 10)}.\n` +
           `You can read the workspace's own data with query_module_data (already scoped to this workspace).\n` +
           (contextLines ? `Current screen context:\n${contextLines}\n` : "") +
-          `Work autonomously: gather what you need, then deliver. Do not ask clarifying questions unless the request is impossible without them.`,
+          `Work autonomously: gather what you need, then deliver. Never invent data you were not given — ` +
+          `when a record you must create needs details you cannot look up, call ask_user once with every missing field.`,
       },
     ];
-    for (const att of attachments) {
-      if (!att?.text) continue;
+
+    // Resume: the client returns the paused transcript plus the user's answers.
+    const resume = body.resume;
+    const resumeMessages: Row[] = Array.isArray(resume?.messages) ? resume.messages : [];
+    if (resumeMessages.length) {
+      for (const m of resumeMessages.slice(-40)) {
+        if (m && typeof m === "object" && m.role && m.role !== "system") messages.push(m as Row);
+      }
       messages.push({
-        role: "user",
-        content: `Attached file "${att.name ?? "document"}" (truncated to 30k chars):\n\n${String(att.text).slice(0, 30000)}`,
+        role: "tool",
+        tool_call_id: String(resume?.toolCallId ?? ""),
+        content: JSON.stringify({ answers: body.answers ?? {}, note: instruction }).slice(0, 20000),
       });
+    } else {
+      for (const att of attachments) {
+        if (!att?.text) continue;
+        messages.push({
+          role: "user",
+          content: `Attached file "${att.name ?? "document"}" (truncated to 30k chars):\n\n${String(att.text).slice(0, 30000)}`,
+        });
+      }
+      messages.push({ role: "user", content: instruction });
     }
-    messages.push({ role: "user", content: instruction });
+
 
     const tools = toolSchemas(agent.tables, agent.tools);
     let deliverable: { id: string; title: string; html: string } | null = null;
@@ -479,7 +760,44 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        if (name === "ask_user") {
+          const questions = Array.isArray(args.questions) ? args.questions.slice(0, 12) : [];
+          await logStep({
+            step_type: "question",
+            label: "Needs more details",
+            tool_name: name,
+            output: { fields: questions.length },
+            status: "waiting",
+            duration_ms: Date.now() - t0,
+          });
+          if (runId) {
+            await admin
+              .from("ai_agent_runs")
+              .update({
+                status: "awaiting_input",
+                result_text: String(args.reason ?? "Waiting for details"),
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                duration_ms: Date.now() - started,
+              })
+              .eq("id", runId);
+          }
+          return json({
+            runId,
+            agentKey: agent.key,
+            pending: {
+              reason: args.reason ?? "I need a few details before I can continue.",
+              questions,
+              toolCallId: call.id,
+              messages: messages.filter((m) => m.role !== "system"),
+            },
+            usage: { promptTokens, completionTokens },
+            durationMs: Date.now() - started,
+          });
+        }
+
         const result = await runTool(name, args);
+
         await logStep({
           step_type: "tool",
           label: name === "query_module_data" ? `Read ${args.table}` : name.replace(/_/g, " "),

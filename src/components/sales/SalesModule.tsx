@@ -55,7 +55,7 @@ const DealInsights = lazyNamed(() => import("./DealInsights"), "DealInsights");
 const SalesForecasting = lazyNamed(() => import("./SalesForecasting"), "SalesForecasting");
 const EmailSequences = lazyNamed(() => import("./EmailSequences"), "EmailSequences");
 const SalesAutomations = lazyNamed(() => import("./SalesAutomations"), "SalesAutomations");
-const MEDDICWorkflow = lazyNamed(() => import("./MEDDICWorkflow"), "MEDDICWorkflow");
+// MEDDIC is rendered by DealsView (initialView="meddic") — no separate chunk.
 const ProductCatalog = lazyNamed(() => import("./ProductCatalog"), "ProductCatalog");
 const TerritoryManagement = lazyNamed(() => import("./TerritoryManagement"), "TerritoryManagement");
 const RottenDeals = lazyNamed(() => import("./RottenDeals"), "RottenDeals");
@@ -127,6 +127,8 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         tabs: [
           { id: "dashboard", label: "Insights", icon: LayoutDashboard, render: () => <SalesModuleDashboard onNavigate={setActiveTab} /> },
           { id: "deals", label: "Deals", icon: Handshake, render: () => <DealsView />, preload: DealsView as unknown as PreloadableComponent<never> },
+          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <DealsView initialView="meddic" />, preload: DealsView as unknown as PreloadableComponent<never> },
+
           { id: "leads", label: "Leads", icon: Activity, render: () => <LeadsView />, preload: LeadsView as unknown as PreloadableComponent<never> },
           { id: "contacts", label: "Contacts", icon: Phone, render: () => <ContactsView />, preload: ContactsView as unknown as PreloadableComponent<never> },
           { id: "my-accounts", label: "Accounts", icon: Building2, render: () => <MyAccountsView />, preload: MyAccountsView as unknown as PreloadableComponent<never> },
@@ -139,7 +141,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         label: "Tools",
         icon: Package,
         tabs: [
-          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <MEDDICWorkflow />, preload: MEDDICWorkflow as unknown as PreloadableComponent<never> },
+          // MEDDIC is no longer a separate tool — it is a view inside Deals.
           { id: "forecasting", label: "Forecasting", icon: BarChart3, render: () => <SalesForecasting />, preload: SalesForecasting as unknown as PreloadableComponent<never> },
           { id: "quotations", label: "Quotations", icon: FileText, render: () => <QuotationsView />, preload: QuotationsView as unknown as PreloadableComponent<never> },
           { id: "catalog", label: "Catalog", icon: BookOpen, render: () => <ProductCatalog />, preload: ProductCatalog as unknown as PreloadableComponent<never> },

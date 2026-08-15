@@ -1,8 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Paperclip, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { agentsForModule, getAgentMeta } from "@/lib/agents/registry";
@@ -48,10 +51,18 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
   const [instruction, setInstruction] = useState("");
   const [attachments, setAttachments] = useState<AgentAttachment[]>([]);
   const [parsing, setParsing] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
-  const { run, isRunning, steps, result, error } = useAgentRun();
+  const { run, isRunning, steps, result, pending, error } = useAgentRun();
 
   const activeAgent = getAgentMeta(active) ?? roster[0];
+
+  useEffect(() => {
+    if (!pending) return;
+    const prefilled: Record<string, string> = {};
+    for (const q of pending.questions) if (q.suggestion) prefilled[q.id] = q.suggestion;
+    setAnswers(prefilled);
+  }, [pending]);
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -69,6 +80,21 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
     if (!instruction.trim() || isRunning) return;
     await run({ agentKey: active, instruction: instruction.trim(), context, attachments });
   };
+
+  const submitAnswers = async () => {
+    if (!pending || isRunning) return;
+    const summary = pending.questions
+      .map((q) => `${q.label}: ${answers[q.id]?.trim() || "not provided"}`)
+      .join("\n");
+    await run({
+      agentKey: active,
+      instruction: summary,
+      context,
+      answers,
+      resume: { toolCallId: pending.toolCallId, messages: pending.messages },
+    });
+  };
+
 
   return (
     <Card className={cn("border-primary/20 bg-card/70 backdrop-blur", className)}>
@@ -173,6 +199,59 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
             <AgentRunTimeline steps={steps} isRunning={isRunning} />
           </div>
         )}
+
+        {pending && (
+          <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <p className="text-sm font-medium">{pending.reason}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {pending.questions.map((q) => (
+                <div key={q.id} className="space-y-1">
+                  <Label htmlFor={`agent-q-${q.id}`} className="text-xs">
+                    {q.label}
+                    {q.required !== false && <span className="text-destructive"> *</span>}
+                  </Label>
+                  {q.options?.length ? (
+                    <Select
+                      value={answers[q.id] ?? ""}
+                      onValueChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                    >
+                      <SelectTrigger id={`agent-q-${q.id}`}>
+                        <SelectValue placeholder="Select…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {q.options.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : q.type === "textarea" ? (
+                    <Textarea
+                      id={`agent-q-${q.id}`}
+                      rows={2}
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    />
+                  ) : (
+                    <Input
+                      id={`agent-q-${q.id}`}
+                      type={q.type === "number" || q.type === "date" ? q.type : "text"}
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    />
+                  )}
+                  {q.help && <p className="text-[11px] text-muted-foreground">{q.help}</p>}
+                </div>
+              ))}
+            </div>
+            <Button size="sm" onClick={submitAnswers} disabled={isRunning}>
+              {isRunning ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+              Continue
+            </Button>
+          </div>
+        )}
+
 
         {error && (
           <Alert variant="destructive">

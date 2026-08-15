@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,11 @@ import { workflows } from "@/lib/workflows";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
+
+/** MEDDIC lives inside Deals — one module, two views. */
+const MEDDICWorkflow = lazy(() =>
+  import("./MEDDICWorkflow").then((m) => ({ default: m.MEDDICWorkflow })),
+);
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 type DealStage = Database["public"]["Enums"]["deal_stage"];
 
@@ -82,9 +87,12 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
-export function DealsView() {
+/** Deals is the single home for the pipeline AND its MEDDIC qualification view. */
+export function DealsView({ initialView = "pipeline" }: { initialView?: "pipeline" | "meddic" } = {}) {
+  const [dealsView, setDealsView] = useState<"pipeline" | "meddic">(initialView);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<DealWithContact | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DealWithContact | null>(null);
@@ -356,8 +364,28 @@ export function DealsView() {
 
   return (
     <div className="space-y-6">
+
+      <ToggleGroup
+        type="single"
+        value={dealsView}
+        onValueChange={(v) => v && setDealsView(v as "pipeline" | "meddic")}
+        className="justify-start"
+        aria-label="Deals view"
+      >
+        <ToggleGroupItem value="pipeline">Pipeline</ToggleGroupItem>
+        <ToggleGroupItem value="meddic">MEDDIC Qualification</ToggleGroupItem>
+      </ToggleGroup>
+
+      {dealsView === "meddic" ? (
+        <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}>
+          <MEDDICWorkflow />
+        </Suspense>
+      ) : (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 glass border-border">
+
+
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/20">
               <DollarSign className="w-5 h-5 text-primary" />
@@ -643,6 +671,9 @@ export function DealsView() {
           }}
         />
       )}
+      </>
+      )}
     </div>
+
   );
 }

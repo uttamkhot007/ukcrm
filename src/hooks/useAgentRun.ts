@@ -23,6 +23,23 @@ export interface AgentDeliverable {
   html: string;
 }
 
+export interface AgentQuestion {
+  id: string;
+  label: string;
+  help?: string;
+  type?: string;
+  options?: string[];
+  required?: boolean;
+  suggestion?: string;
+}
+
+export interface AgentPending {
+  reason: string;
+  questions: AgentQuestion[];
+  toolCallId: string;
+  messages: unknown[];
+}
+
 export interface AgentRunResult {
   runId: string | null;
   text: string;
@@ -34,7 +51,11 @@ interface RunArgs {
   instruction: string;
   context?: Record<string, unknown>;
   attachments?: AgentAttachment[];
+  /** Resume a paused run with the answers the user just filled in. */
+  resume?: { toolCallId: string; messages: unknown[] };
+  answers?: Record<string, string>;
 }
+
 
 /**
  * Drives one agent run: invokes the runtime, polls the step trail while it
@@ -45,6 +66,8 @@ export function useAgentRun() {
   const [isRunning, setIsRunning] = useState(false);
   const [steps, setSteps] = useState<AgentRunStep[]>([]);
   const [result, setResult] = useState<AgentRunResult | null>(null);
+  const [pending, setPending] = useState<AgentPending | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
   const runIdRef = useRef<string | null>(null);
@@ -68,12 +91,14 @@ export function useAgentRun() {
   }, []);
 
   const run = useCallback(
-    async ({ agentKey, instruction, context, attachments }: RunArgs) => {
+    async ({ agentKey, instruction, context, attachments, resume, answers }: RunArgs) => {
       setIsRunning(true);
       setError(null);
       setResult(null);
-      setSteps([]);
+      setPending(null);
+      if (!resume) setSteps([]);
       runIdRef.current = null;
+
 
       // While the runtime works, poll the newest run's steps for a live trail.
       const pollLatest = async () => {
@@ -101,11 +126,19 @@ export function useAgentRun() {
             tenantId: currentTenant?.id ?? null,
             context: context ?? {},
             attachments: attachments ?? [],
+            resume: resume ?? null,
+            answers: answers ?? null,
           },
         });
 
         if (fnError) throw new Error(fnError.message);
         if (data?.error) throw new Error(data.error);
+
+        if (data?.pending?.questions?.length) {
+          setPending(data.pending as AgentPending);
+          if (data.runId) await loadSteps(data.runId);
+          return null;
+        }
 
         const runResult: AgentRunResult = {
           runId: data?.runId ?? null,
@@ -129,9 +162,10 @@ export function useAgentRun() {
 
   const reset = useCallback(() => {
     setResult(null);
+    setPending(null);
     setError(null);
     setSteps([]);
   }, []);
 
-  return { run, reset, isRunning, steps, result, error };
+  return { run, reset, isRunning, steps, result, pending, error };
 }
