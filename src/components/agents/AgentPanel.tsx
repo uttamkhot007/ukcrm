@@ -48,10 +48,18 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
   const [instruction, setInstruction] = useState("");
   const [attachments, setAttachments] = useState<AgentAttachment[]>([]);
   const [parsing, setParsing] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
-  const { run, isRunning, steps, result, error } = useAgentRun();
+  const { run, isRunning, steps, result, pending, error } = useAgentRun();
 
   const activeAgent = getAgentMeta(active) ?? roster[0];
+
+  useEffect(() => {
+    if (!pending) return;
+    const prefilled: Record<string, string> = {};
+    for (const q of pending.questions) if (q.suggestion) prefilled[q.id] = q.suggestion;
+    setAnswers(prefilled);
+  }, [pending]);
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -69,6 +77,21 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
     if (!instruction.trim() || isRunning) return;
     await run({ agentKey: active, instruction: instruction.trim(), context, attachments });
   };
+
+  const submitAnswers = async () => {
+    if (!pending || isRunning) return;
+    const summary = pending.questions
+      .map((q) => `${q.label}: ${answers[q.id]?.trim() || "not provided"}`)
+      .join("\n");
+    await run({
+      agentKey: active,
+      instruction: summary,
+      context,
+      answers,
+      resume: { toolCallId: pending.toolCallId, messages: pending.messages },
+    });
+  };
+
 
   return (
     <Card className={cn("border-primary/20 bg-card/70 backdrop-blur", className)}>
