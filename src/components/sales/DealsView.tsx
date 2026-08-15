@@ -379,6 +379,8 @@ export function DealsView({ initialView = "pipeline" }: { initialView?: "pipelin
       ) : (
       <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4 glass border-border">
+
 
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/20">
