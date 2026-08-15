@@ -1038,3 +1038,53 @@
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* ── AI agent deliverables ───────────────────────────────────────────────
+   Rendered HTML produced by the agents. Scoped so agent output inherits the
+   app theme instead of shipping its own inline styles. */
+.agent-deliverable h2 {
+  @apply mt-6 mb-2 text-lg font-semibold text-foreground;
+}
+.agent-deliverable h3 {
+  @apply mt-4 mb-1.5 text-base font-semibold text-foreground;
+}
+.agent-deliverable p {
+  @apply mb-3 text-sm leading-relaxed text-muted-foreground;
+}
+.agent-deliverable ul,
+.agent-deliverable ol {
+  @apply mb-3 ml-5 space-y-1 text-sm text-muted-foreground;
+}
+.agent-deliverable ul { @apply list-disc; }
+.agent-deliverable ol { @apply list-decimal; }
+.agent-deliverable strong { @apply font-semibold text-foreground; }
+.agent-deliverable table {
+  @apply my-3 w-full border-collapse overflow-hidden rounded-lg border text-sm;
+}
+.agent-deliverable th {
+  @apply border bg-muted/60 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+}
+.agent-deliverable td {
+  @apply border px-3 py-2 align-top text-sm;
+}
+.agent-deliverable .kpi-grid {
+  @apply mb-4 grid grid-cols-2 gap-3 md:grid-cols-4;
+}
+.agent-deliverable .kpi {
+  @apply flex flex-col rounded-xl border bg-card/60 p-3;
+}
+.agent-deliverable .kpi-label {
+  @apply text-[10px] font-semibold uppercase tracking-wider text-muted-foreground;
+}
+.agent-deliverable .kpi-value {
+  @apply text-xl font-bold text-foreground;
+}
+.agent-deliverable .kpi-delta {
+  @apply text-xs text-muted-foreground;
+}
+.agent-deliverable .kpi[data-tone="good"] { @apply border-emerald-500/40; }
+.agent-deliverable .kpi[data-tone="good"] .kpi-value { @apply text-emerald-500; }
+.agent-deliverable .kpi[data-tone="warn"] { @apply border-amber-500/40; }
+.agent-deliverable .kpi[data-tone="warn"] .kpi-value { @apply text-amber-500; }
+.agent-deliverable .kpi[data-tone="bad"] { @apply border-destructive/40; }
+.agent-deliverable .kpi[data-tone="bad"] .kpi-value { @apply text-destructive; }
