@@ -73,28 +73,101 @@ jobs:
           docker push ${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }}
           docker push ${{ steps.cfn.outputs.backend_ecr }}:latest
 
+      # Never deploy the mutable :latest tag. Reusing the same task definition
+      # lets a rolling deployment briefly (or, after a failed pull, permanently)
+      # mix old and new containers behind the load balancer. Registering a new
+      # revision with the commit-addressed image makes the release atomic and
+      # gives ECS an exact version to roll back to.
+      - name: Register immutable task definitions
+        id: tasks
+        run: |
+          register_revision() {
+            FAMILY="$1"
+            CONTAINER="$2"
+            IMAGE="$3"
+            OUTPUT="$4"
+
+            aws ecs describe-task-definition --task-definition "$FAMILY" \
+              --query taskDefinition > "/tmp/${CONTAINER}-task.json"
+            jq --arg image "$IMAGE" --arg container "$CONTAINER" \
+              '.containerDefinitions |= map(if .name == $container then .image = $image else . end)
+               | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                     .compatibilities, .registeredAt, .registeredBy)' \
+              "/tmp/${CONTAINER}-task.json" > "/tmp/${CONTAINER}-task-next.json"
+            TASK_ARN=$(aws ecs register-task-definition \
+              --cli-input-json "file:///tmp/${CONTAINER}-task-next.json" \
+              --query 'taskDefinition.taskDefinitionArn' --output text)
+            echo "${OUTPUT}=${TASK_ARN}" >> "$GITHUB_OUTPUT"
+          }
+
+          register_revision \
+            "${ENV_NAME}-nexuscrm-frontend" frontend \
+            "${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }}" frontend_task
+          register_revision \
+            "${ENV_NAME}-nexuscrm-backend" backend \
+            "${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }}" backend_task
+
       - name: Run DB migrations (one-shot ECS task)
         run: |
           aws ecs run-task \
             --cluster ${{ steps.cfn.outputs.cluster }} \
-            --task-definition ${ENV_NAME}-backend \
+            --task-definition '${{ steps.tasks.outputs.backend_task }}' \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnets'].OutputValue" --output text)],assignPublicIp=DISABLED}" \
             --overrides '{"containerOverrides":[{"name":"backend","command":["node","dist/db/migrate.js"]}]}' \
             --started-by "gha-${{ github.run_id }}"
 
-      - name: Force new deployment of ECS services
+      - name: Deploy immutable task revisions
         run: |
           aws ecs update-service --cluster ${{ steps.cfn.outputs.cluster }} \
-            --service ${ENV_NAME}-frontend --force-new-deployment > /dev/null
+            --service ${ENV_NAME}-frontend \
+            --task-definition '${{ steps.tasks.outputs.frontend_task }}' > /dev/null
           aws ecs update-service --cluster ${{ steps.cfn.outputs.cluster }} \
-            --service ${ENV_NAME}-backend  --force-new-deployment > /dev/null
+            --service ${ENV_NAME}-backend \
+            --task-definition '${{ steps.tasks.outputs.backend_task }}' > /dev/null
 
       - name: Wait for services to stabilize
         run: |
           aws ecs wait services-stable \
             --cluster ${{ steps.cfn.outputs.cluster }} \
             --services ${ENV_NAME}-frontend ${ENV_NAME}-backend
+
+      - name: Verify deployed images
+        run: |
+          verify_service_image() {
+            SERVICE="$1"
+            CONTAINER="$2"
+            EXPECTED_IMAGE="$3"
+
+            TASK_ARNS=$(aws ecs list-tasks \
+              --cluster "${{ steps.cfn.outputs.cluster }}" \
+              --service-name "$SERVICE" \
+              --desired-status RUNNING \
+              --query 'taskArns' --output text)
+            if [ -z "$TASK_ARNS" ] || [ "$TASK_ARNS" = "None" ]; then
+              echo "No running tasks found for $SERVICE" >&2
+              exit 1
+            fi
+
+            ACTUAL_IMAGES=$(aws ecs describe-tasks \
+              --cluster "${{ steps.cfn.outputs.cluster }}" \
+              --tasks $TASK_ARNS \
+              --query "tasks[].containers[?name=='${CONTAINER}'].image" \
+              --output text)
+            for IMAGE in $ACTUAL_IMAGES; do
+              if [ "$IMAGE" != "$EXPECTED_IMAGE" ]; then
+                echo "$SERVICE rolled back or is mixed: expected $EXPECTED_IMAGE, found $IMAGE" >&2
+                exit 1
+              fi
+            done
+          }
+
+          verify_service_image \
+            "${ENV_NAME}-frontend" frontend \
+            "${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }}"
+          verify_service_image \
+            "${ENV_NAME}-backend" backend \
+            "${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }}"
 
       - name: Summary
         run: |
