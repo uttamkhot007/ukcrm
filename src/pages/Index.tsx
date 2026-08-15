@@ -358,50 +358,35 @@ const Index = () => {
       case "renewals-subscriptions":
         return <RenewalsWrapper initialTab="subscriptions" />;
       
-      // Employee Portal modules - Simplified structure
+      // Employee Portal - one grouped workspace (Me / Work / Requests / Grow).
+      // Legacy module ids are kept as deep links into the matching tab.
       case "employee-ai-assistant":
         return <EmployeeAIAssistant />;
-      case "employee-attendance":
-        return <AttendanceModule />;
-      case "employee-attendance-reports":
-        return <AttendanceReports />;
-      case "employee-requests":
-        return <ExpenseModule />; // Combined: Leave, Travel, Expenses
-      case "employee-resources":
-        return <EmployeeResourcesModule />; // Includes docs, trainings, policies
-      case "employee-tasks":
-        return <EmployeeWorkflowsModule />; // Workflows & HR tasks
-      case "employee-approvals":
-        return <RequestApprovalModule />;
-      case "employee-events":
-        return <EmployeeEventsModule />;
-      case "employee-documentation":
-        return <DocumentationModule />;
-      case "employee-organization":
-        return <MyOrganization />;
-      case "employee-workflows":
-        return <EmployeeWorkflowsModule />;
-      case "employee-benefits":
-        return <EmployeeBenefitsModule />;
-      case "employee-profile":
-        return <EmployeeProfileModule />;
-      case "employee-skill-matrix":
-        return <SkillMatrixModule viewMode="employee" />;
-      case "employee-leave":
-        return <RequestsModule />;
-      case "employee-tickets":
-        return <EmployeeTicketSection />;
-      case "employee-communication":
-        return <TeamCommunication />;
       case "learning-hub":
         return <LearningHubModule />;
+      case "employee":
+      case "employee-attendance":
+      case "employee-attendance-reports":
+      case "employee-activity-tracker":
+      case "employee-requests":
+      case "employee-resources":
+      case "employee-tasks":
+      case "employee-approvals":
+      case "employee-events":
+      case "employee-documentation":
+      case "employee-organization":
+      case "employee-workflows":
+      case "employee-benefits":
+      case "employee-profile":
+      case "employee-skill-matrix":
+      case "employee-leave":
+      case "employee-tickets":
+      case "employee-communication":
       case "employee-travel":
       case "employee-expenses":
-        return <ExpenseModule />;
       case "employee-assets":
-        return <AssetsModule />;
       case "employee-projects":
-        return <ProjectsModule />;
+        return <EmployeePortalModule initialTab={activeModule} />;
       
       // IT Module
       case "it":
