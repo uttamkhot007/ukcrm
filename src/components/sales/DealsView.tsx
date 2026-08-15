@@ -82,9 +82,12 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
-export function DealsView() {
+/** Deals is the single home for the pipeline AND its MEDDIC qualification view. */
+export function DealsView({ initialView = "pipeline" }: { initialView?: "pipeline" | "meddic" } = {}) {
+  const [dealsView, setDealsView] = useState<"pipeline" | "meddic">(initialView);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<DealWithContact | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DealWithContact | null>(null);
