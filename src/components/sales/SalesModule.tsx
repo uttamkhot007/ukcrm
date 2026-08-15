@@ -127,6 +127,8 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         tabs: [
           { id: "dashboard", label: "Insights", icon: LayoutDashboard, render: () => <SalesModuleDashboard onNavigate={setActiveTab} /> },
           { id: "deals", label: "Deals", icon: Handshake, render: () => <DealsView />, preload: DealsView as unknown as PreloadableComponent<never> },
+          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <DealsView initialView="meddic" />, preload: DealsView as unknown as PreloadableComponent<never> },
+
           { id: "leads", label: "Leads", icon: Activity, render: () => <LeadsView />, preload: LeadsView as unknown as PreloadableComponent<never> },
           { id: "contacts", label: "Contacts", icon: Phone, render: () => <ContactsView />, preload: ContactsView as unknown as PreloadableComponent<never> },
           { id: "my-accounts", label: "Accounts", icon: Building2, render: () => <MyAccountsView />, preload: MyAccountsView as unknown as PreloadableComponent<never> },
