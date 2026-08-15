@@ -697,22 +697,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Employee Portal",
         icon: UserCircle,
         color: "text-employee",
-        children: [
-          { id: "employee-organization", label: "My Organization", icon: Network },
-          { id: "employee-profile", label: "My Profile", icon: UserCircle },
-          { id: "employee-communication", label: "Team Communication", icon: Video },
-          { id: "learning-hub", label: "Learning Hub", icon: GraduationCap },
-          { id: "employee-attendance", label: "Attendance", icon: Clock },
-          { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
-          { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
-          { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
-          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
-          { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
-          { id: "employee-tickets", label: "Support Tickets", icon: Ticket },
-          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
-          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
-        ],
       });
 
       // Admin items (Management & Admin Panel) - for admin role or super admin
@@ -755,18 +739,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           label: "Employee Portal",
           icon: UserCircle,
           color: "text-employee",
-          children: [
-            { id: "employee-organization", label: "My Organization", icon: Network },
-            { id: "employee-profile", label: "My Profile", icon: UserCircle },
-            { id: "employee-communication", label: "Team Communication", icon: Video },
-            { id: "learning-hub", label: "Learning Hub", icon: GraduationCap },
-            { id: "employee-attendance", label: "Attendance", icon: Clock },
-            { id: "employee-activity-tracker", label: "Activity Tracker", icon: Activity },
-            { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-            { id: "employee-requests", label: "Requests & Expenses", icon: Calendar },
-            { id: "employee-resources", label: "Resources & Events", icon: BookOpen },
-            { id: "employee-tasks", label: "Tasks & Approvals", icon: FileCheck },
-          ],
         });
         return items; // Return early - no other modules for employee-only access
       }
@@ -945,21 +917,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Employee Portal",
         icon: UserCircle,
         color: "text-employee",
-        children: [
-          { id: "employee-organization", label: "My Organization", icon: Network },
-          { id: "employee-profile", label: "My Profile", icon: UserCircle },
-          { id: "employee-communication", label: "Team Communication", icon: Video },
-          { id: "learning-hub", label: "Learning Hub", icon: GraduationCap },
-          { id: "employee-attendance", label: "Attendance", icon: Clock },
-          { id: "employee-attendance-reports", label: "Attendance Reports", icon: BarChart3 },
-          { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
-          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
-          { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
-          { id: "employee-tickets", label: "Support Tickets", icon: Ticket },
-          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
-          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
-        ],
       });
 
       // IT Module - for IT team
@@ -1016,16 +973,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         label: "Employee Portal",
         icon: UserCircle,
         color: "text-employee",
-        children: [
-          { id: "employee-organization", label: "My Organization", icon: Network },
-          { id: "employee-profile", label: "My Profile", icon: UserCircle },
-          { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-          { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
-          { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
-          { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
-          { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
-          { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
-        ],
       });
     }
 
