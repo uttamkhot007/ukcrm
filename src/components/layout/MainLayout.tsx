@@ -83,7 +83,10 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
       </div>
 
       <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
-      
+
+      {/* Specialist agents, scoped to whatever module is on screen */}
+      {activeModule !== "agents" && <ModuleAgentDock activeModule={activeModule} />}
+
       {/* Deal Won Celebration - Shows on all pages */}
       <DealWonCelebration />
     </div>
