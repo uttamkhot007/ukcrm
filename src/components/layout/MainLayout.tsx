@@ -5,6 +5,7 @@ import { ModuleTabsProvider } from "@/contexts/ModuleTabsContext";
 import { Header } from "@/components/layout/Header";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
+import { ModuleAgentDock } from "@/components/agents/ModuleAgentDock";
 import { DealWonCelebration } from "@/components/dashboard/DealWonCelebration";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
