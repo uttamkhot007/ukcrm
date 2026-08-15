@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Bot,
   HeartPulse,
   Gauge,
 
@@ -109,6 +110,15 @@ interface NavItem {
 // Sales-enabled employees see these items (under workspace mode)
 const salesPortalItems: NavItem[] = [
   {
+    id: "ai-agents",
+    label: "AI Agents",
+    icon: Bot,
+    color: "text-primary",
+    portalMode: "workspace",
+    isLink: true,
+    linkPath: "/agents",
+  },
+  {
     id: "dashboard",
     label: "Sales Dashboard",
     icon: LayoutDashboard,
@@ -142,6 +152,15 @@ const salesPortalItems: NavItem[] = [
 
 // Regular employee portal items (under workspace mode)
 const employeePortalItems: NavItem[] = [
+  {
+    id: "ai-agents",
+    label: "AI Agents",
+    icon: Bot,
+    color: "text-primary",
+    portalMode: "workspace",
+    isLink: true,
+    linkPath: "/agents",
+  },
   {
     id: "dashboard",
     label: "Dashboard",
