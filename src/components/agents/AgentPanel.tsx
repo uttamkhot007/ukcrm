@@ -52,6 +52,8 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
   const [attachments, setAttachments] = useState<AgentAttachment[]>([]);
   const [parsing, setParsing] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [showErrors, setShowErrors] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const { run, isRunning, steps, result, pending, error } = useAgentRun();
 
