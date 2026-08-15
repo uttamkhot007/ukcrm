@@ -132,6 +132,43 @@ jobs:
             --cluster ${{ steps.cfn.outputs.cluster }} \
             --services ${ENV_NAME}-frontend ${ENV_NAME}-backend
 
+      - name: Verify deployed images
+        run: |
+          verify_service_image() {
+            SERVICE="$1"
+            CONTAINER="$2"
+            EXPECTED_IMAGE="$3"
+
+            TASK_ARNS=$(aws ecs list-tasks \
+              --cluster "${{ steps.cfn.outputs.cluster }}" \
+              --service-name "$SERVICE" \
+              --desired-status RUNNING \
+              --query 'taskArns' --output text)
+            if [ -z "$TASK_ARNS" ] || [ "$TASK_ARNS" = "None" ]; then
+              echo "No running tasks found for $SERVICE" >&2
+              exit 1
+            fi
+
+            ACTUAL_IMAGES=$(aws ecs describe-tasks \
+              --cluster "${{ steps.cfn.outputs.cluster }}" \
+              --tasks $TASK_ARNS \
+              --query "tasks[].containers[?name=='${CONTAINER}'].image" \
+              --output text)
+            for IMAGE in $ACTUAL_IMAGES; do
+              if [ "$IMAGE" != "$EXPECTED_IMAGE" ]; then
+                echo "$SERVICE rolled back or is mixed: expected $EXPECTED_IMAGE, found $IMAGE" >&2
+                exit 1
+              fi
+            done
+          }
+
+          verify_service_image \
+            "${ENV_NAME}-frontend" frontend \
+            "${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }}"
+          verify_service_image \
+            "${ENV_NAME}-backend" backend \
+            "${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }}"
+
       - name: Summary
         run: |
           echo "✅ Deployed commit ${{ github.sha }}"
