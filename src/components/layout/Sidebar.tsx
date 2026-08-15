@@ -181,17 +181,6 @@ const employeePortalItems: NavItem[] = [
     icon: UserCircle,
     color: "text-employee",
     portalMode: "workspace",
-    children: [
-      { id: "employee-organization", label: "My Organization", icon: Network },
-      { id: "employee-profile", label: "My Profile", icon: UserCircle },
-      { id: "employee-benefits", label: "My Compensation", icon: DollarSign },
-      { id: "employee-resources", label: "Resources & Docs", icon: BookOpen },
-      { id: "employee-skill-matrix", label: "Skill Matrix", icon: Target },
-      { id: "employee-events", label: "Events & Recognition", icon: PartyPopper },
-      { id: "employee-requests", label: "Leave & Travel", icon: Calendar },
-      { id: "employee-workflows", label: "My Workflows", icon: FolderKanban },
-      { id: "employee-approvals", label: "Request Approvals", icon: FileCheck },
-    ],
   },
 ];
 
