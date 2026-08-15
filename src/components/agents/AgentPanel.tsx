@@ -252,7 +252,9 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
           <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
             <p className="text-sm font-medium">{pending.reason}</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {pending.questions.map((q) => (
+              {pending.questions.map((q) => {
+                const fieldError = showErrors ? answerErrors[q.id] : undefined;
+                return (
                 <div key={q.id} className="space-y-1">
                   <Label htmlFor={`agent-q-${q.id}`} className="text-xs">
                     {q.label}
@@ -263,7 +265,7 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
                       value={answers[q.id] ?? ""}
                       onValueChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
                     >
-                      <SelectTrigger id={`agent-q-${q.id}`}>
+                      <SelectTrigger id={`agent-q-${q.id}`} aria-invalid={!!fieldError}>
                         <SelectValue placeholder="Select…" />
                       </SelectTrigger>
                       <SelectContent>
@@ -278,6 +280,7 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
                     <Textarea
                       id={`agent-q-${q.id}`}
                       rows={2}
+                      aria-invalid={!!fieldError}
                       value={answers[q.id] ?? ""}
                       onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     />
@@ -285,18 +288,32 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
                     <Input
                       id={`agent-q-${q.id}`}
                       type={q.type === "number" || q.type === "date" ? q.type : "text"}
+                      min={q.type === "number" ? 1 : q.type === "date" ? todayIso : undefined}
+                      aria-invalid={!!fieldError}
+                      className={cn(fieldError && "border-destructive focus-visible:ring-destructive")}
                       value={answers[q.id] ?? ""}
                       onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     />
                   )}
-                  {q.help && <p className="text-[11px] text-muted-foreground">{q.help}</p>}
+                  {fieldError ? (
+                    <p className="text-[11px] font-medium text-destructive">{fieldError}</p>
+                  ) : (
+                    q.help && <p className="text-[11px] text-muted-foreground">{q.help}</p>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
+            {showErrors && Object.keys(answerErrors).length > 0 && (
+              <p className="text-xs font-medium text-destructive">
+                Please correct the highlighted fields before continuing.
+              </p>
+            )}
             <Button size="sm" onClick={submitAnswers} disabled={isRunning}>
               {isRunning ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
               Continue
             </Button>
+
           </div>
         )}
 
