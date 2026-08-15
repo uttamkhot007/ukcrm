@@ -644,7 +644,7 @@ Deno.serve(async (req) => {
             problem_requirement: args.problem_requirement ?? null,
             quantity: Number.isFinite(quantity) && quantity > 0 ? Math.round(quantity) : 1,
             value,
-            expected_close_date: args.expected_close_date ?? null,
+            expected_close_date: closeDate,
             stage: ["pipeline", "qualified", "proposal", "negotiation"].includes(String(args.stage))
               ? String(args.stage)
               : "pipeline",
