@@ -1,55 +1,63 @@
-I found two real code issues behind the repeated “same dashboard”/refresh problem:
+# Agentic AI Layer — Specialist Agents Embedded in Every Module
 
-1. The app is still using `profile.is_super_admin` as an access signal in the frontend and database helpers, even though roles are supposed to be authoritative in `user_roles`. This creates split-brain admin detection and race conditions between `useAuth`, `TenantContext`, `Index`, `AdminLayout`, and `PlatformLayout`.
-2. The cache-killer code is duplicated in `index.html` and can race/reload before React fully stabilizes. In my browser check it produced a blank page with only the static build badge visible before later landing on `/auth`, meaning the cleanup flow itself can break the app experience.
+Build an in-platform agent fabric: a set of specialised AI agents (Document, Tender, Accounting, Reporting, Sales/MEDDIC, Support, HR) that understand natural-language instructions, pull real tenant data from the database, and produce finished deliverables — client-ready implementation guides, tender analyses, financial statements and monthly summary dashboards like the two uploaded samples.
 
-Plan to fix it permanently:
+## What the user gets
 
-1. Create one authoritative admin access model
-   - Add a small frontend helper for role decisions, e.g. `isPlatformAdmin = role === "admin" || role === "super_admin"` / `isSuperAdmin = role === "super_admin"` as supported by the existing schema.
-   - Stop using `portalMode === "admin"` as proof of admin access.
-   - Stop using `profile.is_super_admin` as the main routing guard in app code; keep it only as backward-compatible metadata if needed.
+1. **Agent Console** (`/agents`) — one place to see all agents, their skills, recent runs, cost and success rate. Start a run, watch progress step by step, download the output.
+2. **Embedded agent launchers** — every module gets an "Ask the agent" panel scoped to that module (Documents, Tenders/Deal Desk, Finance & Accounting, Reports, Sales MEDDIC, Support, HR). The agent already knows the tenant, module and record you are on, so no re-typing context.
+3. **Deliverables** — agents output rendered documents (implementation guides, SOWs, tender bid packs, compliance matrices, board reports, monthly cyber-security summaries) as styled HTML preview plus PDF/DOCX export, saved to a document library with version history.
+4. **Automation** — agents can be scheduled (e.g. "monthly client security summary on the 1st") or triggered by events (deal Closed Won → Onboarding pack; tender uploaded → auto-analysis; month end → financial pack).
 
-2. Harden `useAuth` so auth/profile/role resolution is deterministic
-   - Track separate resolved flags instead of relying on `null` values and a 6-second timeout.
-   - Fetch profile, all role rows, teams, and console access in one guarded sequence per session.
-   - Make `getRedirectPath()` return `/admin/platform/tenants` for admin/platform users, not `/admin`.
-   - Ensure sign-in and initial page refresh use the same redirect logic.
+## The agents
 
-3. Fix root route behavior (`/`)
-   - Replace the current effect-based redirect with a decisive guarded render:
-     - while auth/role/tenant is unresolved: show loading only
-     - if unauthenticated: navigate to `/auth`
-     - if platform admin: navigate to `/admin/platform/tenants`
-     - otherwise: render tenant/workspace dashboard
-   - Remove the timeout path that can incorrectly proceed to the tenant dashboard before role data is ready.
+| Agent | What it does | Data it reads |
+| --- | --- | --- |
+| Document Agent | Drafts implementation guides, SOWs, proposals, policies from a brief + template pack. Sample: the SAMA/ISO 27001 implementation guide. | templates, offerings, accounts, deals |
+| Tender Agent | Ingests a tender/RFP file, extracts scope, eligibility, deadlines, evaluation criteria; builds compliance matrix, bid/no-bid score and response skeleton | tenders, rfp_responses, offerings |
+| Accounting Agent | Explains and drafts ledgers, GST/TDS positions, ratio commentary, month-end close checklist, AR-aging chase notes | invoices, payments, vouchers, GST data |
+| Reporting Agent | Builds the recurring client/executive report — KPI rollups, trend commentary, risk highlights — in the dashboard style of the uploaded PKF and DIS Holdings samples | any module metrics, tickets, projects |
+| Sales (MEDDIC) Agent | Qualification gaps, next-best-action, objection handling, deal risk | deals, MEDDIC fields, activities |
+| Support Agent | Triage, RCA drafts, customer-ready replies | tickets, SLA data |
+| HR Agent | JD, PIP, appraisal and policy drafting, compliance checks | employees, HR modules |
+| Orchestrator | Routes a free-form instruction to the right agent(s), chains them (e.g. Tender Agent → Document Agent → Reporting Agent) | — |
 
-4. Fix admin/platform route guards
-   - Update `AdminLayout` and `PlatformLayout` to use the same centralized admin helper.
-   - Prevent any redirect back to `/` until auth and role are fully resolved.
-   - Keep `/admin/platform/*` matched only through the nested admin route to avoid duplicate route/layout behavior.
+## How it works (technical)
 
-5. Fix the sidebar/header confusion
-   - For platform admins, show the Platform Console navigation consistently.
-   - Make the Dashboard sidebar item route to the correct admin landing page instead of sending platform admins back to the tenant dashboard.
-   - Keep workspace/customer preview modes as view modes only, not access-control signals.
+**Backend — one agent runtime, many agents.** A new `agent-run` edge function built on the AI SDK with tool calling, reusing the existing `supabase/functions/_shared/ai.ts` gateway helper. Each agent is a registry entry: system prompt, allowed tools, output schema, default model.
 
-6. Remove the fragile duplicate cache-killer path
-   - Consolidate the HTML cache cleanup to one script path.
-   - Wait for self-destruct service worker activation before reload, but only do one guarded reload per build.
-   - Ensure React mount is not hidden by stale cleanup state and the static build badge only appears when React actually fails.
+Tools available to agents (all tenant-scoped, service-role queries filtered by `tenant_id`):
+- `query_module_data` — read-only, whitelisted tables per agent
+- `get_template` / `list_templates` — reuse the existing 37-template library
+- `read_uploaded_file` — parse PDF/DOCX/HTML attachments (tender docs, prior reports)
+- `render_document` — emit structured deliverable sections
+- `save_deliverable` — persist to the new document library
+- `create_record` — gated behind human approval (never silent writes)
 
-7. Add temporary targeted diagnostics for this issue
-   - Add concise console logs for: auth resolved, role resolved, root redirect target, admin guard decision.
-   - These logs can confirm the real route decision if the issue appears again; they will not include tokens or secrets.
+Long generations stream (`streamText` + awaited text) so multi-minute report builds do not time out.
 
-8. Verify before final response
-   - Run TypeScript/build checks.
-   - Verify `/` redirects to `/admin/platform/tenants` for the current Uttam admin record.
-   - Verify refreshing `/` and `/admin/platform/tenants` does not show the tenant dashboard.
-   - Verify the white-screen/static-badge-only state is gone.
+**Data model** (new tables, RLS + GRANTs, tenant-scoped):
+- `ai_agents` — registry, per-tenant enable/disable and prompt overrides
+- `ai_agent_runs` — instruction, status, steps, tokens, cost, duration, error
+- `ai_agent_run_steps` — tool calls and reasoning trail for the live timeline
+- `ai_deliverables` — generated documents (title, type, HTML body, JSON data, version, linked record)
+- `ai_agent_schedules` — cron/event triggers
 
-Technical notes:
-- The current database record for Uttam is already correct: role `admin`, `is_super_admin = true`, tenant assigned.
-- The fix should focus on app state/routing/cache code, not changing that user record.
-- I will not edit generated backend client/type files.
+**Frontend**
+- `src/lib/agents/registry.ts` — shared agent definitions and module mapping
+- `src/components/agents/AgentPanel.tsx` — embeddable launcher (instruction box, attachments, suggested prompts per module)
+- `src/components/agents/AgentRunTimeline.tsx` — live step trail
+- `src/components/agents/DeliverablePreview.tsx` — renders HTML deliverable, export to PDF/DOCX via the existing `document-export` lib
+- `src/pages/Agents.tsx` + sidebar entry, plus `AgentPanel` mounted in Documents, Deal Desk/Tenders, Finance, Reports, MEDDIC, Support and HR modules
+- Deliverable styling follows the existing cyber/premium theme tokens; report deliverables use the KPI-card + trend + risk-table structure seen in the uploaded samples
+
+**Guardrails**: every run is tenant-scoped and attributed to the user; write actions require explicit approval; rate-limit and credit errors surface as actionable banners (existing `AIChatErrorBanner`); prompts never leave the server.
+
+## Delivery order
+
+1. Data model + RLS/GRANTs, agent registry, `agent-run` runtime with tools and streaming
+2. Agent Console page, run timeline, deliverable library and export
+3. Document Agent + Reporting Agent (matched to the two uploaded samples) end to end
+4. Tender Agent (file ingest, compliance matrix, bid score) and Accounting Agent
+5. Sales/Support/HR agents + embedded panels in every module
+6. Schedules and event triggers (month-end reports, Closed Won packs)
