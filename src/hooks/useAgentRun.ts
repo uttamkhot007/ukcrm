@@ -126,11 +126,19 @@ export function useAgentRun() {
             tenantId: currentTenant?.id ?? null,
             context: context ?? {},
             attachments: attachments ?? [],
+            resume: resume ?? null,
+            answers: answers ?? null,
           },
         });
 
         if (fnError) throw new Error(fnError.message);
         if (data?.error) throw new Error(data.error);
+
+        if (data?.pending?.questions?.length) {
+          setPending(data.pending as AgentPending);
+          if (data.runId) await loadSteps(data.runId);
+          return null;
+        }
 
         const runResult: AgentRunResult = {
           runId: data?.runId ?? null,
@@ -154,9 +162,14 @@ export function useAgentRun() {
 
   const reset = useCallback(() => {
     setResult(null);
+    setPending(null);
     setError(null);
     setSteps([]);
   }, []);
+
+  return { run, reset, isRunning, steps, result, pending, error };
+}
+
 
   return { run, reset, isRunning, steps, result, error };
 }
