@@ -59,6 +59,8 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
 
   const activeAgent = getAgentMeta(active) ?? roster[0];
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+
   useEffect(() => {
     if (!pending) return;
     const prefilled: Record<string, string> = {};
