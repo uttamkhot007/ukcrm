@@ -308,6 +308,311 @@ export type Database = {
           },
         ]
       }
+      ai_agent_run_steps: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          id: string
+          input: Json | null
+          label: string | null
+          output: Json | null
+          run_id: string
+          status: string
+          step_index: number
+          step_type: string
+          tenant_id: string
+          tool_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          input?: Json | null
+          label?: string | null
+          output?: Json | null
+          run_id: string
+          status?: string
+          step_index?: number
+          step_type?: string
+          tenant_id: string
+          tool_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          input?: Json | null
+          label?: string | null
+          output?: Json | null
+          run_id?: string
+          status?: string
+          step_index?: number
+          step_type?: string
+          tenant_id?: string
+          tool_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_run_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_runs: {
+        Row: {
+          agent_key: string
+          completion_tokens: number
+          context: Json
+          created_at: string
+          created_by: string
+          deliverable_id: string | null
+          duration_ms: number | null
+          error: string | null
+          id: string
+          instruction: string
+          model: string | null
+          module: string | null
+          prompt_tokens: number
+          related_record_id: string | null
+          related_record_type: string | null
+          result_data: Json | null
+          result_text: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          agent_key: string
+          completion_tokens?: number
+          context?: Json
+          created_at?: string
+          created_by?: string
+          deliverable_id?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          instruction: string
+          model?: string | null
+          module?: string | null
+          prompt_tokens?: number
+          related_record_id?: string | null
+          related_record_type?: string | null
+          result_data?: Json | null
+          result_text?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string
+          completion_tokens?: number
+          context?: Json
+          created_at?: string
+          created_by?: string
+          deliverable_id?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          instruction?: string
+          model?: string | null
+          module?: string | null
+          prompt_tokens?: number
+          related_record_id?: string | null
+          related_record_type?: string | null
+          result_data?: Json | null
+          result_text?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_agent_schedules: {
+        Row: {
+          agent_key: string
+          context: Json
+          created_at: string
+          created_by: string
+          cron_expression: string | null
+          enabled: boolean
+          event_key: string | null
+          id: string
+          instruction: string
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          tenant_id: string
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_key: string
+          context?: Json
+          created_at?: string
+          created_by?: string
+          cron_expression?: string | null
+          enabled?: boolean
+          event_key?: string | null
+          id?: string
+          instruction: string
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          tenant_id: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string
+          context?: Json
+          created_at?: string
+          created_by?: string
+          cron_expression?: string | null
+          enabled?: boolean
+          event_key?: string | null
+          id?: string
+          instruction?: string
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          tenant_id?: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_agents: {
+        Row: {
+          agent_key: string
+          capabilities: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          icon: string | null
+          id: string
+          model: string | null
+          module: string | null
+          name: string
+          system_prompt: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_key: string
+          capabilities?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          icon?: string | null
+          id?: string
+          model?: string | null
+          module?: string | null
+          name: string
+          system_prompt?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string
+          capabilities?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          icon?: string | null
+          id?: string
+          model?: string | null
+          module?: string | null
+          name?: string
+          system_prompt?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_deliverables: {
+        Row: {
+          agent_key: string | null
+          body_html: string | null
+          created_at: string
+          created_by: string
+          data: Json
+          deliverable_type: string
+          id: string
+          module: string | null
+          parent_id: string | null
+          related_record_id: string | null
+          related_record_type: string | null
+          run_id: string | null
+          status: string
+          summary: string | null
+          tenant_id: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          agent_key?: string | null
+          body_html?: string | null
+          created_at?: string
+          created_by?: string
+          data?: Json
+          deliverable_type?: string
+          id?: string
+          module?: string | null
+          parent_id?: string | null
+          related_record_id?: string | null
+          related_record_type?: string | null
+          run_id?: string | null
+          status?: string
+          summary?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          agent_key?: string | null
+          body_html?: string | null
+          created_at?: string
+          created_by?: string
+          data?: Json
+          deliverable_type?: string
+          id?: string
+          module?: string | null
+          parent_id?: string | null
+          related_record_id?: string | null
+          related_record_type?: string | null
+          run_id?: string | null
+          status?: string
+          summary?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_deliverables_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_deliverables_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alliance_organizations: {
         Row: {
           account_manager_id: string | null
