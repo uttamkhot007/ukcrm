@@ -66,6 +66,8 @@ export function useAgentRun() {
   const [isRunning, setIsRunning] = useState(false);
   const [steps, setSteps] = useState<AgentRunStep[]>([]);
   const [result, setResult] = useState<AgentRunResult | null>(null);
+  const [pending, setPending] = useState<AgentPending | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
   const runIdRef = useRef<string | null>(null);
