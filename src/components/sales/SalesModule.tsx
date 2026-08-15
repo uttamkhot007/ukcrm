@@ -139,7 +139,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         label: "Tools",
         icon: Package,
         tabs: [
-          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <MEDDICWorkflow />, preload: MEDDICWorkflow as unknown as PreloadableComponent<never> },
+          // MEDDIC is no longer a separate tool — it is a view inside Deals.
           { id: "forecasting", label: "Forecasting", icon: BarChart3, render: () => <SalesForecasting />, preload: SalesForecasting as unknown as PreloadableComponent<never> },
           { id: "quotations", label: "Quotations", icon: FileText, render: () => <QuotationsView />, preload: QuotationsView as unknown as PreloadableComponent<never> },
           { id: "catalog", label: "Catalog", icon: BookOpen, render: () => <ProductCatalog />, preload: ProductCatalog as unknown as PreloadableComponent<never> },
