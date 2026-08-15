@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+
+/** MEDDIC lives inside Deals — one module, two views. */
+const MEDDICWorkflow = lazy(() =>
+  import("./MEDDICWorkflow").then((m) => ({ default: m.MEDDICWorkflow })),
+);
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
 import { Button } from "@/components/ui/button";
