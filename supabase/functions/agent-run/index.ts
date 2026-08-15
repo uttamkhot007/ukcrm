@@ -189,6 +189,41 @@ function toolSchemas(tables: string[], extra: string[]) {
     },
   ];
 
+  // Always available: the agent may come back to the user for the details it
+  // cannot infer. The run pauses and the UI renders these as a form.
+  tools.push({
+    type: "function",
+    function: {
+      name: "ask_user",
+      description:
+        "Pause and ask the user for the details you are missing. Ask for everything you need in ONE call. " +
+        "Use it before creating any record when required fields are unknown.",
+      parameters: {
+        type: "object",
+        properties: {
+          reason: { type: "string", description: "One line explaining why you need these details" },
+          questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "Short field key, e.g. deal_size" },
+                label: { type: "string" },
+                help: { type: "string", description: "Hint, e.g. what was found in the workspace" },
+                type: { type: "string", description: "text, number, date, select or textarea" },
+                options: { type: "array", items: { type: "string" } },
+                required: { type: "boolean" },
+                suggestion: { type: "string", description: "Pre-filled value if you have a good guess" },
+              },
+              required: ["id", "label"],
+            },
+          },
+        },
+        required: ["questions"],
+      },
+    },
+  });
+
   if (extra.includes("list_templates")) {
     tools.push({
       type: "function",
@@ -212,8 +247,98 @@ function toolSchemas(tables: string[], extra: string[]) {
       },
     });
   }
+  if (extra.includes("create_account")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_account",
+        description: "Create a customer account (organization) when it does not already exist.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            industry: { type: "string" },
+            website: { type: "string" },
+            description: { type: "string" },
+          },
+          required: ["name"],
+        },
+      },
+    });
+  }
+  if (extra.includes("create_contact")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_contact",
+        description: "Create a contact person on an account when they do not already exist.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            company: { type: "string", description: "Account / organization name" },
+            email: { type: "string" },
+            phone: { type: "string" },
+            designation: { type: "string" },
+            alliance_organization_id: { type: "string" },
+          },
+          required: ["name"],
+        },
+      },
+    });
+  }
+  if (extra.includes("create_product")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_product",
+        description: "Add a product or service to the catalog when the proposed solution does not exist yet.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            category: { type: "string", description: "product or service category" },
+            description: { type: "string" },
+            unit_price: { type: "number" },
+          },
+          required: ["name"],
+        },
+      },
+    });
+  }
+  if (extra.includes("create_deal")) {
+    tools.push({
+      type: "function",
+      function: {
+        name: "create_deal",
+        description:
+          "Create a deal in the sales pipeline. Only call this once every required detail is known " +
+          "(account, deal type, proposed solution, quantity, value, expected close date, contact).",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            organization_name: { type: "string" },
+            alliance_organization_id: { type: "string" },
+            contact_id: { type: "string" },
+            deal_type: { type: "string" },
+            proposed_solution: { type: "string", description: "Product or service being proposed" },
+            product_id: { type: "string", description: "product_catalog id, if it exists" },
+            quantity: { type: "number" },
+            value: { type: "number", description: "Deal size in INR" },
+            expected_close_date: { type: "string", description: "YYYY-MM-DD" },
+            stage: { type: "string", description: "pipeline, qualified, proposal, negotiation" },
+            description: { type: "string" },
+            problem_requirement: { type: "string" },
+          },
+          required: ["title", "organization_name", "value"],
+        },
+      },
+    });
+  }
   return tools;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
