@@ -359,8 +359,7 @@ export function DealsView({ initialView = "pipeline" }: { initialView?: "pipelin
 
   return (
     <div className="space-y-6">
-  return (
-    <div className="space-y-6">
+
       <ToggleGroup
         type="single"
         value={dealsView}
