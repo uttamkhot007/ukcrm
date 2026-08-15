@@ -91,12 +91,14 @@ export function useAgentRun() {
   }, []);
 
   const run = useCallback(
-    async ({ agentKey, instruction, context, attachments }: RunArgs) => {
+    async ({ agentKey, instruction, context, attachments, resume, answers }: RunArgs) => {
       setIsRunning(true);
       setError(null);
       setResult(null);
-      setSteps([]);
+      setPending(null);
+      if (!resume) setSteps([]);
       runIdRef.current = null;
+
 
       // While the runtime works, poll the newest run's steps for a live trail.
       const pollLatest = async () => {
