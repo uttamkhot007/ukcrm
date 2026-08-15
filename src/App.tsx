@@ -53,6 +53,7 @@ const SelectWorkspace = lazyDefault(() => import("./pages/workspace/SelectWorksp
 const SupportPortal = lazyDefault(() => import("./pages/SupportPortal"));
 const SupportDashboard = lazyDefault(() => import("./pages/SupportDashboard"));
 const Tenders = lazyDefault(() => import("./pages/Tenders"));
+const Agents = lazyDefault(() => import("./pages/Agents"));
 
 // A single client whose cache survives reloads, so reopening a module paints
 // from the last known data and revalidates in the background.
@@ -86,6 +87,9 @@ const App = () => (
                 
                 {/* Tender Management */}
                 <Route path="/tenders" element={<Tenders />} />
+
+                {/* Agentic AI */}
+                <Route path="/agents" element={<Agents />} />
                 
                 {/* Admin Center Routes */}
                 <Route path="/admin" element={<AdminLayout />}>

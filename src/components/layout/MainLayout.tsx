@@ -5,6 +5,7 @@ import { ModuleTabsProvider } from "@/contexts/ModuleTabsContext";
 import { Header } from "@/components/layout/Header";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { AIAssistant } from "@/components/ai/AIAssistant";
+import { ModuleAgentDock } from "@/components/agents/ModuleAgentDock";
 import { DealWonCelebration } from "@/components/dashboard/DealWonCelebration";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,10 @@ export function MainLayout({ children, activeModule, onModuleChange }: MainLayou
       </div>
 
       <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
-      
+
+      {/* Specialist agents, scoped to whatever module is on screen */}
+      {activeModule !== "agents" && <ModuleAgentDock activeModule={activeModule} />}
+
       {/* Deal Won Celebration - Shows on all pages */}
       <DealWonCelebration />
     </div>
