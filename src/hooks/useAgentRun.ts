@@ -23,6 +23,23 @@ export interface AgentDeliverable {
   html: string;
 }
 
+export interface AgentQuestion {
+  id: string;
+  label: string;
+  help?: string;
+  type?: string;
+  options?: string[];
+  required?: boolean;
+  suggestion?: string;
+}
+
+export interface AgentPending {
+  reason: string;
+  questions: AgentQuestion[];
+  toolCallId: string;
+  messages: unknown[];
+}
+
 export interface AgentRunResult {
   runId: string | null;
   text: string;
@@ -34,7 +51,11 @@ interface RunArgs {
   instruction: string;
   context?: Record<string, unknown>;
   attachments?: AgentAttachment[];
+  /** Resume a paused run with the answers the user just filled in. */
+  resume?: { toolCallId: string; messages: unknown[] };
+  answers?: Record<string, string>;
 }
+
 
 /**
  * Drives one agent run: invokes the runtime, polls the step trail while it
