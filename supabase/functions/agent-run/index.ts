@@ -626,7 +626,9 @@ Deno.serve(async (req) => {
           }
         }
 
+        const { data: deal, error } = await admin
           .from("deals")
+
           .insert({
             tenant_id: tenantId,
             user_id: user.id,
