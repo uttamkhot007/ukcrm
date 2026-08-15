@@ -197,6 +197,59 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
           </div>
         )}
 
+        {pending && (
+          <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <p className="text-sm font-medium">{pending.reason}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {pending.questions.map((q) => (
+                <div key={q.id} className="space-y-1">
+                  <Label htmlFor={`agent-q-${q.id}`} className="text-xs">
+                    {q.label}
+                    {q.required !== false && <span className="text-destructive"> *</span>}
+                  </Label>
+                  {q.options?.length ? (
+                    <Select
+                      value={answers[q.id] ?? ""}
+                      onValueChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                    >
+                      <SelectTrigger id={`agent-q-${q.id}`}>
+                        <SelectValue placeholder="Select…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {q.options.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : q.type === "textarea" ? (
+                    <Textarea
+                      id={`agent-q-${q.id}`}
+                      rows={2}
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    />
+                  ) : (
+                    <Input
+                      id={`agent-q-${q.id}`}
+                      type={q.type === "number" || q.type === "date" ? q.type : "text"}
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    />
+                  )}
+                  {q.help && <p className="text-[11px] text-muted-foreground">{q.help}</p>}
+                </div>
+              ))}
+            </div>
+            <Button size="sm" onClick={submitAnswers} disabled={isRunning}>
+              {isRunning ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+              Continue
+            </Button>
+          </div>
+        )}
+
+
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
