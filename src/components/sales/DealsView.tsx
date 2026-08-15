@@ -53,6 +53,11 @@ import { workflows } from "@/lib/workflows";
 import { ClosedWonWorkflowInitiator } from "@/components/accounts/ClosedWonWorkflowInitiator";
 
 type Deal = Database["public"]["Tables"]["deals"]["Row"];
+
+/** MEDDIC lives inside Deals — one module, two views. */
+const MEDDICWorkflow = lazy(() =>
+  import("./MEDDICWorkflow").then((m) => ({ default: m.MEDDICWorkflow })),
+);
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 type DealStage = Database["public"]["Enums"]["deal_stage"];
 
