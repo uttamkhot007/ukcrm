@@ -81,8 +81,51 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
     await run({ agentKey: active, instruction: instruction.trim(), context, attachments });
   };
 
+  const validateAnswer = (q: { id: string; label: string; type?: string; required?: boolean }, raw: string) => {
+    const value = (raw ?? "").trim();
+    if (!value) return q.required === false ? null : "This is required.";
+
+    if (q.type === "date") {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return "Enter a valid date (YYYY-MM-DD).";
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (parsed < today) return "Date cannot be in the past.";
+      const maxDate = new Date(today.getFullYear() + 5, today.getMonth(), today.getDate());
+      if (parsed > maxDate) return "Date looks unrealistic (more than 5 years ahead).";
+      return null;
+    }
+
+    if (q.type === "number") {
+      const num = Number(value.replace(/[,\s₹]/g, ""));
+      if (!Number.isFinite(num)) return "Enter a valid number.";
+      if (num <= 0) return "Must be greater than zero.";
+      if (/value|amount|size|price/i.test(q.label) && num > 1_000_000_000_000)
+        return "Amount looks unrealistic.";
+      return null;
+    }
+
+    if (/email/i.test(q.label) && /@/.test(value) && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.split(/[,;]/)[0].trim()))
+      return "Enter a valid email address.";
+
+    if (value.length < 2) return "Please enter a bit more detail.";
+    return null;
+  };
+
+  const answerErrors = useMemo(() => {
+    if (!pending) return {} as Record<string, string>;
+    const errs: Record<string, string> = {};
+    for (const q of pending.questions) {
+      const message = validateAnswer(q, answers[q.id] ?? "");
+      if (message) errs[q.id] = message;
+    }
+    return errs;
+  }, [pending, answers]);
+
   const submitAnswers = async () => {
     if (!pending || isRunning) return;
+    setShowErrors(true);
+    if (Object.keys(answerErrors).length > 0) return;
     const summary = pending.questions
       .map((q) => `${q.label}: ${answers[q.id]?.trim() || "not provided"}`)
       .join("\n");
@@ -94,6 +137,7 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
       resume: { toolCallId: pending.toolCallId, messages: pending.messages },
     });
   };
+
 
 
   return (
