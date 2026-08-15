@@ -52,17 +52,23 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
   const [attachments, setAttachments] = useState<AgentAttachment[]>([]);
   const [parsing, setParsing] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [showErrors, setShowErrors] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const { run, isRunning, steps, result, pending, error } = useAgentRun();
 
   const activeAgent = getAgentMeta(active) ?? roster[0];
+
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (!pending) return;
     const prefilled: Record<string, string> = {};
     for (const q of pending.questions) if (q.suggestion) prefilled[q.id] = q.suggestion;
     setAnswers(prefilled);
+    setShowErrors(false);
   }, [pending]);
+
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -81,8 +87,51 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
     await run({ agentKey: active, instruction: instruction.trim(), context, attachments });
   };
 
+  const validateAnswer = (q: { id: string; label: string; type?: string; required?: boolean }, raw: string) => {
+    const value = (raw ?? "").trim();
+    if (!value) return q.required === false ? null : "This is required.";
+
+    if (q.type === "date") {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return "Enter a valid date (YYYY-MM-DD).";
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (parsed < today) return "Date cannot be in the past.";
+      const maxDate = new Date(today.getFullYear() + 5, today.getMonth(), today.getDate());
+      if (parsed > maxDate) return "Date looks unrealistic (more than 5 years ahead).";
+      return null;
+    }
+
+    if (q.type === "number") {
+      const num = Number(value.replace(/[,\s₹]/g, ""));
+      if (!Number.isFinite(num)) return "Enter a valid number.";
+      if (num <= 0) return "Must be greater than zero.";
+      if (/value|amount|size|price/i.test(q.label) && num > 1_000_000_000_000)
+        return "Amount looks unrealistic.";
+      return null;
+    }
+
+    if (/email/i.test(q.label) && /@/.test(value) && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.split(/[,;]/)[0].trim()))
+      return "Enter a valid email address.";
+
+    if (value.length < 2) return "Please enter a bit more detail.";
+    return null;
+  };
+
+  const answerErrors = useMemo(() => {
+    if (!pending) return {} as Record<string, string>;
+    const errs: Record<string, string> = {};
+    for (const q of pending.questions) {
+      const message = validateAnswer(q, answers[q.id] ?? "");
+      if (message) errs[q.id] = message;
+    }
+    return errs;
+  }, [pending, answers]);
+
   const submitAnswers = async () => {
     if (!pending || isRunning) return;
+    setShowErrors(true);
+    if (Object.keys(answerErrors).length > 0) return;
     const summary = pending.questions
       .map((q) => `${q.label}: ${answers[q.id]?.trim() || "not provided"}`)
       .join("\n");
@@ -94,6 +143,7 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
       resume: { toolCallId: pending.toolCallId, messages: pending.messages },
     });
   };
+
 
 
   return (
@@ -204,7 +254,9 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
           <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
             <p className="text-sm font-medium">{pending.reason}</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {pending.questions.map((q) => (
+              {pending.questions.map((q) => {
+                const fieldError = showErrors ? answerErrors[q.id] : undefined;
+                return (
                 <div key={q.id} className="space-y-1">
                   <Label htmlFor={`agent-q-${q.id}`} className="text-xs">
                     {q.label}
@@ -215,7 +267,7 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
                       value={answers[q.id] ?? ""}
                       onValueChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
                     >
-                      <SelectTrigger id={`agent-q-${q.id}`}>
+                      <SelectTrigger id={`agent-q-${q.id}`} aria-invalid={!!fieldError}>
                         <SelectValue placeholder="Select…" />
                       </SelectTrigger>
                       <SelectContent>
@@ -230,6 +282,7 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
                     <Textarea
                       id={`agent-q-${q.id}`}
                       rows={2}
+                      aria-invalid={!!fieldError}
                       value={answers[q.id] ?? ""}
                       onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     />
@@ -237,18 +290,32 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
                     <Input
                       id={`agent-q-${q.id}`}
                       type={q.type === "number" || q.type === "date" ? q.type : "text"}
+                      min={q.type === "number" ? 1 : q.type === "date" ? todayIso : undefined}
+                      aria-invalid={!!fieldError}
+                      className={cn(fieldError && "border-destructive focus-visible:ring-destructive")}
                       value={answers[q.id] ?? ""}
                       onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     />
                   )}
-                  {q.help && <p className="text-[11px] text-muted-foreground">{q.help}</p>}
+                  {fieldError ? (
+                    <p className="text-[11px] font-medium text-destructive">{fieldError}</p>
+                  ) : (
+                    q.help && <p className="text-[11px] text-muted-foreground">{q.help}</p>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
+            {showErrors && Object.keys(answerErrors).length > 0 && (
+              <p className="text-xs font-medium text-destructive">
+                Please correct the highlighted fields before continuing.
+              </p>
+            )}
             <Button size="sm" onClick={submitAnswers} disabled={isRunning}>
               {isRunning ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
               Continue
             </Button>
+
           </div>
         )}
 
