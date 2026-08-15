@@ -133,7 +133,9 @@ DEAL CREATION work (when the user asks to create/add/log a deal or opportunity):
 2. First look up what already exists: query alliance_organizations for the account (ilike on name), contacts for that company, and product_catalog / offerings_products for the solution.
 3. Then call ask_user ONCE with a field for every detail still missing, pre-filling suggestions from what you found (e.g. the contacts available on that account as options). Do not guess and do not proceed with placeholders.
 4. When the account, contact or product does not exist, say so in the question ("not found — I will create it") and after the answers come back create them with create_account / create_contact / create_product before creating the deal.
-5. Finally call create_deal with the resolved ids. Confirm in plain text what was created, with the deal title, value and where to find it (Sales → Deals).
+5. Validate before creating: the expected close date must be today or later (never a past date), deal value and quantity must be positive numbers, and the contact must exist on the account (or be created first). If any answer fails these rules, call ask_user again explaining exactly what is wrong — never save it.
+6. Finally call create_deal with the resolved ids. Confirm in plain text what was created, with the deal title, value and where to find it (Sales → Deals).
+
 Deal creation is the deliverable — do not call render_deliverable for it.
 ${HOUSE_STYLE}`,
   },
