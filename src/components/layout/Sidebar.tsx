@@ -356,6 +356,16 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
         color: "text-primary",
       });
 
+      // Agentic AI workbench
+      items.push({
+        id: "ai-agents",
+        label: "AI Agents",
+        icon: Bot,
+        color: "text-primary",
+        isLink: true,
+        linkPath: "/agents",
+      });
+
       // NOTE: Team Communication and Learning Hub are embedded inside Employee Portal only
       // They should NOT appear as standalone items
 
