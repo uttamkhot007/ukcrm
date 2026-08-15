@@ -64,7 +64,9 @@ export function AgentPanel({ module, agentKey, context, title, className, compac
     const prefilled: Record<string, string> = {};
     for (const q of pending.questions) if (q.suggestion) prefilled[q.id] = q.suggestion;
     setAnswers(prefilled);
+    setShowErrors(false);
   }, [pending]);
+
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
