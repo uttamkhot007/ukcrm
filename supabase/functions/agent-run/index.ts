@@ -760,7 +760,44 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        if (name === "ask_user") {
+          const questions = Array.isArray(args.questions) ? args.questions.slice(0, 12) : [];
+          await logStep({
+            step_type: "question",
+            label: "Needs more details",
+            tool_name: name,
+            output: { fields: questions.length },
+            status: "waiting",
+            duration_ms: Date.now() - t0,
+          });
+          if (runId) {
+            await admin
+              .from("ai_agent_runs")
+              .update({
+                status: "awaiting_input",
+                result_text: String(args.reason ?? "Waiting for details"),
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                duration_ms: Date.now() - started,
+              })
+              .eq("id", runId);
+          }
+          return json({
+            runId,
+            agentKey: agent.key,
+            pending: {
+              reason: args.reason ?? "I need a few details before I can continue.",
+              questions,
+              toolCallId: call.id,
+              messages: messages.filter((m) => m.role !== "system"),
+            },
+            usage: { promptTokens, completionTokens },
+            durationMs: Date.now() - started,
+          });
+        }
+
         const result = await runTool(name, args);
+
         await logStep({
           step_type: "tool",
           label: name === "query_module_data" ? `Read ${args.table}` : name.replace(/_/g, " "),
