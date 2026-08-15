@@ -169,7 +169,3 @@ export function useAgentRun() {
 
   return { run, reset, isRunning, steps, result, pending, error };
 }
-
-
-  return { run, reset, isRunning, steps, result, error };
-}
