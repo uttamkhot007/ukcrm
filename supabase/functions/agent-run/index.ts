@@ -631,17 +631,34 @@ Deno.serve(async (req) => {
           `${agent.prompt}\n\nToday is ${new Date().toISOString().slice(0, 10)}.\n` +
           `You can read the workspace's own data with query_module_data (already scoped to this workspace).\n` +
           (contextLines ? `Current screen context:\n${contextLines}\n` : "") +
-          `Work autonomously: gather what you need, then deliver. Do not ask clarifying questions unless the request is impossible without them.`,
+          `Work autonomously: gather what you need, then deliver. Never invent data you were not given — ` +
+          `when a record you must create needs details you cannot look up, call ask_user once with every missing field.`,
       },
     ];
-    for (const att of attachments) {
-      if (!att?.text) continue;
+
+    // Resume: the client returns the paused transcript plus the user's answers.
+    const resume = body.resume;
+    const resumeMessages: Row[] = Array.isArray(resume?.messages) ? resume.messages : [];
+    if (resumeMessages.length) {
+      for (const m of resumeMessages.slice(-40)) {
+        if (m && typeof m === "object" && m.role && m.role !== "system") messages.push(m as Row);
+      }
       messages.push({
-        role: "user",
-        content: `Attached file "${att.name ?? "document"}" (truncated to 30k chars):\n\n${String(att.text).slice(0, 30000)}`,
+        role: "tool",
+        tool_call_id: String(resume?.toolCallId ?? ""),
+        content: JSON.stringify({ answers: body.answers ?? {}, note: instruction }).slice(0, 20000),
       });
+    } else {
+      for (const att of attachments) {
+        if (!att?.text) continue;
+        messages.push({
+          role: "user",
+          content: `Attached file "${att.name ?? "document"}" (truncated to 30k chars):\n\n${String(att.text).slice(0, 30000)}`,
+        });
+      }
+      messages.push({ role: "user", content: instruction });
     }
-    messages.push({ role: "user", content: instruction });
+
 
     const tools = toolSchemas(agent.tables, agent.tools);
     let deliverable: { id: string; title: string; html: string } | null = null;
