@@ -573,8 +573,59 @@ Deno.serve(async (req) => {
         if (missing.length) {
           return { error: `Missing required deal details: ${missing.join(", ")}. Ask the user with ask_user.` };
         }
+
+        // Reject implausible values rather than persisting bad data.
+        if (value > 1_000_000_000_000) {
+          return { error: "Deal value looks unrealistic. Re-confirm the amount in INR with ask_user." };
+        }
         const quantity = Number(args.quantity);
-        const { data: deal, error } = await admin
+        if (args.quantity !== undefined && (!Number.isFinite(quantity) || quantity <= 0)) {
+          return { error: "Quantity must be a positive number. Re-ask the user with ask_user." };
+        }
+
+        const rawDate = args.expected_close_date ? String(args.expected_close_date).trim() : "";
+        let closeDate: string | null = null;
+        if (rawDate) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+            return { error: "expected_close_date must be YYYY-MM-DD. Re-ask the user with ask_user." };
+          }
+          const parsed = new Date(`${rawDate}T00:00:00Z`);
+          if (Number.isNaN(parsed.getTime())) {
+            return { error: "expected_close_date is not a valid date. Re-ask the user with ask_user." };
+          }
+          const today = new Date();
+          const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+          if (parsed < todayUtc) {
+            return {
+              error:
+                `Expected close date ${rawDate} is in the past. Deals cannot close in the past — ` +
+                `ask the user with ask_user for a date on or after ${todayUtc.toISOString().slice(0, 10)}.`,
+            };
+          }
+          const maxDate = new Date(Date.UTC(todayUtc.getUTCFullYear() + 5, todayUtc.getUTCMonth(), todayUtc.getUTCDate()));
+          if (parsed > maxDate) {
+            return { error: `Expected close date ${rawDate} is more than 5 years away. Re-ask the user with ask_user.` };
+          }
+          closeDate = rawDate;
+        }
+
+        // A contact must resolve to a real record on this tenant.
+        if (args.contact_id) {
+          const { data: contactRow } = await admin
+            .from("contacts")
+            .select("id")
+            .eq("id", String(args.contact_id))
+            .eq("tenant_id", tenantId)
+            .maybeSingle();
+          if (!contactRow) {
+            return {
+              error:
+                "The contact_id does not exist for this tenant. Create the contact with create_contact first, " +
+                "or ask the user with ask_user for the correct contact.",
+            };
+          }
+        }
+
           .from("deals")
           .insert({
             tenant_id: tenantId,
