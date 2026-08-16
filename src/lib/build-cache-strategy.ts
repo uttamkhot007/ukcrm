@@ -19,11 +19,14 @@
  */
 
 import { BUILD_COMMIT, BUILD_TIME, BUILD_VERSION } from "@/lib/build-info";
+import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
 
 const LAST_BUILD_KEY = "nexus:last-build-id";
 const RELOADED_FOR_KEY = "nexus:reloaded-for-build";
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 const MIN_POLL_GAP_MS = 30 * 1000;
+const RESUME_GAP_MS = 60 * 1000;
+const COHERENCE_EVENT = "nexus:release-coherence-updated";
 
 export const RUNNING_BUILD_ID = `${BUILD_VERSION}|${BUILD_COMMIT}|${BUILD_TIME}`;
 
@@ -34,6 +37,42 @@ export type ServedBuild = {
 };
 
 export const NEW_BUILD_EVENT = "nexus:new-build-available";
+
+export type ReleaseCheckTrigger = "boot" | "interval" | "visible" | "focus" | "online" | "pageshow" | "resume";
+export type ReleaseCoherenceDiagnostic = {
+  trigger: ReleaseCheckTrigger;
+  runningId: string;
+  servedId: string | null;
+  checkedAt: string;
+  bfcache: boolean;
+  decision: "current" | "reload" | "unverifiable" | "failed";
+  reason?: string;
+};
+
+const diagnostics: ReleaseCoherenceDiagnostic[] = [];
+
+function recordDiagnostic(value: ReleaseCoherenceDiagnostic) {
+  diagnostics.push(value);
+  if (diagnostics.length > 20) diagnostics.shift();
+  try {
+    sessionStorage.setItem("nexus:release-coherence", JSON.stringify(diagnostics));
+    window.dispatchEvent(new CustomEvent(COHERENCE_EVENT));
+  } catch { /* diagnostics are best effort */ }
+}
+
+export function getReleaseCoherenceDiagnostics(): ReleaseCoherenceDiagnostic[] {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("nexus:release-coherence") ?? "[]") as ReleaseCoherenceDiagnostic[];
+    return Array.isArray(saved) ? saved.slice(-20).reverse() : [];
+  } catch {
+    return diagnostics.slice().reverse();
+  }
+}
+
+export function subscribeReleaseCoherence(fn: () => void): () => void {
+  window.addEventListener(COHERENCE_EVENT, fn);
+  return () => window.removeEventListener(COHERENCE_EVENT, fn);
+}
 
 function safeLocal(): Storage | null {
   try {
@@ -74,6 +113,7 @@ export async function purgeCachesOnNewBuild(): Promise<boolean> {
   // Build-scoped app storage from the previous build.
   try {
     if (store) {
+      purgeObsoletePresentationState(store);
       const stale: string[] = [];
       for (let i = 0; i < store.length; i += 1) {
         const key = store.key(i);
@@ -106,19 +146,13 @@ export async function fetchServedBuild(): Promise<ServedBuild> {
   return { buildTime, commit, id };
 }
 
-function isServedBuildNewer(served: ServedBuild): boolean {
+export function isServedBuildDifferent(served: ServedBuild): boolean {
   if (!served.id) return false;
   // Unreplaced placeholders (dev server) never count as a mismatch.
   if (served.buildTime?.startsWith("__") || served.commit?.startsWith("__")) return false;
 
-  if (served.commit && served.commit !== BUILD_COMMIT) return true;
-  if (served.buildTime && served.buildTime !== BUILD_TIME) {
-    const a = Date.parse(served.buildTime);
-    const b = Date.parse(BUILD_TIME);
-    if (Number.isNaN(a) || Number.isNaN(b)) return true;
-    return a > b;
-  }
-  return false;
+  if (served.commit && BUILD_COMMIT !== "dev" && served.commit !== BUILD_COMMIT) return true;
+  return Boolean(served.buildTime && served.buildTime !== BUILD_TIME);
 }
 
 function alreadyReloadedFor(id: string): boolean {
@@ -148,25 +182,48 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   const autoReload = options.autoReload ?? true;
   let disposed = false;
   let lastCheck = 0;
+  let lastHeartbeat = Date.now();
 
-  const check = async () => {
+  const check = async (
+    trigger: ReleaseCheckTrigger = "interval",
+    bfcache = false,
+    force = false,
+    retryAttempt = 0,
+  ) => {
     if (disposed || document.visibilityState === "hidden") return;
     const now = Date.now();
-    if (now - lastCheck < MIN_POLL_GAP_MS) return;
+    if (!force && now - lastCheck < MIN_POLL_GAP_MS) return;
     lastCheck = now;
 
     let served: ServedBuild;
     try {
       served = await fetchServedBuild();
     } catch {
+      if (!disposed && retryAttempt === 0 && navigator.onLine) {
+        window.setTimeout(() => void check(trigger, bfcache, true, 1), 400);
+        return;
+      }
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: null, checkedAt: new Date().toISOString(), bfcache, decision: "failed", reason: "index fetch failed" });
       return; // offline or origin blocks the read — never disrupt the session
     }
-    if (disposed || !isServedBuildNewer(served)) return;
+    if (disposed) return;
+    if (!served.id) {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: null, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "served build metadata missing" });
+      return;
+    }
+    if (!isServedBuildDifferent(served)) {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current" });
+      return;
+    }
 
     window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
 
     const id = served.id as string;
-    if (!autoReload || alreadyReloadedFor(id)) return;
+    if (!autoReload || alreadyReloadedFor(id)) {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: autoReload ? "reload already attempted" : "auto reload disabled" });
+      return;
+    }
+    recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "reload" });
     markReloadedFor(id);
     // Plain reload: assets are content-hashed and the HTML is sent with
     // no-store, so this pulls the new shell without inventing new URLs.
@@ -174,18 +231,32 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   };
 
   const onVisible = () => {
-    if (document.visibilityState === "visible") void check();
+    if (document.visibilityState !== "visible") return;
+    const resumed = Date.now() - lastHeartbeat > RESUME_GAP_MS;
+    lastHeartbeat = Date.now();
+    void check(resumed ? "resume" : "visible", false, resumed);
   };
 
-  void check();
-  const timer = window.setInterval(() => void check(), POLL_INTERVAL_MS);
+  const onFocus = () => void check("focus", false, true);
+  const onOnline = () => void check("online", false, true);
+  const onPageShow = (event: PageTransitionEvent) => void check("pageshow", event.persisted, true);
+
+  void check("boot", false, true);
+  const timer = window.setInterval(() => {
+    lastHeartbeat = Date.now();
+    void check("interval");
+  }, POLL_INTERVAL_MS);
   document.addEventListener("visibilitychange", onVisible);
-  window.addEventListener("online", onVisible);
+  window.addEventListener("focus", onFocus);
+  window.addEventListener("online", onOnline);
+  window.addEventListener("pageshow", onPageShow);
 
   return () => {
     disposed = true;
     window.clearInterval(timer);
-    window.removeEventListener("online", onVisible);
+    window.removeEventListener("focus", onFocus);
+    window.removeEventListener("online", onOnline);
+    window.removeEventListener("pageshow", onPageShow);
     document.removeEventListener("visibilitychange", onVisible);
   };
 }

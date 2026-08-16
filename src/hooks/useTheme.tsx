@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { THEME_STORAGE_KEY } from '@/lib/ui-persistence';
 
 export type ThemeMode = 'light' | 'dark';
 export type ThemeBrand = 'emerald' | 'blue' | 'purple' | 'orange';
@@ -20,19 +21,37 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = 'app-theme-config';
-
 const defaultTheme: ThemeConfig = {
   mode: 'dark',
   brand: 'emerald',
-  mood: 'default',
+  mood: 'cyber',
 };
 
+const MODES: ThemeMode[] = ['light', 'dark'];
+const BRANDS: ThemeBrand[] = ['emerald', 'blue', 'purple', 'orange'];
+const MOODS: ThemeMood[] = ['default', 'ocean', 'forest', 'sunset', 'midnight', 'cyber'];
+
+function readTheme(): ThemeConfig {
+  try {
+    const raw = localStorage.getItem(THEME_STORAGE_KEY);
+    if (!raw) return defaultTheme;
+    const value = JSON.parse(raw) as Partial<ThemeConfig>;
+    if (
+      MODES.includes(value.mode as ThemeMode) &&
+      BRANDS.includes(value.brand as ThemeBrand) &&
+      MOODS.includes(value.mood as ThemeMood)
+    ) {
+      return value as ThemeConfig;
+    }
+    localStorage.removeItem(THEME_STORAGE_KEY);
+  } catch {
+    try { localStorage.removeItem(THEME_STORAGE_KEY); } catch { /* ignore */ }
+  }
+  return defaultTheme;
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeConfig>(() => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : defaultTheme;
-  });
+  const [theme, setTheme] = useState<ThemeConfig>(readTheme);
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));

@@ -31,6 +31,11 @@ import {
 } from "@/lib/route-diagnostics";
 import { hardReloadLatestBuild } from "@/lib/cache-cleanup";
 import { cn } from "@/lib/utils";
+import {
+  getReleaseCoherenceDiagnostics,
+  subscribeReleaseCoherence,
+  type ReleaseCoherenceDiagnostic,
+} from "@/lib/build-cache-strategy";
 
 function time(t: number) {
   return new Date(t).toLocaleTimeString(undefined, {
@@ -65,8 +70,15 @@ export function RouteDiagnosticsPanel() {
   const [entries, setEntries] = useState<DiagnosticEntry[]>(() => getDiagnostics());
   const [deployment, setDeployment] = useState<DeploymentIdentity | null>(null);
   const [checking, setChecking] = useState(false);
+  const [coherence, setCoherence] = useState<ReleaseCoherenceDiagnostic[]>(
+    () => getReleaseCoherenceDiagnostics(),
+  );
 
   useEffect(() => subscribeDiagnostics(() => setEntries(getDiagnostics())), []);
+  useEffect(
+    () => subscribeReleaseCoherence(() => setCoherence(getReleaseCoherenceDiagnostics())),
+    [],
+  );
 
   const refreshDeployment = useCallback(async () => {
     setChecking(true);
@@ -85,7 +97,7 @@ export function RouteDiagnosticsPanel() {
   const mismatch = deployment?.mismatch ?? false;
 
   const copyReport = async () => {
-    const report = JSON.stringify({ route: location.pathname + location.search, deployment, entries }, null, 2);
+    const report = JSON.stringify({ route: location.pathname + location.search, deployment, coherence, entries }, null, 2);
     try {
       await navigator.clipboard.writeText(report);
       toast({ title: "Diagnostics copied", description: "Route + deployment report is on your clipboard." });
@@ -188,6 +200,33 @@ export function RouteDiagnosticsPanel() {
             <Button size="sm" variant="destructive" onClick={() => void hardReloadLatestBuild()}>
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" /> Hard reload latest build
             </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Inactivity &amp; resume checks</CardTitle>
+          <CardDescription>
+            Release checks triggered after focus, connectivity, visibility, and browser back/forward cache restores.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {coherence.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No resume checks recorded yet.</p>
+          ) : (
+            <ul className="space-y-2 text-xs font-mono">
+              {coherence.slice(0, 10).map((entry, index) => (
+                <li key={`${entry.checkedAt}-${index}`} className="grid gap-1 rounded-lg border p-2 sm:grid-cols-[9rem_6rem_1fr]">
+                  <span>{new Date(entry.checkedAt).toLocaleTimeString()}</span>
+                  <span>{entry.trigger}{entry.bfcache ? " · BFCache" : ""}</span>
+                  <span className={entry.decision === "reload" ? "text-destructive" : "text-muted-foreground"}>
+                    {entry.decision} · served {entry.servedId ?? "unknown"}
+                    {entry.reason ? ` · ${entry.reason}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>

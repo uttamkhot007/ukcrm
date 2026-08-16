@@ -522,6 +522,11 @@ Resources:
         - !Ref PublicSubnet2
       SecurityGroups:
         - !Ref ALBSecurityGroup
+      LoadBalancerAttributes:
+        # Long-idle browser tabs perform a release check when they wake. Keep
+        # idle connections alive long enough to avoid losing that first check.
+        - Key: idle_timeout.timeout_seconds
+          Value: '120'
 
   FrontendTG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
