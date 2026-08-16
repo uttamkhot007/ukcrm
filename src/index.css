@@ -1234,7 +1234,9 @@
     display: none !important;
   }
 
-  /* Sidebar is hidden on paper: reclaim its gutter so the report is centred. */
+  /* Sidebar is hidden on paper: reclaim its gutter so the report is centred.
+     The shell offsets content with a margin-left equal to the sidebar width. */
+  #root div[class*="h-screen"],
   main,
   [role="main"] {
     margin: 0 !important;
