@@ -161,6 +161,81 @@ export function isServedBuildDifferent(served: ServedBuild): boolean {
 
 export type ServedBuildRelation = "same" | "newer" | "older" | "different" | "unknown";
 
+/* ------------------------------------------------------------------ *
+ * Release floor — the hard "never fall back to an old view" guarantee.
+ *
+ * Every release identity this browser has ever *successfully run or seen
+ * served* is remembered as a monotonic floor (highest build time wins).
+ * If the bundle that boots is older than that floor, the browser handed us
+ * a stale shell (HTTP cache, bfcache, proxy, or a lagging task) and we
+ * refuse to render it: caches are purged and the page is reloaded with a
+ * cache-busting probe until a build at or above the floor is served.
+ * ------------------------------------------------------------------ */
+
+const RELEASE_FLOOR_KEY = "nexus:release-floor";
+
+type ReleaseFloor = { time: number; id: string };
+
+function readReleaseFloor(): ReleaseFloor | null {
+  try {
+    const raw = safeLocal()?.getItem(RELEASE_FLOOR_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ReleaseFloor>;
+    return typeof parsed.time === "number" && Number.isFinite(parsed.time) && typeof parsed.id === "string"
+      ? { time: parsed.time, id: parsed.id }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Raise the floor when a newer release identity is observed. */
+export function recordReleaseObservation(buildTime: string | null, id: string | null): void {
+  if (!buildTime || !id || buildTime.startsWith("__")) return;
+  const time = Date.parse(buildTime);
+  if (!Number.isFinite(time)) return;
+  const current = readReleaseFloor();
+  if (current && current.time >= time) return;
+  try {
+    safeLocal()?.setItem(RELEASE_FLOOR_KEY, JSON.stringify({ time, id } satisfies ReleaseFloor));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** True when the bundle currently executing predates a release we already ran. */
+export function isRunningBuildBelowFloor(): boolean {
+  if (BUILD_COMMIT === "dev") return false;
+  const floor = readReleaseFloor();
+  if (!floor) return false;
+  const running = Date.parse(BUILD_TIME);
+  if (!Number.isFinite(running)) return false;
+  return running < floor.time;
+}
+
+/**
+ * Boot guard: never let an old bundle paint. Runs before the watcher so a
+ * regressed shell is thrown away immediately instead of after a poll cycle.
+ */
+export function enforceReleaseFloor(): boolean {
+  if (typeof window === "undefined") return false;
+  if (!isRunningBuildBelowFloor()) {
+    recordReleaseObservation(BUILD_TIME, RUNNING_BUILD_ID);
+    return false;
+  }
+  const floor = readReleaseFloor();
+  recordDiagnostic({
+    trigger: "boot",
+    runningId: RUNNING_BUILD_ID,
+    servedId: floor?.id ?? null,
+    checkedAt: new Date().toISOString(),
+    bfcache: false,
+    decision: "reload",
+    reason: "running bundle is older than a release already seen (stale shell)",
+  });
+  return requestReleaseReload(floor?.id ?? "release-floor", { clearCaches: true });
+}
+
 /**
  * Compare releases directionally. A different release is not automatically a
  * newer release: during an ECS rolling deployment an ALB can briefly return an
