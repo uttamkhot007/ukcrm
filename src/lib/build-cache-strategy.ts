@@ -20,6 +20,7 @@
 
 import { BUILD_COMMIT, BUILD_TIME, BUILD_VERSION } from "@/lib/build-info";
 import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
+import { flushReleaseFloorTelemetry, recordReleaseFloorEvent } from "@/lib/release-floor-telemetry";
 
 const LAST_BUILD_KEY = "nexus:last-build-id";
 const RELOADED_FOR_KEY = "nexus:reloaded-for-build";
@@ -390,6 +391,14 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
     // lagging load-balancer target, proxy, or browser cache.
     if (relation === "older") {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "preserved", reason: "server response is older than running UI; downgrade blocked" });
+      recordReleaseFloorEvent({
+        eventKind: "downgrade_prevented",
+        trigger,
+        servedReleaseId: served.id,
+        ...floorForTelemetry(),
+        reason: "server response is older than running UI; downgrade blocked",
+        action: "kept_current_bundle",
+      });
       return;
     }
 
@@ -398,6 +407,14 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       // this tab is definitively the stale one and must be replaced.
       if (isRunningBuildBelowFloor()) {
         recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "reload", reason: "running bundle is below the release floor" });
+        recordReleaseFloorEvent({
+          eventKind: "served_blocked",
+          trigger,
+          servedReleaseId: served.id,
+          ...floorForTelemetry(),
+          reason: "running bundle is below the release floor",
+          action: "purge_and_reload",
+        });
         requestReleaseReload(served.id, { clearCaches: true });
         return;
       }
@@ -430,6 +447,9 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   const onFocus = () => void check("focus", false, true);
   const onOnline = () => void check("online", false, true);
   const onPageShow = (event: PageTransitionEvent) => void check("pageshow", event.persisted, true);
+
+  // Ship anything queued by a block that happened just before the last reload.
+  void flushReleaseFloorTelemetry();
 
   void check("boot", false, true);
   const timer = window.setInterval(() => {
