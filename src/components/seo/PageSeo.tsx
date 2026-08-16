@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 
-const SITE_URL = "https://ukcrm.lovable.app";
+const configuredSiteUrl = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "");
 
 interface PageSeoProps {
   title: string;
@@ -14,7 +14,8 @@ interface PageSeoProps {
  * route so crawlers attribute the page to itself.
  */
 export function PageSeo({ title, description, path, noindex }: PageSeoProps) {
-  const url = `${SITE_URL}${path}`;
+  const origin = configuredSiteUrl || (typeof window !== "undefined" ? window.location.origin : "");
+  const url = `${origin}${path}`;
 
   return (
     <Helmet>

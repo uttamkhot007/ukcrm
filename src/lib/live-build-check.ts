@@ -12,7 +12,9 @@
 
 import { BUILD_TIME } from "@/lib/build-info";
 
-export const LIVE_SITE_URL = "https://ukcrm.lovable.app";
+export const LIVE_SITE_URL =
+  (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "") ||
+  (typeof window !== "undefined" ? window.location.origin : "");
 
 export type LiveBuildStatus = "fresh" | "stale" | "unknown" | "same-origin";
 

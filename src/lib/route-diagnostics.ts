@@ -154,7 +154,9 @@ function shortCommit(commit: string | null | undefined) {
 
 function deploymentId(buildTime: string | null, commit: string | null) {
   if (!buildTime && !commit) return null;
-  const stamp = buildTime ? buildTime.replace(/[-:.TZ]/g, "").slice(0, 14) : "unknown";
+  const stamp = buildTime
+    ? ["-", ":", ".", "T", "Z"].reduce((value, token) => value.split(token).join(""), buildTime).slice(0, 14)
+    : "unknown";
   return `${stamp}-${shortCommit(commit) ?? "nocommit"}`;
 }
 

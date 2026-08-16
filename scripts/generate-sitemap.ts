@@ -3,7 +3,7 @@
 import { writeFileSync } from "fs";
 import { resolve } from "path";
 
-const BASE_URL = "https://ukcrm.lovable.app";
+const BASE_URL = (process.env.PUBLIC_SITE_URL || "https://nexuscrm.example.com").replace(/\/$/, "");
 
 interface SitemapEntry {
   path: string;
@@ -41,4 +41,8 @@ function generateSitemap(items: SitemapEntry[]) {
 }
 
 writeFileSync(resolve("public/sitemap.xml"), generateSitemap(entries));
+writeFileSync(
+  resolve("public/robots.txt"),
+  `User-agent: Googlebot\nAllow: /\n\nUser-agent: Bingbot\nAllow: /\n\nUser-agent: Twitterbot\nAllow: /\n\nUser-agent: facebookexternalhit\nAllow: /\n\nUser-agent: *\nAllow: /\n\nSitemap: ${BASE_URL}/sitemap.xml\n`,
+);
 console.log(`sitemap.xml written (${entries.length} entries)`);
