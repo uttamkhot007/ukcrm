@@ -1134,3 +1134,92 @@
 .agent-deliverable .kpi[data-tone="warn"] .kpi-value { @apply text-amber-500; }
 .agent-deliverable .kpi[data-tone="bad"] { @apply border-destructive/40; }
 .agent-deliverable .kpi[data-tone="bad"] .kpi-value { @apply text-destructive; }
+
+/* ============================ PRINT / PDF EXPORT ============================
+   Report exports go through the browser print pipeline (window.print()), which
+   inherits whatever theme is on screen. Force the light token set so exported
+   PDFs always come out on white paper with dark text — never a navy sheet with
+   inverted cards. */
+@media print {
+  :root,
+  html,
+  html.dark,
+  body {
+    /* Re-declare the light palette so `dark` tokens can never reach paper. */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --border: 214 25% 88%;
+    --input: 214 25% 88%;
+    color-scheme: light;
+    background: #fff !important;
+    color: hsl(222 47% 11%) !important;
+  }
+
+  /* Any surface that carries a themed background must fall back to paper. */
+  .glass,
+  .glass-card,
+  .neon-card,
+  .bg-gradient-dark,
+  .bg-background,
+  .bg-card,
+  .bg-popover,
+  .bg-muted,
+  .bg-secondary,
+  [class*="bg-gradient"] {
+    background: #fff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-color: hsl(214 25% 88%) !important;
+  }
+
+  /* Cards keep a hairline so structure survives on paper. */
+  .glass,
+  .glass-card,
+  .neon-card,
+  [data-slot="card"] {
+    border: 1px solid hsl(214 25% 88%) !important;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    background: #fff !important;
+    color: hsl(222 47% 11%) !important;
+    border-color: hsl(214 25% 88%) !important;
+  }
+
+  th {
+    background: hsl(210 40% 96%) !important;
+  }
+
+  /* Chrome/Safari otherwise drop background fills when printing. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    text-shadow: none !important;
+  }
+
+  /* Screen-only chrome that must not land in the export. */
+  aside,
+  nav,
+  [data-print-hide],
+  [role="banner"],
+  [role="dialog"] [data-radix-dialog-overlay],
+  .overlay-scrim {
+    display: none !important;
+  }
+}
