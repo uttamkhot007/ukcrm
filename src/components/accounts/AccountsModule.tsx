@@ -4,7 +4,7 @@ import { AccountsARaging } from "./AccountsARAging";
 import { AccountsSLAReminders } from "./AccountsSLAReminders";
 import { AccountsProcurement } from "./AccountsProcurement";
 import { AccountsStocking } from "./AccountsStocking";
-import { SalesAnalyticsModule } from "./SalesAnalyticsModule";
+import { FinanceIntelligenceDashboard } from "./FinanceIntelligenceDashboard";
 import { PostSaleWorkflowView } from "./PostSaleWorkflowView";
 import { QuotationApprovals } from "./QuotationApprovals";
 
