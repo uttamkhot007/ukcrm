@@ -14,6 +14,22 @@ const BUILD_COMMIT =
   process.env.VERCEL_GIT_COMMIT_SHA ||
   process.env.GITHUB_SHA ||
   "dev";
+const BUILD_ENVIRONMENT = process.env.APP_ENVIRONMENT || process.env.NODE_ENV || "development";
+const BASE_RELEASE_ID = process.env.APP_RELEASE_ID || `${BUILD_COMMIT}:${BUILD_TIME}`;
+let currentReleaseId = BASE_RELEASE_ID;
+let currentReleaseRevision = 0;
+
+function releaseManifest() {
+  return {
+    releaseId: currentReleaseId,
+    revision: currentReleaseRevision,
+    commit: BUILD_COMMIT,
+    buildTime: BUILD_TIME,
+    version: pkg.version,
+    uiSchemaVersion: "2",
+    environment: BUILD_ENVIRONMENT,
+  };
+}
 
 // `lovable-tagger` is a Lovable-editor-only devDependency. Loading it lazily
 // (and only in development) means the AWS production bundle has no hard
@@ -53,9 +69,36 @@ export default defineConfig(async ({ mode }) => {
           handler(html: string) {
             return html
               .replace(/__INDEX_HTML_BUILT__/g, BUILD_TIME)
-              .replace(/__INDEX_HTML_COMMIT__/g, BUILD_COMMIT);
+              .replace(/__INDEX_HTML_COMMIT__/g, BUILD_COMMIT)
+              .replace(/__INDEX_HTML_RELEASE_ID__/g, currentReleaseId)
+              .replace(/__INDEX_HTML_RELEASE_REVISION__/g, String(currentReleaseRevision))
+              .replace(/__INDEX_HTML_ENVIRONMENT__/g, BUILD_ENVIRONMENT);
           },
 
+        },
+      },
+      {
+        name: "release-manifest",
+        configureServer(server) {
+          server.watcher.on("change", (file) => {
+            if (!file.includes("node_modules") && !file.includes(".git")) {
+              currentReleaseRevision += 1;
+              currentReleaseId = `${BASE_RELEASE_ID}:hmr:${currentReleaseRevision}`;
+            }
+          });
+          server.middlewares.use("/release-manifest.json", (_req, res) => {
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            res.end(JSON.stringify(releaseManifest()));
+          });
+        },
+        generateBundle() {
+          this.emitFile({
+            type: "asset",
+            fileName: "release-manifest.json",
+            source: JSON.stringify(releaseManifest(), null, 2),
+          });
         },
       },
     ].filter(Boolean),
@@ -97,6 +140,9 @@ export default defineConfig(async ({ mode }) => {
       __APP_VERSION__: JSON.stringify(pkg.version),
       __APP_BUILD_TIME__: JSON.stringify(BUILD_TIME),
       __APP_COMMIT__: JSON.stringify(BUILD_COMMIT),
+      __APP_RELEASE_ID__: JSON.stringify(BASE_RELEASE_ID),
+      __APP_RELEASE_REVISION__: JSON.stringify(0),
+      __APP_ENVIRONMENT__: JSON.stringify(BUILD_ENVIRONMENT),
       ...(isProd
         ? {
             "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(""),
