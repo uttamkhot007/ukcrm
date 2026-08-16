@@ -96,7 +96,25 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@NexusCRM" />
+    <script>
+      // Apply the persisted theme before first paint so light mode never
+      // flashes dark. The <body> must NOT carry a hardcoded theme class:
+      // that made every Tailwind `dark:` variant win in light mode.
+      (function () {
+        try {
+          var raw = localStorage.getItem('nexus-theme:v2');
+          var t = raw ? JSON.parse(raw) : null;
+          var mode = t && t.mode === 'light' ? 'light' : 'dark';
+          var el = document.documentElement;
+          el.classList.remove('light', 'dark');
+          el.classList.add(mode);
+          el.setAttribute('data-brand', (t && t.brand) || 'emerald');
+          el.setAttribute('data-mood', (t && t.mood) || 'cyber');
+        } catch (e) { document.documentElement.classList.add('dark'); }
+      })();
+    </script>
   </head>
+
 
   <body>
     <!--
