@@ -88,16 +88,14 @@ interface ProductTechnology extends JunctionRecord {
 
 interface OfferingProblemAreaMapping extends JunctionRecord {
   offering_id: string;
-  offering_type: "product" | "offensive_security" | "managed_security" | "professional_services";
+  offering_type: "product" | "professional_services";
   problem_area_id: string;
 }
 
-type OfferingType = "products" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
+type OfferingType = "products" | "professional_services" | "problem_areas" | "technologies" | "oems";
 
 const offeringTabs: { value: OfferingType; label: string; icon: React.ElementType; table: string }[] = [
   { value: "products", label: "Products", icon: Package, table: "offerings_products" },
-  { value: "offensive_security", label: "Offensive Security", icon: Shield, table: "offerings_offensive_security" },
-  { value: "managed_security", label: "Managed Security", icon: Server, table: "offerings_managed_security" },
   { value: "professional_services", label: "Professional Services", icon: Briefcase, table: "offerings_professional_services" },
   { value: "problem_areas", label: "Problem & Requirement Areas", icon: Target, table: "offerings_problem_areas" },
   { value: "technologies", label: "Technologies", icon: Cpu, table: "offerings_technologies" },
