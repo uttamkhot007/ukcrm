@@ -254,25 +254,6 @@ export const TEMPLATE_LIBRARY: LibraryTemplate[] = [
     branding: THEMES.technicalGreen,
   },
   {
-    key: "quote-offensive-security",
-    name: "Offensive Security (VAPT) Quotation",
-    description: "Assessment quote with scope units, testing windows and reporting deliverables.",
-    template_type: "quote",
-    role: "sales",
-    solution: "Offensive Security",
-    content: {
-      ...fields(
-        ["Quote Number", "auto"], ["Customer Details", "customer"],
-        ["Assessment Scope", "table"], ["Testing Methodology", "rich_text"],
-        ["Testing Window", "text"], ["Deliverables", "list"], ["Total", "calculated"],
-      ),
-      scopeUnits: ["IPs", "Applications", "APIs", "Mobile apps", "Cloud accounts"],
-    },
-    header_content: docHeader("SECURITY ASSESSMENT QUOTATION"),
-    footer_content: docFooter({ showTerms: true, showSignature: true, showNdaNote: true }),
-    branding: THEMES.complianceSlate,
-  },
-  {
     key: "quote-renewal",
     name: "Renewal Quotation",
     description: "Renewal-specific quote showing existing entitlement, uplift and multi-year options.",
