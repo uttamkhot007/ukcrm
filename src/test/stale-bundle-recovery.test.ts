@@ -247,7 +247,7 @@ describe("watcher against the deployed release", () => {
     );
     const strategy = await loadStrategy();
     await expect(strategy.installBuildCacheStrategy()).resolves.toBe(false);
-    expect(forceFreshReload).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
   });
 });
 
