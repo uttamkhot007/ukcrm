@@ -351,8 +351,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))', 
                       borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                    }}
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)', color: 'hsl(var(--popover-foreground))',}}
                     formatter={(value: number, name: string) => {
                       if (name === 'deals' || name === 'won') return [value, name.charAt(0).toUpperCase() + name.slice(1)];
                       return [formatCurrency(value), name.charAt(0).toUpperCase() + name.slice(1)];
@@ -407,8 +406,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Funnel
                     dataKey="value"
@@ -454,8 +452,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                     formatter={(value: number) => [`${value.toFixed(1)}%`, 'Score']}
                   />
                 </RadarChart>
@@ -494,8 +491,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                     formatter={(value: number, name: string, props: any) => [
                       `${value} invoices (${formatCurrency(props.payload.amount)})`,
                       name
@@ -533,8 +529,7 @@ export function TableauDashboard({ role }: TableauDashboardProps) {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Bar dataKey="value" name="Employees" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>

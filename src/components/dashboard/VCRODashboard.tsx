@@ -307,8 +307,7 @@ export function VCRODashboard() {
                     ]}
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))" 
-                    }}
+                      border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Legend />
                   <Bar yAxisId="left" dataKey="won" name="Won" fill="hsl(var(--chart-2))" />
@@ -336,8 +335,7 @@ export function VCRODashboard() {
                     formatter={(value: number) => formatCurrency(value)}
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))" 
-                    }}
+                      border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -375,8 +373,7 @@ export function VCRODashboard() {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))" 
-                      }}
+                        border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                     />
                     <Legend />
                   </PieChart>

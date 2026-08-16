@@ -1,3 +1,4 @@
+import { chartTooltipProps } from "@/lib/chart-theme";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -351,7 +352,7 @@ export function MoodAnalyticsDashboard() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip />
+                  <Tooltip {...chartTooltipProps} />
                   <Legend />
                   <Line type="monotone" dataKey="good" stroke="#22C55E" strokeWidth={2} />
                   <Line type="monotone" dataKey="stressful" stroke="#EF4444" strokeWidth={2} />

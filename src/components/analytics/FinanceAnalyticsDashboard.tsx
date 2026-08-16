@@ -404,8 +404,7 @@ export function FinanceAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                     formatter={(value: number) => formatCurrency(value)}
                   />
                   <Legend />
@@ -452,8 +451,7 @@ export function FinanceAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Bar dataKey="value" name="Invoices" radius={[4, 4, 0, 0]}>
                     {financeData?.arAging.map((entry, index) => (
@@ -496,8 +494,7 @@ export function FinanceAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                     formatter={(value: number, name: string, props: any) => [
                       `${value} invoices (${formatCurrency(props.payload.amount)})`,
                       name
@@ -539,8 +536,7 @@ export function FinanceAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                     formatter={(value: number) => formatCurrency(value)}
                   />
                   <Bar dataKey="value" name="Amount" radius={[0, 4, 4, 0]}>

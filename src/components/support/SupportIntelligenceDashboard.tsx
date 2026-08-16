@@ -1,3 +1,4 @@
+import { chartTooltipProps } from "@/lib/chart-theme";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
@@ -228,7 +229,7 @@ export function SupportIntelligenceDashboard() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip {...chartTooltipProps} />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {metrics.ticketsBySeverity.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

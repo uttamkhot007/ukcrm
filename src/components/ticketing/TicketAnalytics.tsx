@@ -1,3 +1,4 @@
+import { chartTooltipProps } from "@/lib/chart-theme";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
@@ -285,7 +286,7 @@ export function TicketAnalytics() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="date" className="text-xs" />
                     <YAxis className="text-xs" />
-                    <Tooltip />
+                    <Tooltip {...chartTooltipProps} />
                     <Legend />
                     <Area type="monotone" dataKey="created" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} name="Created" />
                     <Area type="monotone" dataKey="resolved" stackId="2" stroke="#10b981" fill="#10b981" fillOpacity={0.2} name="Resolved" />
@@ -320,7 +321,7 @@ export function TicketAnalytics() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip {...chartTooltipProps} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -349,7 +350,7 @@ export function TicketAnalytics() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip {...chartTooltipProps} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -367,7 +368,7 @@ export function TicketAnalytics() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis type="number" className="text-xs" />
                       <YAxis dataKey="name" type="category" className="text-xs" width={80} />
-                      <Tooltip />
+                      <Tooltip {...chartTooltipProps} />
                       <Bar dataKey="value" fill="#3b82f6" radius={4} />
                     </BarChart>
                   </ResponsiveContainer>
