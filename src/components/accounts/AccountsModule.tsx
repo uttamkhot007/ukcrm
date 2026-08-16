@@ -37,7 +37,7 @@ export function AccountsModule({ initialTab = "contracts" }: AccountsModuleProps
       case "quotation-approvals":
         return <QuotationApprovals />;
       case "analytics":
-        return <SalesAnalyticsModule />;
+        return <FinanceIntelligenceDashboard />;
       default:
         return <AccountsContractWorkflow filterStage="all" />;
     }
