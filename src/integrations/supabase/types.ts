@@ -802,6 +802,7 @@ export type Database = {
           notes: string | null
           required_role: string
           status: string
+          tenant_id: string | null
         }
         Insert: {
           approval_level?: number
@@ -814,6 +815,7 @@ export type Database = {
           notes?: string | null
           required_role?: string
           status?: string
+          tenant_id?: string | null
         }
         Update: {
           approval_level?: number
@@ -826,6 +828,7 @@ export type Database = {
           notes?: string | null
           required_role?: string
           status?: string
+          tenant_id?: string | null
         }
         Relationships: []
       }
