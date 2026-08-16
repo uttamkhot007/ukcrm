@@ -22,6 +22,7 @@ import {
   Headphones,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { SlaCommandCenter } from "./SlaCommandCenter";
 
 interface SupportMetrics {
   totalTickets: number;
