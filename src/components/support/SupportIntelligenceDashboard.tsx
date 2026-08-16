@@ -22,6 +22,7 @@ import {
   Headphones,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { SlaCommandCenter } from "./SlaCommandCenter";
 
 interface SupportMetrics {
   totalTickets: number;
@@ -174,10 +175,16 @@ export function SupportIntelligenceDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="command">SLA Command Center</TabsTrigger>
           <TabsTrigger value="severity">Severity</TabsTrigger>
           <TabsTrigger value="sla">SLA</TabsTrigger>
           <TabsTrigger value="ai">AI Triage</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="command" className="space-y-4">
+          <SlaCommandCenter />
+        </TabsContent>
+
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
