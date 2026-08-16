@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,21 +9,28 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTenant } from "@/contexts/TenantContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { analyzeDeal, summarize, type DealIntelligence, type IntelligenceDeal, type RiskLevel } from "@/lib/deal-intelligence";
+import { analyzeDeal, summarize, type DealIntelligence, type IntelligenceDeal, type NextBestAction, type RiskLevel } from "@/lib/deal-intelligence";
+import { automateBatch, automateNextBestAction, dueInDaysFor } from "@/lib/pipeline-followups";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   ArrowUpRight,
+  BellRing,
   CalendarClock,
   CheckCircle2,
   Clock,
   Compass,
   Flame,
   ListChecks,
+  Loader2,
   Search,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
+
 
 const LEVEL_META: Record<RiskLevel, { label: string; className: string; icon: typeof Flame }> = {
   critical: { label: "Critical", className: "bg-destructive/15 text-destructive border-destructive/30", icon: Flame },
