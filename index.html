@@ -62,13 +62,31 @@
           };
 
           // No service worker is registered by this app. Any registration left
-          // over from an older build is removed once, along with its caches.
-          // We never reload here: reloading after cleanup fought with the
-          // React-side unregister and bounced users onto stale snapshots.
+          // over from an older build is torn down here, along with the caches it
+          // created. If this page itself was served by a stale worker, we reload
+          // exactly once (guarded by a session flag) so the user can never keep
+          // looking at an outdated view.
+          var swPurgeFlag = "nexus:sw-purged";
+          var controlledByStaleSw =
+            "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
+
+          function reloadOnceAfterPurge() {
+            try {
+              if (sessionStorage.getItem(swPurgeFlag) === "1") return;
+              sessionStorage.setItem(swPurgeFlag, "1");
+            } catch (e) { return; }
+            window.location.reload();
+          }
+
           if ("serviceWorker" in navigator) {
             navigator.serviceWorker.getRegistrations().then(function (regs) {
-              (regs || []).forEach(function (r) {
-                try { r.unregister(); } catch (e) { /* ignore */ }
+              var had = (regs || []).length > 0;
+              return Promise.all(
+                (regs || []).map(function (r) {
+                  return r.unregister().catch(function () {});
+                })
+              ).then(function () {
+                if (had && controlledByStaleSw) reloadOnceAfterPurge();
               });
             }).catch(function () {});
           }
@@ -79,6 +97,7 @@
               });
             }).catch(function () {});
           }
+
         } catch (e) { /* never block app startup */ }
       })();
     </script>
