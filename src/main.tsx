@@ -18,11 +18,6 @@ console.info(
 );
 
 installPreviewBuildRefreshHook();
-// Purge build-scoped caches when the bundle changes and keep watching the
-// deployed build so returning visitors never sit on a stale shell.
-const releaseIsCurrent = installBuildCacheStrategy();
-
-
 // Vite fires this when a preloaded module chunk cannot be fetched — almost
 // always a dropped connection or a build that was replaced mid-session. We
 // swallow the default hard error and let the retry layer / error boundary
@@ -34,15 +29,20 @@ window.addEventListener("vite:preloadError", (event) => {
   if (navigator.onLine && isStaleDeployError(reason)) recoverFromStaleDeploy();
 });
 
-if (releaseIsCurrent) {
-  const root = document.getElementById("root");
-  if (root) {
-    // Only hide the static build marker once this release is allowed to paint.
-    document.documentElement.setAttribute("data-react-mounted", "1");
-    createRoot(root).render(
-      <HelmetProvider>
-        <App />
-      </HelmetProvider>
-    );
+async function mountCurrentRelease() {
+  const releaseIsCurrent = await installBuildCacheStrategy();
+  if (releaseIsCurrent) {
+    const root = document.getElementById("root");
+    if (root) {
+      // Only hide the static build marker once this release is allowed to paint.
+      document.documentElement.setAttribute("data-react-mounted", "1");
+      createRoot(root).render(
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
+      );
+    }
   }
 }
+
+void mountCurrentRelease();

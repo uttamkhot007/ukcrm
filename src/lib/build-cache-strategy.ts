@@ -503,12 +503,44 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 }
 
 /** Boot-time entry point used by main.tsx. */
-export function installBuildCacheStrategy(): boolean {
+export async function installBuildCacheStrategy(): Promise<boolean> {
   const isDev = Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV);
   // Hard guarantee first: if this bundle predates a release we already ran,
   // purge and reload before anything else renders against it.
   if (!isDev && enforceReleaseFloor()) return false;
-  void purgeCachesOnNewBuild();
+
+  // Gate first paint on the authoritative manifest so an old React tree can
+  // never mount while a newer deployment is being discovered in background.
+  try {
+    const served = await fetchServedBuild();
+    recordReleaseObservation(served.buildTime, served.id);
+    if (compareServedBuild(served) === "newer" && served.id) {
+      window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
+      recordDiagnostic({
+        trigger: "boot",
+        runningId: RUNNING_BUILD_ID,
+        servedId: served.id,
+        checkedAt: new Date().toISOString(),
+        bfcache: false,
+        decision: "reload",
+        reason: "newer release found before application mount",
+      });
+      requestReleaseReload(served.id, { clearCaches: true });
+      return false;
+    }
+  } catch {
+    recordDiagnostic({
+      trigger: "boot",
+      runningId: RUNNING_BUILD_ID,
+      servedId: null,
+      checkedAt: new Date().toISOString(),
+      bfcache: false,
+      decision: "failed",
+      reason: "release manifest unavailable before application mount",
+    });
+  }
+
+  await purgeCachesOnNewBuild();
   watchServedBuild({ autoReload: true });
   return true;
 }

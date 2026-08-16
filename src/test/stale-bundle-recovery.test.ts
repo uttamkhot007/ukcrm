@@ -239,6 +239,16 @@ describe("watcher against the deployed release", () => {
     await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
     stop();
   });
+
+  it("blocks application mount when the boot manifest is newer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(servedManifest(NEW_TIME, "newcommit"), { status: 200 })),
+    );
+    const strategy = await loadStrategy();
+    await expect(strategy.installBuildCacheStrategy()).resolves.toBe(false);
+    expect(forceFreshReload).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("cached assets from a previous build", () => {
