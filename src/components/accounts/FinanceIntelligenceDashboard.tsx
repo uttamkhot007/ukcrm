@@ -90,7 +90,10 @@ export function FinanceIntelligenceDashboard() {
     enabled: !!tenantId,
   });
 
+  const invoiceIds = useMemo(() => (invoices as any[]).map((i: any) => i.id), [invoices]);
+
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
+
     queryKey: ["fi-payments", tenantId, invoiceIds.length],
     queryFn: async () => {
       if (!invoiceIds.length) return [];
