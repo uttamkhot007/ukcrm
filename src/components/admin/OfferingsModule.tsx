@@ -591,12 +591,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       case "product-problem":
         const linkedProblemIds1 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "product").map(m => m.problem_area_id);
         return problemAreas.filter(pa => !linkedProblemIds1.includes(pa.id));
-      case "offensive-problem":
-        const linkedProblemIds2 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "offensive_security").map(m => m.problem_area_id);
-        return problemAreas.filter(pa => !linkedProblemIds2.includes(pa.id));
-      case "managed-problem":
-        const linkedProblemIds3 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "managed_security").map(m => m.problem_area_id);
-        return problemAreas.filter(pa => !linkedProblemIds3.includes(pa.id));
       case "professional-problem":
         const linkedProblemIds4 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "professional_services").map(m => m.problem_area_id);
         return problemAreas.filter(pa => !linkedProblemIds4.includes(pa.id));
@@ -636,14 +630,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         table = "offering_problem_area_mappings";
         data = { offering_id: selectedItemForLink.id, offering_type: "product", problem_area_id: targetId };
         break;
-      case "offensive-problem":
-        table = "offering_problem_area_mappings";
-        data = { offering_id: selectedItemForLink.id, offering_type: "offensive_security", problem_area_id: targetId };
-        break;
-      case "managed-problem":
-        table = "offering_problem_area_mappings";
-        data = { offering_id: selectedItemForLink.id, offering_type: "managed_security", problem_area_id: targetId };
-        break;
       case "professional-problem":
         table = "offering_problem_area_mappings";
         data = { offering_id: selectedItemForLink.id, offering_type: "professional_services", problem_area_id: targetId };
@@ -679,8 +665,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         record = productTechnologies.find(pt => pt.technology_id === itemId && pt.product_id === linkedId);
         break;
       case "product-problem":
-      case "offensive-problem":
-      case "managed-problem":
       case "professional-problem":
         table = "offering_problem_area_mappings";
         record = problemAreaMappings.find(m => m.offering_id === itemId && m.problem_area_id === linkedId);
@@ -711,8 +695,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       case "tech-product":
         return `Link Products to ${selectedItemForLink?.name}`;
       case "product-problem":
-      case "offensive-problem":
-      case "managed-problem":
       case "professional-problem":
         return `Link Problem Areas to ${selectedItemForLink?.name}`;
       default:
