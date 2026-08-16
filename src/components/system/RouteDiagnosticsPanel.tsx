@@ -95,6 +95,12 @@ export function RouteDiagnosticsPanel() {
 
   const redirects = useMemo(() => entries.filter((e) => e.kind !== "route"), [entries]);
   const mismatch = deployment?.mismatch ?? false;
+  const unverifiableRelease = Boolean(
+    deployment &&
+      (deployment.bundle.commit === "dev" ||
+        !deployment.served.id ||
+        deployment.served.commit === "dev"),
+  );
 
   const copyReport = async () => {
     const report = JSON.stringify({ route: location.pathname + location.search, deployment, coherence, entries }, null, 2);
@@ -158,10 +164,10 @@ export function RouteDiagnosticsPanel() {
       </Card>
 
       {/* Deployment identity */}
-      <Card className={mismatch ? "border-destructive/40" : undefined}>
+      <Card className={mismatch || unverifiableRelease ? "border-destructive/40" : undefined}>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            {mismatch ? (
+            {mismatch || unverifiableRelease ? (
               <AlertTriangle className="w-4 h-4 text-destructive" aria-hidden="true" />
             ) : (
               <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-hidden="true" />
@@ -171,6 +177,8 @@ export function RouteDiagnosticsPanel() {
           <CardDescription>
             {mismatch
               ? "The HTML served by this origin was built from a different deployment than the JavaScript running in this tab — you are looking at a stale shell."
+              : unverifiableRelease
+                ? "This deployment uses a development or missing release identity, so stale-view protection cannot be fully verified."
               : "The served HTML and the running bundle come from the same deployment."}
           </CardDescription>
         </CardHeader>

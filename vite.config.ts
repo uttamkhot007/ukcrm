@@ -26,7 +26,7 @@ function releaseManifest() {
     commit: BUILD_COMMIT,
     buildTime: BUILD_TIME,
     version: pkg.version,
-    uiSchemaVersion: "2",
+    uiSchemaVersion: "3",
     environment: BUILD_ENVIRONMENT,
   };
 }
