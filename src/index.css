@@ -406,6 +406,18 @@
     border: 1px solid hsl(var(--glass-border) / 0.5);
   }
 
+  /* Dialog/sheet/drawer scrims: shared token so the white theme gets a light,
+     neutral veil instead of a near-black slab. */
+  .overlay-scrim {
+    background-color: hsl(222 47% 11% / 0.35);
+  }
+
+  .dark .overlay-scrim {
+    background-color: hsl(0 0% 0% / 0.8);
+  }
+
+
+
   /* Enhanced Glass Hover */
   .glass-hover {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
