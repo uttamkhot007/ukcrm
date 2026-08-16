@@ -396,7 +396,16 @@ export function FinanceIntelligenceDashboard() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="collections" className="space-y-4">
+          <PaymentTrackingPanel />
+        </TabsContent>
+
+        <TabsContent value="dso-pnl" className="space-y-4">
+          <DsoProfitInsights />
+        </TabsContent>
+
         <TabsContent value="taxation" className="space-y-4">
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TaxCard title="Output GST (Payable)" value={metrics.gstPayable} type="outward" />
             <TaxCard title="Input GST (Credit)" value={metrics.gstInputCredit} type="inward" />
