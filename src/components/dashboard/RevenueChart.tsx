@@ -1,4 +1,6 @@
+import { CHART_TOKENS, chartAxisProps, chartGridProps, chartTooltipProps } from "@/lib/chart-theme";
 import {
+
   AreaChart,
   Area,
   XAxis,
