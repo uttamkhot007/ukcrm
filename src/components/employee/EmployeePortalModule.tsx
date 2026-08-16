@@ -20,6 +20,7 @@ import {
   BarChart3,
   Activity,
   FolderKanban,
+  Route,
   Briefcase,
   Calendar,
   Receipt,
@@ -45,6 +46,7 @@ const AttendanceModule = lazyNamed(() => import("./AttendanceModule"), "Attendan
 const AttendanceReports = lazyNamed(() => import("./AttendanceReports"), "AttendanceReports");
 const DailyActivityTracker = lazyNamed(() => import("./DailyActivityTracker"), "DailyActivityTracker");
 const EmployeeWorkflowsModule = lazyNamed(() => import("./EmployeeWorkflowsModule"), "EmployeeWorkflowsModule");
+const HRJourneysModule = lazyNamed(() => import("./HRJourneysModule"), "HRJourneysModule");
 const RequestsModule = lazyNamed(() => import("./RequestsModule"), "RequestsModule");
 const RequestApprovalModule = lazyNamed(() => import("./RequestApprovalModule"), "RequestApprovalModule");
 const EmployeeResourcesModule = lazyNamed(() => import("./EmployeeResourcesModule"), "EmployeeResourcesModule");
@@ -126,6 +128,7 @@ export function EmployeePortalModule({ initialTab = "employee-profile" }: Employ
           { id: "attendance-reports", label: "Attendance Reports", icon: BarChart3, render: () => <AttendanceReports />, preload: asPreload(AttendanceReports), visible: canSeeTeamReports },
           { id: "activity-tracker", label: "Activity Tracker", icon: Activity, render: () => <DailyActivityTracker />, preload: asPreload(DailyActivityTracker) },
           { id: "workflows", label: "My Workflows", icon: FolderKanban, render: () => <EmployeeWorkflowsModule />, preload: asPreload(EmployeeWorkflowsModule) },
+          { id: "hr-journeys", label: "HR Journeys", icon: Route, render: () => <HRJourneysModule />, preload: asPreload(HRJourneysModule) },
           { id: "projects", label: "Projects", icon: Briefcase, render: () => <ProjectsModule />, preload: asPreload(ProjectsModule) },
         ],
       },
@@ -180,6 +183,8 @@ export function EmployeePortalModule({ initialTab = "employee-profile" }: Employ
       "employee-attendance-reports": "attendance-reports",
       "employee-activity-tracker": "activity-tracker",
       "employee-workflows": "workflows",
+      "employee-hr-journeys": "hr-journeys",
+      "hr-journeys": "hr-journeys",
       "employee-tasks": "workflows",
       "employee-projects": "projects",
       "employee-leave": "leave",
