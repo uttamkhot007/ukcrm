@@ -14,6 +14,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthDiagnosticsGate } from "@/components/auth/AuthDiagnosticsGate";
 import { BuildVersionBadge } from "@/components/system/BuildVersionBadge";
 import { RouteDiagnosticsTracker } from "@/components/system/RouteDiagnosticsTracker";
+import { VersionMismatchBanner } from "@/components/system/VersionMismatchBanner";
 
 import Auth from "./pages/Auth";
 
@@ -125,6 +126,7 @@ const App = () => (
               </Routes>
               </Suspense>
               <AuthDiagnosticsGate />
+              <VersionMismatchBanner />
               <BuildVersionBadge />
               <RouteDiagnosticsTracker />
 
