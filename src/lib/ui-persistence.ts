@@ -1,5 +1,5 @@
 /** Presentation-state schema. Bump when navigation or theme shapes change. */
-export const UI_STATE_SCHEMA_VERSION = "2";
+export const UI_STATE_SCHEMA_VERSION = "3";
 export const UI_STATE_PREFIX = `nexus-ui-state:v${UI_STATE_SCHEMA_VERSION}:`;
 /**
  * @deprecated Legacy, schema-versioned theme key. The live key is the stable

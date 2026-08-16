@@ -24,7 +24,7 @@ document.documentElement.setAttribute("data-react-mounted", "1");
 installPreviewBuildRefreshHook();
 // Purge build-scoped caches when the bundle changes and keep watching the
 // deployed build so returning visitors never sit on a stale shell.
-installBuildCacheStrategy();
+const releaseIsCurrent = installBuildCacheStrategy();
 
 
 // Vite fires this when a preloaded module chunk cannot be fetched — almost
@@ -38,8 +38,13 @@ window.addEventListener("vite:preloadError", (event) => {
   if (navigator.onLine && isStaleDeployError(reason)) recoverFromStaleDeploy();
 });
 
-createRoot(document.getElementById("root")!).render(
-  <HelmetProvider>
-    <App />
-  </HelmetProvider>
-);
+if (releaseIsCurrent) {
+  const root = document.getElementById("root");
+  if (root) {
+    createRoot(root).render(
+      <HelmetProvider>
+        <App />
+      </HelmetProvider>
+    );
+  }
+}
