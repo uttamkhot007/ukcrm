@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Sparkles,
   Bot,
+  Brain,
   HeartPulse,
   Gauge,
 
