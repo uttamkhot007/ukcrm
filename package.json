@@ -16,7 +16,10 @@
     "test:isolation": "vitest run tests/tenant-isolation.db.test.ts backend/src/routes/__tests__/crud-factory.tenant-isolation.test.ts backend/src/platform/__tests__/events.tenant-isolation.test.ts",
     "test:contract": "vitest run backend/src/platform/__tests__/contract.test.ts",
     "predev": "bunx tsx scripts/generate-sitemap.ts",
-    "prebuild": "bunx tsx scripts/generate-sitemap.ts"
+    "prebuild": "bunx tsx scripts/generate-sitemap.ts",
+    "test:theme": "vitest run src/test/theme-regression.test.ts",
+    "test:theme:visual": "python3 scripts/theme-visual-regression.py",
+    "test:theme:visual:update": "python3 scripts/theme-visual-regression.py --update"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
