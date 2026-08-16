@@ -15,6 +15,8 @@
  *     forever, so retrying is pointless — we reload onto the fresh build once.
  */
 
+import { requestReleaseReload } from "@/lib/build-cache-strategy";
+
 export class ChunkLoadError extends Error {
   readonly cause?: unknown;
   readonly offline: boolean;
@@ -69,10 +71,7 @@ export function isStaleDeployError(error: unknown): boolean {
  */
 export function recoverFromStaleDeploy(): boolean {
   if (typeof window === "undefined") return false;
-  void import("@/lib/build-cache-strategy").then(({ requestReleaseReload }) => {
-    requestReleaseReload("chunk-load-failure", { clearCaches: true });
-  });
-  return true;
+  return requestReleaseReload("chunk-load-failure", { clearCaches: true });
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
