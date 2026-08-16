@@ -39,7 +39,6 @@ import {
   Users, 
   Plus, 
   Package,
-  Server,
   Briefcase
 } from "lucide-react";
 
@@ -48,12 +47,10 @@ interface OrganizationSupportConfigProps {
   organizationName: string;
 }
 
-type SolutionCategory = "products" | "offensive_security" | "managed_security" | "professional_services";
+type SolutionCategory = "products" | "professional_services";
 
 const solutionCategories: { value: SolutionCategory; label: string; icon: React.ElementType }[] = [
   { value: "products", label: "Products", icon: Package },
-  { value: "offensive_security", label: "Offensive Security Services", icon: Shield },
-  { value: "managed_security", label: "Managed Services", icon: Server },
   { value: "professional_services", label: "Professional Services", icon: Briefcase },
 ];
 
@@ -139,27 +136,6 @@ export default function OrganizationSupportConfig({
     enabled: !!currentTenant,
   });
 
-  const { data: offeringsOffensive } = useQuery({
-    queryKey: ["offerings", "offensive_security", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data, error } = await supabase.from("offerings_offensive_security").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!currentTenant,
-  });
-
-  const { data: offeringsManaged } = useQuery({
-    queryKey: ["offerings", "managed_security", currentTenant?.id],
-    queryFn: async () => {
-      if (!currentTenant) return [];
-      const { data, error } = await supabase.from("offerings_managed_security").select("id, name").eq("tenant_id", currentTenant.id).eq("status", "active");
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!currentTenant,
-  });
 
   const { data: offeringsProfessional } = useQuery({
     queryKey: ["offerings", "professional_services", currentTenant?.id],
@@ -175,8 +151,6 @@ export default function OrganizationSupportConfig({
   const getOfferingsForCategory = (category: SolutionCategory) => {
     switch (category) {
       case "products": return offeringsProducts || [];
-      case "offensive_security": return offeringsOffensive || [];
-      case "managed_security": return offeringsManaged || [];
       case "professional_services": return offeringsProfessional || [];
       default: return [];
     }
@@ -445,7 +419,7 @@ function SolutionForm({
   const [isLoading, setIsLoading] = useState(false);
 
   const offerings = selectedCategory ? getOfferingsForCategory(selectedCategory) : [];
-  const showEscalationMatrix = selectedCategory === "managed_security";
+  const showEscalationMatrix = false;
 
   const handleSubmit = async () => {
     if (!selectedCategory || !selectedOffering) return;

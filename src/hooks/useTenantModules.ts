@@ -14,9 +14,7 @@ export type ModuleKey =
   | 'renewals'
   | 'tenders'
   | 'ai_assistant'
-  | 'projects'
-  | 'mss'
-  | 'offensive';
+  | 'projects';
 
 interface ModuleConfig {
   key: ModuleKey;

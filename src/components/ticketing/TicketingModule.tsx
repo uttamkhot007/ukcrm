@@ -7,6 +7,7 @@ import { TicketDetailsSheet } from "./TicketDetailsSheet";
 import { TicketAnalytics } from "./TicketAnalytics";
 import { TicketAutomation } from "./TicketAutomation";
 import { CannedResponses } from "./CannedResponses";
+import { SupportIntelligenceDashboard } from "@/components/support/SupportIntelligenceDashboard";
 import { Button } from "@/components/ui/button";
 import { Plus, LayoutGrid, List, Ticket } from "lucide-react";
 
@@ -28,6 +29,8 @@ export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
     switch (activeTab) {
       case "analytics":
         return <TicketAnalytics />;
+      case "intelligence":
+        return <SupportIntelligenceDashboard />;
       case "automation":
         return <TicketAutomation />;
       case "templates":

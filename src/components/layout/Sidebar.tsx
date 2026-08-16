@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Sparkles,
   Bot,
+  Brain,
   HeartPulse,
   Gauge,
 
@@ -863,6 +864,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
             { id: "helpdesk-remote-sessions", label: "Remote Sessions", icon: Video },
             { id: "helpdesk-templates", label: "Templates", icon: FileText },
             { id: "helpdesk-analytics", label: "Analytics", icon: BarChart3 },
+            { id: "helpdesk-intelligence", label: "AI Intelligence", icon: Brain },
             { id: "helpdesk-automation", label: "Automation", icon: Sparkles },
           ],
         });

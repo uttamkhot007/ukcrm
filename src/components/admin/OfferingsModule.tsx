@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload, ShieldAlert, Zap, FileWarning, Scale, CircleDot } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload, ShieldAlert, Zap, FileWarning, Scale, CircleDot } from "lucide-react";
 import { BulkUploadDialog, BulkUploadType } from "./BulkUploadDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -88,16 +88,14 @@ interface ProductTechnology extends JunctionRecord {
 
 interface OfferingProblemAreaMapping extends JunctionRecord {
   offering_id: string;
-  offering_type: "product" | "offensive_security" | "managed_security" | "professional_services";
+  offering_type: "product" | "professional_services";
   problem_area_id: string;
 }
 
-type OfferingType = "products" | "offensive_security" | "managed_security" | "professional_services" | "problem_areas" | "technologies" | "oems";
+type OfferingType = "products" | "professional_services" | "problem_areas" | "technologies" | "oems";
 
 const offeringTabs: { value: OfferingType; label: string; icon: React.ElementType; table: string }[] = [
   { value: "products", label: "Products", icon: Package, table: "offerings_products" },
-  { value: "offensive_security", label: "Offensive Security", icon: Shield, table: "offerings_offensive_security" },
-  { value: "managed_security", label: "Managed Security", icon: Server, table: "offerings_managed_security" },
   { value: "professional_services", label: "Professional Services", icon: Briefcase, table: "offerings_professional_services" },
   { value: "problem_areas", label: "Problem & Requirement Areas", icon: Target, table: "offerings_problem_areas" },
   { value: "technologies", label: "Technologies", icon: Cpu, table: "offerings_technologies" },
@@ -115,7 +113,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   const [editingItem, setEditingItem] = useState<Offering | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product" | "product-problem" | "offensive-problem" | "managed-problem" | "professional-problem">("oem-tech");
+  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product" | "product-problem" | "professional-problem">("oem-tech");
   const [selectedItemForLink, setSelectedItemForLink] = useState<Offering | null>(null);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [bulkUploadType, setBulkUploadType] = useState<BulkUploadType>("products");
@@ -247,12 +245,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       switch (activeTab) {
         case "products":
           query = supabase.from("offerings_products" as any).select("*").eq("tenant_id", currentTenant.id).order("name");
-          break;
-        case "offensive_security":
-          query = supabase.from("offerings_offensive_security").select("*").eq("tenant_id", currentTenant.id).order("name");
-          break;
-        case "managed_security":
-          query = supabase.from("offerings_managed_security").select("*").eq("tenant_id", currentTenant.id).order("name");
           break;
         case "professional_services":
           query = supabase.from("offerings_professional_services").select("*").eq("tenant_id", currentTenant.id).order("name");
@@ -423,12 +415,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
           case "products":
             updateQuery = supabase.from("offerings_products" as any).update(baseData).eq("id", editingItem.id);
             break;
-          case "offensive_security":
-            updateQuery = supabase.from("offerings_offensive_security").update(baseData).eq("id", editingItem.id);
-            break;
-          case "managed_security":
-            updateQuery = supabase.from("offerings_managed_security").update(baseData).eq("id", editingItem.id);
-            break;
           case "professional_services":
             updateQuery = supabase.from("offerings_professional_services").update(baseData).eq("id", editingItem.id);
             break;
@@ -454,12 +440,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         switch (activeTab) {
           case "products":
             insertQuery = supabase.from("offerings_products" as any).insert(insertData);
-            break;
-          case "offensive_security":
-            insertQuery = supabase.from("offerings_offensive_security").insert(insertData);
-            break;
-          case "managed_security":
-            insertQuery = supabase.from("offerings_managed_security").insert(insertData);
             break;
           case "professional_services":
             insertQuery = supabase.from("offerings_professional_services").insert(insertData);
@@ -496,12 +476,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       switch (activeTab) {
         case "products":
           deleteQuery = supabase.from("offerings_products" as any).delete().eq("id", id);
-          break;
-        case "offensive_security":
-          deleteQuery = supabase.from("offerings_offensive_security").delete().eq("id", id);
-          break;
-        case "managed_security":
-          deleteQuery = supabase.from("offerings_managed_security").delete().eq("id", id);
           break;
         case "professional_services":
           deleteQuery = supabase.from("offerings_professional_services").delete().eq("id", id);
@@ -617,12 +591,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       case "product-problem":
         const linkedProblemIds1 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "product").map(m => m.problem_area_id);
         return problemAreas.filter(pa => !linkedProblemIds1.includes(pa.id));
-      case "offensive-problem":
-        const linkedProblemIds2 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "offensive_security").map(m => m.problem_area_id);
-        return problemAreas.filter(pa => !linkedProblemIds2.includes(pa.id));
-      case "managed-problem":
-        const linkedProblemIds3 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "managed_security").map(m => m.problem_area_id);
-        return problemAreas.filter(pa => !linkedProblemIds3.includes(pa.id));
       case "professional-problem":
         const linkedProblemIds4 = problemAreaMappings.filter(m => m.offering_id === itemId && m.offering_type === "professional_services").map(m => m.problem_area_id);
         return problemAreas.filter(pa => !linkedProblemIds4.includes(pa.id));
@@ -662,14 +630,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         table = "offering_problem_area_mappings";
         data = { offering_id: selectedItemForLink.id, offering_type: "product", problem_area_id: targetId };
         break;
-      case "offensive-problem":
-        table = "offering_problem_area_mappings";
-        data = { offering_id: selectedItemForLink.id, offering_type: "offensive_security", problem_area_id: targetId };
-        break;
-      case "managed-problem":
-        table = "offering_problem_area_mappings";
-        data = { offering_id: selectedItemForLink.id, offering_type: "managed_security", problem_area_id: targetId };
-        break;
       case "professional-problem":
         table = "offering_problem_area_mappings";
         data = { offering_id: selectedItemForLink.id, offering_type: "professional_services", problem_area_id: targetId };
@@ -705,8 +665,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         record = productTechnologies.find(pt => pt.technology_id === itemId && pt.product_id === linkedId);
         break;
       case "product-problem":
-      case "offensive-problem":
-      case "managed-problem":
       case "professional-problem":
         table = "offering_problem_area_mappings";
         record = problemAreaMappings.find(m => m.offering_id === itemId && m.problem_area_id === linkedId);
@@ -737,8 +695,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       case "tech-product":
         return `Link Products to ${selectedItemForLink?.name}`;
       case "product-problem":
-      case "offensive-problem":
-      case "managed-problem":
       case "professional-problem":
         return `Link Problem Areas to ${selectedItemForLink?.name}`;
       default:
