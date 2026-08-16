@@ -54,9 +54,15 @@ interface PipelineCoachProps {
 
 export function PipelineCoach({ onOpenDeals }: PipelineCoachProps) {
   const { currentTenant } = useTenant();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { formatCurrency } = useOrganizationSettings();
   const [filter, setFilter] = useState<"all" | RiskLevel>("all");
   const [search, setSearch] = useState("");
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [automating, setAutomating] = useState(false);
+  const [automated, setAutomated] = useState<Set<string>>(new Set());
+
 
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ["pipeline-coach-deals", currentTenant?.id],
