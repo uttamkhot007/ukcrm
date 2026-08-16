@@ -168,14 +168,15 @@ export function compareServedBuild(served: ServedBuild): ServedBuildRelation {
   if (!served.id || served.buildTime?.startsWith("__") || served.commit?.startsWith("__")) {
     return "unknown";
   }
-  if (!isServedBuildDifferent(served)) return "same";
 
   const servedTime = served.buildTime ? Date.parse(served.buildTime) : Number.NaN;
   const runningTime = Date.parse(BUILD_TIME);
   if (Number.isFinite(servedTime) && Number.isFinite(runningTime)) {
+    if (servedTime === runningTime) return "same";
     if (servedTime > runningTime) return "newer";
     if (servedTime < runningTime) return "older";
   }
+  if (served.commit && BUILD_COMMIT !== "dev" && served.commit === BUILD_COMMIT) return "same";
   return "different";
 }
 
