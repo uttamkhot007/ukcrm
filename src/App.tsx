@@ -125,6 +125,7 @@ const App = () => (
               </Routes>
               </Suspense>
               <AuthDiagnosticsGate />
+              <VersionMismatchBanner />
               <BuildVersionBadge />
               <RouteDiagnosticsTracker />
 
