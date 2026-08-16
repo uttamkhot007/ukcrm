@@ -7,6 +7,7 @@ import { TicketDetailsSheet } from "./TicketDetailsSheet";
 import { TicketAnalytics } from "./TicketAnalytics";
 import { TicketAutomation } from "./TicketAutomation";
 import { CannedResponses } from "./CannedResponses";
+import { SupportIntelligenceDashboard } from "./SupportIntelligenceDashboard";
 import { Button } from "@/components/ui/button";
 import { Plus, LayoutGrid, List, Ticket } from "lucide-react";
 
