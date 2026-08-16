@@ -352,6 +352,10 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       return;
     }
     const relation = compareServedBuild(served);
+    // Every verified sighting raises the floor, so this browser can never
+    // silently accept an older release later on.
+    recordReleaseObservation(served.buildTime, served.id);
+
     if (relation === "same") {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current" });
       return;
@@ -365,9 +369,17 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
     }
 
     if (relation === "unknown" || relation === "different") {
+      // Unless the running bundle itself is below the release floor — then
+      // this tab is definitively the stale one and must be replaced.
+      if (isRunningBuildBelowFloor()) {
+        recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "reload", reason: "running bundle is below the release floor" });
+        requestReleaseReload(served.id, { clearCaches: true });
+        return;
+      }
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "release order unavailable; reload blocked" });
       return;
     }
+
 
     window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
 
