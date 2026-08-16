@@ -29,6 +29,8 @@ export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
     switch (activeTab) {
       case "analytics":
         return <TicketAnalytics />;
+      case "intelligence":
+        return <SupportIntelligenceDashboard />;
       case "automation":
         return <TicketAutomation />;
       case "templates":
