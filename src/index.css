@@ -555,7 +555,7 @@
     background: linear-gradient(
       145deg,
       hsl(var(--card)) 0%,
-      hsl(222 47% 7%) 100%
+      hsl(var(--background)) 100%
     );
     border: 1px solid hsl(var(--primary) / 0.2);
     border-radius: 1rem;
@@ -888,7 +888,7 @@
     background: linear-gradient(
       180deg,
       hsl(var(--background)) 0%,
-      hsl(222 47% 4%) 100%
+      hsl(var(--muted)) 100%
     );
   }
 
