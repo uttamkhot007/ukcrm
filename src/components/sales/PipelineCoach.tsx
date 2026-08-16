@@ -109,6 +109,75 @@ export function PipelineCoach({ onOpenDeals }: PipelineCoachProps) {
 
   const coverage = summary.totalValue > 0 ? Math.round(100 - (summary.valueAtRisk / summary.totalValue) * 100) : 100;
 
+  const canAutomate = Boolean(currentTenant?.id && user?.id);
+
+  /** Schedule the follow-up task + notify the owner for a single action. */
+  const runAction = useCallback(
+    async (deal: IntelligenceDeal, action: NextBestAction) => {
+      if (!currentTenant?.id || !user?.id) return;
+      const key = `${deal.id}:${action.code}`;
+      setBusyAction(key);
+      try {
+        const outcome = await automateNextBestAction({
+          tenantId: currentTenant.id,
+          actorId: user.id,
+          deal,
+          action,
+        });
+        setAutomated((prev) => new Set(prev).add(key));
+        toast({
+          title: outcome.created ? "Follow-up scheduled" : "Already scheduled",
+          description: outcome.created
+            ? `"${action.label}" is due in ${dueInDaysFor(action)} day(s) and the deal owner was notified.`
+            : outcome.reason,
+        });
+      } catch (error) {
+        toast({
+          title: "Could not create the follow-up",
+          description: error instanceof Error ? error.message : "Unexpected error",
+          variant: "destructive",
+        });
+      } finally {
+        setBusyAction(null);
+      }
+    },
+    [currentTenant?.id, user?.id, toast],
+  );
+
+  /** Automate the top action for every deal currently in view that needs one. */
+  const runBulkAutomation = useCallback(async () => {
+    if (!currentTenant?.id || !user?.id) return;
+    const targets = visible
+      .filter(({ intel }) => intel.level === "critical" || intel.level === "at_risk")
+      .map(({ deal, intel }) => ({ deal, action: intel.actions[0] }))
+      .filter((t): t is { deal: IntelligenceDeal; action: NextBestAction } => Boolean(t.action));
+
+    if (targets.length === 0) {
+      toast({ title: "Nothing to automate", description: "No critical or at-risk deals in this view." });
+      return;
+    }
+
+    setAutomating(true);
+    try {
+      const result = await automateBatch(
+        targets.map(({ deal, action }) => ({ tenantId: currentTenant.id, actorId: user.id, deal, action })),
+      );
+      setAutomated((prev) => {
+        const next = new Set(prev);
+        targets.forEach(({ deal, action }) => next.add(`${deal.id}:${action.code}`));
+        return next;
+      });
+      toast({
+        title: `Automated ${result.created} follow-up(s)`,
+        description: `${result.skipped} already open${result.failed ? `, ${result.failed} failed` : ""}. Owners were notified.`,
+        variant: result.failed ? "destructive" : undefined,
+      });
+    } finally {
+      setAutomating(false);
+    }
+  }, [currentTenant?.id, user?.id, visible, toast]);
+
+
   if (isLoading) {
     return (
       <div className="space-y-4">
