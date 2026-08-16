@@ -256,9 +256,15 @@ export function ProjectIntelligenceDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="risk">Risk Radar</TabsTrigger>
           <TabsTrigger value="workload">Workload</TabsTrigger>
           <TabsTrigger value="milestones">Milestones</TabsTrigger>
           <TabsTrigger value="ai">AI Insights</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="risk" className="space-y-4">
+          <ProjectRiskRadar />
+        </TabsContent>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
