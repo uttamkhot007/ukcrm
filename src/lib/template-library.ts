@@ -305,21 +305,6 @@ export const TEMPLATE_LIBRARY: LibraryTemplate[] = [
     branding: THEMES.cyberTeal,
   },
   {
-    key: "proposal-managed-services",
-    name: "Managed Services Proposal",
-    description: "MSS proposal with service catalogue, SLA, escalation matrix and onboarding plan.",
-    template_type: "proposal",
-    role: "sales",
-    solution: "Managed Security Services",
-    content: sections(
-      "Cover Page", "Executive Summary", "Service Catalogue", "Operating Model",
-      "SLA & KPIs", "Escalation Matrix", "Onboarding Plan", "Reporting & Governance", "Commercials",
-    ),
-    header_content: docHeader("MANAGED SERVICES PROPOSAL", { showCoverPage: true, showTOC: true }),
-    footer_content: docFooter({ showEscalationMatrix: true }),
-    branding: THEMES.enterpriseNavy,
-  },
-  {
     key: "proposal-professional-services",
     name: "Professional Services Proposal",
     description: "Delivery-led proposal with scope, methodology, RACI and acceptance criteria.",
