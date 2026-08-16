@@ -214,6 +214,28 @@ function markReloadAttempt(id: string): void {
   }
 }
 
+let reloadInFlight = false;
+
+/** Single reload arbiter shared by release checks and failed lazy chunks. */
+export function requestReleaseReload(
+  id: string,
+  options: { clearCaches?: boolean } = {},
+): boolean {
+  if (typeof window === "undefined" || reloadInFlight) return false;
+  if (reloadAttemptsFor(id) >= MAX_RELOAD_ATTEMPTS) return false;
+
+  reloadInFlight = true;
+  markReloadAttempt(id);
+  if (options.clearCaches) {
+    void import("@/lib/cache-cleanup")
+      .then((module) => module.forceFreshReload())
+      .catch(() => window.location.reload());
+  } else {
+    window.location.reload();
+  }
+  return true;
+}
+
 /**
  * Start watching the deployed build. When the server is ahead of this tab we
  * fire `NEW_BUILD_EVENT` and — at most once per deployed build id — reload so
@@ -281,17 +303,16 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       return;
     }
     recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "reload" });
-    markReloadAttempt(id);
-    // Plain reload: assets are content-hashed and the HTML is sent with
-    // no-store, so this pulls the new shell without inventing new URLs.
-    window.location.reload();
+    requestReleaseReload(id);
   };
 
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
     const resumed = Date.now() - lastHeartbeat > RESUME_GAP_MS;
     lastHeartbeat = Date.now();
-    void check(resumed ? "resume" : "visible", false, resumed);
+    // Returning to the app is always a coherence boundary. Never let a recent
+    // background timer suppress the check the user is relying on now.
+    void check(resumed ? "resume" : "visible", false, true);
   };
 
   const onFocus = () => void check("focus", false, true);
@@ -300,7 +321,6 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 
   void check("boot", false, true);
   const timer = window.setInterval(() => {
-    lastHeartbeat = Date.now();
     void check("interval");
   }, POLL_INTERVAL_MS);
   document.addEventListener("visibilitychange", onVisible);
