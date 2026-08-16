@@ -1,3 +1,4 @@
+import { chartTooltipProps } from "@/lib/chart-theme";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
@@ -290,7 +291,7 @@ export function EmployeeIntelligenceDashboard() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="label" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip {...chartTooltipProps} />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                       {moodDistribution.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

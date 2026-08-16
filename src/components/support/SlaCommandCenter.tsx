@@ -1,3 +1,4 @@
+import { chartTooltipProps } from "@/lib/chart-theme";
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
@@ -142,7 +143,7 @@ export function SlaCommandCenter() {
                 <XAxis dataKey="period" fontSize={12} />
                 <YAxis yAxisId="left" fontSize={12} domain={[0, 100]} />
                 <YAxis yAxisId="right" orientation="right" fontSize={12} />
-                <Tooltip />
+                <Tooltip {...chartTooltipProps} />
                 <Legend />
                 <Line
                   yAxisId="left"
@@ -178,7 +179,7 @@ export function SlaCommandCenter() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="period" fontSize={12} />
                 <YAxis fontSize={12} />
-                <Tooltip />
+                <Tooltip {...chartTooltipProps} />
                 <Legend />
                 <Bar dataKey="created" name="Created" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="resolved" name="Resolved" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />

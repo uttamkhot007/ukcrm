@@ -1,3 +1,4 @@
+import { chartTooltipProps } from "@/lib/chart-theme";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/api/client";
@@ -146,7 +147,7 @@ export function ProjectRiskRadar() {
                 <XAxis dataKey="period" fontSize={12} />
                 <YAxis yAxisId="left" fontSize={12} />
                 <YAxis yAxisId="right" orientation="right" domain={[0, 100]} fontSize={12} />
-                <Tooltip />
+                <Tooltip {...chartTooltipProps} />
                 <Legend />
                 <Line
                   yAxisId="left"
@@ -181,7 +182,7 @@ export function ProjectRiskRadar() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="name" fontSize={11} interval={0} angle={-15} textAnchor="end" height={50} />
                 <YAxis fontSize={12} />
-                <Tooltip />
+                <Tooltip {...chartTooltipProps} />
                 <Legend />
                 <Bar dataKey="progress" name="Progress %" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expected" name="Expected %" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
