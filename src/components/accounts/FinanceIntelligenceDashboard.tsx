@@ -277,9 +277,12 @@ export function FinanceIntelligenceDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="collections">Payment Tracking</TabsTrigger>
+          <TabsTrigger value="dso-pnl">DSO & P&amp;L</TabsTrigger>
           <TabsTrigger value="receivables">Receivables</TabsTrigger>
           <TabsTrigger value="taxation">Taxation</TabsTrigger>
           <TabsTrigger value="ai">AI Insights</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
