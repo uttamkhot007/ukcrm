@@ -57,6 +57,7 @@ const ExpenseModule = lazyNamed(() => import("@/components/expenses/ExpenseModul
 const AssetsModule = lazyNamed(() => import("@/components/assets/AssetsModule"), "AssetsModule");
 const ProjectsModule = lazyNamed(() => import("@/components/projects/ProjectsModule"), "ProjectsModule");
 const EmployeeTicketSection = lazyNamed(() => import("@/components/ticketing/EmployeeTicketSection"), "EmployeeTicketSection");
+const EmployeeIntelligenceDashboard = lazyNamed(() => import("./EmployeeIntelligenceDashboard"), "EmployeeIntelligenceDashboard");
 
 interface EmployeePortalModuleProps {
   /** Legacy sidebar / deep-link module id, e.g. "employee-profile". */
