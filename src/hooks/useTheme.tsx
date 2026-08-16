@@ -1,15 +1,17 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { THEME_STORAGE_KEY } from '@/lib/ui-persistence';
+import {
+  applyThemeToDocument,
+  readStoredTheme,
+  writeStoredTheme,
+  normalizeTheme,
+  THEME_KEY,
+  type ThemeBrand,
+  type ThemeConfig,
+  type ThemeMode,
+  type ThemeMood,
+} from '@/lib/theme-storage';
 
-export type ThemeMode = 'light' | 'dark';
-export type ThemeBrand = 'emerald' | 'blue' | 'purple' | 'orange';
-export type ThemeMood = 'default' | 'ocean' | 'forest' | 'sunset' | 'midnight' | 'cyber';
-
-interface ThemeConfig {
-  mode: ThemeMode;
-  brand: ThemeBrand;
-  mood: ThemeMood;
-}
+export type { ThemeMode, ThemeBrand, ThemeMood } from '@/lib/theme-storage';
 
 interface ThemeContextType {
   theme: ThemeConfig;
@@ -21,48 +23,32 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const defaultTheme: ThemeConfig = {
-  mode: 'dark',
-  brand: 'emerald',
-  mood: 'cyber',
-};
-
-const MODES: ThemeMode[] = ['light', 'dark'];
-const BRANDS: ThemeBrand[] = ['emerald', 'blue', 'purple', 'orange'];
-const MOODS: ThemeMood[] = ['default', 'ocean', 'forest', 'sunset', 'midnight', 'cyber'];
-
-function readTheme(): ThemeConfig {
-  try {
-    const raw = localStorage.getItem(THEME_STORAGE_KEY);
-    if (!raw) return defaultTheme;
-    const value = JSON.parse(raw) as Partial<ThemeConfig>;
-    if (
-      MODES.includes(value.mode as ThemeMode) &&
-      BRANDS.includes(value.brand as ThemeBrand) &&
-      MOODS.includes(value.mood as ThemeMood)
-    ) {
-      return value as ThemeConfig;
-    }
-    localStorage.removeItem(THEME_STORAGE_KEY);
-  } catch {
-    try { localStorage.removeItem(THEME_STORAGE_KEY); } catch { /* ignore */ }
-  }
-  return defaultTheme;
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeConfig>(readTheme);
+  const [theme, setTheme] = useState<ThemeConfig>(readStoredTheme);
 
   useEffect(() => {
-    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
-    
-    // Apply mode
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme.mode);
-    
-    // Apply brand and mood as data attributes
-    document.documentElement.setAttribute('data-brand', theme.brand);
-    document.documentElement.setAttribute('data-mood', theme.mood);
+    writeStoredTheme(theme);
+    applyThemeToDocument(theme);
+  }, [theme]);
+
+  // Keep every open tab in sync, and recover the choice if another script
+  // (cache purge, storage cleanup) removes the key while the app is running.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== THEME_KEY) return;
+      if (event.newValue === null) {
+        writeStoredTheme(theme);
+        return;
+      }
+      try {
+        const next = normalizeTheme(JSON.parse(event.newValue));
+        if (next) setTheme(next);
+      } catch {
+        /* ignore malformed writes */
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, [theme]);
 
   const setMode = (mode: ThemeMode) => setTheme(prev => ({ ...prev, mode }));
