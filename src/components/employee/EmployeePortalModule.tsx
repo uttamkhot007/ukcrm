@@ -194,6 +194,7 @@ export function EmployeePortalModule({ initialTab = "employee-profile" }: Employ
       "employee-communication": "communication",
       "employee-events": "events",
       "employee-documentation": "documentation",
+      "people-intel": "people-intel",
       "employee-ai-assistant": "ai-assistant",
     }),
     [],
