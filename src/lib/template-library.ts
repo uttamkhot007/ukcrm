@@ -235,27 +235,6 @@ export const TEMPLATE_LIBRARY: LibraryTemplate[] = [
     branding: THEMES.cyberTeal,
   },
   {
-    key: "quote-managed-security",
-    name: "Managed Security Services Quotation",
-    description: "Recurring MSS quote with monthly/annual pricing, SLA and coverage matrix.",
-    template_type: "quote",
-    role: "sales",
-    solution: "Managed Security Services",
-    content: {
-      ...fields(
-        ["Quote Number", "auto"], ["Customer Details", "customer"],
-        ["Service Scope", "rich_text"], ["Coverage Matrix", "table"],
-        ["SLA Commitments", "table"], ["Monthly Charges", "table"],
-        ["Annual Contract Value", "calculated"],
-      ),
-      billingModes: ["monthly", "quarterly", "annual"],
-      showSlaMatrix: true,
-    },
-    header_content: docHeader("MANAGED SERVICES QUOTATION"),
-    footer_content: docFooter({ showTerms: true, showSignature: true, showEscalationMatrix: true }),
-    branding: THEMES.enterpriseNavy,
-  },
-  {
     key: "quote-professional-services",
     name: "Professional Services Quotation",
     description: "Effort-based quote with role rate card, man-days and milestone billing.",
