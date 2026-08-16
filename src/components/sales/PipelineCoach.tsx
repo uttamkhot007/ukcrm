@@ -205,13 +205,24 @@ export function PipelineCoach({ onOpenDeals }: PipelineCoachProps) {
               Explainable risk scoring and the next best action for every open deal — recalculated live, no waiting on AI.
             </p>
           </div>
-          {onOpenDeals && (
-            <Button variant="outline" onClick={onOpenDeals}>
-              Open Deals
-              <ArrowUpRight className="ml-2 h-4 w-4" aria-hidden="true" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => void runBulkAutomation()} disabled={!canAutomate || automating}>
+              {automating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
+              )}
+              Automate follow-ups
             </Button>
-          )}
+            {onOpenDeals && (
+              <Button variant="outline" onClick={onOpenDeals}>
+                Open Deals
+                <ArrowUpRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              </Button>
+            )}
+          </div>
         </header>
+
 
         <div className="grid gap-4 md:grid-cols-4">
           <SummaryCard
