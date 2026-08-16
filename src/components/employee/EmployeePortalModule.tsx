@@ -31,6 +31,7 @@ import {
   Video,
   PartyPopper,
   Sparkles,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 
