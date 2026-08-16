@@ -101,16 +101,49 @@
       // flashes dark. The <body> must NOT carry a hardcoded theme class:
       // that made every Tailwind `dark:` variant win in light mode.
       (function () {
+        var STABLE = 'nexus-theme';
+        var LEGACY = ['nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
+        function parse(raw) {
+          if (!raw) return null;
+          try {
+            var v = JSON.parse(raw);
+            if (v && (v.mode === 'light' || v.mode === 'dark')) return v;
+          } catch (e) {}
+          return null;
+        }
+        function fromCookie() {
+          try {
+            var m = document.cookie.match(/(?:^|;\s*)nexus_theme=([^;]*)/);
+            return m ? parse(decodeURIComponent(m[1])) : null;
+          } catch (e) { return null; }
+        }
+        var t = null;
         try {
-          var raw = localStorage.getItem('nexus-theme:v2');
-          var t = raw ? JSON.parse(raw) : null;
-          var mode = t && t.mode === 'light' ? 'light' : 'dark';
-          var el = document.documentElement;
-          el.classList.remove('light', 'dark');
-          el.classList.add(mode);
-          el.setAttribute('data-brand', (t && t.brand) || 'emerald');
-          el.setAttribute('data-mood', (t && t.mood) || 'cyber');
-        } catch (e) { document.documentElement.classList.add('dark'); }
+          t = parse(localStorage.getItem(STABLE));
+          if (!t) t = fromCookie();
+          if (!t) {
+            for (var i = 0; i < LEGACY.length && !t; i++) t = parse(localStorage.getItem(LEGACY[i]));
+          }
+          // Heal the stable key immediately so the first React render and any
+          // later storage purge both read the same resolved value.
+          if (t) localStorage.setItem(STABLE, JSON.stringify(t));
+        } catch (e) {
+          t = t || fromCookie();
+        }
+        if (!t) {
+          try {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+              t = { mode: 'light' };
+            }
+          } catch (e) {}
+        }
+        var el = document.documentElement;
+        var mode = t && t.mode === 'light' ? 'light' : 'dark';
+        el.classList.remove('light', 'dark');
+        el.classList.add(mode);
+        el.setAttribute('data-brand', (t && t.brand) || 'emerald');
+        el.setAttribute('data-mood', (t && t.mood) || 'cyber');
+        el.style.colorScheme = mode;
       })();
     </script>
   </head>
