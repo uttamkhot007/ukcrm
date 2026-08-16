@@ -127,7 +127,7 @@ describe("returning user boots an outdated bundle", () => {
 
     expect(isRunningBuildBelowFloor()).toBe(true);
     expect(enforceReleaseFloor()).toBe(true);
-    expect(forceFreshReload).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
   });
 
   it("records the block with both release ids and the session id", async () => {
