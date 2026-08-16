@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { recordQueryRead } from "@/lib/cache-metrics";
+import { UI_STATE_SCHEMA_VERSION } from "@/lib/ui-persistence";
 
 /**
  * Persistent query cache.
@@ -26,6 +27,7 @@ type PersistedEntry = {
 
 type PersistedCache = {
   version: string;
+  schema?: string;
   savedAt: number;
   tenantId: string | null;
   queries: PersistedEntry[];
@@ -83,7 +85,11 @@ function restore(client: QueryClient, buildId: string) {
     const parsed = JSON.parse(raw) as PersistedCache;
 
     // A new build may change query shapes; a stale cache is worse than none.
-    if (parsed.version !== buildId || Date.now() - parsed.savedAt > MAX_AGE_MS) {
+    if (
+      parsed.version !== buildId ||
+      parsed.schema !== UI_STATE_SCHEMA_VERSION ||
+      Date.now() - parsed.savedAt > MAX_AGE_MS
+    ) {
       window.localStorage.removeItem(STORAGE_KEY);
       return;
     }
@@ -141,6 +147,7 @@ function scheduleWrites(client: QueryClient, buildId: string) {
 
       const payload: PersistedCache = {
         version: buildId,
+        schema: UI_STATE_SCHEMA_VERSION,
         savedAt: Date.now(),
         tenantId: null,
         queries,

@@ -21,6 +21,10 @@ import {
   LIVE_SITE_URL,
   type LiveBuildResult,
 } from "@/lib/live-build-check";
+import {
+  getReleaseCoherenceDiagnostics,
+  subscribeReleaseCoherence,
+} from "@/lib/build-cache-strategy";
 
 /**
  * Floating bottom-left badge showing the current frontend build version.
@@ -38,6 +42,7 @@ export function BuildVersionBadge() {
   const [badgeNonce, setBadgeNonce] = useState(0);
   const [liveBuild, setLiveBuild] = useState<LiveBuildResult | null>(null);
   const [checkingLive, setCheckingLive] = useState(false);
+  const [coherence, setCoherence] = useState(() => getReleaseCoherenceDiagnostics());
   const location = useLocation();
 
   useEffect(() => {
@@ -45,6 +50,8 @@ export function BuildVersionBadge() {
     window.addEventListener("nexus:build-info-updated", rerender);
     return () => window.removeEventListener("nexus:build-info-updated", rerender);
   }, []);
+
+  useEffect(() => subscribeReleaseCoherence(() => setCoherence(getReleaseCoherenceDiagnostics())), []);
 
   // Pre-flight: compare the published site's build with this one.
   useEffect(() => {
@@ -115,6 +122,7 @@ export function BuildVersionBadge() {
       ...getFullBuildInfo(),
       route: location.pathname + location.search,
       redirects: getRecentRedirects(10),
+      releaseCoherence: coherence,
     };
     try {
       await navigator.clipboard.writeText(JSON.stringify(info, null, 2));
@@ -224,6 +232,18 @@ export function BuildVersionBadge() {
             <span className="text-primary">{location.pathname}</span>
           </div>
         </div>
+
+        {coherence[0] && (
+          <div className="rounded-lg border bg-muted/30 p-2 text-[10px] font-mono space-y-1">
+            <div className="font-sans text-[11px] font-semibold">Resume coherence</div>
+            <div><span className="text-muted-foreground">last trigger </span>{coherence[0].trigger}</div>
+            <div><span className="text-muted-foreground">decision </span>{coherence[0].decision}</div>
+            <div><span className="text-muted-foreground">BFCache </span>{coherence[0].bfcache ? "restored" : "no"}</div>
+            <div className="truncate" title={coherence[0].servedId ?? "unknown"}>
+              <span className="text-muted-foreground">served </span>{coherence[0].servedId ?? "unknown"}
+            </div>
+          </div>
+        )}
 
         {/* Live-site pre-flight check */}
         <div
