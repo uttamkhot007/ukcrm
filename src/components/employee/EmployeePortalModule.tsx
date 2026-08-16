@@ -151,6 +151,7 @@ export function EmployeePortalModule({ initialTab = "employee-profile" }: Employ
           { id: "communication", label: "Team Communication", icon: Video, render: () => <TeamCommunication />, preload: asPreload(TeamCommunication) },
           { id: "events", label: "Events & Recognition", icon: PartyPopper, render: () => <EmployeeEventsModule />, preload: asPreload(EmployeeEventsModule) },
           { id: "documentation", label: "SOPs", icon: BookOpen, render: () => <DocumentationModule />, preload: asPreload(DocumentationModule) },
+          { id: "people-intel", label: "People Intelligence", icon: Brain, render: () => <EmployeeIntelligenceDashboard />, preload: asPreload(EmployeeIntelligenceDashboard), visible: canSeeTeamReports },
           { id: "ai-assistant", label: "My AI Assistant", icon: Sparkles, render: () => <EmployeeAIAssistant />, preload: asPreload(EmployeeAIAssistant) },
         ],
       },
