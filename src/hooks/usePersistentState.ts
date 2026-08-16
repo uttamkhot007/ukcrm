@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { UI_STATE_PREFIX } from "@/lib/ui-persistence";
 
 /**
  * Module UI state that survives a browser reload.
@@ -18,7 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  - Writes are wrapped: private mode / quota errors are never fatal.
  */
 
-const PREFIX = "nexus-ui-state:";
+const PREFIX = UI_STATE_PREFIX;
 const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
 type Stored<T> = { v: T; at: number };

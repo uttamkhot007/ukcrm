@@ -216,7 +216,8 @@ export async function resolveDeploymentIdentity(): Promise<DeploymentIdentity> {
         documentBuildTime,
       },
       mismatch: Boolean(
-        servedBuildTime && bundle.buildTime && servedBuildTime !== bundle.buildTime,
+        (servedCommit && bundle.commit !== "dev" && servedCommit !== bundle.commit) ||
+        (servedBuildTime && bundle.buildTime && servedBuildTime !== bundle.buildTime),
       ),
     };
   } catch (e) {
