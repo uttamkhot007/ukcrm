@@ -24,6 +24,8 @@ import NotFound from "./pages/NotFound";
 // Route-level code splitting: the admin/platform console, support portal and
 // tender screens no longer ship inside the initial bundle.
 const Index = lazyDefault(() => import("./pages/Index"));
+const ThemeGallery = lazyDefault(() => import("./pages/ThemeGallery"));
+
 const Notifications = lazyDefault(() => import("./pages/Notifications"));
 const EmployeeDirectory = lazyDefault(() => import("./pages/EmployeeDirectory"));
 const AdminLayout = lazyDefault(() => import("./pages/admin/AdminLayout"));
