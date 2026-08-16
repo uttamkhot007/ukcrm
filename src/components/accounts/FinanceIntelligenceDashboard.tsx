@@ -10,6 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format, subDays, isBefore, parseISO, differenceInDays } from "date-fns";
+import { PaymentTrackingPanel } from "./PaymentTrackingPanel";
+import { DsoProfitInsights } from "./DsoProfitInsights";
+
 import {
   IndianRupee,
   TrendingUp,
