@@ -1140,6 +1140,10 @@
    inherits whatever theme is on screen. Force the light token set so exported
    PDFs always come out on white paper with dark text — never a navy sheet with
    inverted cards. */
+@page {
+  margin: 12mm;
+}
+
 @media print {
   :root,
   html,
