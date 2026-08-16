@@ -35,6 +35,7 @@ import {
   Map,
   FileCheck,
   Brain,
+  Compass,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,6 +53,7 @@ const MyAccountsView = lazyNamed(() => import("./MyAccountsView"), "MyAccountsVi
 const DealRegistrationModule = lazyNamed(() => import("./DealRegistrationModule"), "DealRegistrationModule");
 const LeadScoring = lazyNamed(() => import("./LeadScoring"), "LeadScoring");
 const DealInsights = lazyNamed(() => import("./DealInsights"), "DealInsights");
+const PipelineCoach = lazyNamed(() => import("./PipelineCoach"), "PipelineCoach");
 const SalesForecasting = lazyNamed(() => import("./SalesForecasting"), "SalesForecasting");
 const EmailSequences = lazyNamed(() => import("./EmailSequences"), "EmailSequences");
 const SalesAutomations = lazyNamed(() => import("./SalesAutomations"), "SalesAutomations");
@@ -133,6 +135,7 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
           { id: "contacts", label: "Contacts", icon: Phone, render: () => <ContactsView />, preload: ContactsView as unknown as PreloadableComponent<never> },
           { id: "my-accounts", label: "Accounts", icon: Building2, render: () => <MyAccountsView />, preload: MyAccountsView as unknown as PreloadableComponent<never> },
           { id: "activity", label: "Activity", icon: Timer, render: () => <ActivityWorkspace /> },
+          { id: "pipeline-coach", label: "Coach", icon: Compass, render: () => <PipelineCoach onOpenDeals={() => setActiveTab("deals")} />, preload: PipelineCoach as unknown as PreloadableComponent<never> },
           { id: "rotten-deals", label: "Rotten Deals", icon: Target, render: () => <RottenDeals />, preload: RottenDeals as unknown as PreloadableComponent<never> },
         ],
       },

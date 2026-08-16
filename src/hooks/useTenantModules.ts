@@ -132,22 +132,6 @@ export const MODULE_DEFINITIONS: ModuleConfig[] = [
     icon: 'FolderKanban',
     tierRequired: 'starter',
   },
-  {
-    key: 'mss',
-    name: 'Managed Security Services',
-    description: 'SOC operations, threat monitoring, and incident response',
-    category: 'operations',
-    icon: 'ShieldAlert',
-    tierRequired: 'professional',
-  },
-  {
-    key: 'offensive',
-    name: 'Offensive Security',
-    description: 'Penetration testing, VAPT, and security audits',
-    category: 'operations',
-    icon: 'Crosshair',
-    tierRequired: 'professional',
-  },
 ];
 
 export function useTenantModules() {

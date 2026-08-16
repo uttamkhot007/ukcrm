@@ -51,8 +51,6 @@ const ADDITIONAL_MODULES = [
   { value: 'compliance', label: 'Compliance' },
   { value: 'ticketing', label: 'Ticketing' },
   { value: 'projects', label: 'Project Management' },
-  { value: 'mss', label: 'Managed Security' },
-  { value: 'offensive', label: 'Offensive Security' },
 ];
 
 export function ConsoleAccessManagement() {

@@ -672,26 +672,8 @@ const Index = () => {
         return <TicketingModule initialTab="analytics" />;
       case "helpdesk-automation":
         return <TicketingModule initialTab="automation" />;
-      
-      // Managed Security Services (MSS)
-      case "mss":
-      case "mss-soc":
-      case "mss-monitoring":
-      case "mss-incidents":
-      case "mss-alerts":
-      case "mss-reports":
-      case "mss-clients":
-        return <PlaceholderModule title="Managed Security Services" section={activeModule} />;
-      
-      // Offensive Security
-      case "offensive":
-      case "offensive-pentest":
-      case "offensive-vapt":
-      case "offensive-redteam":
-      case "offensive-audits":
-      case "offensive-findings":
-      case "offensive-remediation":
-        return <PlaceholderModule title="Offensive Security" section={activeModule} />;
+
+
       
       // Billing (duplicate removed - already handled at line ~414)
       
@@ -750,18 +732,6 @@ const Index = () => {
       "admin-procurement": "Procurement",
       "management-performance": "People Performance",
       "management-cashflow": "Inflow vs Outflow",
-      "mss-soc": "SOC Operations",
-      "mss-monitoring": "Threat Monitoring",
-      "mss-incidents": "Incident Response",
-      "mss-alerts": "Security Alerts",
-      "mss-reports": "Security Reports",
-      "mss-clients": "Client Portals",
-      "offensive-pentest": "Penetration Testing",
-      "offensive-vapt": "VAPT Assessments",
-      "offensive-redteam": "Red Team Operations",
-      "offensive-audits": "Security Audits",
-      "offensive-findings": "Findings & Reports",
-      "offensive-remediation": "Remediation Tracking",
     };
 
     return (

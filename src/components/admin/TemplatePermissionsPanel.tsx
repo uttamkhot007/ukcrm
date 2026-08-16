@@ -17,7 +17,7 @@ import { useTemplatePermissions, type TemplatePermissionRule } from "@/hooks/use
 const APP_ROLES = ["admin", "manager", "employee"];
 const TEAMS = [
   "sales", "presales", "technical", "managed_services", "management", "hr",
-  "finance", "inside_sales", "marketing", "renewals", "accounts", "admin", "mss", "offensive",
+  "finance", "inside_sales", "marketing", "renewals", "accounts", "admin",
 ];
 
 function solutionsFor(packRole: string): string[] {
