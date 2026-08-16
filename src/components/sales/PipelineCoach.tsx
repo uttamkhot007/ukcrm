@@ -421,18 +421,43 @@ function DealCoachCard({
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Next best actions</p>
           <ul className="space-y-2">
-            {intel.actions.slice(0, 3).map((action) => (
-              <li key={action.code} className="flex items-start gap-2 text-sm">
-                <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-help underline decoration-dotted underline-offset-4">{action.label}</span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">{action.rationale}</TooltipContent>
-                </Tooltip>
-              </li>
-            ))}
+            {intel.actions.slice(0, 3).map((action) => {
+              const key = `${deal.id}:${action.code}`;
+              const busy = busyAction === key;
+              const done = automated.has(key);
+              return (
+                <li key={action.code} className="flex items-start gap-2 text-sm">
+                  <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help underline decoration-dotted underline-offset-4">{action.label}</span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      {action.rationale} Creates a task due in {dueInDaysFor(action)} day(s) and notifies the deal owner.
+                    </TooltipContent>
+                  </Tooltip>
+                  <Button
+                    size="sm"
+                    variant={done ? "secondary" : "ghost"}
+                    className="ml-auto h-7 shrink-0 px-2 text-xs"
+                    disabled={!canAutomate || busy}
+                    onClick={() => void onRunAction(deal, action)}
+                    aria-label={`Schedule follow-up and notify owner: ${action.label}`}
+                  >
+                    {busy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : done ? (
+                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                    ) : (
+                      <BellRing className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    {busy ? "" : done ? "Scheduled" : "Follow up"}
+                  </Button>
+                </li>
+              );
+            })}
           </ul>
+
         </div>
 
         {intel.factors.length > 0 && (
