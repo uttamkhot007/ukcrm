@@ -1160,6 +1160,11 @@
     --accent-foreground: 222 47% 11%;
     --border: 214 25% 88%;
     --input: 214 25% 88%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 25% 88%;
     color-scheme: light;
     background: #fff !important;
     color: hsl(222 47% 11%) !important;
@@ -1216,6 +1221,9 @@
   /* Screen-only chrome that must not land in the export. */
   aside,
   nav,
+  [data-sidebar],
+  [data-sidebar-root],
+  .app-sidebar,
   [data-print-hide],
   [role="banner"],
   [role="dialog"] [data-radix-dialog-overlay],
