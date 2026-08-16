@@ -23,6 +23,7 @@ import {
   Target,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
+import { ProjectRiskRadar } from "./ProjectRiskRadar";
 
 interface ProjectMetrics {
   totalProjects: number;
