@@ -427,7 +427,11 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 
 /** Boot-time entry point used by main.tsx. */
 export function installBuildCacheStrategy(): void {
-  void purgeCachesOnNewBuild();
   const isDev = Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV);
+  // Hard guarantee first: if this bundle predates a release we already ran,
+  // purge and reload before anything else renders against it.
+  if (!isDev && enforceReleaseFloor()) return;
+  void purgeCachesOnNewBuild();
   watchServedBuild({ autoReload: !isDev });
 }
+
