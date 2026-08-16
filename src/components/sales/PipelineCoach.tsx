@@ -354,11 +354,20 @@ function DealCoachCard({
   deal,
   intel,
   formatCurrency,
+  canAutomate,
+  busyAction,
+  automated,
+  onRunAction,
 }: {
   deal: IntelligenceDeal;
   intel: DealIntelligence;
   formatCurrency: (value: number) => string;
+  canAutomate: boolean;
+  busyAction: string | null;
+  automated: Set<string>;
+  onRunAction: (deal: IntelligenceDeal, action: NextBestAction) => void | Promise<void>;
 }) {
+
   const meta = LEVEL_META[intel.level];
   const LevelIcon = meta.icon;
 
