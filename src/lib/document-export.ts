@@ -129,9 +129,19 @@ export async function buildPdf(doc: ExportableDocument, branding: Branding): Pro
   const [r, g, b] = hexToRgb(branding.primaryColor);
   const logo = await loadLogo(branding.logoUrl);
 
+  // Paint an explicit white page canvas. jsPDF pages are transparent by
+  // default, so viewers in dark mode (Chrome PDF viewer, Preview, mobile
+  // readers) can show a grey/near-black sheet behind our light text.
+  const paintPageBackground = () => {
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
+  };
+
   const drawHeader = () => {
+    paintPageBackground();
     pdf.setFillColor(r, g, b);
     pdf.rect(0, 0, pageWidth, 6, "F");
+
 
     let textLeft = margin;
     if (logo) {
