@@ -23,6 +23,7 @@ import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
 
 const LAST_BUILD_KEY = "nexus:last-build-id";
 const RELOADED_FOR_KEY = "nexus:reloaded-for-build";
+const MAX_RELOAD_ATTEMPTS = 3;
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 const MIN_POLL_GAP_MS = 30 * 1000;
 const RESUME_GAP_MS = 60 * 1000;
@@ -45,7 +46,7 @@ export type ReleaseCoherenceDiagnostic = {
   servedId: string | null;
   checkedAt: string;
   bfcache: boolean;
-  decision: "current" | "reload" | "unverifiable" | "failed";
+  decision: "current" | "preserved" | "reload" | "unverifiable" | "failed";
   reason?: string;
 };
 
@@ -155,17 +156,55 @@ export function isServedBuildDifferent(served: ServedBuild): boolean {
   return Boolean(served.buildTime && served.buildTime !== BUILD_TIME);
 }
 
-function alreadyReloadedFor(id: string): boolean {
+export type ServedBuildRelation = "same" | "newer" | "older" | "different" | "unknown";
+
+/**
+ * Compare releases directionally. A different release is not automatically a
+ * newer release: during an ECS rolling deployment an ALB can briefly return an
+ * older healthy task. Reloading for that response downgrades a perfectly fresh
+ * tab and is the main cause of the GUI apparently reverting after inactivity.
+ */
+export function compareServedBuild(served: ServedBuild): ServedBuildRelation {
+  if (!served.id || served.buildTime?.startsWith("__") || served.commit?.startsWith("__")) {
+    return "unknown";
+  }
+  if (!isServedBuildDifferent(served)) return "same";
+
+  const servedTime = served.buildTime ? Date.parse(served.buildTime) : Number.NaN;
+  const runningTime = Date.parse(BUILD_TIME);
+  if (Number.isFinite(servedTime) && Number.isFinite(runningTime)) {
+    if (servedTime > runningTime) return "newer";
+    if (servedTime < runningTime) return "older";
+  }
+  return "different";
+}
+
+type ReloadRecord = { id: string; attempts: number };
+
+function readReloadRecord(): ReloadRecord | null {
   try {
-    return window.sessionStorage.getItem(RELOADED_FOR_KEY) === id;
+    const raw = window.sessionStorage.getItem(RELOADED_FOR_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ReloadRecord>;
+    return typeof parsed.id === "string" && typeof parsed.attempts === "number"
+      ? { id: parsed.id, attempts: parsed.attempts }
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-function markReloadedFor(id: string): void {
+function reloadAttemptsFor(id: string): number {
+  const record = readReloadRecord();
+  return record?.id === id ? record.attempts : 0;
+}
+
+function markReloadAttempt(id: string): void {
   try {
-    window.sessionStorage.setItem(RELOADED_FOR_KEY, id);
+    window.sessionStorage.setItem(
+      RELOADED_FOR_KEY,
+      JSON.stringify({ id, attempts: reloadAttemptsFor(id) + 1 } satisfies ReloadRecord),
+    );
   } catch {
     /* ignore */
   }
@@ -211,20 +250,34 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: null, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "served build metadata missing" });
       return;
     }
-    if (!isServedBuildDifferent(served)) {
+    const relation = compareServedBuild(served);
+    if (relation === "same") {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current" });
+      return;
+    }
+
+    // Never replace a newer running UI with an older shell returned by a
+    // lagging load-balancer target, proxy, or browser cache.
+    if (relation === "older") {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "preserved", reason: "server response is older than running UI; downgrade blocked" });
+      return;
+    }
+
+    if (relation === "unknown") {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "release order unavailable" });
       return;
     }
 
     window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
 
     const id = served.id as string;
-    if (!autoReload || alreadyReloadedFor(id)) {
-      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: autoReload ? "reload already attempted" : "auto reload disabled" });
+    const attempts = reloadAttemptsFor(id);
+    if (!autoReload || attempts >= MAX_RELOAD_ATTEMPTS) {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: autoReload ? `reload limit reached (${MAX_RELOAD_ATTEMPTS})` : "auto reload disabled" });
       return;
     }
     recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "reload" });
-    markReloadedFor(id);
+    markReloadAttempt(id);
     // Plain reload: assets are content-hashed and the HTML is sent with
     // no-store, so this pulls the new shell without inventing new URLs.
     window.location.reload();
