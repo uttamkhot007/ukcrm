@@ -8,7 +8,7 @@ import { clearPersistedUiState } from "@/hooks/usePersistentState";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "manager" | "employee";
-type TeamType = "sales" | "presales" | "technical" | "managed_services" | "management" | "hr" | "finance" | "inside_sales" | "marketing" | "renewals" | "accounts" | "admin" | "mss" | "offensive";
+type TeamType = "sales" | "presales" | "technical" | "managed_services" | "management" | "hr" | "finance" | "inside_sales" | "marketing" | "renewals" | "accounts" | "admin";
 type PortalMode = "admin" | "workspace" | "customer";
 type UserCategory = "employee" | "contractor" | "vendor" | "distributor" | "customer";
 
