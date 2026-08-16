@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Stale-bundle recovery regression suite.
  *
