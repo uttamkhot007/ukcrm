@@ -11045,6 +11045,66 @@ export type Database = {
           },
         ]
       }
+      release_floor_blocks: {
+        Row: {
+          action: string | null
+          created_at: string
+          event_kind: string
+          floor_build_time: string | null
+          floor_release_id: string | null
+          id: string
+          occurred_at: string
+          page_url: string | null
+          reason: string | null
+          running_build_time: string | null
+          running_release_id: string
+          served_release_id: string | null
+          session_id: string
+          tenant_id: string | null
+          trigger: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          event_kind: string
+          floor_build_time?: string | null
+          floor_release_id?: string | null
+          id?: string
+          occurred_at?: string
+          page_url?: string | null
+          reason?: string | null
+          running_build_time?: string | null
+          running_release_id: string
+          served_release_id?: string | null
+          session_id: string
+          tenant_id?: string | null
+          trigger?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          event_kind?: string
+          floor_build_time?: string | null
+          floor_release_id?: string | null
+          id?: string
+          occurred_at?: string
+          page_url?: string | null
+          reason?: string | null
+          running_build_time?: string | null
+          running_release_id?: string
+          served_release_id?: string | null
+          session_id?: string
+          tenant_id?: string | null
+          trigger?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       remote_session_participants: {
         Row: {
           created_at: string
