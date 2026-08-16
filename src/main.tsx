@@ -17,10 +17,6 @@ console.info(
   "color:#a78bfa;font-weight:bold"
 );
 
-// Mark React as mounted so the static fallback badge in index.html hides
-// itself. If this attribute never appears, the user knows React failed to
-// boot and the static "html · <build-time>" badge stays visible.
-document.documentElement.setAttribute("data-react-mounted", "1");
 installPreviewBuildRefreshHook();
 // Purge build-scoped caches when the bundle changes and keep watching the
 // deployed build so returning visitors never sit on a stale shell.
@@ -41,6 +37,8 @@ window.addEventListener("vite:preloadError", (event) => {
 if (releaseIsCurrent) {
   const root = document.getElementById("root");
   if (root) {
+    // Only hide the static build marker once this release is allowed to paint.
+    document.documentElement.setAttribute("data-react-mounted", "1");
     createRoot(root).render(
       <HelmetProvider>
         <App />

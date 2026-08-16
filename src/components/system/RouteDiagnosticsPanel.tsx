@@ -181,6 +181,7 @@ export function RouteDiagnosticsPanel() {
               <div>id {deployment?.bundle.id ?? "…"}</div>
               <div>built {deployment?.bundle.buildTime ?? "…"}</div>
               <div>commit {deployment?.bundle.commit ?? "…"}</div>
+              <div>environment {deployment?.bundle.environment ?? "…"}</div>
               <div>version v{deployment?.bundle.version ?? "…"}</div>
             </div>
             <div className="rounded-lg bg-muted/40 p-2 space-y-1">
@@ -188,6 +189,8 @@ export function RouteDiagnosticsPanel() {
               <div>id {deployment?.served.id ?? "unknown"}</div>
               <div>built {deployment?.served.buildTime ?? "unknown"}</div>
               <div>commit {deployment?.served.commit ?? "unknown"}</div>
+              <div>environment {deployment?.served.environment ?? "unknown"}</div>
+              <div>revision {deployment?.served.revision ?? "unknown"}</div>
               <div>etag {deployment?.served.etag ?? "—"}</div>
             </div>
           </div>
