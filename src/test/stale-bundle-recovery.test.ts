@@ -46,7 +46,7 @@ vi.mock("@/lib/cache-cleanup", () => ({
   hardReloadLatestBuild: vi.fn(async () => {}),
 }));
 
-const insert = vi.fn(async () => ({ error: null }));
+const insert = vi.fn(async (_rows?: unknown) => ({ error: null }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { getSession: async () => ({ data: { session: { user: { id: "user-1" } } } }) },
