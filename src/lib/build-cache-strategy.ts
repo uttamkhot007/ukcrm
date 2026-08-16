@@ -134,7 +134,10 @@ export async function purgeCachesOnNewBuild(): Promise<boolean> {
 
 /** Read the build identity the server is currently handing out. */
 export async function fetchServedBuild(): Promise<ServedBuild> {
-  const url = `${window.location.origin}/index.html`;
+  // A unique probe URL prevents non-compliant intermediary proxies from
+  // replaying an old index response. This query is never used for navigation,
+  // so it cannot create stale browser history or shell cache entries.
+  const url = `${window.location.origin}/index.html?release-probe=${Date.now()}`;
   const res = await fetch(url, { cache: "no-store", credentials: "omit" });
   if (!res.ok) throw new Error(`index.html responded ${res.status}`);
   const html = await res.text();
@@ -264,8 +267,8 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       return;
     }
 
-    if (relation === "unknown") {
-      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "release order unavailable" });
+    if (relation === "unknown" || relation === "different") {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "release order unavailable; reload blocked" });
       return;
     }
 
