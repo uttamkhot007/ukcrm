@@ -295,7 +295,17 @@ export function PipelineCoach({ onOpenDeals }: PipelineCoachProps) {
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {visible.map(({ deal, intel }) => (
-              <DealCoachCard key={deal.id} deal={deal} intel={intel} formatCurrency={formatCurrency} />
+              <DealCoachCard
+                key={deal.id}
+                deal={deal}
+                intel={intel}
+                formatCurrency={formatCurrency}
+                canAutomate={canAutomate}
+                busyAction={busyAction}
+                automated={automated}
+                onRunAction={runAction}
+              />
+
             ))}
           </div>
         )}
