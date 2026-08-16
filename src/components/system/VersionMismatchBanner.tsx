@@ -1,18 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { RefreshCw, RotateCw, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   NEW_BUILD_EVENT,
-  compareServedBuild,
-  fetchServedBuild,
   isRunningBuildBelowFloor,
-  recordReleaseObservation,
+  requestReleaseReload,
   type ServedBuild,
 } from "@/lib/build-cache-strategy";
 import { BUILD_TIME } from "@/lib/build-info";
-
-const CHECK_GAP_MS = 60 * 1000;
-const AUTO_RELOAD_SECONDS = 10;
 
 type Mismatch = { servedId: string; reason: "newer" | "stale-shell" };
 
@@ -31,82 +26,31 @@ type Mismatch = { servedId: string; reason: "newer" | "stale-shell" };
  */
 export function VersionMismatchBanner() {
   const [mismatch, setMismatch] = useState<Mismatch | null>(null);
-  const [seconds, setSeconds] = useState(AUTO_RELOAD_SECONDS);
   const [reloading, setReloading] = useState(false);
-  const lastCheck = useRef(0);
 
-  const hardReload = useCallback(async () => {
+  const hardReload = () => {
     setReloading(true);
-    try {
-      const { forceFreshReload } = await import("@/lib/cache-cleanup");
-      await forceFreshReload();
-    } catch {
-      window.location.reload();
-    }
-  }, []);
+    const id = mismatch?.servedId ?? "manual-version-mismatch";
+    if (!requestReleaseReload(id, { clearCaches: true })) setReloading(false);
+  };
 
-  // Detection: event from the release watcher + an independent probe on
-  // mount, focus and tab return.
+  // Presentation only. The release controller owns probing and reloading.
   useEffect(() => {
-    let cancelled = false;
-
-    const evaluate = (served: ServedBuild) => {
-      if (cancelled || !served.id) return;
-      recordReleaseObservation(served.buildTime, served.id);
-      const relation = compareServedBuild(served);
-      if (relation === "newer") {
-        setMismatch({ servedId: served.id, reason: "newer" });
-      } else if (isRunningBuildBelowFloor()) {
-        setMismatch({ servedId: served.id, reason: "stale-shell" });
-      }
-    };
-
-    const probe = (force = false) => {
-      if (document.visibilityState === "hidden") return;
-      const now = Date.now();
-      if (!force && now - lastCheck.current < CHECK_GAP_MS) return;
-      lastCheck.current = now;
-      void fetchServedBuild().then(evaluate).catch(() => undefined);
-    };
-
     const onNewBuild = (event: Event) => {
       const served = (event as CustomEvent<ServedBuild>).detail;
-      if (served) evaluate(served);
+      if (served?.id) setMismatch({ servedId: served.id, reason: "newer" });
     };
 
     if (isRunningBuildBelowFloor()) {
       setMismatch({ servedId: "release-floor", reason: "stale-shell" });
     }
 
-    probe(true);
     window.addEventListener(NEW_BUILD_EVENT, onNewBuild);
-    window.addEventListener("focus", () => probe(true));
-    document.addEventListener("visibilitychange", () => probe(true));
-    const timer = window.setInterval(() => probe(), CHECK_GAP_MS);
 
     return () => {
-      cancelled = true;
-      window.clearInterval(timer);
       window.removeEventListener(NEW_BUILD_EVENT, onNewBuild);
     };
   }, []);
-
-  // Countdown to the automatic hard reload.
-  useEffect(() => {
-    if (!mismatch || reloading) return;
-    setSeconds(AUTO_RELOAD_SECONDS);
-    const timer = window.setInterval(() => {
-      setSeconds((value) => {
-        if (value <= 1) {
-          window.clearInterval(timer);
-          void hardReload();
-          return 0;
-        }
-        return value - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [mismatch, reloading, hardReload]);
 
   if (!mismatch) return null;
 
@@ -129,14 +73,14 @@ export function VersionMismatchBanner() {
       <span className="text-xs opacity-90">
         {reloading
           ? "Clearing caches and loading the latest build…"
-          : `Reloading with cache bypass in ${seconds}s · running build ${BUILD_TIME}`}
+          : `Latest release detected · running build ${BUILD_TIME}`}
       </span>
       <div className="ml-auto flex items-center gap-2">
         <Button
           size="sm"
           variant="secondary"
           className="h-8 min-h-8 px-3 text-xs focus-visible:ring-2 focus-visible:ring-offset-2"
-          onClick={() => void hardReload()}
+          onClick={hardReload}
           disabled={reloading}
           aria-label="Reload now with cache bypass"
         >

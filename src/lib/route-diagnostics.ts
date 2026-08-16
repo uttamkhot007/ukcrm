@@ -14,7 +14,8 @@
  * which is the usual cause of "my change vanished".
  */
 
-import { BUILD_COMMIT, BUILD_TIME, BUILD_VERSION } from "@/lib/build-info";
+import { BUILD_COMMIT, BUILD_ENVIRONMENT, BUILD_TIME, BUILD_VERSION, RELEASE_ID } from "@/lib/build-info";
+import { fetchServedBuild } from "@/lib/build-cache-strategy";
 
 export type DiagnosticKind = "route" | "redirect" | "blocked" | "info";
 
@@ -130,7 +131,7 @@ export function subscribeDiagnostics(fn: () => void): () => void {
 
 export interface DeploymentIdentity {
   /** Build compiled into the running JavaScript bundle. */
-  bundle: { version: string; buildTime: string; commit: string; id: string };
+  bundle: { version: string; buildTime: string; commit: string; id: string; environment: string };
   /** Build of the HTML document that the origin is serving right now. */
   served: {
     buildTime: string | null;
@@ -139,6 +140,8 @@ export interface DeploymentIdentity {
     etag: string | null;
     /** HTML currently in the DOM (may be older than what the origin serves). */
     documentBuildTime: string | null;
+    environment: string | null;
+    revision: number | null;
   };
   /** True when the served HTML and the running bundle disagree. */
   mismatch: boolean;
@@ -176,7 +179,8 @@ export async function resolveDeploymentIdentity(): Promise<DeploymentIdentity> {
     version: BUILD_VERSION,
     buildTime: BUILD_TIME,
     commit: BUILD_COMMIT,
-    id: deploymentId(BUILD_TIME, BUILD_COMMIT) ?? "unknown",
+    id: RELEASE_ID,
+    environment: BUILD_ENVIRONMENT,
   };
   const origin = typeof window !== "undefined" ? window.location.origin : "n/a";
   const documentBuildTime = metaContent(
@@ -192,6 +196,8 @@ export async function resolveDeploymentIdentity(): Promise<DeploymentIdentity> {
       id: null,
       etag: null,
       documentBuildTime,
+      environment: null,
+      revision: null,
     },
     mismatch: false,
     origin,
@@ -199,27 +205,21 @@ export async function resolveDeploymentIdentity(): Promise<DeploymentIdentity> {
   };
 
   try {
-    const res = await fetch(`${origin}/index.html`, {
-      cache: "no-store",
-      headers: { "Cache-Control": "no-cache" },
-    });
-    const html = await res.text();
-    const parsed = new DOMParser().parseFromString(html, "text/html");
-    const servedBuildTime = metaContent(parsed, "build-time");
-    const servedCommit = metaContent(parsed, "build-commit");
+    const served = await fetchServedBuild();
 
     return {
       ...base,
       served: {
-        buildTime: servedBuildTime,
-        commit: servedCommit,
-        id: deploymentId(servedBuildTime, servedCommit),
-        etag: res.headers.get("etag"),
+        buildTime: served.buildTime,
+        commit: served.commit,
+        id: served.id,
+        etag: null,
         documentBuildTime,
+        environment: served.environment ?? null,
+        revision: served.revision ?? null,
       },
       mismatch: Boolean(
-        (servedCommit && bundle.commit !== "dev" && servedCommit !== bundle.commit) ||
-        (servedBuildTime && bundle.buildTime && servedBuildTime !== bundle.buildTime),
+        served.id && served.id !== bundle.id,
       ),
     };
   } catch (e) {

@@ -46,6 +46,9 @@
     <!-- Build identity (also surfaced by BuildVersionBadge after React mounts). -->
     <meta name="build-time" content="__INDEX_HTML_BUILT__" />
     <meta name="build-commit" content="__INDEX_HTML_COMMIT__" />
+    <meta name="release-id" content="__INDEX_HTML_RELEASE_ID__" />
+    <meta name="release-revision" content="__INDEX_HTML_RELEASE_REVISION__" />
+    <meta name="release-environment" content="__INDEX_HTML_ENVIRONMENT__" />
 
 
     <script>
@@ -53,6 +56,8 @@
         try {
           var buildTime = document.querySelector('meta[name="build-time"]')?.getAttribute("content") || String(Date.now());
           window.__BUILD_TIME__ = buildTime;
+          window.__NEXUS_RELEASE_ID__ = document.querySelector('meta[name="release-id"]')?.getAttribute("content") || null;
+          window.__NEXUS_RELEASE_REVISION__ = Number(document.querySelector('meta[name="release-revision"]')?.getAttribute("content") || "0");
 
           // Manual "hard reload" helper: plain reload, no URL rewriting.
           // Adding ?fresh=/?build= params created a brand new cache entry for

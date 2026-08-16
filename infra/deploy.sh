@@ -58,6 +58,9 @@ echo ""
 echo ">>> Step 3: Building frontend..."
 docker build \
   --build-arg VITE_API_URL="http://${ALB_DNS}" \
+  --build-arg GIT_COMMIT_SHA="${RELEASE_ID}" \
+  --build-arg APP_RELEASE_ID="${RELEASE_ID}" \
+  --build-arg APP_ENVIRONMENT="production" \
   -t "${FRONTEND_ECR}:${RELEASE_ID}" \
   -t "${FRONTEND_ECR}:latest" .
 docker push "${FRONTEND_ECR}:${RELEASE_ID}"

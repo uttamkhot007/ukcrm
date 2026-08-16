@@ -8,7 +8,13 @@ WORKDIR /app
 # leftover Supabase or Lovable references are caught by `verify-aws-bundle.mjs`
 # below and will fail the build.
 ARG VITE_API_URL=""
+ARG GIT_COMMIT_SHA=""
+ARG APP_RELEASE_ID=""
+ARG APP_ENVIRONMENT="production"
 ENV VITE_API_URL=$VITE_API_URL
+ENV GITHUB_SHA=$GIT_COMMIT_SHA
+ENV APP_RELEASE_ID=$APP_RELEASE_ID
+ENV APP_ENVIRONMENT=$APP_ENVIRONMENT
 
 # Install dependencies
 COPY package.json bun.lock* package-lock.json* ./

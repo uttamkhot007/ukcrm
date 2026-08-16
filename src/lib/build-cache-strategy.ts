@@ -18,7 +18,14 @@
  *     visitor silently lands on the latest assets without ever looping.
  */
 
-import { BUILD_COMMIT, BUILD_TIME, BUILD_VERSION } from "@/lib/build-info";
+import {
+  BUILD_COMMIT,
+  BUILD_ENVIRONMENT,
+  BUILD_TIME,
+  BUILD_VERSION,
+  RELEASE_ID,
+  RELEASE_REVISION,
+} from "@/lib/build-info";
 import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
 import { flushReleaseFloorTelemetry, recordReleaseFloorEvent } from "@/lib/release-floor-telemetry";
 
@@ -30,12 +37,15 @@ const MIN_POLL_GAP_MS = 30 * 1000;
 const RESUME_GAP_MS = 60 * 1000;
 const COHERENCE_EVENT = "nexus:release-coherence-updated";
 
-export const RUNNING_BUILD_ID = `${BUILD_VERSION}|${BUILD_COMMIT}|${BUILD_TIME}`;
+export const RUNNING_BUILD_ID = RELEASE_ID;
 
 export type ServedBuild = {
   buildTime: string | null;
   commit: string | null;
   id: string | null;
+  revision?: number | null;
+  environment?: string | null;
+  uiSchemaVersion?: string | null;
 };
 
 export const NEW_BUILD_EVENT = "nexus:new-build-available";
@@ -47,6 +57,7 @@ export type ReleaseCoherenceDiagnostic = {
   servedId: string | null;
   checkedAt: string;
   bfcache: boolean;
+  environment?: string;
   decision: "current" | "preserved" | "reload" | "unverifiable" | "failed";
   reason?: string;
 };
@@ -54,7 +65,7 @@ export type ReleaseCoherenceDiagnostic = {
 const diagnostics: ReleaseCoherenceDiagnostic[] = [];
 
 function recordDiagnostic(value: ReleaseCoherenceDiagnostic) {
-  diagnostics.push(value);
+  diagnostics.push({ environment: BUILD_ENVIRONMENT, ...value });
   if (diagnostics.length > 20) diagnostics.shift();
   try {
     sessionStorage.setItem("nexus:release-coherence", JSON.stringify(diagnostics));
@@ -138,17 +149,26 @@ export async function fetchServedBuild(): Promise<ServedBuild> {
   // A unique probe URL prevents non-compliant intermediary proxies from
   // replaying an old index response. This query is never used for navigation,
   // so it cannot create stale browser history or shell cache entries.
-  const url = `${window.location.origin}/index.html?release-probe=${Date.now()}`;
+  const url = `${window.location.origin}/release-manifest.json?release-probe=${Date.now()}`;
   const res = await fetch(url, { cache: "no-store", credentials: "omit" });
-  if (!res.ok) throw new Error(`index.html responded ${res.status}`);
-  const html = await res.text();
-  const read = (name: string) =>
-    html.match(new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']*)["']`, "i"))?.[1] ?? null;
-
-  const buildTime = read("build-time");
-  const commit = read("build-commit");
-  const id = buildTime || commit ? `${commit ?? "?"}|${buildTime ?? "?"}` : null;
-  return { buildTime, commit, id };
+  if (!res.ok) throw new Error(`release manifest responded ${res.status}`);
+  const manifest = (await res.json()) as Partial<{
+    releaseId: string;
+    revision: number;
+    buildTime: string;
+    commit: string;
+    environment: string;
+    uiSchemaVersion: string;
+  }>;
+  const id = typeof manifest.releaseId === "string" ? manifest.releaseId : null;
+  return {
+    buildTime: typeof manifest.buildTime === "string" ? manifest.buildTime : null,
+    commit: typeof manifest.commit === "string" ? manifest.commit : null,
+    id,
+    revision: typeof manifest.revision === "number" ? manifest.revision : null,
+    environment: typeof manifest.environment === "string" ? manifest.environment : null,
+    uiSchemaVersion: typeof manifest.uiSchemaVersion === "string" ? manifest.uiSchemaVersion : null,
+  };
 }
 
 export function isServedBuildDifferent(served: ServedBuild): boolean {
@@ -272,6 +292,16 @@ export function compareServedBuild(served: ServedBuild): ServedBuildRelation {
   if (!served.id || served.buildTime?.startsWith("__") || served.commit?.startsWith("__")) {
     return "unknown";
   }
+
+  if (
+    served.environment === BUILD_ENVIRONMENT &&
+    typeof served.revision === "number" &&
+    served.buildTime === BUILD_TIME
+  ) {
+    if (served.revision > RELEASE_REVISION) return "newer";
+    if (served.revision < RELEASE_REVISION) return "older";
+  }
+  if (served.id === RELEASE_ID) return "same";
 
   const servedTime = served.buildTime ? Date.parse(served.buildTime) : Number.NaN;
   const runningTime = Date.parse(BUILD_TIME);
@@ -427,7 +457,9 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 
     const id = served.id as string;
     const attempts = reloadAttemptsFor(id);
-    if (!autoReload || attempts >= MAX_RELOAD_ATTEMPTS) {
+    const isDevelopment = BUILD_ENVIRONMENT === "development";
+    const activeHmrCheck = isDevelopment && (trigger === "boot" || trigger === "interval");
+    if (!autoReload || activeHmrCheck || attempts >= MAX_RELOAD_ATTEMPTS) {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: autoReload ? `reload limit reached (${MAX_RELOAD_ATTEMPTS})` : "auto reload disabled" });
       return;
     }
@@ -471,12 +503,45 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 }
 
 /** Boot-time entry point used by main.tsx. */
-export function installBuildCacheStrategy(): void {
+export async function installBuildCacheStrategy(): Promise<boolean> {
   const isDev = Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV);
   // Hard guarantee first: if this bundle predates a release we already ran,
   // purge and reload before anything else renders against it.
-  if (!isDev && enforceReleaseFloor()) return;
-  void purgeCachesOnNewBuild();
-  watchServedBuild({ autoReload: !isDev });
+  if (!isDev && enforceReleaseFloor()) return false;
+
+  // Gate first paint on the authoritative manifest so an old React tree can
+  // never mount while a newer deployment is being discovered in background.
+  try {
+    const served = await fetchServedBuild();
+    recordReleaseObservation(served.buildTime, served.id);
+    if (compareServedBuild(served) === "newer" && served.id) {
+      window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
+      recordDiagnostic({
+        trigger: "boot",
+        runningId: RUNNING_BUILD_ID,
+        servedId: served.id,
+        checkedAt: new Date().toISOString(),
+        bfcache: false,
+        decision: "reload",
+        reason: "newer release found before application mount",
+      });
+      requestReleaseReload(served.id, { clearCaches: true });
+      return false;
+    }
+  } catch {
+    recordDiagnostic({
+      trigger: "boot",
+      runningId: RUNNING_BUILD_ID,
+      servedId: null,
+      checkedAt: new Date().toISOString(),
+      bfcache: false,
+      decision: "failed",
+      reason: "release manifest unavailable before application mount",
+    });
+  }
+
+  await purgeCachesOnNewBuild();
+  watchServedBuild({ autoReload: true });
+  return true;
 }
 

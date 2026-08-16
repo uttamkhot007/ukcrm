@@ -18,7 +18,7 @@
  * No tokens, no payloads — only release identities plus a random session id.
  */
 
-import { BUILD_COMMIT, BUILD_TIME, BUILD_VERSION } from "@/lib/build-info";
+import { BUILD_TIME, RELEASE_ID } from "@/lib/build-info";
 
 export type ReleaseFloorEventKind =
   | "boot_blocked" // running bundle was below the floor at boot
@@ -198,7 +198,7 @@ export function recordReleaseFloorEvent(report: ReleaseFloorReport): ReleaseFloo
     sessionId: getTelemetrySessionId(),
     eventKind: report.eventKind,
     trigger: report.trigger ?? null,
-    runningReleaseId: `${BUILD_VERSION}|${BUILD_COMMIT}|${BUILD_TIME}`,
+    runningReleaseId: RELEASE_ID,
     runningBuildTime: BUILD_TIME,
     floorReleaseId: report.floorReleaseId ?? null,
     floorBuildTime: report.floorBuildTime ?? null,

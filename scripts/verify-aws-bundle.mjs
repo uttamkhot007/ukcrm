@@ -139,8 +139,29 @@ for (const file of files) {
 console.log(`Scanned ${fmtBytes(bytesScanned)} across ${files.length} files.`);
 
 if (findings.length === 0) {
+  const manifestPath = join(DIST, "release-manifest.json");
+  let releaseManifest;
+  try {
+    releaseManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  } catch {
+    console.error("✘ release-manifest.json is missing or invalid.");
+    process.exit(1);
+  }
+  const html = readFileSync(join(DIST, "index.html"), "utf8");
+  const manifestIsProduction = releaseManifest.environment === "production";
+  const invalidProductionIdentity =
+    manifestIsProduction &&
+    (!releaseManifest.releaseId || !releaseManifest.commit || releaseManifest.commit === "dev");
+  const htmlIdentityMismatch =
+    !html.includes(`name="release-id" content="${releaseManifest.releaseId}"`) ||
+    !html.includes(`name="build-commit" content="${releaseManifest.commit}"`);
+  if (invalidProductionIdentity || htmlIdentityMismatch) {
+    console.error("✘ Release identity is missing, set to dev, or inconsistent across the manifest and HTML.");
+    process.exit(1);
+  }
   console.log("");
   console.log("✓ Bundle is clean — no Supabase or Lovable references found.");
+  console.log(`✓ Release identity verified: ${releaseManifest.releaseId}`);
   console.log("✓ Safe to deploy to AWS.");
   process.exit(0);
 }

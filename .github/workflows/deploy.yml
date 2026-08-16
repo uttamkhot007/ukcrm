@@ -60,6 +60,9 @@ jobs:
         run: |
           docker build \
             --build-arg VITE_API_URL="https://${{ steps.cfn.outputs.alb_dns }}" \
+            --build-arg GIT_COMMIT_SHA="${{ github.sha }}" \
+            --build-arg APP_RELEASE_ID="${{ github.sha }}" \
+            --build-arg APP_ENVIRONMENT="production" \
             -t ${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }} \
             -t ${{ steps.cfn.outputs.frontend_ecr }}:latest .
           docker push ${{ steps.cfn.outputs.frontend_ecr }}:${{ github.sha }}

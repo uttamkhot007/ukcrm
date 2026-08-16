@@ -34,6 +34,11 @@ vi.mock("@/lib/build-info", () => ({
     return buildCommit;
   },
   BUILD_VERSION: "1.0.0",
+  get RELEASE_ID() {
+    return `1.0.0|${buildCommit}|${buildTime}`;
+  },
+  RELEASE_REVISION: 0,
+  BUILD_ENVIRONMENT: "production",
 }));
 
 vi.mock("@/lib/ui-persistence", () => ({
@@ -68,11 +73,15 @@ function installCacheStorage(names: string[]) {
 
 const reload = vi.fn();
 
-function servedIndexHtml(time: string, commit: string) {
-  return `<!doctype html><html><head>
-    <meta name="build-time" content="${time}" />
-    <meta name="build-commit" content="${commit}" />
-  </head><body></body></html>`;
+function servedManifest(time: string, commit: string, revision = 0) {
+  return JSON.stringify({
+    releaseId: `1.0.0|${commit}|${time}`,
+    revision,
+    buildTime: time,
+    commit,
+    environment: "production",
+    uiSchemaVersion: "3",
+  });
 }
 
 async function loadStrategy() {
@@ -179,7 +188,7 @@ describe("watcher against the deployed release", () => {
   it("forces a cache-clearing reload when the server is ahead", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(servedIndexHtml(NEW_TIME, "newcommit"), { status: 200 })),
+      vi.fn(async () => new Response(servedManifest(NEW_TIME, "newcommit"), { status: 200 })),
     );
     const strategy = await loadStrategy();
     const stop = strategy.watchServedBuild();
@@ -193,7 +202,7 @@ describe("watcher against the deployed release", () => {
     seedReleaseFloor(NEW_TIME);
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(servedIndexHtml(OLD_TIME, "oldcommit"), { status: 200 })),
+      vi.fn(async () => new Response(servedManifest(OLD_TIME, "oldcommit"), { status: 200 })),
     );
 
     const strategy = await loadStrategy();
@@ -217,6 +226,28 @@ describe("watcher against the deployed release", () => {
     });
     expect(results[0]).toBe(true);
     expect(results.slice(1).every((r) => r === false)).toBe(true);
+  });
+
+  it("replaces a preview revision missed while the tab was suspended", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(servedManifest(OLD_TIME, "oldcommit", 3), { status: 200 })),
+    );
+    const strategy = await loadStrategy();
+    const stop = strategy.watchServedBuild();
+    document.dispatchEvent(new Event("visibilitychange"));
+    await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
+    stop();
+  });
+
+  it("blocks application mount when the boot manifest is newer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(servedManifest(NEW_TIME, "newcommit"), { status: 200 })),
+    );
+    const strategy = await loadStrategy();
+    await expect(strategy.installBuildCacheStrategy()).resolves.toBe(false);
+    await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
   });
 });
 
