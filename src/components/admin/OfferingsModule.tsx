@@ -113,7 +113,7 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
   const [editingItem, setEditingItem] = useState<Offering | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product" | "product-problem" | "offensive-problem" | "managed-problem" | "professional-problem">("oem-tech");
+  const [linkDialogType, setLinkDialogType] = useState<"oem-tech" | "product-oem" | "product-tech" | "tech-oem" | "tech-product" | "product-problem" | "professional-problem">("oem-tech");
   const [selectedItemForLink, setSelectedItemForLink] = useState<Offering | null>(null);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [bulkUploadType, setBulkUploadType] = useState<BulkUploadType>("products");
@@ -245,12 +245,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       switch (activeTab) {
         case "products":
           query = supabase.from("offerings_products" as any).select("*").eq("tenant_id", currentTenant.id).order("name");
-          break;
-        case "offensive_security":
-          query = supabase.from("offerings_offensive_security").select("*").eq("tenant_id", currentTenant.id).order("name");
-          break;
-        case "managed_security":
-          query = supabase.from("offerings_managed_security").select("*").eq("tenant_id", currentTenant.id).order("name");
           break;
         case "professional_services":
           query = supabase.from("offerings_professional_services").select("*").eq("tenant_id", currentTenant.id).order("name");
@@ -421,12 +415,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
           case "products":
             updateQuery = supabase.from("offerings_products" as any).update(baseData).eq("id", editingItem.id);
             break;
-          case "offensive_security":
-            updateQuery = supabase.from("offerings_offensive_security").update(baseData).eq("id", editingItem.id);
-            break;
-          case "managed_security":
-            updateQuery = supabase.from("offerings_managed_security").update(baseData).eq("id", editingItem.id);
-            break;
           case "professional_services":
             updateQuery = supabase.from("offerings_professional_services").update(baseData).eq("id", editingItem.id);
             break;
@@ -452,12 +440,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
         switch (activeTab) {
           case "products":
             insertQuery = supabase.from("offerings_products" as any).insert(insertData);
-            break;
-          case "offensive_security":
-            insertQuery = supabase.from("offerings_offensive_security").insert(insertData);
-            break;
-          case "managed_security":
-            insertQuery = supabase.from("offerings_managed_security").insert(insertData);
             break;
           case "professional_services":
             insertQuery = supabase.from("offerings_professional_services").insert(insertData);
@@ -494,12 +476,6 @@ export function OfferingsModule({ readOnly = false }: OfferingsModuleProps) {
       switch (activeTab) {
         case "products":
           deleteQuery = supabase.from("offerings_products" as any).delete().eq("id", id);
-          break;
-        case "offensive_security":
-          deleteQuery = supabase.from("offerings_offensive_security").delete().eq("id", id);
-          break;
-        case "managed_security":
-          deleteQuery = supabase.from("offerings_managed_security").delete().eq("id", id);
           break;
         case "professional_services":
           deleteQuery = supabase.from("offerings_professional_services").delete().eq("id", id);
