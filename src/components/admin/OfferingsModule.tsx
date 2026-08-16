@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Package, Shield, Server, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload, ShieldAlert, Zap, FileWarning, Scale, CircleDot } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Shield, Briefcase, Target, Cpu, Building2, ChevronDown, ChevronRight, Link, X, Sparkles, Loader2, Award, TrendingUp, Lightbulb, Building, Users, Trophy, CheckCircle, AlertCircle, BarChart3, Upload, ShieldAlert, Zap, FileWarning, Scale, CircleDot } from "lucide-react";
 import { BulkUploadDialog, BulkUploadType } from "./BulkUploadDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
