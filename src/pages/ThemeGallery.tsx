@@ -201,9 +201,9 @@ export default function ThemeGallery() {
           <CardContent className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={SERIES}>
-                <CartesianGrid {...chartGridProps()} />
-                <XAxis dataKey="label" {...chartAxisProps()} />
-                <YAxis {...chartAxisProps()} />
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="label" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} />
                 <Bar dataKey="pipeline" fill="hsl(var(--primary))" isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
@@ -217,9 +217,9 @@ export default function ThemeGallery() {
           <CardContent className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={SERIES}>
-                <CartesianGrid {...chartGridProps()} />
-                <XAxis dataKey="label" {...chartAxisProps()} />
-                <YAxis {...chartAxisProps()} />
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="label" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} />
                 <Line
                   type="monotone"
                   dataKey="closed"
