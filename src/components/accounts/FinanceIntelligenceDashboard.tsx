@@ -10,6 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format, subDays, isBefore, parseISO, differenceInDays } from "date-fns";
+import { PaymentTrackingPanel } from "./PaymentTrackingPanel";
+import { DsoProfitInsights } from "./DsoProfitInsights";
+
 import {
   IndianRupee,
   TrendingUp,
@@ -90,19 +93,23 @@ export function FinanceIntelligenceDashboard() {
     enabled: !!tenantId,
   });
 
+  const invoiceIds = useMemo(() => (invoices as any[]).map((i: any) => i.id), [invoices]);
+
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
-    queryKey: ["fi-payments", tenantId],
+
+    queryKey: ["fi-payments", tenantId, invoiceIds.length],
     queryFn: async () => {
-      if (!tenantId) return [];
+      if (!invoiceIds.length) return [];
       const { data, error } = await (supabase.from("payment_records") as any)
-        .select("amount, payment_date")
-        .eq("tenant_id", tenantId)
+        .select("amount, payment_date, invoice_id")
+        .in("invoice_id", invoiceIds)
         .gte("payment_date", format(subDays(new Date(), 90), "yyyy-MM-dd"));
       if (error) throw error;
       return data || [];
     },
-    enabled: !!tenantId,
+    enabled: invoiceIds.length > 0,
   });
+
 
   const { data: ledgers = [], isLoading: ledgersLoading } = useQuery({
     queryKey: ["fi-ledgers", tenantId],
@@ -273,9 +280,12 @@ export function FinanceIntelligenceDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="collections">Payment Tracking</TabsTrigger>
+          <TabsTrigger value="dso-pnl">DSO & P&amp;L</TabsTrigger>
           <TabsTrigger value="receivables">Receivables</TabsTrigger>
           <TabsTrigger value="taxation">Taxation</TabsTrigger>
           <TabsTrigger value="ai">AI Insights</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -389,7 +399,16 @@ export function FinanceIntelligenceDashboard() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="collections" className="space-y-4">
+          <PaymentTrackingPanel />
+        </TabsContent>
+
+        <TabsContent value="dso-pnl" className="space-y-4">
+          <DsoProfitInsights />
+        </TabsContent>
+
         <TabsContent value="taxation" className="space-y-4">
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TaxCard title="Output GST (Payable)" value={metrics.gstPayable} type="outward" />
             <TaxCard title="Input GST (Credit)" value={metrics.gstInputCredit} type="inward" />
