@@ -390,7 +390,7 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       return;
     }
     recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "reload" });
-    requestReleaseReload(id);
+    requestReleaseReload(id, { clearCaches: true });
   };
 
   const onVisible = () => {
