@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { readFileSync } from "fs";
@@ -77,7 +77,7 @@ export default defineConfig(async ({ mode }) => {
 
         },
       },
-      {
+      ({
         name: "release-manifest",
         configureServer(server) {
           server.watcher.on("change", (file) => {
@@ -100,7 +100,7 @@ export default defineConfig(async ({ mode }) => {
             source: JSON.stringify(releaseManifest(), null, 2),
           });
         },
-      },
+      } satisfies Plugin),
     ].filter(Boolean),
     resolve: {
       alias: {
