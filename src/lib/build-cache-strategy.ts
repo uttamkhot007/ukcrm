@@ -20,6 +20,7 @@
 
 import { BUILD_COMMIT, BUILD_TIME, BUILD_VERSION } from "@/lib/build-info";
 import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
+import { flushReleaseFloorTelemetry, recordReleaseFloorEvent } from "@/lib/release-floor-telemetry";
 
 const LAST_BUILD_KEY = "nexus:last-build-id";
 const RELOADED_FOR_KEY = "nexus:reloaded-for-build";
@@ -201,6 +202,13 @@ export function recordReleaseObservation(buildTime: string | null, id: string | 
   } catch {
     /* ignore */
   }
+  recordReleaseFloorEvent({
+    eventKind: "floor_raised",
+    floorReleaseId: id,
+    floorBuildTime: new Date(time).toISOString(),
+    reason: current ? `floor raised from ${current.id}` : "first observed release",
+    action: "floor_updated",
+  });
 }
 
 /** True when the bundle currently executing predates a release we already ran. */
@@ -211,6 +219,15 @@ export function isRunningBuildBelowFloor(): boolean {
   const running = Date.parse(BUILD_TIME);
   if (!Number.isFinite(running)) return false;
   return running < floor.time;
+}
+
+/** Floor identity for telemetry (release id + ISO build time). */
+function floorForTelemetry(): { floorReleaseId: string | null; floorBuildTime: string | null } {
+  const floor = readReleaseFloor();
+  return {
+    floorReleaseId: floor?.id ?? null,
+    floorBuildTime: floor ? new Date(floor.time).toISOString() : null,
+  };
 }
 
 /**
@@ -224,6 +241,7 @@ export function enforceReleaseFloor(): boolean {
     return false;
   }
   const floor = readReleaseFloor();
+  const reason = "running bundle is older than a release already seen (stale shell)";
   recordDiagnostic({
     trigger: "boot",
     runningId: RUNNING_BUILD_ID,
@@ -231,8 +249,16 @@ export function enforceReleaseFloor(): boolean {
     checkedAt: new Date().toISOString(),
     bfcache: false,
     decision: "reload",
-    reason: "running bundle is older than a release already seen (stale shell)",
+    reason,
   });
+  recordReleaseFloorEvent({
+    eventKind: "boot_blocked",
+    trigger: "boot",
+    ...floorForTelemetry(),
+    reason,
+    action: "purge_and_reload",
+  });
+
   return requestReleaseReload(floor?.id ?? "release-floor", { clearCaches: true });
 }
 
@@ -365,6 +391,14 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
     // lagging load-balancer target, proxy, or browser cache.
     if (relation === "older") {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "preserved", reason: "server response is older than running UI; downgrade blocked" });
+      recordReleaseFloorEvent({
+        eventKind: "downgrade_prevented",
+        trigger,
+        servedReleaseId: served.id,
+        ...floorForTelemetry(),
+        reason: "server response is older than running UI; downgrade blocked",
+        action: "kept_current_bundle",
+      });
       return;
     }
 
@@ -373,6 +407,14 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       // this tab is definitively the stale one and must be replaced.
       if (isRunningBuildBelowFloor()) {
         recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "reload", reason: "running bundle is below the release floor" });
+        recordReleaseFloorEvent({
+          eventKind: "served_blocked",
+          trigger,
+          servedReleaseId: served.id,
+          ...floorForTelemetry(),
+          reason: "running bundle is below the release floor",
+          action: "purge_and_reload",
+        });
         requestReleaseReload(served.id, { clearCaches: true });
         return;
       }
@@ -405,6 +447,9 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   const onFocus = () => void check("focus", false, true);
   const onOnline = () => void check("online", false, true);
   const onPageShow = (event: PageTransitionEvent) => void check("pageshow", event.persisted, true);
+
+  // Ship anything queued by a block that happened just before the last reload.
+  void flushReleaseFloorTelemetry();
 
   void check("boot", false, true);
   const timer = window.setInterval(() => {
