@@ -201,6 +201,13 @@ export function recordReleaseObservation(buildTime: string | null, id: string | 
   } catch {
     /* ignore */
   }
+  recordReleaseFloorEvent({
+    eventKind: "floor_raised",
+    floorReleaseId: id,
+    floorBuildTime: new Date(time).toISOString(),
+    reason: current ? `floor raised from ${current.id}` : "first observed release",
+    action: "floor_updated",
+  });
 }
 
 /** True when the bundle currently executing predates a release we already ran. */
@@ -211,6 +218,15 @@ export function isRunningBuildBelowFloor(): boolean {
   const running = Date.parse(BUILD_TIME);
   if (!Number.isFinite(running)) return false;
   return running < floor.time;
+}
+
+/** Floor identity for telemetry (release id + ISO build time). */
+function floorForTelemetry(): { floorReleaseId: string | null; floorBuildTime: string | null } {
+  const floor = readReleaseFloor();
+  return {
+    floorReleaseId: floor?.id ?? null,
+    floorBuildTime: floor ? new Date(floor.time).toISOString() : null,
+  };
 }
 
 /**
@@ -224,6 +240,7 @@ export function enforceReleaseFloor(): boolean {
     return false;
   }
   const floor = readReleaseFloor();
+  const reason = "running bundle is older than a release already seen (stale shell)";
   recordDiagnostic({
     trigger: "boot",
     runningId: RUNNING_BUILD_ID,
@@ -231,8 +248,16 @@ export function enforceReleaseFloor(): boolean {
     checkedAt: new Date().toISOString(),
     bfcache: false,
     decision: "reload",
-    reason: "running bundle is older than a release already seen (stale shell)",
+    reason,
   });
+  recordReleaseFloorEvent({
+    eventKind: "boot_blocked",
+    trigger: "boot",
+    ...floorForTelemetry(),
+    reason,
+    action: "purge_and_reload",
+  });
+
   return requestReleaseReload(floor?.id ?? "release-floor", { clearCaches: true });
 }
 
