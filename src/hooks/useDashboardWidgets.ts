@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { UI_STATE_PREFIX } from "@/lib/ui-persistence";
 
 export interface WidgetConfig {
   id: string;
@@ -21,14 +22,24 @@ const DEFAULT_WIDGET_ORDER: WidgetConfig[] = [
   { id: "team-performance", visible: true, order: 11 },
 ];
 
-const STORAGE_KEY = "dashboard-widget-order";
+const STORAGE_KEY = `${UI_STATE_PREFIX}dashboard-widgets`;
+
+function isWidgetConfig(value: unknown): value is WidgetConfig {
+  if (!value || typeof value !== "object") return false;
+  const widget = value as Partial<WidgetConfig>;
+  return typeof widget.id === "string" && typeof widget.visible === "boolean" && typeof widget.order === "number";
+}
 
 export function useDashboardWidgets() {
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as unknown;
+        if (!Array.isArray(parsed) || !parsed.every(isWidgetConfig)) {
+          localStorage.removeItem(STORAGE_KEY);
+          return DEFAULT_WIDGET_ORDER;
+        }
         // Merge with defaults to handle new widgets
         const mergedWidgets = DEFAULT_WIDGET_ORDER.map((defaultWidget) => {
           const storedWidget = parsed.find((w: WidgetConfig) => w.id === defaultWidget.id);

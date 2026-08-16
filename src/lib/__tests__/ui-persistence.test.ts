@@ -25,13 +25,18 @@ describe("presentation persistence migration", () => {
   it("removes obsolete UI keys without touching auth or current state", () => {
     storage.setItem("nexus-ui-state:legacy:tabs", "old");
     storage.setItem("app-theme-config", "old");
+    storage.setItem("dashboard-widget-order", "old");
     storage.setItem(`${UI_STATE_PREFIX}tabs`, "current");
     storage.setItem(THEME_STORAGE_KEY, "current-theme");
     storage.setItem("auth-token", "secret");
 
     const removed = purgeObsoletePresentationState(storage);
 
-    expect(removed).toEqual(expect.arrayContaining(["nexus-ui-state:legacy:tabs", "app-theme-config"]));
+    expect(removed).toEqual(expect.arrayContaining([
+      "nexus-ui-state:legacy:tabs",
+      "app-theme-config",
+      "dashboard-widget-order",
+    ]));
     expect(storage.getItem(`${UI_STATE_PREFIX}tabs`)).toBe("current");
     expect(storage.getItem(THEME_STORAGE_KEY)).toBe("current-theme");
     expect(storage.getItem("auth-token")).toBe("secret");

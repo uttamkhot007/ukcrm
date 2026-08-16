@@ -184,7 +184,12 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   let lastCheck = 0;
   let lastHeartbeat = Date.now();
 
-  const check = async (trigger: ReleaseCheckTrigger = "interval", bfcache = false, force = false) => {
+  const check = async (
+    trigger: ReleaseCheckTrigger = "interval",
+    bfcache = false,
+    force = false,
+    retryAttempt = 0,
+  ) => {
     if (disposed || document.visibilityState === "hidden") return;
     const now = Date.now();
     if (!force && now - lastCheck < MIN_POLL_GAP_MS) return;
@@ -194,6 +199,10 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
     try {
       served = await fetchServedBuild();
     } catch {
+      if (!disposed && retryAttempt === 0 && navigator.onLine) {
+        window.setTimeout(() => void check(trigger, bfcache, true, 1), 400);
+        return;
+      }
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: null, checkedAt: new Date().toISOString(), bfcache, decision: "failed", reason: "index fetch failed" });
       return; // offline or origin blocks the read — never disrupt the session
     }
