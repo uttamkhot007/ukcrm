@@ -220,7 +220,7 @@ export function RouteDiagnosticsPanel() {
                 <li key={`${entry.checkedAt}-${index}`} className="grid gap-1 rounded-lg border p-2 sm:grid-cols-[9rem_6rem_1fr]">
                   <span>{new Date(entry.checkedAt).toLocaleTimeString()}</span>
                   <span>{entry.trigger}{entry.bfcache ? " · BFCache" : ""}</span>
-                  <span className={entry.decision === "reload" ? "text-destructive" : "text-muted-foreground"}>
+                   <span className={entry.decision === "reload" ? "text-destructive" : entry.decision === "preserved" ? "text-emerald-500" : "text-muted-foreground"}>
                     {entry.decision} · served {entry.servedId ?? "unknown"}
                     {entry.reason ? ` · ${entry.reason}` : ""}
                   </span>

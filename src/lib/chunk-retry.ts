@@ -15,6 +15,8 @@
  *     forever, so retrying is pointless — we reload onto the fresh build once.
  */
 
+import { requestReleaseReload } from "@/lib/build-cache-strategy";
+
 export class ChunkLoadError extends Error {
   readonly cause?: unknown;
   readonly offline: boolean;
@@ -62,25 +64,14 @@ export function isStaleDeployError(error: unknown): boolean {
   );
 }
 
-const STALE_RELOAD_KEY = "chunk-stale-reload-at";
-
 /**
- * Reload once onto the current build when chunks 404 after a deploy.
- * Guarded by a timestamp so a persistently broken build cannot loop.
+ * Reload onto the current build when chunks 404 after a deploy. This shares
+ * the release controller's arbiter, preventing a simultaneous resume check
+ * and chunk failure from launching two competing navigations.
  */
 export function recoverFromStaleDeploy(): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    const last = Number(sessionStorage.getItem(STALE_RELOAD_KEY) ?? 0);
-    if (Date.now() - last < 60_000) return false;
-    sessionStorage.setItem(STALE_RELOAD_KEY, String(Date.now()));
-  } catch {
-    // Private mode without sessionStorage: fall through and reload once.
-  }
-  void import("@/lib/cache-cleanup")
-    .then((m) => m.forceFreshReload())
-    .catch(() => window.location.reload());
-  return true;
+  return requestReleaseReload("chunk-load-failure", { clearCaches: true });
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {

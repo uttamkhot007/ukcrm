@@ -23,6 +23,7 @@ import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
 
 const LAST_BUILD_KEY = "nexus:last-build-id";
 const RELOADED_FOR_KEY = "nexus:reloaded-for-build";
+const MAX_RELOAD_ATTEMPTS = 3;
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 const MIN_POLL_GAP_MS = 30 * 1000;
 const RESUME_GAP_MS = 60 * 1000;
@@ -45,7 +46,7 @@ export type ReleaseCoherenceDiagnostic = {
   servedId: string | null;
   checkedAt: string;
   bfcache: boolean;
-  decision: "current" | "reload" | "unverifiable" | "failed";
+  decision: "current" | "preserved" | "reload" | "unverifiable" | "failed";
   reason?: string;
 };
 
@@ -133,7 +134,10 @@ export async function purgeCachesOnNewBuild(): Promise<boolean> {
 
 /** Read the build identity the server is currently handing out. */
 export async function fetchServedBuild(): Promise<ServedBuild> {
-  const url = `${window.location.origin}/index.html`;
+  // A unique probe URL prevents non-compliant intermediary proxies from
+  // replaying an old index response. This query is never used for navigation,
+  // so it cannot create stale browser history or shell cache entries.
+  const url = `${window.location.origin}/index.html?release-probe=${Date.now()}`;
   const res = await fetch(url, { cache: "no-store", credentials: "omit" });
   if (!res.ok) throw new Error(`index.html responded ${res.status}`);
   const html = await res.text();
@@ -155,20 +159,81 @@ export function isServedBuildDifferent(served: ServedBuild): boolean {
   return Boolean(served.buildTime && served.buildTime !== BUILD_TIME);
 }
 
-function alreadyReloadedFor(id: string): boolean {
+export type ServedBuildRelation = "same" | "newer" | "older" | "different" | "unknown";
+
+/**
+ * Compare releases directionally. A different release is not automatically a
+ * newer release: during an ECS rolling deployment an ALB can briefly return an
+ * older healthy task. Reloading for that response downgrades a perfectly fresh
+ * tab and is the main cause of the GUI apparently reverting after inactivity.
+ */
+export function compareServedBuild(served: ServedBuild): ServedBuildRelation {
+  if (!served.id || served.buildTime?.startsWith("__") || served.commit?.startsWith("__")) {
+    return "unknown";
+  }
+
+  const servedTime = served.buildTime ? Date.parse(served.buildTime) : Number.NaN;
+  const runningTime = Date.parse(BUILD_TIME);
+  if (Number.isFinite(servedTime) && Number.isFinite(runningTime)) {
+    if (servedTime === runningTime) return "same";
+    if (servedTime > runningTime) return "newer";
+    if (servedTime < runningTime) return "older";
+  }
+  if (served.commit && BUILD_COMMIT !== "dev" && served.commit === BUILD_COMMIT) return "same";
+  return "different";
+}
+
+type ReloadRecord = { id: string; attempts: number };
+
+function readReloadRecord(): ReloadRecord | null {
   try {
-    return window.sessionStorage.getItem(RELOADED_FOR_KEY) === id;
+    const raw = window.sessionStorage.getItem(RELOADED_FOR_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ReloadRecord>;
+    return typeof parsed.id === "string" && typeof parsed.attempts === "number"
+      ? { id: parsed.id, attempts: parsed.attempts }
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-function markReloadedFor(id: string): void {
+function reloadAttemptsFor(id: string): number {
+  const record = readReloadRecord();
+  return record?.id === id ? record.attempts : 0;
+}
+
+function markReloadAttempt(id: string): void {
   try {
-    window.sessionStorage.setItem(RELOADED_FOR_KEY, id);
+    window.sessionStorage.setItem(
+      RELOADED_FOR_KEY,
+      JSON.stringify({ id, attempts: reloadAttemptsFor(id) + 1 } satisfies ReloadRecord),
+    );
   } catch {
     /* ignore */
   }
+}
+
+let reloadInFlight = false;
+
+/** Single reload arbiter shared by release checks and failed lazy chunks. */
+export function requestReleaseReload(
+  id: string,
+  options: { clearCaches?: boolean } = {},
+): boolean {
+  if (typeof window === "undefined" || reloadInFlight) return false;
+  if (reloadAttemptsFor(id) >= MAX_RELOAD_ATTEMPTS) return false;
+
+  reloadInFlight = true;
+  markReloadAttempt(id);
+  if (options.clearCaches) {
+    void import("@/lib/cache-cleanup")
+      .then((module) => module.forceFreshReload())
+      .catch(() => window.location.reload());
+  } else {
+    window.location.reload();
+  }
+  return true;
 }
 
 /**
@@ -211,30 +276,43 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: null, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "served build metadata missing" });
       return;
     }
-    if (!isServedBuildDifferent(served)) {
+    const relation = compareServedBuild(served);
+    if (relation === "same") {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current" });
+      return;
+    }
+
+    // Never replace a newer running UI with an older shell returned by a
+    // lagging load-balancer target, proxy, or browser cache.
+    if (relation === "older") {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "preserved", reason: "server response is older than running UI; downgrade blocked" });
+      return;
+    }
+
+    if (relation === "unknown" || relation === "different") {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: "release order unavailable; reload blocked" });
       return;
     }
 
     window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
 
     const id = served.id as string;
-    if (!autoReload || alreadyReloadedFor(id)) {
-      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: autoReload ? "reload already attempted" : "auto reload disabled" });
+    const attempts = reloadAttemptsFor(id);
+    if (!autoReload || attempts >= MAX_RELOAD_ATTEMPTS) {
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "unverifiable", reason: autoReload ? `reload limit reached (${MAX_RELOAD_ATTEMPTS})` : "auto reload disabled" });
       return;
     }
     recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: id, checkedAt: new Date().toISOString(), bfcache, decision: "reload" });
-    markReloadedFor(id);
-    // Plain reload: assets are content-hashed and the HTML is sent with
-    // no-store, so this pulls the new shell without inventing new URLs.
-    window.location.reload();
+    requestReleaseReload(id);
   };
 
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
     const resumed = Date.now() - lastHeartbeat > RESUME_GAP_MS;
     lastHeartbeat = Date.now();
-    void check(resumed ? "resume" : "visible", false, resumed);
+    // Returning to the app is always a coherence boundary. Never let a recent
+    // background timer suppress the check the user is relying on now.
+    void check(resumed ? "resume" : "visible", false, true);
   };
 
   const onFocus = () => void check("focus", false, true);
@@ -243,7 +321,6 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 
   void check("boot", false, true);
   const timer = window.setInterval(() => {
-    lastHeartbeat = Date.now();
     void check("interval");
   }, POLL_INTERVAL_MS);
   document.addEventListener("visibilitychange", onVisible);
