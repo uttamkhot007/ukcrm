@@ -273,16 +273,24 @@ export function AttendanceReports() {
       <html>
       <head>
         <title>Attendance Report - ${format(new Date(selectedMonth + "-01"), "MMMM yyyy")}</title>
+        <meta name="color-scheme" content="light" />
         <style>
+          /* Exported report is always light: never inherit the app theme or the
+             OS dark preference into the printed page. */
+          :root { color-scheme: light; }
+          html, body { background: #ffffff !important; color: #0f1729 !important; }
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #333; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f4f4f4; }
+          h1 { color: #0f1729; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #ffffff; }
+          th, td { border: 1px solid #d4d8e2; padding: 8px; text-align: left; color: #0f1729; background: #ffffff; }
+          th { background-color: #f1f5f9; }
           .stats { display: flex; gap: 20px; margin: 20px 0; }
-          .stat-box { padding: 15px; background: #f9f9f9; border-radius: 8px; }
+          .stat-box { padding: 15px; background: #f8fafc; border: 1px solid #e5e9f0; border-radius: 8px; color: #0f1729; }
           .late { color: #dc2626; }
+          @media print { html, body { background: #ffffff !important; } }
         </style>
+
       </head>
       <body>
         <h1>Attendance Report</h1>
