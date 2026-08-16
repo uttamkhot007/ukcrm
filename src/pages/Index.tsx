@@ -670,6 +670,8 @@ const Index = () => {
         return <TicketingModule initialTab="templates" />;
       case "helpdesk-analytics":
         return <TicketingModule initialTab="analytics" />;
+      case "helpdesk-intelligence":
+        return <TicketingModule initialTab="intelligence" />;
       case "helpdesk-automation":
         return <TicketingModule initialTab="automation" />;
 
