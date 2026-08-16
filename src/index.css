@@ -406,12 +406,16 @@
     border: 1px solid hsl(var(--glass-border) / 0.5);
   }
 
-  /* Dialog/sheet/drawer scrims: the shadcn default (black/80) reads as a dark
-     slab in the white theme. Soften it to a light, neutral veil. */
-  .light [data-radix-popper-content-wrapper] ~ * ,
-  .light [data-state="open"][class*="bg-black/80"] {
-    background-color: hsl(220 25% 12% / 0.32) !important;
+  /* Dialog/sheet/drawer scrims: shared token so the white theme gets a light,
+     neutral veil instead of a near-black slab. */
+  .overlay-scrim {
+    background-color: hsl(222 47% 11% / 0.35);
   }
+
+  .dark .overlay-scrim {
+    background-color: hsl(0 0% 0% / 0.8);
+  }
+
 
 
   /* Enhanced Glass Hover */
