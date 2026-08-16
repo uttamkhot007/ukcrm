@@ -91,18 +91,19 @@ export function FinanceIntelligenceDashboard() {
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
-    queryKey: ["fi-payments", tenantId],
+    queryKey: ["fi-payments", tenantId, invoiceIds.length],
     queryFn: async () => {
-      if (!tenantId) return [];
+      if (!invoiceIds.length) return [];
       const { data, error } = await (supabase.from("payment_records") as any)
-        .select("amount, payment_date")
-        .eq("tenant_id", tenantId)
+        .select("amount, payment_date, invoice_id")
+        .in("invoice_id", invoiceIds)
         .gte("payment_date", format(subDays(new Date(), 90), "yyyy-MM-dd"));
       if (error) throw error;
       return data || [];
     },
-    enabled: !!tenantId,
+    enabled: invoiceIds.length > 0,
   });
+
 
   const { data: ledgers = [], isLoading: ledgersLoading } = useQuery({
     queryKey: ["fi-ledgers", tenantId],
