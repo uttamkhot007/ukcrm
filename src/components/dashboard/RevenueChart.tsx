@@ -110,42 +110,36 @@ export function RevenueChart({ onNavigate }: RevenueChartProps) {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                  <stop offset="5%" stopColor={CHART_TOKENS.primary} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={CHART_TOKENS.primary} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(217, 33%, 17%)" />
+              <CartesianGrid {...chartGridProps} />
               <XAxis
                 dataKey="month"
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={12}
+                {...chartAxisProps}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={12}
+                {...chartAxisProps}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${getCurrencySymbol()}${value}k`}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(222, 47%, 8%)",
-                  border: "1px solid hsl(217, 33%, 17%)",
-                  borderRadius: "8px",
-                  color: "hsl(210, 40%, 98%)",
-                }}
+                {...chartTooltipProps}
                 formatter={(value: number) => [formatCurrency(value * 1000), "Revenue"]}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(217, 91%, 60%)"
+                stroke={CHART_TOKENS.primary}
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorRevenue)"
               />
+
             </AreaChart>
           </ResponsiveContainer>
         </div>
