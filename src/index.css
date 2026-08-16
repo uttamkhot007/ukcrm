@@ -1227,7 +1227,28 @@
   [data-print-hide],
   [role="banner"],
   [role="dialog"] [data-radix-dialog-overlay],
-  .overlay-scrim {
+  .overlay-scrim,
+  .fixed,
+  [data-sonner-toaster],
+  [data-radix-popper-content-wrapper] {
     display: none !important;
   }
+
+  /* Sidebar is hidden on paper: reclaim its gutter so the report is centred. */
+  main,
+  [role="main"] {
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Avoid breaking a card or table row across two sheets. */
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  [data-slot="card"],
+  .glass,
+  .glass-card { page-break-inside: avoid; }
 }
