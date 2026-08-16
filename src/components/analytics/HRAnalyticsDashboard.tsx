@@ -358,8 +358,7 @@ export function HRAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Legend />
                   <Area 
@@ -410,8 +409,7 @@ export function HRAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -439,8 +437,7 @@ export function HRAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Legend />
                   <Bar 
@@ -481,8 +478,7 @@ export function HRAnalyticsDashboard() {
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                      borderRadius: '8px', color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Bar dataKey="count" name="Responses" radius={[0, 4, 4, 0]}>
                     {hrData?.moodData.map((entry, index) => (

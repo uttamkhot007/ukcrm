@@ -276,8 +276,7 @@ export function VCISODashboard() {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))" 
-                      }}
+                        border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -316,8 +315,7 @@ export function VCISODashboard() {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))" 
-                      }}
+                        border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                     />
                     <Legend />
                   </PieChart>
@@ -370,8 +368,7 @@ export function VCISODashboard() {
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))" 
-                    }}
+                      border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {controlStatusData.map((entry, index) => (

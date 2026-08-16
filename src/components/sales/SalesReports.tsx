@@ -254,8 +254,7 @@ export function SalesReports() {
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
-                  }}
+                    borderRadius: "8px", color: 'hsl(var(--popover-foreground))',}}
                 />
                 <Legend />
                 <Line type="monotone" dataKey="deals" stroke="#3b82f6" strokeWidth={2} name="New Deals" />
@@ -289,8 +288,7 @@ export function SalesReports() {
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
+                      borderRadius: "8px", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Legend />
                 </PieChart>
@@ -308,8 +306,7 @@ export function SalesReports() {
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
+                      borderRadius: "8px", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Bar dataKey="amount" fill="#3b82f6" radius={4} />
                 </BarChart>
@@ -331,8 +328,7 @@ export function SalesReports() {
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
-                  }}
+                    borderRadius: "8px", color: 'hsl(var(--popover-foreground))',}}
                 />
                 <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>

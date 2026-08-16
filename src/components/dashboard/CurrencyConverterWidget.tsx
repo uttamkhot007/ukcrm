@@ -204,8 +204,7 @@ export function CurrencyConverterWidget() {
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px',
-                        fontSize: '12px'
-                      }}
+                        fontSize: '12px', color: 'hsl(var(--popover-foreground))',}}
                       formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Rate']}
                     />
                     <Line 

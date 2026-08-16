@@ -238,8 +238,7 @@ export function VCFODashboard() {
                     formatter={(value: number) => [formatCurrency(value), "Revenue"]}
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))" 
-                    }}
+                      border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Area 
                     type="monotone" 
@@ -280,8 +279,7 @@ export function VCFODashboard() {
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))" 
-                      }}
+                        border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                     />
                     <Legend />
                   </PieChart>
@@ -392,8 +390,7 @@ export function VCFODashboard() {
                     formatter={(value: number) => formatCurrency(value)}
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))" 
-                    }}
+                      border: "1px solid hsl(var(--border))", color: 'hsl(var(--popover-foreground))',}}
                   />
                   <Legend />
                   <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-2))" />
