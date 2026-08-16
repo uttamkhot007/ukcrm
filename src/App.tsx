@@ -77,6 +77,12 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/employee-directory" element={<EmployeeDirectory />} />
+
+                {/* Theme specimen sheet for visual regression tests (never shipped to prod) */}
+                {!import.meta.env.PROD && (
+                  <Route path="/__theme" element={<ThemeGallery />} />
+                )}
+
                 
                 {/* Workspace Routes */}
                 <Route path="/workspace/new" element={<CreateWorkspace />} />
