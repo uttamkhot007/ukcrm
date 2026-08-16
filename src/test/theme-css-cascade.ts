@@ -56,12 +56,16 @@ export function parseCustomPropertyRules(css: string): CssRule[] {
       const selector = stack.pop() ?? "";
       const body = buffer;
       buffer = "";
-      if (selector && !selector.startsWith("@")) {
+      // Conditional groups (`@media print`, responsive tweaks) are not part of
+      // the base theme cascade the app renders on screen.
+      const insideConditional = stack.some((ancestor) => ancestor.startsWith("@media"));
+      if (selector && !selector.startsWith("@") && !insideConditional) {
         const declarations = parseDeclarations(body);
         if (Object.keys(declarations).length > 0) {
           rules.push({ selector, declarations });
         }
       }
+
       i += 1;
       continue;
     }
