@@ -142,6 +142,7 @@ export interface DeploymentIdentity {
     documentBuildTime: string | null;
     environment: string | null;
     revision: number | null;
+    source: "manifest" | "html" | null;
   };
   /** True when the served HTML and the running bundle disagree. */
   mismatch: boolean;
@@ -198,6 +199,7 @@ export async function resolveDeploymentIdentity(): Promise<DeploymentIdentity> {
       documentBuildTime,
       environment: null,
       revision: null,
+      source: null,
     },
     mismatch: false,
     origin,
@@ -217,6 +219,7 @@ export async function resolveDeploymentIdentity(): Promise<DeploymentIdentity> {
         documentBuildTime,
         environment: served.environment ?? null,
         revision: served.revision ?? null,
+        source: served.source ?? null,
       },
       mismatch: Boolean(
         served.id && served.id !== bundle.id,

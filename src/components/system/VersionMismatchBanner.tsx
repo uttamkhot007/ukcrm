@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { RefreshCw, RotateCw, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  getReleaseVerificationState,
   NEW_BUILD_EVENT,
   isRunningBuildBelowFloor,
   requestReleaseReload,
+  subscribeReleaseVerification,
+  type ReleaseVerificationState,
   type ServedBuild,
 } from "@/lib/build-cache-strategy";
 import { BUILD_TIME } from "@/lib/build-info";
@@ -27,6 +30,9 @@ type Mismatch = { servedId: string; reason: "newer" | "stale-shell" };
 export function VersionMismatchBanner() {
   const [mismatch, setMismatch] = useState<Mismatch | null>(null);
   const [reloading, setReloading] = useState(false);
+  const [verification, setVerification] = useState<ReleaseVerificationState>(
+    () => getReleaseVerificationState(),
+  );
 
   const hardReload = () => {
     setReloading(true);
@@ -46,16 +52,21 @@ export function VersionMismatchBanner() {
     }
 
     window.addEventListener(NEW_BUILD_EVENT, onNewBuild);
+    const unsubscribe = subscribeReleaseVerification(setVerification);
 
     return () => {
       window.removeEventListener(NEW_BUILD_EVENT, onNewBuild);
+      unsubscribe();
     };
   }, []);
 
-  if (!mismatch) return null;
+  const unverified = verification.status === "unverifiable";
+  if (!mismatch && !unverified) return null;
 
   const title =
-    mismatch.reason === "stale-shell"
+    unverified
+      ? "App version could not be verified"
+      : mismatch?.reason === "stale-shell"
       ? "You are viewing an outdated version of the app"
       : "A newer version of the app is available";
 
@@ -73,7 +84,9 @@ export function VersionMismatchBanner() {
       <span className="text-xs opacity-90">
         {reloading
           ? "Clearing caches and loading the latest build…"
-          : `Latest release detected · running build ${BUILD_TIME}`}
+          : unverified
+            ? "Changes are disabled until the server confirms this release. Check your connection or reload safely."
+            : `Latest release detected · running build ${BUILD_TIME}`}
       </span>
       <div className="ml-auto flex items-center gap-2">
         <Button

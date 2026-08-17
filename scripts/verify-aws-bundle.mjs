@@ -155,8 +155,15 @@ if (findings.length === 0) {
   const htmlIdentityMismatch =
     !html.includes(`name="release-id" content="${releaseManifest.releaseId}"`) ||
     !html.includes(`name="build-commit" content="${releaseManifest.commit}"`);
-  if (invalidProductionIdentity || htmlIdentityMismatch) {
-    console.error("✘ Release identity is missing, set to dev, or inconsistent across the manifest and HTML.");
+  const javascript = files
+    .filter((file) => extname(file).toLowerCase() === ".js")
+    .map((file) => readFileSync(file, "utf8"))
+    .join("\n");
+  const bundleIdentityMismatch =
+    !javascript.includes(String(releaseManifest.releaseId)) ||
+    !javascript.includes(String(releaseManifest.commit));
+  if (invalidProductionIdentity || htmlIdentityMismatch || bundleIdentityMismatch) {
+    console.error("✘ Release identity is missing, set to dev, or inconsistent across the manifest, HTML, and JavaScript.");
     process.exit(1);
   }
   console.log("");

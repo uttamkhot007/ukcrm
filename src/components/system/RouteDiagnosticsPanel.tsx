@@ -199,6 +199,7 @@ export function RouteDiagnosticsPanel() {
               <div>commit {deployment?.served.commit ?? "unknown"}</div>
               <div>environment {deployment?.served.environment ?? "unknown"}</div>
               <div>revision {deployment?.served.revision ?? "unknown"}</div>
+              <div>verification source {deployment?.served.source ?? "unknown"}</div>
               <div>etag {deployment?.served.etag ?? "—"}</div>
             </div>
           </div>
@@ -233,6 +234,8 @@ export function RouteDiagnosticsPanel() {
                   <span>{entry.trigger}{entry.bfcache ? " · BFCache" : ""}</span>
                    <span className={entry.decision === "reload" ? "text-destructive" : entry.decision === "preserved" ? "text-emerald-500" : "text-muted-foreground"}>
                     {entry.decision} · served {entry.servedId ?? "unknown"}
+                     {entry.source ? ` · via ${entry.source}` : ""}
+                     {entry.attempts ? ` · ${entry.attempts} attempt${entry.attempts === 1 ? "" : "s"}` : ""}
                     {entry.reason ? ` · ${entry.reason}` : ""}
                   </span>
                 </li>

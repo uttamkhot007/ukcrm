@@ -10,6 +10,11 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { checkLiveBuild, formatBehind, type LiveBuildResult } from "@/lib/live-build-check";
+import {
+  getReleaseVerificationState,
+  subscribeReleaseVerification,
+  type ReleaseVerificationState,
+} from "@/lib/build-cache-strategy";
 
 /**
  * Stale-build guard (admin banner mode).
@@ -48,6 +53,9 @@ const OVERRIDE_KEY = "nexus:stale-build-override";
 export function StaleBuildGuardProvider({ children }: { children: ReactNode }) {
   const [live, setLive] = useState<LiveBuildResult | null>(null);
   const [checking, setChecking] = useState(false);
+  const [releaseVerification, setReleaseVerification] = useState<ReleaseVerificationState>(
+    () => getReleaseVerificationState(),
+  );
   const [overridden, setOverridden] = useState(() => {
     try {
       return sessionStorage.getItem(OVERRIDE_KEY) === "1";
@@ -81,6 +89,7 @@ export function StaleBuildGuardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void run(false);
   }, [run]);
+  useEffect(() => subscribeReleaseVerification(setReleaseVerification), []);
 
   const isStale = live?.status === "stale";
 
@@ -106,7 +115,8 @@ export function StaleBuildGuardProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<StaleBuildGuardValue>(() => {
-    const riskyActionsBlocked = isStale && !overridden;
+    const releaseUnverifiable = releaseVerification.status === "unverifiable";
+    const riskyActionsBlocked = releaseUnverifiable || (isStale && !overridden);
     return {
       live,
       checking,
@@ -114,14 +124,16 @@ export function StaleBuildGuardProvider({ children }: { children: ReactNode }) {
       overridden,
       riskyActionsBlocked,
       blockedReason: riskyActionsBlocked
-        ? `The live site is ${formatBehind(live?.behindMs ?? null)}. Re-check the live build (or override) before making changes.`
+        ? releaseUnverifiable
+          ? "This app release could not be verified. Reload or reconnect before making changes."
+          : `The live site is ${formatBehind(live?.behindMs ?? null)}. Re-check the live build (or override) before making changes.`
         : null,
       recheck: async () => {
         await run(true);
       },
       override,
     };
-  }, [live, checking, isStale, overridden, run, override]);
+  }, [live, checking, isStale, overridden, run, override, releaseVerification.status]);
 
   return (
     <StaleBuildGuardContext.Provider value={value}>{children}</StaleBuildGuardContext.Provider>

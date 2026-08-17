@@ -132,6 +132,22 @@ verify_service_image() {
 verify_service_image "${ENV_NAME}-frontend" frontend "${FRONTEND_ECR}:${RELEASE_ID}"
 verify_service_image "${ENV_NAME}-backend" backend "${BACKEND_ECR}:${RELEASE_ID}"
 
+echo ">>> Verifying deployed release identity..."
+release_headers=$(mktemp)
+release_manifest=$(mktemp)
+curl --fail --silent --show-error --retry 4 --retry-all-errors \
+  -D "$release_headers" \
+  "http://${ALB_DNS}/release-manifest.json?deploy-probe=${RELEASE_ID}" \
+  -o "$release_manifest"
+jq -e --arg expected "${RELEASE_ID}" \
+  '.commit == $expected and .releaseId == $expected and .environment == "production"' \
+  "$release_manifest" > /dev/null
+grep -qi '^cache-control:.*no-store' "$release_headers" || {
+  echo "ERROR: release-manifest.json is cacheable." >&2
+  exit 1
+}
+rm -f "$release_headers" "$release_manifest"
+
 echo ""
 echo "============================================"
 echo " Deployment Complete!"
