@@ -84,6 +84,24 @@ function servedManifest(time: string, commit: string, revision = 0) {
   });
 }
 
+function manifestResponse(time: string, commit: string, revision = 0, status = 200) {
+  return new Response(servedManifest(time, commit, revision), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function servedHtml(time: string, commit: string, revision = 0) {
+  return `<!doctype html><html><head>
+    <meta name="build-time" content="${time}">
+    <meta name="build-commit" content="${commit}">
+    <meta name="release-id" content="1.0.0|${commit}|${time}">
+    <meta name="release-revision" content="${revision}">
+    <meta name="release-environment" content="production">
+    <meta name="ui-schema-version" content="3">
+  </head></html>`;
+}
+
 async function loadStrategy() {
   return import("@/lib/build-cache-strategy");
 }
@@ -188,7 +206,7 @@ describe("watcher against the deployed release", () => {
   it("forces a cache-clearing reload when the server is ahead", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(servedManifest(NEW_TIME, "newcommit"), { status: 200 })),
+      vi.fn(async () => manifestResponse(NEW_TIME, "newcommit")),
     );
     const strategy = await loadStrategy();
     const stop = strategy.watchServedBuild();
@@ -202,7 +220,7 @@ describe("watcher against the deployed release", () => {
     seedReleaseFloor(NEW_TIME);
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(servedManifest(OLD_TIME, "oldcommit"), { status: 200 })),
+      vi.fn(async () => manifestResponse(OLD_TIME, "oldcommit")),
     );
 
     const strategy = await loadStrategy();
@@ -231,7 +249,7 @@ describe("watcher against the deployed release", () => {
   it("replaces a preview revision missed while the tab was suspended", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(servedManifest(OLD_TIME, "oldcommit", 3), { status: 200 })),
+      vi.fn(async () => manifestResponse(OLD_TIME, "oldcommit", 3)),
     );
     const strategy = await loadStrategy();
     const stop = strategy.watchServedBuild();
@@ -243,11 +261,54 @@ describe("watcher against the deployed release", () => {
   it("blocks application mount when the boot manifest is newer", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(servedManifest(NEW_TIME, "newcommit"), { status: 200 })),
+      vi.fn(async () => manifestResponse(NEW_TIME, "newcommit")),
     );
     const strategy = await loadStrategy();
     await expect(strategy.installBuildCacheStrategy()).resolves.toBe(false);
     await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
+  });
+
+  it("uses no-store HTML metadata when the manifest is missing", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("missing", { status: 404 }))
+      .mockResolvedValueOnce(new Response(servedHtml(NEW_TIME, "newcommit"), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const strategy = await loadStrategy();
+    const served = await strategy.fetchServedBuild();
+
+    expect(served.source).toBe("html");
+    expect(served.id).toContain("newcommit");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects a 200 HTML interstitial returned as the manifest and falls back", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("<html>challenge</html>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }))
+      .mockResolvedValueOnce(new Response(servedHtml(OLD_TIME, "oldcommit"), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { fetchServedBuild } = await loadStrategy();
+    await expect(fetchServedBuild()).resolves.toMatchObject({ source: "html", commit: "oldcommit" });
+  });
+
+  it("marks the shell unverifiable after both online probes fail twice", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("missing", { status: 404 })));
+    const strategy = await loadStrategy();
+
+    await expect(strategy.installBuildCacheStrategy()).resolves.toBe(true);
+
+    expect(strategy.getReleaseVerificationState().status).toBe("unverifiable");
+    expect(document.documentElement.hasAttribute("data-release-unverified")).toBe(true);
+    expect(strategy.getReleaseCoherenceDiagnostics()[0]).toMatchObject({
+      decision: "failed",
+      attempts: 2,
+    });
   });
 });
 

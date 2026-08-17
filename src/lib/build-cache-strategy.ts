@@ -83,7 +83,10 @@ let verificationInFlight: Promise<ServedBuild> | null = null;
 function setVerificationState(state: ReleaseVerificationState) {
   verificationState = state;
   try {
-    document.documentElement.toggleAttribute("data-release-unverified", state.status === "unverifiable");
+    document.documentElement.toggleAttribute(
+      "data-release-unverified",
+      state.status === "checking" || state.status === "unverifiable",
+    );
     window.dispatchEvent(new CustomEvent(VERIFICATION_EVENT, { detail: state }));
   } catch { /* browser state is best effort */ }
 }
