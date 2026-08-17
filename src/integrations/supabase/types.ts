@@ -15803,6 +15803,10 @@ export type Database = {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
       }
+      users_share_tenant: {
+        Args: { _actor: string; _target: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "manager" | "employee"
