@@ -31,6 +31,8 @@ window.addEventListener("vite:preloadError", (event) => {
 });
 
 async function mountCurrentRelease() {
+  // Approved design lock: never paint a shell older than the approved view.
+  if (enforceApprovedDesign()) return;
   const releaseIsCurrent = await installBuildCacheStrategy();
   if (releaseIsCurrent) {
     const root = document.getElementById("root");
