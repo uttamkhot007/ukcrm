@@ -516,7 +516,7 @@ export function requestReleaseReload(
  * the newest assets are fetched. The guard makes looping impossible even if a
  * CDN keeps serving a mixed set of files.
  */
-export function watchServedBuild(options: { autoReload?: boolean } = {}): () => void {
+export function watchServedBuild(options: { autoReload?: boolean; initialCheck?: boolean } = {}): () => void {
   if (typeof window === "undefined") return () => {};
   const autoReload = options.autoReload ?? true;
   let disposed = false;
@@ -630,7 +630,7 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   // Ship anything queued by a block that happened just before the last reload.
   void flushReleaseFloorTelemetry();
 
-  void check("boot", false, true);
+  if (options.initialCheck ?? true) void check("boot", false, true);
   const timer = window.setInterval(() => {
     void check("interval");
   }, POLL_INTERVAL_MS);
@@ -689,7 +689,9 @@ export async function installBuildCacheStrategy(): Promise<boolean> {
   }
 
   await purgeCachesOnNewBuild();
-  watchServedBuild({ autoReload: true });
+  // Boot verification already completed above. Avoid an overlapping second
+  // request that could replace its final state with an in-flight "checking".
+  watchServedBuild({ autoReload: true, initialCheck: false });
   return true;
 }
 
