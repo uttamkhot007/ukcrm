@@ -6,6 +6,7 @@ import "./index.css";
 import { BUILD_VERSION, BUILD_TIME, BUILD_COMMIT } from "./lib/build-info";
 import { installPreviewBuildRefreshHook } from "./lib/preview-build-refresh";
 import { installBuildCacheStrategy } from "./lib/build-cache-strategy";
+import { enforceApprovedDesign } from "./lib/approved-design-lock";
 import { isStaleDeployError, recoverFromStaleDeploy } from "./lib/chunk-retry";
 
 
