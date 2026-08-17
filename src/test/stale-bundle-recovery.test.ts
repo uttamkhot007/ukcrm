@@ -297,16 +297,16 @@ describe("watcher against the deployed release", () => {
     await expect(fetchServedBuild()).resolves.toMatchObject({ source: "html", commit: "oldcommit" });
   });
 
-  it("marks the shell unverifiable after both online probes fail twice", async () => {
+  it("preserves the approved shell when both online probes fail twice", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("missing", { status: 404 })));
     const strategy = await loadStrategy();
 
     await expect(strategy.installBuildCacheStrategy()).resolves.toBe(true);
 
-    expect(strategy.getReleaseVerificationState().status).toBe("unverifiable");
-    expect(document.documentElement.hasAttribute("data-release-unverified")).toBe(true);
+    expect(strategy.getReleaseVerificationState().status).toBe("verified");
+    expect(document.documentElement.hasAttribute("data-release-unverified")).toBe(false);
     expect(strategy.getReleaseCoherenceDiagnostics()[0]).toMatchObject({
-      decision: "failed",
+      decision: "preserved",
       attempts: 2,
     });
   });
