@@ -299,11 +299,16 @@ async function resolveServedBuild(trigger: ReleaseCheckTrigger, attempts = 2): P
       }
     }
     const reason = lastError instanceof Error ? lastError.message : "release verification failed";
+    // A failed probe is not evidence that the bundle became stale. Preserve an
+    // already-approved release unless the monotonic floor positively proves it
+    // is old. This avoids locking a healthy console during transient hosting,
+    // proxy, or release-manifest outages.
+    const belowFloor = isRunningBuildBelowFloor();
     setVerificationState({
-      status: navigator.onLine ? "unverifiable" : "offline",
+      status: navigator.onLine && belowFloor ? "unverifiable" : navigator.onLine ? "verified" : "offline",
       trigger,
       checkedAt: new Date().toISOString(),
-      reason,
+      reason: belowFloor ? reason : `Current release preserved; latest-release probe unavailable: ${reason}`,
     });
     throw lastError;
   })();
@@ -543,9 +548,11 @@ export function watchServedBuild(options: { autoReload?: boolean; initialCheck?:
         servedId: null,
         checkedAt: new Date().toISOString(),
         bfcache,
-        decision: "failed",
+        decision: isRunningBuildBelowFloor() ? "failed" : "preserved",
         attempts: 2,
-        reason: error instanceof Error ? error.message : "release verification failed",
+        reason: isRunningBuildBelowFloor()
+          ? error instanceof Error ? error.message : "release verification failed"
+          : "current release preserved because no newer release was verified",
       });
       return;
     }
@@ -682,9 +689,11 @@ export async function installBuildCacheStrategy(): Promise<boolean> {
       servedId: null,
       checkedAt: new Date().toISOString(),
       bfcache: false,
-      decision: "failed",
+      decision: isRunningBuildBelowFloor() ? "failed" : "preserved",
       attempts: 2,
-      reason: error instanceof Error ? error.message : "release verification unavailable before application mount",
+      reason: isRunningBuildBelowFloor()
+        ? error instanceof Error ? error.message : "release verification unavailable before application mount"
+        : "current release preserved because no newer release was verified",
     });
   }
 
