@@ -4,6 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* A resumed shell that cannot verify its release remains inspectable but
+   cannot submit stale writes. The fixed recovery banner stays interactive. */
+html[data-release-unverified] #root {
+  pointer-events: none;
+  user-select: none;
+}
+
+html[data-release-unverified] [role="alert"] {
+  pointer-events: auto;
+  user-select: text;
+}
+
 /* Module-specific colors */
 :root {
   --legal: 220 70% 50%;

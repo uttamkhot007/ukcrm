@@ -46,6 +46,7 @@ export type ServedBuild = {
   revision?: number | null;
   environment?: string | null;
   uiSchemaVersion?: string | null;
+  source?: "manifest" | "html";
 };
 
 export const NEW_BUILD_EVENT = "nexus:new-build-available";
@@ -60,7 +61,45 @@ export type ReleaseCoherenceDiagnostic = {
   environment?: string;
   decision: "current" | "preserved" | "reload" | "unverifiable" | "failed";
   reason?: string;
+  source?: "manifest" | "html";
+  attempts?: number;
 };
+
+export type ReleaseVerificationState = {
+  status: "checking" | "verified" | "unverifiable" | "offline";
+  trigger: ReleaseCheckTrigger;
+  checkedAt: string;
+  reason?: string;
+};
+
+const VERIFICATION_EVENT = "nexus:release-verification-state";
+let verificationState: ReleaseVerificationState = {
+  status: "checking",
+  trigger: "boot",
+  checkedAt: new Date().toISOString(),
+};
+let verificationInFlight: Promise<ServedBuild> | null = null;
+
+function setVerificationState(state: ReleaseVerificationState) {
+  verificationState = state;
+  try {
+    document.documentElement.toggleAttribute(
+      "data-release-unverified",
+      state.status === "checking" || state.status === "unverifiable",
+    );
+    window.dispatchEvent(new CustomEvent(VERIFICATION_EVENT, { detail: state }));
+  } catch { /* browser state is best effort */ }
+}
+
+export function getReleaseVerificationState(): ReleaseVerificationState {
+  return verificationState;
+}
+
+export function subscribeReleaseVerification(fn: (state: ReleaseVerificationState) => void): () => void {
+  const listener = (event: Event) => fn((event as CustomEvent<ReleaseVerificationState>).detail);
+  window.addEventListener(VERIFICATION_EVENT, listener);
+  return () => window.removeEventListener(VERIFICATION_EVENT, listener);
+}
 
 const diagnostics: ReleaseCoherenceDiagnostic[] = [];
 
@@ -144,15 +183,45 @@ export async function purgeCachesOnNewBuild(): Promise<boolean> {
   return true;
 }
 
-/** Read the build identity the server is currently handing out. */
-export async function fetchServedBuild(): Promise<ServedBuild> {
+class ReleaseProbeError extends Error {
+  constructor(message: string, readonly source: "manifest" | "html") {
+    super(message);
+    this.name = "ReleaseProbeError";
+  }
+}
+
+async function fetchWithTimeout(url: string, source: "manifest" | "html"): Promise<Response> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 5_000);
+  try {
+    return await fetch(url, { cache: "no-store", credentials: "omit", signal: controller.signal });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "network error";
+    throw new ReleaseProbeError(`${source} request failed: ${detail}`, source);
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function metaFromHtml(html: string, name: string): string | null {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(new RegExp(`<meta[^>]+name=["']${escaped}["'][^>]+content=["']([^"']+)["']`, "i"));
+  const value = match?.[1] ?? null;
+  return value && !value.startsWith("__INDEX_HTML") ? value : null;
+}
+
+async function fetchManifestBuild(): Promise<ServedBuild> {
   // A unique probe URL prevents non-compliant intermediary proxies from
-  // replaying an old index response. This query is never used for navigation,
+  // replaying an old manifest response. This query is never used for navigation,
   // so it cannot create stale browser history or shell cache entries.
   const url = `${window.location.origin}/release-manifest.json?release-probe=${Date.now()}`;
-  const res = await fetch(url, { cache: "no-store", credentials: "omit" });
-  if (!res.ok) throw new Error(`release manifest responded ${res.status}`);
-  const manifest = (await res.json()) as Partial<{
+  const res = await fetchWithTimeout(url, "manifest");
+  if (!res.ok) throw new ReleaseProbeError(`release manifest responded HTTP ${res.status}`, "manifest");
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("json")) {
+    throw new ReleaseProbeError(`release manifest returned ${contentType || "an unknown content type"}`, "manifest");
+  }
+  let manifest: Partial<{
     releaseId: string;
     revision: number;
     buildTime: string;
@@ -160,7 +229,13 @@ export async function fetchServedBuild(): Promise<ServedBuild> {
     environment: string;
     uiSchemaVersion: string;
   }>;
+  try {
+    manifest = (await res.json()) as typeof manifest;
+  } catch {
+    throw new ReleaseProbeError("release manifest returned invalid JSON", "manifest");
+  }
   const id = typeof manifest.releaseId === "string" ? manifest.releaseId : null;
+  if (!id) throw new ReleaseProbeError("release manifest is missing releaseId", "manifest");
   return {
     buildTime: typeof manifest.buildTime === "string" ? manifest.buildTime : null,
     commit: typeof manifest.commit === "string" ? manifest.commit : null,
@@ -168,7 +243,75 @@ export async function fetchServedBuild(): Promise<ServedBuild> {
     revision: typeof manifest.revision === "number" ? manifest.revision : null,
     environment: typeof manifest.environment === "string" ? manifest.environment : null,
     uiSchemaVersion: typeof manifest.uiSchemaVersion === "string" ? manifest.uiSchemaVersion : null,
+    source: "manifest",
   };
+}
+
+async function fetchHtmlBuild(): Promise<ServedBuild> {
+  const url = `${window.location.origin}/index.html?release-fallback=${Date.now()}`;
+  const res = await fetchWithTimeout(url, "html");
+  if (!res.ok) throw new ReleaseProbeError(`index metadata responded HTTP ${res.status}`, "html");
+  const html = await res.text();
+  const id = metaFromHtml(html, "release-id");
+  if (!id) throw new ReleaseProbeError("index metadata is missing release-id", "html");
+  const revision = Number(metaFromHtml(html, "release-revision"));
+  return {
+    id,
+    buildTime: metaFromHtml(html, "build-time"),
+    commit: metaFromHtml(html, "build-commit"),
+    revision: Number.isFinite(revision) ? revision : null,
+    environment: metaFromHtml(html, "release-environment"),
+    uiSchemaVersion: metaFromHtml(html, "ui-schema-version"),
+    source: "html",
+  };
+}
+
+/** Resolve the served release through the manifest, then no-store HTML metadata. */
+export async function fetchServedBuild(): Promise<ServedBuild> {
+  try {
+    return await fetchManifestBuild();
+  } catch (manifestError) {
+    try {
+      return await fetchHtmlBuild();
+    } catch (htmlError) {
+      const manifestReason = manifestError instanceof Error ? manifestError.message : "manifest failed";
+      const htmlReason = htmlError instanceof Error ? htmlError.message : "HTML fallback failed";
+      throw new Error(`${manifestReason}; ${htmlReason}`);
+    }
+  }
+}
+
+async function resolveServedBuild(trigger: ReleaseCheckTrigger, attempts = 2): Promise<ServedBuild> {
+  if (verificationInFlight) return verificationInFlight;
+  setVerificationState({ status: "checking", trigger, checkedAt: new Date().toISOString() });
+  verificationInFlight = (async () => {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        const served = await fetchServedBuild();
+        setVerificationState({ status: "verified", trigger, checkedAt: new Date().toISOString() });
+        return served;
+      } catch (error) {
+        lastError = error;
+        if (attempt < attempts && navigator.onLine) {
+          await new Promise((resolve) => window.setTimeout(resolve, attempt * 250));
+        }
+      }
+    }
+    const reason = lastError instanceof Error ? lastError.message : "release verification failed";
+    setVerificationState({
+      status: navigator.onLine ? "unverifiable" : "offline",
+      trigger,
+      checkedAt: new Date().toISOString(),
+      reason,
+    });
+    throw lastError;
+  })();
+  try {
+    return await verificationInFlight;
+  } finally {
+    verificationInFlight = null;
+  }
 }
 
 export function isServedBuildDifferent(served: ServedBuild): boolean {
@@ -373,7 +516,7 @@ export function requestReleaseReload(
  * the newest assets are fetched. The guard makes looping impossible even if a
  * CDN keeps serving a mixed set of files.
  */
-export function watchServedBuild(options: { autoReload?: boolean } = {}): () => void {
+export function watchServedBuild(options: { autoReload?: boolean; initialCheck?: boolean } = {}): () => void {
   if (typeof window === "undefined") return () => {};
   const autoReload = options.autoReload ?? true;
   let disposed = false;
@@ -384,7 +527,6 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
     trigger: ReleaseCheckTrigger = "interval",
     bfcache = false,
     force = false,
-    retryAttempt = 0,
   ) => {
     if (disposed || document.visibilityState === "hidden") return;
     const now = Date.now();
@@ -393,14 +535,19 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
 
     let served: ServedBuild;
     try {
-      served = await fetchServedBuild();
-    } catch {
-      if (!disposed && retryAttempt === 0 && navigator.onLine) {
-        window.setTimeout(() => void check(trigger, bfcache, true, 1), 400);
-        return;
-      }
-      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: null, checkedAt: new Date().toISOString(), bfcache, decision: "failed", reason: "index fetch failed" });
-      return; // offline or origin blocks the read — never disrupt the session
+      served = await resolveServedBuild(trigger);
+    } catch (error) {
+      recordDiagnostic({
+        trigger,
+        runningId: RUNNING_BUILD_ID,
+        servedId: null,
+        checkedAt: new Date().toISOString(),
+        bfcache,
+        decision: "failed",
+        attempts: 2,
+        reason: error instanceof Error ? error.message : "release verification failed",
+      });
+      return;
     }
     if (disposed) return;
     if (!served.id) {
@@ -413,7 +560,7 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
     recordReleaseObservation(served.buildTime, served.id);
 
     if (relation === "same") {
-      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current" });
+      recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current", source: served.source, attempts: 1 });
       return;
     }
 
@@ -483,7 +630,7 @@ export function watchServedBuild(options: { autoReload?: boolean } = {}): () => 
   // Ship anything queued by a block that happened just before the last reload.
   void flushReleaseFloorTelemetry();
 
-  void check("boot", false, true);
+  if (options.initialCheck ?? true) void check("boot", false, true);
   const timer = window.setInterval(() => {
     void check("interval");
   }, POLL_INTERVAL_MS);
@@ -512,7 +659,7 @@ export async function installBuildCacheStrategy(): Promise<boolean> {
   // Gate first paint on the authoritative manifest so an old React tree can
   // never mount while a newer deployment is being discovered in background.
   try {
-    const served = await fetchServedBuild();
+    const served = await resolveServedBuild("boot");
     recordReleaseObservation(served.buildTime, served.id);
     if (compareServedBuild(served) === "newer" && served.id) {
       window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
@@ -528,7 +675,7 @@ export async function installBuildCacheStrategy(): Promise<boolean> {
       requestReleaseReload(served.id, { clearCaches: true });
       return false;
     }
-  } catch {
+  } catch (error) {
     recordDiagnostic({
       trigger: "boot",
       runningId: RUNNING_BUILD_ID,
@@ -536,12 +683,15 @@ export async function installBuildCacheStrategy(): Promise<boolean> {
       checkedAt: new Date().toISOString(),
       bfcache: false,
       decision: "failed",
-      reason: "release manifest unavailable before application mount",
+      attempts: 2,
+      reason: error instanceof Error ? error.message : "release verification unavailable before application mount",
     });
   }
 
   await purgeCachesOnNewBuild();
-  watchServedBuild({ autoReload: true });
+  // Boot verification already completed above. Avoid an overlapping second
+  // request that could replace its final state with an in-flight "checking".
+  watchServedBuild({ autoReload: true, initialCheck: false });
   return true;
 }
 

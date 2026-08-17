@@ -172,6 +172,21 @@ jobs:
             "${ENV_NAME}-backend" backend \
             "${{ steps.cfn.outputs.backend_ecr }}:${{ github.sha }}"
 
+      - name: Verify deployed release manifest
+        run: |
+          ORIGIN="https://${{ steps.cfn.outputs.alb_dns }}"
+          curl --fail --silent --show-error --retry 4 --retry-all-errors \
+            -D /tmp/release-headers.txt \
+            "${ORIGIN}/release-manifest.json?deploy-probe=${{ github.run_id }}" \
+            -o /tmp/release-manifest.json
+          jq -e --arg expected "${{ github.sha }}" \
+            '.commit == $expected and .releaseId == $expected and .environment == "production"' \
+            /tmp/release-manifest.json > /dev/null
+          grep -qi '^cache-control:.*no-store' /tmp/release-headers.txt || {
+            echo "release-manifest.json is cacheable" >&2
+            exit 1
+          }
+
       - name: Summary
         run: |
           echo "✅ Deployed commit ${{ github.sha }}"
