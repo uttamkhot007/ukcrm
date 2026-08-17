@@ -6,6 +6,7 @@ import "./index.css";
 import { BUILD_VERSION, BUILD_TIME, BUILD_COMMIT } from "./lib/build-info";
 import { installPreviewBuildRefreshHook } from "./lib/preview-build-refresh";
 import { installBuildCacheStrategy } from "./lib/build-cache-strategy";
+import { enforceApprovedDesign } from "./lib/approved-design-lock";
 import { isStaleDeployError, recoverFromStaleDeploy } from "./lib/chunk-retry";
 
 
@@ -30,6 +31,8 @@ window.addEventListener("vite:preloadError", (event) => {
 });
 
 async function mountCurrentRelease() {
+  // Approved design lock: never paint a shell older than the approved view.
+  if (enforceApprovedDesign()) return;
   const releaseIsCurrent = await installBuildCacheStrategy();
   if (releaseIsCurrent) {
     const root = document.getElementById("root");
