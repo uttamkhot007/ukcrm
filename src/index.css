@@ -125,6 +125,9 @@ html[data-release-unverified] [role="alert"] {
     --popover-foreground: 222 47% 11%;
     --primary: 160 84% 27%;
     --primary-foreground: 0 0% 100%;
+    /* Module accents darkened for AA contrast against white text in light mode */
+    --sales: 160 84% 27%;
+
     --secondary: 220 14% 92%;
     --secondary-foreground: 222 47% 11%;
     --muted: 220 14% 92%;
