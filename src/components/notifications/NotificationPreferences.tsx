@@ -140,7 +140,7 @@ export function NotificationPreferences() {
               </div>
             </div>
             {isEnabled ? (
-              <Badge variant="secondary" className="bg-green-500/10 text-green-600">
+              <Badge variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-400">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Enabled
               </Badge>

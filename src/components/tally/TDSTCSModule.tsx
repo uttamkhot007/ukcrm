@@ -206,7 +206,7 @@ export function TDSTCSModule() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-muted-foreground">Paid</div>
-            <div className="text-2xl font-bold text-green-600">{totals.paid}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{totals.paid}</div>
           </CardContent>
         </Card>
       </div>

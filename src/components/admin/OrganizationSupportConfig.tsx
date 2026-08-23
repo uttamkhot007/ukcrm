@@ -299,7 +299,7 @@ export default function OrganizationSupportConfig({
                             <p className="font-medium">{solution.solution_name}</p>
                             <div className="flex items-center gap-2 flex-wrap">
                               {category && <Badge variant="outline" className="text-xs">{category.label}</Badge>}
-                              <Badge variant="secondary" className={`text-xs ${sol.support_type === 'continuous' ? 'bg-green-500/20 text-green-600' : ''}`}>
+                              <Badge variant="secondary" className={`text-xs ${sol.support_type === 'continuous' ? 'bg-green-500/20 text-green-700 dark:text-green-400' : ''}`}>
                                 {sol.support_type === 'continuous' ? 'Continuous' : 'One-time'}
                               </Badge>
                               {sol.support_tier && (

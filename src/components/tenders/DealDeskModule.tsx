@@ -212,7 +212,7 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{drStats.approved}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{drStats.approved}</div>
             <p className="text-xs text-muted-foreground">
               ₹{(drStats.totalValue / 100000).toFixed(1)}L value
             </p>
@@ -236,7 +236,7 @@ export function DealDeskModule({ initialTab = 'deal-registration' }: DealDeskMod
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{tenderStats.won}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{tenderStats.won}</div>
             <p className="text-xs text-muted-foreground">
               ₹{(tenderStats.wonValue / 100000).toFixed(1)}L value
             </p>

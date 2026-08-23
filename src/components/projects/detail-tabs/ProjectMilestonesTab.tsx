@@ -39,7 +39,7 @@ export function ProjectMilestonesTab({ projectId }: ProjectMilestonesTabProps) {
 
   const getStatusBadge = (milestone: any) => {
     if (milestone.status === "completed") {
-      return <Badge className="bg-green-500/10 text-green-600">Completed</Badge>;
+      return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">Completed</Badge>;
     }
     if (milestone.status === "missed" || (isPast(new Date(milestone.due_date)) && milestone.status !== "completed")) {
       return <Badge className="bg-red-500/10 text-red-600">Missed</Badge>;
@@ -105,7 +105,7 @@ export function ProjectMilestonesTab({ projectId }: ProjectMilestonesTabProps) {
                       Due: {format(new Date(milestone.due_date), "MMM d, yyyy")}
                     </span>
                     {milestone.completed_at && (
-                      <span className="text-green-600">
+                      <span className="text-green-700 dark:text-green-400">
                         Completed: {format(new Date(milestone.completed_at), "MMM d, yyyy")}
                       </span>
                     )}
@@ -129,7 +129,7 @@ export function ProjectMilestonesTab({ projectId }: ProjectMilestonesTabProps) {
               <p className="text-sm text-muted-foreground">Total</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-green-700 dark:text-green-400">
                 {milestones.filter(m => m.status === "completed").length}
               </p>
               <p className="text-sm text-muted-foreground">Completed</p>

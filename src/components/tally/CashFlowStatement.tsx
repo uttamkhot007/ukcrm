@@ -186,7 +186,7 @@ export function CashFlowStatement() {
               items.slice(0, 10).map((item, idx) => (
                 <TableRow key={idx}>
                   <TableCell>{item.description}</TableCell>
-                  <TableCell className={`text-right font-mono ${item.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  <TableCell className={`text-right font-mono ${item.amount < 0 ? 'text-red-600' : 'text-green-700 dark:text-green-400'}`}>
                     {formatAmount(item.amount)}
                   </TableCell>
                 </TableRow>
@@ -194,7 +194,7 @@ export function CashFlowStatement() {
             )}
             <TableRow className="bg-muted/50 font-bold">
               <TableCell>Net {title}</TableCell>
-              <TableCell className={`text-right font-mono ${total < 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <TableCell className={`text-right font-mono ${total < 0 ? 'text-red-600' : 'text-green-700 dark:text-green-400'}`}>
                 {formatAmount(total)}
               </TableCell>
             </TableRow>
@@ -255,7 +255,7 @@ export function CashFlowStatement() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground">Operating Activities</div>
-                <div className={`text-2xl font-bold ${cashFlows.operating.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`text-2xl font-bold ${cashFlows.operating.total >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                   {formatAmount(cashFlows.operating.total)}
                 </div>
               </CardContent>
@@ -263,7 +263,7 @@ export function CashFlowStatement() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground">Investing Activities</div>
-                <div className={`text-2xl font-bold ${cashFlows.investing.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`text-2xl font-bold ${cashFlows.investing.total >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                   {formatAmount(cashFlows.investing.total)}
                 </div>
               </CardContent>
@@ -271,7 +271,7 @@ export function CashFlowStatement() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground">Financing Activities</div>
-                <div className={`text-2xl font-bold ${cashFlows.financing.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`text-2xl font-bold ${cashFlows.financing.total >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                   {formatAmount(cashFlows.financing.total)}
                 </div>
               </CardContent>
@@ -279,7 +279,7 @@ export function CashFlowStatement() {
             <Card className="bg-primary/5">
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground">Net Change in Cash</div>
-                <div className={`text-2xl font-bold ${cashFlows.netChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`text-2xl font-bold ${cashFlows.netChange >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                   {formatAmount(cashFlows.netChange)}
                 </div>
               </CardContent>
@@ -333,7 +333,7 @@ export function CashFlowStatement() {
                     </ul>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
                       <Lightbulb className="h-4 w-4" />
                       Recommendations
                     </div>

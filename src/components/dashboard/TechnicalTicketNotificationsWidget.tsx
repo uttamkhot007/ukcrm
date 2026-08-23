@@ -190,7 +190,7 @@ export function TechnicalTicketNotificationsWidget({ onNavigate }: TicketNotific
       case "in_progress": return "bg-amber-500/10 text-amber-600 border-amber-500/20";
       case "pending_customer": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
       case "escalated": return "bg-red-500/10 text-red-600 border-red-500/20";
-      case "resolved": return "bg-green-500/10 text-green-600 border-green-500/20";
+      case "resolved": return "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20";
       case "closed": return "bg-muted text-muted-foreground border-border";
       default: return "bg-muted text-muted-foreground";
     }

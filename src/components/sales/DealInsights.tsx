@@ -220,7 +220,7 @@ export function DealInsights() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     {nextActions && nextActions.length > 0 && (
                       <div className="bg-green-500/5 rounded-lg p-3">
-                        <h4 className="font-medium text-sm flex items-center gap-2 mb-2 text-green-600">
+                        <h4 className="font-medium text-sm flex items-center gap-2 mb-2 text-green-700 dark:text-green-400">
                           <ArrowRight className="h-4 w-4" />
                           Next Best Actions
                         </h4>

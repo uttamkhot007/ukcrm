@@ -305,7 +305,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Completed</span>
-                      <span className="text-green-600">{member.completed}</span>
+                      <span className="text-green-700 dark:text-green-400">{member.completed}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">In Progress</span>

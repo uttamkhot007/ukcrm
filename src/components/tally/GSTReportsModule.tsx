@@ -157,7 +157,7 @@ export function GSTReportsModule() {
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total ITC Available</CardTitle></CardHeader>
-              <CardContent><p className="text-2xl font-bold text-green-600">{formatCurrency(gstr2Summary.totalCGST + gstr2Summary.totalSGST + gstr2Summary.totalIGST)}</p></CardContent>
+              <CardContent><p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(gstr2Summary.totalCGST + gstr2Summary.totalSGST + gstr2Summary.totalIGST)}</p></CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Reverse Charge</CardTitle></CardHeader>
@@ -264,7 +264,7 @@ export function GSTReportsModule() {
                     <p className="text-sm text-muted-foreground">Output Tax</p><p className="text-xl font-bold text-destructive">{formatCurrency(annualSummary.totalOutputTax)}</p>
                   </CardContent></Card>
                   <Card className="bg-green-500/5 border-green-500/20"><CardContent className="pt-4">
-                    <p className="text-sm text-muted-foreground">Input Tax Credit</p><p className="text-xl font-bold text-green-600">{formatCurrency(annualSummary.totalInputTax)}</p>
+                    <p className="text-sm text-muted-foreground">Input Tax Credit</p><p className="text-xl font-bold text-green-700 dark:text-green-400">{formatCurrency(annualSummary.totalInputTax)}</p>
                   </CardContent></Card>
                   <Card className="bg-primary/5 border-primary/20"><CardContent className="pt-4">
                     <p className="text-sm text-muted-foreground">Net Tax Payable</p><p className="text-xl font-bold">{formatCurrency(Math.max(0, annualSummary.totalOutputTax - annualSummary.totalInputTax))}</p>
@@ -284,11 +284,11 @@ export function GSTReportsModule() {
             </Card>
             <Card className="border-green-500/20">
               <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">ITC Available (Books)</CardTitle></CardHeader>
-              <CardContent><p className="text-2xl font-bold text-green-600">{formatCurrency(purchaseTax)}</p></CardContent>
+              <CardContent><p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(purchaseTax)}</p></CardContent>
             </Card>
             <Card className={`${salesTax - purchaseTax > 0 ? "border-destructive/20" : "border-green-500/20"}`}>
               <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Net Tax {salesTax - purchaseTax > 0 ? "Payable" : "Credit"}</CardTitle></CardHeader>
-              <CardContent><p className={`text-2xl font-bold ${salesTax - purchaseTax > 0 ? "text-destructive" : "text-green-600"}`}>{formatCurrency(Math.abs(salesTax - purchaseTax))}</p></CardContent>
+              <CardContent><p className={`text-2xl font-bold ${salesTax - purchaseTax > 0 ? "text-destructive" : "text-green-700 dark:text-green-400"}`}>{formatCurrency(Math.abs(salesTax - purchaseTax))}</p></CardContent>
             </Card>
           </div>
 
@@ -342,7 +342,7 @@ export function GSTReportsModule() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Credit Notes Issued</CardTitle></CardHeader>
-              <CardContent><p className="text-2xl font-bold text-green-600">{formatCurrency(creditNotes.filter(t => t.transaction_type === "credit_note").reduce((s, t) => s + (t.taxable_value || 0), 0))}</p><p className="text-xs text-muted-foreground mt-1">{creditNotes.filter(t => t.transaction_type === "credit_note").length} notes</p></CardContent>
+              <CardContent><p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(creditNotes.filter(t => t.transaction_type === "credit_note").reduce((s, t) => s + (t.taxable_value || 0), 0))}</p><p className="text-xs text-muted-foreground mt-1">{creditNotes.filter(t => t.transaction_type === "credit_note").length} notes</p></CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Debit Notes Issued</CardTitle></CardHeader>
@@ -495,7 +495,7 @@ export function GSTReportsModule() {
                     <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">SGST</p><p className="text-lg font-bold">{formatCurrency(
                       gstTransactions.filter(t => t.transaction_type === "sale").reduce((s, t) => s + (t.sgst_amount || 0), 0) + purchaseTransactions.filter(t => t.reverse_charge).reduce((s, t) => s + (t.sgst_amount || 0), 0) - purchaseTransactions.reduce((s, t) => s + (t.sgst_amount || 0), 0)
                     )}</p></CardContent></Card>
-                    <Card className={`${salesTax + rcmTax - purchaseTax > 0 ? "border-destructive" : "border-green-500"}`}><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Net Total</p><p className={`text-lg font-bold ${salesTax + rcmTax - purchaseTax > 0 ? "text-destructive" : "text-green-600"}`}>{formatCurrency(Math.abs(salesTax + rcmTax - purchaseTax))}{salesTax + rcmTax - purchaseTax < 0 ? " (Credit)" : ""}</p></CardContent></Card>
+                    <Card className={`${salesTax + rcmTax - purchaseTax > 0 ? "border-destructive" : "border-green-500"}`}><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Net Total</p><p className={`text-lg font-bold ${salesTax + rcmTax - purchaseTax > 0 ? "text-destructive" : "text-green-700 dark:text-green-400"}`}>{formatCurrency(Math.abs(salesTax + rcmTax - purchaseTax))}{salesTax + rcmTax - purchaseTax < 0 ? " (Credit)" : ""}</p></CardContent></Card>
                   </div>
                 </div>
               </div>

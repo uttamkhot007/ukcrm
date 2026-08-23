@@ -157,9 +157,13 @@ const Index = () => {
 
   // Decide what "/" should do once auth + tenant info are resolved.
   //
-  // A plain "/" is a deterministic landing route. Platform admins always land
-  // in the Platform Console and can never mount the legacy workspace view.
+  // A *plain* "/" is a deterministic landing route: platform admins land in the
+  // Platform Console. But when a module is explicitly requested (sidebar click
+  // from the admin shell -> navigate("/", { state: { module } })), that request
+  // must win — otherwise every module click bounces back to the console and
+  // each module appears to show the same content.
   const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
+  const isExplicitModuleRequest = !!requestedModule && requestedModule !== "dashboard";
 
   useEffect(() => {
     if (isLoading || !isAuthResolved || tenantLoading) return;
@@ -170,13 +174,14 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin) {
+    if (isPlatformAdmin && !isExplicitModuleRequest) {
       logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
         requestedModule: requestedModule ?? null,
       });
       navigate("/admin/platform/tenants", { replace: true });
       return;
     }
+
 
     if (!hasTenantAccess) {
       logRedirect("Index", location.pathname, "/workspace/new", "user has no tenant membership");
@@ -218,12 +223,21 @@ const Index = () => {
     return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
-  // This is deliberately a render-time gate rather than only an effect-based
-  // redirect: the legacy workspace dashboard must never mount for a platform
-  // administrator, including when old router state is restored from BFCache.
-  if (!isLoading && isAuthResolved && !tenantLoading && user && isPlatformAdmin) {
+  // Render-time gate: the legacy workspace *dashboard* must never mount for a
+  // platform administrator (including restored BFCache router state). An
+  // explicitly requested module is a deliberate navigation and still renders.
+  const adminWantsWorkspaceModule = isExplicitModuleRequest || activeModule !== "dashboard";
+  if (
+    !isLoading &&
+    isAuthResolved &&
+    !tenantLoading &&
+    user &&
+    isPlatformAdmin &&
+    !adminWantsWorkspaceModule
+  ) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }
+
 
 
   // Only block rendering while we genuinely don't know yet, or while an
@@ -704,9 +718,16 @@ const Index = () => {
         if (isCustomer || portalMode === 'customer') {
           return <CustomerPortal />;
         }
-        return <Dashboard onModuleChange={setActiveModule} />;
+        // Only "dashboard" (and an unset module) may render the dashboard.
+        // Anything else without a renderer previously fell through to the
+        // dashboard too, which made every unmapped module look identical.
+        if (activeModule === "dashboard") {
+          return <Dashboard onModuleChange={setActiveModule} />;
+        }
+        return <PlaceholderModule title="Module" section={activeModule} />;
     }
   };
+
 
   // Polished placeholder for modules not yet implemented
   const PlaceholderModule = ({ title, section }: { title: string; section: string }) => {
@@ -757,10 +778,15 @@ const Index = () => {
   // they navigate to their dedicated routes instead of trying to render
   // inside the Index page (which has no renderer for them).
   const handleModuleChange = (module: string) => {
+    if (module === "ai-agents") {
+      navigate("/agents");
+      return;
+    }
     if (module === "platform-console" || module === "platform-tenants") {
       navigate("/admin/platform/tenants");
       return;
     }
+
     if (module.startsWith("platform-")) {
       const subPath = module.replace("platform-", "");
       navigate(`/admin/platform/${subPath}`);

@@ -56,7 +56,7 @@ export function MobileHeader({ onMenuClick, showMenu = true }: MobileHeaderProps
               <Button variant="ghost" size="icon" aria-label="Open account menu">
 
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarImage src={profile?.avatar_url || undefined} alt="" />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs">
                     {profile?.full_name?.slice(0, 2).toUpperCase() || 'U'}
                   </AvatarFallback>
@@ -68,7 +68,7 @@ export function MobileHeader({ onMenuClick, showMenu = true }: MobileHeaderProps
                 {/* User info */}
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
+                    <AvatarImage src={profile?.avatar_url || undefined} alt="" />
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {profile?.full_name?.slice(0, 2).toUpperCase() || 'U'}
                     </AvatarFallback>

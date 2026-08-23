@@ -132,7 +132,7 @@ export function DealRegistrationTab({ dealRegistrations, loading, onViewDetails,
                       )}
                     </div>
                     {dr.dr_id_from_vendor && (
-                      <div className="text-sm text-green-600 mt-2 p-2 bg-green-500/10 rounded-md inline-block">
+                      <div className="text-sm text-green-700 dark:text-green-400 mt-2 p-2 bg-green-500/10 rounded-md inline-block">
                         <span className="font-medium">DR ID:</span> {dr.dr_id_from_vendor}
                         {dr.dr_expiry_date && (
                           <span className="text-muted-foreground ml-2">

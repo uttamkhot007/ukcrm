@@ -315,7 +315,7 @@ export function ChartOfAccounts() {
                           {ledger.opening_balance?.toLocaleString("en-IN", { style: "currency", currency: "INR" }) || "₹0.00"}
                         </TableCell>
                         <TableCell className="text-right font-mono">
-                          <span className={ledger.current_balance >= 0 ? "text-green-600" : "text-red-600"}>
+                          <span className={ledger.current_balance >= 0 ? "text-green-700 dark:text-green-400" : "text-red-600"}>
                             {ledger.current_balance?.toLocaleString("en-IN", { style: "currency", currency: "INR" }) || "₹0.00"}
                           </span>
                         </TableCell>

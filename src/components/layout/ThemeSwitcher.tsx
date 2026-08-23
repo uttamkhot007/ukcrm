@@ -38,6 +38,7 @@ export function ThemeSwitcher() {
         size="icon"
         onClick={toggleMode}
         className="h-9 w-9"
+        aria-label={theme.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         title={theme.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       >
         {theme.mode === 'dark' ? (
@@ -50,7 +51,7 @@ export function ThemeSwitcher() {
       {/* Brand Color Picker */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9" title="Choose brand color">
+          <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Choose brand color" title="Choose brand color">
             <Palette className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -71,7 +72,7 @@ export function ThemeSwitcher() {
       {/* Mood Theme Picker */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9" title="Choose mood theme">
+          <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Choose mood theme" title="Choose mood theme">
             <Sparkles className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

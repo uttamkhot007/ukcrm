@@ -49,7 +49,7 @@ const TICKET_CATEGORIES = [
 ];
 
 const PRIORITIES = [
-  { value: "low", label: "Low", color: "bg-green-500/20 text-green-600" },
+  { value: "low", label: "Low", color: "bg-green-500/20 text-green-700 dark:text-green-400" },
   { value: "medium", label: "Medium", color: "bg-yellow-500/20 text-yellow-600" },
   { value: "high", label: "High", color: "bg-orange-500/20 text-orange-600" },
   { value: "critical", label: "Critical", color: "bg-red-500/20 text-red-600" },
@@ -59,7 +59,7 @@ const STATUSES = [
   { value: "open", label: "Open", color: "bg-blue-500/20 text-blue-600" },
   { value: "in_progress", label: "In Progress", color: "bg-yellow-500/20 text-yellow-600" },
   { value: "pending", label: "Pending", color: "bg-orange-500/20 text-orange-600" },
-  { value: "resolved", label: "Resolved", color: "bg-green-500/20 text-green-600" },
+  { value: "resolved", label: "Resolved", color: "bg-green-500/20 text-green-700 dark:text-green-400" },
   { value: "closed", label: "Closed", color: "bg-muted text-muted-foreground" },
 ];
 

@@ -215,7 +215,7 @@ export function RemoteSessionsModule({ context = 'technical', organizationId, ti
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'scheduled': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'in_progress': return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'in_progress': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
       case 'completed': return 'bg-muted text-muted-foreground border-border';
       case 'cancelled': return 'bg-red-500/10 text-red-600 border-red-500/20';
       default: return 'bg-muted text-muted-foreground border-border';

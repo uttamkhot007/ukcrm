@@ -26,7 +26,7 @@ const typeColors: Record<string, string> = {
 const categoryConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
   deals: { icon: Briefcase, label: "Deals", color: "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20" },
   tickets: { icon: Ticket, label: "Tickets", color: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20" },
-  approvals: { icon: ClipboardCheck, label: "Approvals", color: "bg-green-500/10 text-green-600 hover:bg-green-500/20" },
+  approvals: { icon: ClipboardCheck, label: "Approvals", color: "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20" },
   requests: { icon: FileText, label: "Requests", color: "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20" },
   renewals: { icon: RefreshCw, label: "Renewals", color: "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20" },
   compliance: { icon: Shield, label: "Compliance", color: "bg-red-500/10 text-red-600 hover:bg-red-500/20" },
@@ -46,8 +46,8 @@ export function NotificationsPopover() {
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5" />
+        <Button variant="ghost" size="icon" className="relative" aria-label="View notifications">
+          <Bell className="w-5 h-5" aria-hidden="true" />
           {unreadCount > 0 && (
             <Badge 
               variant="destructive" 

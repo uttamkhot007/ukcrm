@@ -179,7 +179,7 @@ export function PFCalculator() {
                 <p className="text-xs text-muted-foreground mt-1">(Employee + Employer EPF)</p>
               </div>
               <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg text-center">
-                <p className="text-sm text-green-600">Monthly to EPS</p>
+                <p className="text-sm text-green-700 dark:text-green-400">Monthly to EPS</p>
                 <p className="text-xl font-bold text-green-700">{formatCurrency(monthlyCalculation.totalMonthlyToEPS)}</p>
                 <p className="text-xs text-muted-foreground mt-1">(Pension Fund)</p>
               </div>
@@ -260,7 +260,7 @@ export function PFCalculator() {
                 </div>
                 <div className="text-center p-4 bg-background rounded-lg">
                   <p className="text-sm text-muted-foreground">Interest Earned</p>
-                  <p className="text-xl font-bold text-green-600">{formatCurrency(projectedCorpus.interestEarned)}</p>
+                  <p className="text-xl font-bold text-green-700 dark:text-green-400">{formatCurrency(projectedCorpus.interestEarned)}</p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-4">

@@ -780,7 +780,7 @@ export function ContactsView() {
                             <Building2 className="h-3 w-3 mr-1" />Alliance
                           </Badge>
                         ) : (contact as any).source_type === 'lead' ? (
-                          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                          <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                             <UserPlus className="h-3 w-3 mr-1" />Lead
                           </Badge>
                         ) : (

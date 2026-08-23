@@ -268,7 +268,7 @@ export function DealRegistrationModule() {
                           )}
                         </div>
                         {dr.dr_id_from_vendor && (
-                          <div className="text-sm text-green-600 mt-1">
+                          <div className="text-sm text-green-700 dark:text-green-400 mt-1">
                             DR ID: {dr.dr_id_from_vendor}
                             {dr.dr_expiry_date && (
                               <span className="text-muted-foreground ml-2">

@@ -77,7 +77,7 @@ const typeColors: Record<string, string> = {
 const categoryConfig: Record<string, { icon: typeof Info; label: string; color: string; bgColor: string }> = {
   deals: { icon: Briefcase, label: "Deals", color: "text-blue-600", bgColor: "bg-blue-500/10" },
   tickets: { icon: Ticket, label: "Tickets", color: "text-amber-600", bgColor: "bg-amber-500/10" },
-  approvals: { icon: ClipboardCheck, label: "Approvals", color: "text-green-600", bgColor: "bg-green-500/10" },
+  approvals: { icon: ClipboardCheck, label: "Approvals", color: "text-green-700 dark:text-green-400", bgColor: "bg-green-500/10" },
   requests: { icon: FileText, label: "Requests", color: "text-purple-600", bgColor: "bg-purple-500/10" },
   renewals: { icon: RefreshCw, label: "Renewals", color: "text-orange-600", bgColor: "bg-orange-500/10" },
   compliance: { icon: Shield, label: "Compliance", color: "text-red-600", bgColor: "bg-red-500/10" },

@@ -217,7 +217,7 @@ export function TicketAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">SLA Compliance</p>
-                <p className={`text-2xl font-bold ${slaCompliance >= 90 ? "text-green-600" : slaCompliance >= 70 ? "text-amber-600" : "text-red-600"}`}>
+                <p className={`text-2xl font-bold ${slaCompliance >= 90 ? "text-green-700 dark:text-green-400" : slaCompliance >= 70 ? "text-amber-600" : "text-red-600"}`}>
                   {slaCompliance}%
                 </p>
               </div>

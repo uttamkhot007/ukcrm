@@ -50,7 +50,7 @@ export const ScopeSection: React.FC<ScopeSectionProps> = ({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <div>
-            <CardTitle className="flex items-center gap-2 text-green-600">
+            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
               <CheckSquare className="h-5 w-5" />
               In Scope
             </CardTitle>
@@ -94,7 +94,7 @@ export const ScopeSection: React.FC<ScopeSectionProps> = ({
                   key={index} 
                   className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg group"
                 >
-                  <CheckSquare className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  <CheckSquare className="h-4 w-4 text-green-700 dark:text-green-400 flex-shrink-0" />
                   <span className="flex-1 text-sm">{item}</span>
                   <Button 
                     variant="ghost" 

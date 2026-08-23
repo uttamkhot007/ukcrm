@@ -95,7 +95,7 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case "ongoing": return "bg-destructive/10 text-destructive border-destructive/20";
     case "contained": return "bg-amber-500/10 text-amber-600 border-amber-500/20";
-    case "resolved": return "bg-green-500/10 text-green-600 border-green-500/20";
+    case "resolved": return "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20";
     default: return "bg-muted text-muted-foreground";
   }
 };

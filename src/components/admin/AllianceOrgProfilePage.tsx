@@ -963,7 +963,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
 
   const getStageColor = (stage: string) => {
     switch (stage) {
-      case 'closed_won': return 'text-green-600';
+      case 'closed_won': return 'text-green-700 dark:text-green-400';
       case 'closed_lost': return 'text-red-600';
       case 'negotiation': return 'text-orange-600';
       case 'proposal': return 'text-blue-600';
@@ -2443,7 +2443,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                                   SPF
                                 </span>
                                 <Badge className={
-                                  threatIntel.emailSecurity.spf.status === 'valid' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.spf.status === 'valid' ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20' :
                                   threatIntel.emailSecurity.spf.status === 'softfail' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
                                   'bg-red-500/10 text-red-600 border-red-500/20'
                                 }>
@@ -2468,7 +2468,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                                   DKIM
                                 </span>
                                 <Badge className={
-                                  threatIntel.emailSecurity.dkim.status === 'active' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.dkim.status === 'active' ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20' :
                                   threatIntel.emailSecurity.dkim.status === 'unknown' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
                                   'bg-red-500/10 text-red-600 border-red-500/20'
                                 }>
@@ -2495,7 +2495,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                                   DMARC
                                 </span>
                                 <Badge className={
-                                  threatIntel.emailSecurity.dmarc.status === 'reject' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                  threatIntel.emailSecurity.dmarc.status === 'reject' ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20' :
                                   threatIntel.emailSecurity.dmarc.status === 'quarantine' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' :
                                   threatIntel.emailSecurity.dmarc.status === 'none' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
                                   'bg-red-500/10 text-red-600 border-red-500/20'
@@ -2521,7 +2521,7 @@ export function AllianceOrgProfilePage({ organization, onBack }: AllianceOrgProf
                       <CardContent><div className="flex items-center gap-4"><span className={`text-4xl font-bold ${getRiskScoreColor(threatIntel.riskScore)}`}>{threatIntel.riskScore}</span><Progress value={threatIntel.riskScore} className="flex-1" /></div></CardContent>
                     </Card>
                     <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Database className="h-4 w-4 text-red-500" />Data Breaches ({threatIntel.breaches.length})</CardTitle></CardHeader>
-                      <CardContent>{threatIntel.breaches.length === 0 ? <p className="text-sm text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />No known breaches found</p> : <div className="space-y-2">{threatIntel.breaches.map((b, i) => <div key={i} className="p-2 bg-muted rounded flex items-center justify-between"><div><p className="font-medium text-sm">{b.name}</p><p className="text-xs text-muted-foreground">{b.date} - {b.records} records</p></div><Badge className={getSeverityColor(b.severity)}>{b.severity}</Badge></div>)}</div>}</CardContent>
+                      <CardContent>{threatIntel.breaches.length === 0 ? <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-1"><CheckCircle className="h-4 w-4" />No known breaches found</p> : <div className="space-y-2">{threatIntel.breaches.map((b, i) => <div key={i} className="p-2 bg-muted rounded flex items-center justify-between"><div><p className="font-medium text-sm">{b.name}</p><p className="text-xs text-muted-foreground">{b.date} - {b.records} records</p></div><Badge className={getSeverityColor(b.severity)}>{b.severity}</Badge></div>)}</div>}</CardContent>
                     </Card>
                     <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4 text-blue-500" />Exposed Services ({threatIntel.exposedServices.length})</CardTitle></CardHeader>
                       <CardContent><div className="space-y-1">{threatIntel.exposedServices.map((svc, i) => <div key={i} className="flex items-center justify-between text-sm"><span>Port {svc.port}: {svc.service}</span><Badge variant={svc.risk === 'Low' ? 'secondary' : 'destructive'}>{svc.risk}</Badge></div>)}</div></CardContent>

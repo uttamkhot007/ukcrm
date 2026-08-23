@@ -157,7 +157,7 @@ export function AccountsDashboard({ onNavigate }: AccountsDashboardProps) {
                 <p className="text-xs text-muted-foreground">{paidThisMonth.length} invoices</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-600" />
+                <DollarSign className="h-6 w-6 text-green-700 dark:text-green-400" />
               </div>
             </div>
           </CardContent>

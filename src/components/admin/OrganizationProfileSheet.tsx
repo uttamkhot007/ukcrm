@@ -645,7 +645,7 @@ export function OrganizationProfileSheet({ organization, open, onOpenChange }: O
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="outline">{deal.stage}</Badge>
                               {deal.value > 0 && (
-                                <span className="text-sm text-green-600 font-medium">
+                                <span className="text-sm text-green-700 dark:text-green-400 font-medium">
                                   ${deal.value.toLocaleString()}
                                 </span>
                               )}
@@ -765,7 +765,7 @@ export function OrganizationProfileSheet({ organization, open, onOpenChange }: O
                       </CardHeader>
                       <CardContent>
                         {threatIntel.breaches.length === 0 ? (
-                          <p className="text-sm text-green-600 flex items-center gap-1">
+                          <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-1">
                             <CheckCircle className="h-4 w-4" />
                             No known breaches found
                           </p>
@@ -795,7 +795,7 @@ export function OrganizationProfileSheet({ organization, open, onOpenChange }: O
                       </CardHeader>
                       <CardContent>
                         {threatIntel.leakedCredentials.count === 0 ? (
-                          <p className="text-sm text-green-600 flex items-center gap-1">
+                          <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-1">
                             <CheckCircle className="h-4 w-4" />
                             No leaked credentials found
                           </p>
@@ -823,7 +823,7 @@ export function OrganizationProfileSheet({ organization, open, onOpenChange }: O
                       </CardHeader>
                       <CardContent>
                         {threatIntel.vulnerabilities.length === 0 ? (
-                          <p className="text-sm text-green-600 flex items-center gap-1">
+                          <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-1">
                             <CheckCircle className="h-4 w-4" />
                             No critical vulnerabilities detected
                           </p>

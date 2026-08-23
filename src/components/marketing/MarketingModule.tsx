@@ -36,12 +36,12 @@ const CAMPAIGN_TYPES = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  active: "bg-green-500/20 text-green-600 border-green-500/20",
+  active: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/20",
   scheduled: "bg-blue-500/20 text-blue-600 border-blue-500/20",
   completed: "bg-muted text-muted-foreground",
   paused: "bg-yellow-500/20 text-yellow-600 border-yellow-500/20",
   draft: "bg-muted text-muted-foreground",
-  published: "bg-green-500/20 text-green-600 border-green-500/20",
+  published: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/20",
   review: "bg-orange-500/20 text-orange-600 border-orange-500/20",
 };
 
@@ -409,11 +409,11 @@ export function MarketingModule({ initialTab = "campaigns" }: MarketingModulePro
                 <CardContent className="space-y-3">
                   <div className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
                     <div><p className="font-medium text-sm">Form Submission</p><p className="text-xs text-muted-foreground">Add to welcome sequence</p></div>
-                    <Badge variant="outline" className="bg-green-500/20 text-green-600">Active</Badge>
+                    <Badge variant="outline" className="bg-green-500/20 text-green-700 dark:text-green-400">Active</Badge>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
                     <div><p className="font-medium text-sm">Page Visit</p><p className="text-xs text-muted-foreground">Increase lead score</p></div>
-                    <Badge variant="outline" className="bg-green-500/20 text-green-600">Active</Badge>
+                    <Badge variant="outline" className="bg-green-500/20 text-green-700 dark:text-green-400">Active</Badge>
                   </div>
                 </CardContent>
               </Card>

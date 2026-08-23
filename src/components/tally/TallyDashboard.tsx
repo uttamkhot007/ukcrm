@@ -164,11 +164,11 @@ export function TallyDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <ArrowUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <ArrowUp className="h-5 w-5 text-green-700 dark:text-green-400" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Income</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                <p className="text-xl font-bold text-green-700 dark:text-green-400">
                   {formatAmount(metrics.totalIncome)}
                 </p>
               </div>
@@ -196,11 +196,11 @@ export function TallyDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${metrics.netProfit >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                <TrendingUp className={`h-5 w-5 ${metrics.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
+                <TrendingUp className={`h-5 w-5 ${metrics.netProfit >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Net {metrics.netProfit >= 0 ? 'Profit' : 'Loss'}</p>
-                <p className={`text-xl font-bold ${metrics.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <p className={`text-xl font-bold ${metrics.netProfit >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {formatAmount(metrics.netProfit)}
                 </p>
               </div>
@@ -237,7 +237,7 @@ export function TallyDashboard() {
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receipts</span>
-              <span className="font-medium text-green-600">{formatAmount(metrics.todayReceipts)}</span>
+              <span className="font-medium text-green-700 dark:text-green-400">{formatAmount(metrics.todayReceipts)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Payments</span>
@@ -245,7 +245,7 @@ export function TallyDashboard() {
             </div>
             <div className="flex justify-between border-t pt-3">
               <span className="text-muted-foreground">Net</span>
-              <span className={`font-medium ${metrics.todayNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`font-medium ${metrics.todayNet >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                 {formatAmount(metrics.todayNet)}
               </span>
             </div>
@@ -354,7 +354,7 @@ export function TallyDashboard() {
 
               {/* Recommendations */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
                   <Lightbulb className="h-4 w-4" />
                   Recommendations
                 </div>

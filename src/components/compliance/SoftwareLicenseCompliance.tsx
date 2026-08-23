@@ -168,7 +168,7 @@ export function SoftwareLicenseCompliance() {
 
   const getRiskBadge = (risk: string) => {
     const variants: Record<string, string> = {
-      low: "bg-green-500/10 text-green-600 border-green-500/20",
+      low: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
       medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
       high: "bg-orange-500/10 text-orange-600 border-orange-500/20",
       critical: "bg-red-500/10 text-red-600 border-red-500/20",
@@ -178,7 +178,7 @@ export function SoftwareLicenseCompliance() {
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { icon: React.ReactNode; class: string }> = {
-      approved: { icon: <CheckCircle className="w-3 h-3" />, class: "bg-green-500/10 text-green-600" },
+      approved: { icon: <CheckCircle className="w-3 h-3" />, class: "bg-green-500/10 text-green-700 dark:text-green-400" },
       review: { icon: <AlertCircle className="w-3 h-3" />, class: "bg-yellow-500/10 text-yellow-600" },
       rejected: { icon: <XCircle className="w-3 h-3" />, class: "bg-red-500/10 text-red-600" },
     };
@@ -313,7 +313,7 @@ export function SoftwareLicenseCompliance() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="text-2xl font-bold text-green-600">{stats.approved}</span>
+              <span className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.approved}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">Approved</p>
           </CardContent>
@@ -488,7 +488,7 @@ export function SoftwareLicenseCompliance() {
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-              <h4 className="font-medium text-green-600 flex items-center gap-2">
+              <h4 className="font-medium text-green-700 dark:text-green-400 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" /> Low Risk (Permissive)
               </h4>
               <p className="text-sm text-muted-foreground mt-1">

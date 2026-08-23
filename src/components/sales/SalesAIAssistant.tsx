@@ -196,7 +196,7 @@ export function SalesAIAssistant() {
                             className={cn(
                               "flex items-center gap-2 text-xs px-3 py-1.5 rounded-md",
                               result.success
-                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
                                 : "bg-red-500/10 text-red-600 dark:text-red-400"
                             )}
                           >

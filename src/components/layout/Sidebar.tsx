@@ -972,11 +972,11 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   const getRoleBadgeColor = () => {
     switch (role) {
       case "admin":
-        return "bg-destructive/20 text-destructive";
+        return "bg-role-admin text-role-foreground";
       case "manager":
-        return "bg-management/20 text-management";
+        return "bg-role-manager text-role-foreground";
       default:
-        return "bg-employee/20 text-employee";
+        return "bg-role-employee text-role-foreground";
     }
   };
 

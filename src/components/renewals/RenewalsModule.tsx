@@ -751,7 +751,7 @@ export function RenewalsModule() {
                                   <Button 
                                     variant="ghost" 
                                     size="icon" 
-                                    className="h-8 w-8 text-green-500 hover:text-green-600"
+                                    className="h-8 w-8 text-green-500 hover:text-green-700 dark:text-green-400"
                                     onClick={() => handleMarkRenewed(renewal.id)}
                                     title="Mark as renewed"
                                   >

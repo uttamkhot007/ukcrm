@@ -86,10 +86,8 @@ export function BuildStatusIndicator({ className }: { className?: string }) {
       {checking && <span className="sr-only">{t("status.checking")}</span>}
 
       {/* Visible text stays compact; the accessible name spells it out. */}
-      <span
-        className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground"
-        aria-label={versionLabel}
-      >
+      <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+        <span className="sr-only">{versionLabel}</span>
         <Tag className="w-3 h-3 shrink-0" aria-hidden="true" />
         <span aria-hidden="true">
           v{BUILD_VERSION} · {formatBuildTime(BUILD_TIME)} · {BUILD_COMMIT}

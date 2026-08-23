@@ -57,7 +57,7 @@ export function ModuleTabBar({ activeModule, onModuleChange }: ModuleTabBarProps
       "flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       isActive
-        ? "bg-primary/15 text-primary shadow-sm"
+        ? "bg-primary text-primary-foreground shadow-sm"
         : "text-muted-foreground hover:bg-accent hover:text-foreground"
     );
 

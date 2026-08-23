@@ -257,7 +257,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
 
           {/* Sort */}
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40" aria-label="Sort tickets by">
               <ArrowUpDown className="w-4 h-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -272,7 +272,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
         <div className="flex items-center gap-2">
           {selectedTickets.size > 0 && (
             <Select onValueChange={bulkUpdateStatus}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" aria-label="Bulk update status of selected tickets">
                 <SelectValue placeholder={`Update ${selectedTickets.size} selected`} />
               </SelectTrigger>
               <SelectContent>
@@ -282,7 +282,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
               </SelectContent>
             </Select>
           )}
-          <Button variant="outline" size="icon" onClick={() => refetch()}>
+          <Button variant="outline" size="icon" aria-label="Refresh tickets" onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
@@ -298,6 +298,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
+                    aria-label="Select all tickets"
                     checked={selectedTickets.size === filteredTickets?.length && filteredTickets?.length > 0}
                     onCheckedChange={toggleSelectAll}
                   />
@@ -327,6 +328,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
                     <TableRow key={ticket.id} className="cursor-pointer hover:bg-muted/50">
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
+                          aria-label={`Select ticket ${ticket.ticket_number}`}
                           checked={selectedTickets.has(ticket.id)}
                           onCheckedChange={() => toggleSelect(ticket.id)}
                         />
@@ -383,7 +385,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
                         {format(new Date(ticket.created_at), "MMM d, HH:mm")}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onTicketSelect(ticket.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open ticket" onClick={() => onTicketSelect(ticket.id)}>
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TableCell>

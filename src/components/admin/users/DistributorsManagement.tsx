@@ -275,7 +275,7 @@ export function DistributorsManagement() {
                           className={cn(
                             "text-xs",
                             distributor.status === "active"
-                              ? "bg-green-500/20 text-green-600"
+                              ? "bg-green-500/20 text-green-700 dark:text-green-400"
                               : "bg-muted text-muted-foreground"
                           )}
                         >
@@ -313,7 +313,7 @@ export function DistributorsManagement() {
                       {(distributor.discount_percentage || distributor.credit_limit) && (
                         <div className="flex items-center gap-4 mt-1 text-xs">
                           {distributor.discount_percentage && (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-600">
+                            <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400">
                               {distributor.discount_percentage}% Discount
                             </Badge>
                           )}

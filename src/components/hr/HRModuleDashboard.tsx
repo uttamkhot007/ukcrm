@@ -110,7 +110,7 @@ export function HRModuleDashboard({ onNavigate }: HRModuleDashboardProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Total Employees</p>
                 <p className="text-2xl font-bold">{metrics?.totalEmployees || 0}</p>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-green-700 dark:text-green-400 mt-1">
                   +{metrics?.newHires || 0} this month
                 </p>
               </div>

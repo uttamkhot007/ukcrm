@@ -597,7 +597,7 @@ function KPICard({ title, value, subtitle, icon: Icon, trend, color }: KPICardPr
         <div className="flex items-center justify-between mt-1">
           <p className="text-xs text-muted-foreground">{subtitle}</p>
           {trend && (
-            <div className={`flex items-center text-xs ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`flex items-center text-xs ${trend.positive ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
               {trend.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
               {trend.value}%
             </div>

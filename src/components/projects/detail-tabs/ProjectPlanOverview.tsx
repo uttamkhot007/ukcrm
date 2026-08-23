@@ -68,7 +68,7 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "text-green-600";
+      case "completed": return "text-green-700 dark:text-green-400";
       case "in_progress": return "text-blue-600";
       case "pending": return "text-yellow-600";
       default: return "text-muted-foreground";
@@ -123,13 +123,13 @@ export function ProjectPlanOverview({ project, phases, tasks, stakeholders }: Pr
           {project.scope_inclusions && (project.scope_inclusions as string[]).length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-green-600">Scope Inclusions</CardTitle>
+                <CardTitle className="text-lg text-green-700 dark:text-green-400">Scope Inclusions</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-1">
                   {(project.scope_inclusions as string[]).map((item: string, i: number) => (
                     <li key={i} className="text-sm flex items-start gap-2">
-                      <span className="text-green-600">✓</span>
+                      <span className="text-green-700 dark:text-green-400">✓</span>
                       {item}
                     </li>
                   ))}

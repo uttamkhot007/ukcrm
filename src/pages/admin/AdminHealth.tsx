@@ -306,7 +306,7 @@ export default function AdminHealth() {
   const getStatusBadge = (status: HealthCheck["status"]) => {
     switch (status) {
       case "healthy":
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Healthy</Badge>;
+        return <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Healthy</Badge>;
       case "warning":
         return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Warning</Badge>;
       case "error":
@@ -357,7 +357,7 @@ export default function AdminHealth() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Healthy</p>
-                <p className="text-2xl font-bold text-green-600">{healthyCount}</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{healthyCount}</p>
               </div>
               <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>

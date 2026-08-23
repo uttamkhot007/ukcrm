@@ -565,7 +565,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-green-600">Scope Inclusions</Label>
+                <Label className="text-green-700 dark:text-green-400">Scope Inclusions</Label>
                 <Button type="button" variant="outline" size="sm" onClick={() => addScopeItem("inclusion")}>
                   <Plus className="h-4 w-4 mr-1" /> Add
                 </Button>

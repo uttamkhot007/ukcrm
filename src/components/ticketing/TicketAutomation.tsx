@@ -188,7 +188,7 @@ export function TicketAutomation() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-medium">{rule.name}</h3>
                       {rule.isActive ? (
-                        <Badge variant="secondary" className="bg-green-500/10 text-green-600">Active</Badge>
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-400">Active</Badge>
                       ) : (
                         <Badge variant="secondary" className="bg-muted text-muted-foreground">Paused</Badge>
                       )}
@@ -214,10 +214,10 @@ export function TicketAutomation() {
                     checked={rule.isActive}
                     onCheckedChange={() => toggleRule(rule.id)}
                   />
-                  <Button variant="ghost" size="icon" onClick={() => setEditingRule(rule)}>
+                  <Button variant="ghost" size="icon" aria-label="Edit automation rule" onClick={() => setEditingRule(rule)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteRule(rule.id)}>
+                  <Button variant="ghost" size="icon" aria-label="Delete automation rule" onClick={() => deleteRule(rule.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>

@@ -36,7 +36,7 @@ const SENTIMENT_CONFIG: Record<string, { icon: any; color: string; bg: string }>
 const STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-blue-500/20 text-blue-600",
   planning: "bg-yellow-500/20 text-yellow-600",
-  completed: "bg-green-500/20 text-green-600",
+  completed: "bg-green-500/20 text-green-700 dark:text-green-400",
   cancelled: "bg-red-500/20 text-red-600",
 };
 

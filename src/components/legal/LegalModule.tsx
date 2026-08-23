@@ -560,7 +560,7 @@ export function LegalModule() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 text-green-500 hover:text-green-600"
+                              className="h-8 w-8 text-green-500 hover:text-green-700 dark:text-green-400"
                               onClick={() => handleUpdateStatus(doc.id, "approved")}
                             >
                               <CheckCircle className="w-4 h-4" />

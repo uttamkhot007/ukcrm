@@ -295,7 +295,7 @@ export function SalesForecasting() {
               {factors.positive && factors.positive.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-green-600 flex items-center gap-2">
+                    <CardTitle className="text-green-700 dark:text-green-400 flex items-center gap-2">
                       <TrendingUp className="h-5 w-5" />
                       Positive Factors
                     </CardTitle>

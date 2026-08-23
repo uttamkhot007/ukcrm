@@ -28,11 +28,11 @@ interface CommunicationsModuleProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  published: "bg-green-500/20 text-green-600 border-green-500/20",
+  published: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/20",
   draft: "bg-muted text-muted-foreground",
   scheduled: "bg-blue-500/20 text-blue-600 border-blue-500/20",
   review: "bg-orange-500/20 text-orange-600 border-orange-500/20",
-  active: "bg-green-500/20 text-green-600 border-green-500/20",
+  active: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/20",
 };
 
 export function CommunicationsModule({ initialTab = "press" }: CommunicationsModuleProps) {
@@ -317,7 +317,7 @@ export function CommunicationsModule({ initialTab = "press" }: CommunicationsMod
                 <CardContent>
                   <div className="text-center py-6">
                     <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-3" />
-                    <h3 className="text-lg font-semibold text-green-600">All Clear</h3>
+                    <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">All Clear</h3>
                     <p className="text-sm text-muted-foreground mt-1">No active crises detected</p>
                   </div>
                 </CardContent>

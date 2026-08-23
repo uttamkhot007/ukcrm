@@ -64,7 +64,7 @@ interface AgingBucket {
 }
 
 const AGING_BUCKETS: AgingBucket[] = [
-  { label: "Current", range: "0-30 days", min: 0, max: 30, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30" },
+  { label: "Current", range: "0-30 days", min: 0, max: 30, color: "text-green-700 dark:text-green-400", bgColor: "bg-green-100 dark:bg-green-900/30" },
   { label: "31-60 Days", range: "31-60 days", min: 31, max: 60, color: "text-yellow-600", bgColor: "bg-yellow-100 dark:bg-yellow-900/30" },
   { label: "61-90 Days", range: "61-90 days", min: 61, max: 90, color: "text-orange-600", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
   { label: "91-120 Days", range: "91-120 days", min: 91, max: 120, color: "text-red-600", bgColor: "bg-red-100 dark:bg-red-900/30" },
@@ -366,7 +366,7 @@ export function AccountsARaging() {
                         {agingDays > 0 ? (
                           <span className={bucket.color}>{agingDays} days</span>
                         ) : (
-                          <span className="text-green-600">Due in {Math.abs(agingDays)} days</span>
+                          <span className="text-green-700 dark:text-green-400">Due in {Math.abs(agingDays)} days</span>
                         )}
                       </TableCell>
                       <TableCell>{formatCurrency(invoice.total)}</TableCell>

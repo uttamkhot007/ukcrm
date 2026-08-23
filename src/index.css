@@ -64,6 +64,12 @@ html[data-release-unverified] [role="alert"] {
     --employee: 199 89% 48%;
     --employee-glow: 199 89% 58%;
 
+    /* Role badges — solid, AA-contrast fills (white text) */
+    --role-admin: 0 72% 38%;
+    --role-manager: 38 92% 28%;
+    --role-employee: 199 89% 28%;
+    --role-foreground: 0 0% 100%;
+
     /* 3D Glass Effect Variables */
     --glass-bg: 222 47% 11%;
     --glass-border: 217 33% 25%;
@@ -117,8 +123,11 @@ html[data-release-unverified] [role="alert"] {
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 160 84% 35%;
+    --primary: 160 84% 27%;
     --primary-foreground: 0 0% 100%;
+    /* Module accents darkened for AA contrast against white text in light mode */
+    --sales: 160 84% 27%;
+
     --secondary: 220 14% 92%;
     --secondary-foreground: 222 47% 11%;
     --muted: 220 14% 92%;

@@ -106,7 +106,7 @@ export function TenderDocumentWorkspace({ initialTab = 'rfp-specs' }: TenderDocu
       draft: { color: 'bg-muted text-muted-foreground', icon: Clock },
       generating: { color: 'bg-blue-500/20 text-blue-600', icon: Loader2 },
       review: { color: 'bg-yellow-500/20 text-yellow-600', icon: AlertCircle },
-      approved: { color: 'bg-green-500/20 text-green-600', icon: CheckCircle },
+      approved: { color: 'bg-green-500/20 text-green-700 dark:text-green-400', icon: CheckCircle },
       exported: { color: 'bg-emerald-500/20 text-emerald-600', icon: FileCheck },
     };
     const config = statusConfig[status] || statusConfig.draft;
@@ -163,7 +163,7 @@ export function TenderDocumentWorkspace({ initialTab = 'rfp-specs' }: TenderDocu
             <FileCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.rfpResponses}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.rfpResponses}</div>
           </CardContent>
         </Card>
         <Card variant="glass">

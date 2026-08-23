@@ -175,7 +175,7 @@ export function OEMPipelineTab({ dealRegistrations, deals = [], loading }: OEMPi
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">
               {Object.values(oemData).reduce((sum, o) => sum + o.approved, 0)}
             </div>
             <div className="text-sm text-muted-foreground">Approved DRs</div>

@@ -216,11 +216,11 @@ export function TargetProgressWidget({ teamType = "sales", showFullBreakdown = f
         {/* Incentive Status */}
         {hasTarget && targetData.incentive_eligibility_cap && overallProgress >= 100 && (
           <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-            <div className="flex items-center gap-2 text-green-600">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
               <Award className="h-5 w-5" />
               <span className="font-medium text-sm">Target Achieved!</span>
             </div>
-            <p className="text-xs text-green-600/80 mt-1">
+            <p className="text-xs text-green-700 dark:text-green-400/80 mt-1">
               Eligible for incentive up to {formatCurrency(targetData.incentive_cap_calculated || targetData.incentive_eligibility_cap)}
             </p>
           </div>

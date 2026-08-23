@@ -273,7 +273,7 @@ export function AccountIntelligence({
 
   const getPayerBadge = (type: string) => {
     switch (type) {
-      case "prompt": return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Prompt Payer</Badge>;
+      case "prompt": return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Prompt Payer</Badge>;
       case "regular": return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Regular Payer</Badge>;
       case "delayed": return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Delayed Payer</Badge>;
       default: return <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Problematic Payer</Badge>;
@@ -282,7 +282,7 @@ export function AccountIntelligence({
 
   const getRiskBadge = (risk: string) => {
     switch (risk) {
-      case "low": return <Badge className="bg-green-500/10 text-green-600">Low Risk</Badge>;
+      case "low": return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">Low Risk</Badge>;
       case "medium": return <Badge className="bg-yellow-500/10 text-yellow-600">Medium Risk</Badge>;
       default: return <Badge className="bg-red-500/10 text-red-600">High Risk</Badge>;
     }
@@ -481,7 +481,7 @@ export function AccountIntelligence({
             <p className="text-sm text-muted-foreground">{analysis.paymentPatterns.pattern}</p>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="p-3 bg-green-500/10 rounded-lg">
-                <p className="text-lg font-semibold text-green-600">{analysis.metrics.paidInvoices}</p>
+                <p className="text-lg font-semibold text-green-700 dark:text-green-400">{analysis.metrics.paidInvoices}</p>
                 <p className="text-xs text-muted-foreground">Paid</p>
               </div>
               <div className="p-3 bg-yellow-500/10 rounded-lg">
@@ -645,16 +645,16 @@ export function AccountIntelligence({
                   <Lock className="w-4 h-4 text-green-500" />
                   Authentication Status
                 </span>
-                <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Configured</Badge>
+                <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Configured</Badge>
               </div>
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>SPF Record</span>
-                  <span className="flex items-center gap-1 text-green-600"><ShieldCheck className="w-3 h-3" /> Valid</span>
+                  <span className="flex items-center gap-1 text-green-700 dark:text-green-400"><ShieldCheck className="w-3 h-3" /> Valid</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>DKIM Signing</span>
-                  <span className="flex items-center gap-1 text-green-600"><ShieldCheck className="w-3 h-3" /> Active</span>
+                  <span className="flex items-center gap-1 text-green-700 dark:text-green-400"><ShieldCheck className="w-3 h-3" /> Active</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>DMARC Policy</span>
@@ -675,15 +675,15 @@ export function AccountIntelligence({
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>Anti-Spam</span>
-                  <span className="text-green-600">Enabled</span>
+                  <span className="text-green-700 dark:text-green-400">Enabled</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>Anti-Phishing</span>
-                  <span className="text-green-600">Enabled</span>
+                  <span className="text-green-700 dark:text-green-400">Enabled</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>Attachment Scanning</span>
-                  <span className="text-green-600">Sandboxed</span>
+                  <span className="text-green-700 dark:text-green-400">Sandboxed</span>
                 </div>
               </div>
             </div>
