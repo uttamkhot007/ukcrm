@@ -87,9 +87,9 @@ const stageLabels: Record<DealStage, string> = {
   closed_lost: "Closed Lost",
 };
 
-/** Deals is the single home for the pipeline AND its MEDDIC qualification view. */
-export function DealsView({ initialView = "pipeline" }: { initialView?: "pipeline" | "meddic" } = {}) {
-  const [dealsView, setDealsView] = useState<"pipeline" | "meddic">(initialView);
+/** Deals is the single unified home: MEDDIC qualification workflow + pipeline in one view. */
+export function DealsView(_props: { initialView?: "pipeline" | "meddic" } = {}) {
+
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
 
