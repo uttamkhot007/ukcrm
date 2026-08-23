@@ -628,14 +628,15 @@ const Index = () => {
       
       // Project Management Module
       case "projects":
+      case "projects-overview":
+      case "projects-tasks":
+      case "projects-milestones":
+        return <ProjectsModule defaultTab="overview" />;
       case "projects-list":
         return <ProjectsModule defaultTab="projects" />;
-      case "projects-tasks":
-        return <ProjectsModule defaultTab="tasks" />;
-      case "projects-milestones":
-        return <ProjectsModule defaultTab="milestones" />;
       case "projects-timesheet":
         return <ProjectsModule defaultTab="timesheet" />;
+      
       
       // Marketing modules
       case "marketing":
