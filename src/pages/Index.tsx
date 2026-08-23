@@ -223,12 +223,21 @@ const Index = () => {
     return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
-  // This is deliberately a render-time gate rather than only an effect-based
-  // redirect: the legacy workspace dashboard must never mount for a platform
-  // administrator, including when old router state is restored from BFCache.
-  if (!isLoading && isAuthResolved && !tenantLoading && user && isPlatformAdmin) {
+  // Render-time gate: the legacy workspace *dashboard* must never mount for a
+  // platform administrator (including restored BFCache router state). An
+  // explicitly requested module is a deliberate navigation and still renders.
+  const adminWantsWorkspaceModule = isExplicitModuleRequest || activeModule !== "dashboard";
+  if (
+    !isLoading &&
+    isAuthResolved &&
+    !tenantLoading &&
+    user &&
+    isPlatformAdmin &&
+    !adminWantsWorkspaceModule
+  ) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }
+
 
 
   // Only block rendering while we genuinely don't know yet, or while an
