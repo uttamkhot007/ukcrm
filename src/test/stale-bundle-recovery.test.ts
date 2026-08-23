@@ -81,6 +81,8 @@ function servedManifest(time: string, commit: string, revision = 0) {
     commit,
     environment: "production",
     uiSchemaVersion: "3",
+    approvedDesignId: "platform-console-2026-08-23",
+    approvedDesignRevision: 2,
   });
 }
 
@@ -99,6 +101,8 @@ function servedHtml(time: string, commit: string, revision = 0) {
     <meta name="release-revision" content="${revision}">
     <meta name="release-environment" content="production">
     <meta name="ui-schema-version" content="3">
+    <meta name="approved-design-id" content="platform-console-2026-08-23">
+    <meta name="approved-design-revision" content="2">
   </head></html>`;
 }
 
@@ -266,6 +270,31 @@ describe("watcher against the deployed release", () => {
     const strategy = await loadStrategy();
     await expect(strategy.installBuildCacheStrategy()).resolves.toBe(false);
     await vi.waitFor(() => expect(forceFreshReload).toHaveBeenCalledTimes(1));
+  });
+
+  it("never mounts a known-old bundle after automatic reload attempts are exhausted", async () => {
+    seedReleaseFloor();
+    sessionStorage.setItem(
+      "nexus:reloaded-for-build",
+      JSON.stringify({ id: "1.0.0|newcommit|2026-08-15T10:00:00.000Z", attempts: 3 }),
+    );
+    vi.stubGlobal("fetch", vi.fn(async () => manifestResponse(NEW_TIME, "newcommit")));
+
+    const strategy = await loadStrategy();
+    await expect(strategy.installBuildCacheStrategy()).resolves.toBe(false);
+  });
+
+  it("rejects a served release without the approved design identity", async () => {
+    const strategy = await loadStrategy();
+    expect(
+      strategy.isServedDesignApproved({
+        id: "legacy",
+        buildTime: OLD_TIME,
+        commit: "oldcommit",
+        approvedDesignId: "legacy-dashboard",
+        approvedDesignRevision: 1,
+      }),
+    ).toBe(false);
   });
 
   it("uses no-store HTML metadata when the manifest is missing", async () => {

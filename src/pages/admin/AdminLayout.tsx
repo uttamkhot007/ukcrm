@@ -101,7 +101,13 @@ export default function AdminLayout() {
     // Any regular application module (sales, hr, finance, …) lives on "/".
     // Without this the admin shell kept rendering the platform page no matter
     // which module was clicked.
-    navigate("/", { state: { module, fromAdminNavigation: true } });
+    // Platform administrators use one canonical shell. Do not route them back
+    // through the legacy root dashboard, even via restored navigation state.
+    if (isPlatformAdmin) {
+      navigate("/admin/platform/tenants");
+      return;
+    }
+    navigate("/", { state: { module } });
   };
 
 

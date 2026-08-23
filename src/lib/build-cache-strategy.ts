@@ -28,6 +28,10 @@ import {
 } from "@/lib/build-info";
 import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
 import { flushReleaseFloorTelemetry, recordReleaseFloorEvent } from "@/lib/release-floor-telemetry";
+import {
+  APPROVED_DESIGN_ID,
+  APPROVED_DESIGN_REVISION,
+} from "@/lib/approved-design-identity";
 
 const LAST_BUILD_KEY = "nexus:last-build-id";
 const RELOADED_FOR_KEY = "nexus:reloaded-for-build";
@@ -46,6 +50,8 @@ export type ServedBuild = {
   revision?: number | null;
   environment?: string | null;
   uiSchemaVersion?: string | null;
+  approvedDesignId?: string | null;
+  approvedDesignRevision?: number | null;
   source?: "manifest" | "html";
 };
 
@@ -146,7 +152,7 @@ export async function purgeCachesOnNewBuild(): Promise<boolean> {
 
   try {
     store?.setItem(LAST_BUILD_KEY, RUNNING_BUILD_ID);
-    store?.removeItem(RELOADED_FOR_KEY);
+    window.sessionStorage.removeItem(RELOADED_FOR_KEY);
   } catch {
     /* ignore */
   }
@@ -228,6 +234,8 @@ async function fetchManifestBuild(): Promise<ServedBuild> {
     commit: string;
     environment: string;
     uiSchemaVersion: string;
+    approvedDesignId: string;
+    approvedDesignRevision: number;
   }>;
   try {
     manifest = (await res.json()) as typeof manifest;
@@ -243,6 +251,9 @@ async function fetchManifestBuild(): Promise<ServedBuild> {
     revision: typeof manifest.revision === "number" ? manifest.revision : null,
     environment: typeof manifest.environment === "string" ? manifest.environment : null,
     uiSchemaVersion: typeof manifest.uiSchemaVersion === "string" ? manifest.uiSchemaVersion : null,
+    approvedDesignId: typeof manifest.approvedDesignId === "string" ? manifest.approvedDesignId : null,
+    approvedDesignRevision:
+      typeof manifest.approvedDesignRevision === "number" ? manifest.approvedDesignRevision : null,
     source: "manifest",
   };
 }
@@ -262,6 +273,8 @@ async function fetchHtmlBuild(): Promise<ServedBuild> {
     revision: Number.isFinite(revision) ? revision : null,
     environment: metaFromHtml(html, "release-environment"),
     uiSchemaVersion: metaFromHtml(html, "ui-schema-version"),
+    approvedDesignId: metaFromHtml(html, "approved-design-id"),
+    approvedDesignRevision: Number(metaFromHtml(html, "approved-design-revision")) || null,
     source: "html",
   };
 }
@@ -326,6 +339,14 @@ export function isServedBuildDifferent(served: ServedBuild): boolean {
 
   if (served.commit && BUILD_COMMIT !== "dev" && served.commit !== BUILD_COMMIT) return true;
   return Boolean(served.buildTime && served.buildTime !== BUILD_TIME);
+}
+
+/** The server may only replace this shell with the explicitly approved design. */
+export function isServedDesignApproved(served: ServedBuild): boolean {
+  return (
+    served.approvedDesignId === APPROVED_DESIGN_ID &&
+    served.approvedDesignRevision === APPROVED_DESIGN_REVISION
+  );
 }
 
 export type ServedBuildRelation = "same" | "newer" | "older" | "different" | "unknown";
@@ -498,10 +519,10 @@ let reloadInFlight = false;
 /** Single reload arbiter shared by release checks and failed lazy chunks. */
 export function requestReleaseReload(
   id: string,
-  options: { clearCaches?: boolean } = {},
+  options: { clearCaches?: boolean; userInitiated?: boolean } = {},
 ): boolean {
   if (typeof window === "undefined" || reloadInFlight) return false;
-  if (reloadAttemptsFor(id) >= MAX_RELOAD_ATTEMPTS) return false;
+  if (!options.userInitiated && reloadAttemptsFor(id) >= MAX_RELOAD_ATTEMPTS) return false;
 
   reloadInFlight = true;
   markReloadAttempt(id);
@@ -565,6 +586,20 @@ export function watchServedBuild(options: { autoReload?: boolean; initialCheck?:
     // Every verified sighting raises the floor, so this browser can never
     // silently accept an older release later on.
     recordReleaseObservation(served.buildTime, served.id);
+
+    if (!isServedDesignApproved(served)) {
+      recordDiagnostic({
+        trigger,
+        runningId: RUNNING_BUILD_ID,
+        servedId: served.id,
+        checkedAt: new Date().toISOString(),
+        bfcache,
+        decision: "preserved",
+        reason: "served release does not carry the approved design identity",
+        source: served.source,
+      });
+      return;
+    }
 
     if (relation === "same") {
       recordDiagnostic({ trigger, runningId: RUNNING_BUILD_ID, servedId: served.id, checkedAt: new Date().toISOString(), bfcache, decision: "current", source: served.source, attempts: 1 });
@@ -641,6 +676,9 @@ export function watchServedBuild(options: { autoReload?: boolean; initialCheck?:
   const timer = window.setInterval(() => {
     void check("interval");
   }, POLL_INTERVAL_MS);
+  // Close the brief rolling-deployment window where both the initial document
+  // and first manifest request can hit the same draining old target.
+  const postBootTimer = window.setTimeout(() => void check("resume", false, true), 12_000);
   document.addEventListener("visibilitychange", onVisible);
   window.addEventListener("focus", onFocus);
   window.addEventListener("online", onOnline);
@@ -649,6 +687,7 @@ export function watchServedBuild(options: { autoReload?: boolean; initialCheck?:
   return () => {
     disposed = true;
     window.clearInterval(timer);
+    window.clearTimeout(postBootTimer);
     window.removeEventListener("focus", onFocus);
     window.removeEventListener("online", onOnline);
     window.removeEventListener("pageshow", onPageShow);
@@ -661,14 +700,19 @@ export async function installBuildCacheStrategy(): Promise<boolean> {
   const isDev = Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV);
   // Hard guarantee first: if this bundle predates a release we already ran,
   // purge and reload before anything else renders against it.
-  if (!isDev && enforceReleaseFloor()) return false;
+  if (!isDev && isRunningBuildBelowFloor()) {
+    // Never mount a bundle positively known to be stale, even if automatic
+    // reload attempts have reached their loop-safety cap.
+    enforceReleaseFloor();
+    return false;
+  }
 
   // Gate first paint on the authoritative manifest so an old React tree can
   // never mount while a newer deployment is being discovered in background.
   try {
     const served = await resolveServedBuild("boot");
     recordReleaseObservation(served.buildTime, served.id);
-    if (compareServedBuild(served) === "newer" && served.id) {
+    if (isServedDesignApproved(served) && compareServedBuild(served) === "newer" && served.id) {
       window.dispatchEvent(new CustomEvent(NEW_BUILD_EVENT, { detail: served }));
       recordDiagnostic({
         trigger: "boot",

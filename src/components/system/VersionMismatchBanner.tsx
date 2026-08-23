@@ -37,7 +37,7 @@ export function VersionMismatchBanner() {
   const hardReload = () => {
     setReloading(true);
     const id = mismatch?.servedId ?? "manual-version-mismatch";
-    if (!requestReleaseReload(id, { clearCaches: true })) setReloading(false);
+    if (!requestReleaseReload(id, { clearCaches: true, userInitiated: true })) setReloading(false);
   };
 
   // Presentation only. The release controller owns probing and reloading.

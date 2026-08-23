@@ -50,6 +50,8 @@
     <meta name="release-revision" content="__INDEX_HTML_RELEASE_REVISION__" />
     <meta name="release-environment" content="__INDEX_HTML_ENVIRONMENT__" />
     <meta name="ui-schema-version" content="3" />
+    <meta name="approved-design-id" content="__INDEX_HTML_APPROVED_DESIGN_ID__" />
+    <meta name="approved-design-revision" content="__INDEX_HTML_APPROVED_DESIGN_REVISION__" />
 
 
     <script>
@@ -59,6 +61,20 @@
           window.__BUILD_TIME__ = buildTime;
           window.__NEXUS_RELEASE_ID__ = document.querySelector('meta[name="release-id"]')?.getAttribute("content") || null;
           window.__NEXUS_RELEASE_REVISION__ = Number(document.querySelector('meta[name="release-revision"]')?.getAttribute("content") || "0");
+
+          // Reject an HTML shell below the highest approved design this browser
+          // has already displayed. This runs before any application JavaScript.
+          var designMeta = document.querySelector('meta[name="approved-design-revision"]');
+          var htmlDesignRevision = Number(designMeta && designMeta.getAttribute("content") || "0");
+          var storedDesign = null;
+          try { storedDesign = JSON.parse(localStorage.getItem("nexus:approved-design") || "null"); } catch (e) {}
+          if (storedDesign && Number(storedDesign.revision) > htmlDesignRevision) {
+            document.documentElement.setAttribute("data-stale-design-blocked", "1");
+            if ("caches" in window) caches.keys().then(function (names) {
+              return Promise.all((names || []).map(function (name) { return caches.delete(name); }));
+            }).finally(function () { window.location.reload(); });
+            return;
+          }
 
           // Manual "hard reload" helper: plain reload, no URL rewriting.
           // Adding ?fresh=/?build= params created a brand new cache entry for
