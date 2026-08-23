@@ -5,7 +5,7 @@ import { ProjectTasksView } from "./ProjectTasksView";
 import { ProjectMilestones } from "./ProjectMilestones";
 import { TimeEntriesView } from "./TimeEntriesView";
 import { ProjectIntelligenceDashboard } from "./ProjectIntelligenceDashboard";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FolderKanban, ListTodo, Flag, Clock, Brain } from "lucide-react";
 
 interface ProjectsModuleProps {
