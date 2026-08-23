@@ -19,11 +19,11 @@ export function Header({ onAIToggle }: HeaderProps) {
   const getRoleBadgeColor = () => {
     switch (role) {
       case "admin":
-        return "bg-destructive/20 text-destructive border-destructive/30";
+        return "bg-destructive text-destructive-foreground border-transparent";
       case "manager":
-        return "bg-management/20 text-management border-management/30";
+        return "bg-management text-white border-transparent";
       default:
-        return "bg-employee/20 text-employee border-employee/30";
+        return "bg-employee text-white border-transparent";
     }
   };
 
