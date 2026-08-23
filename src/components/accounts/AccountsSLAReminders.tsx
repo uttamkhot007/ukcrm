@@ -413,7 +413,7 @@ export function AccountsSLAReminders() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">
                   {reminders.filter((r) => r.status === "completed").length}
                 </p>
               </div>

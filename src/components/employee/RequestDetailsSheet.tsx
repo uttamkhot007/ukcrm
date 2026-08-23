@@ -59,7 +59,7 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
 const STATUS_STYLES: Record<string, { bg: string; icon: React.ElementType }> = {
   pending: { bg: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", icon: Clock },
   under_review: { bg: "bg-blue-500/10 text-blue-600 border-blue-500/20", icon: AlertTriangle },
-  approved: { bg: "bg-green-500/10 text-green-600 border-green-500/20", icon: CheckCircle },
+  approved: { bg: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20", icon: CheckCircle },
   rejected: { bg: "bg-red-500/10 text-red-600 border-red-500/20", icon: XCircle },
   completed: { bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", icon: CheckCircle },
   cancelled: { bg: "bg-muted text-muted-foreground border-muted", icon: XCircle },

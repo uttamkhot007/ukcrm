@@ -111,11 +111,11 @@ export function BankBook() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-100">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-green-700 dark:text-green-400" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Deposits</p>
-                  <p className="text-xl font-bold text-green-600">₹{totalDeposits.toLocaleString("en-IN")}</p>
+                  <p className="text-xl font-bold text-green-700 dark:text-green-400">₹{totalDeposits.toLocaleString("en-IN")}</p>
                 </div>
               </div>
             </CardContent>
@@ -235,7 +235,7 @@ export function BankBook() {
                       <TableCell>{entry.voucher?.voucher_type?.name || "-"}</TableCell>
                       <TableCell>{entry.voucher?.reference_number || "-"}</TableCell>
                       <TableCell>{entry.voucher?.narration || "-"}</TableCell>
-                      <TableCell className="text-right font-mono text-green-600">
+                      <TableCell className="text-right font-mono text-green-700 dark:text-green-400">
                         {entry.debit_amount > 0 ? `₹${entry.debit_amount.toLocaleString("en-IN")}` : "-"}
                       </TableCell>
                       <TableCell className="text-right font-mono text-red-600">
@@ -249,7 +249,7 @@ export function BankBook() {
                 )}
                 <TableRow className="bg-muted/50 font-bold">
                   <TableCell colSpan={5}>Closing Balance</TableCell>
-                  <TableCell className="text-right font-mono text-green-600">
+                  <TableCell className="text-right font-mono text-green-700 dark:text-green-400">
                     ₹{totalDeposits.toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell className="text-right font-mono text-red-600">

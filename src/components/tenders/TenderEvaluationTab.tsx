@@ -71,12 +71,12 @@ export function TenderEvaluationTab({
         <Card className="border-green-200 bg-green-50/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-green-600" />
+              <Trophy className="h-4 w-4 text-green-700 dark:text-green-400" />
               Won Tenders
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{wonTenders.length}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{wonTenders.length}</div>
             <p className="text-xs text-muted-foreground">
               ₹{(wonTenders.reduce((s, t) => s + (t.estimated_value || 0), 0) / 100000).toFixed(1)}L value
             </p>

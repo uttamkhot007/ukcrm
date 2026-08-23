@@ -153,7 +153,7 @@ export function BudgetManagement() {
 
   const getVarianceIndicator = (variance: number) => {
     if (variance < 0) {
-      return <span className="text-green-600 flex items-center"><TrendingDown className="h-3 w-3 mr-1" />Under</span>;
+      return <span className="text-green-700 dark:text-green-400 flex items-center"><TrendingDown className="h-3 w-3 mr-1" />Under</span>;
     } else if (variance > 0) {
       return <span className="text-red-600 flex items-center"><TrendingUp className="h-3 w-3 mr-1" />Over</span>;
     }
@@ -198,7 +198,7 @@ export function BudgetManagement() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-muted-foreground">Active Budgets</div>
-            <div className="text-2xl font-bold text-green-600">{stats.activeBudgets}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.activeBudgets}</div>
           </CardContent>
         </Card>
         <Card>
@@ -280,7 +280,7 @@ export function BudgetManagement() {
                               size="sm"
                               onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: budget.id, status: "approved" }); }}
                             >
-                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <CheckCircle className="h-4 w-4 text-green-700 dark:text-green-400" />
                             </Button>
                           )}
                           {budget.status === "approved" && (
@@ -353,7 +353,7 @@ export function BudgetManagement() {
                           <TableCell>{item.ledger?.name || "Unassigned"}</TableCell>
                           <TableCell className="text-right font-mono">{formatCurrency(item.budgeted_amount)}</TableCell>
                           <TableCell className="text-right font-mono">{formatCurrency(item.actual_amount || 0)}</TableCell>
-                          <TableCell className={`text-right font-mono ${item.variance_amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          <TableCell className={`text-right font-mono ${item.variance_amount > 0 ? 'text-red-600' : 'text-green-700 dark:text-green-400'}`}>
                             {item.variance_amount > 0 ? '+' : ''}{formatCurrency(item.variance_amount || 0)}
                           </TableCell>
                           <TableCell>{getVarianceIndicator(item.variance_amount || 0)}</TableCell>

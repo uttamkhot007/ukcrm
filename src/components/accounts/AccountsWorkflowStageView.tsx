@@ -306,7 +306,7 @@ export function AccountsWorkflowStageView({
                       </div>
 
                       {completion?.completed_at && (
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400">
                           <CheckCircle2 className="w-3 h-3" />
                           Completed {format(new Date(completion.completed_at), "MMM d, yyyy")}
                         </div>

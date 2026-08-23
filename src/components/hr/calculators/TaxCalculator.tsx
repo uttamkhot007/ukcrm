@@ -329,7 +329,7 @@ export function TaxCalculator() {
                 <span>Gross Salary</span>
                 <span className="font-medium">{formatCurrency(calculation.grossSalary)}</span>
               </div>
-              <div className="flex justify-between text-sm text-green-600">
+              <div className="flex justify-between text-sm text-green-700 dark:text-green-400">
                 <span>Less: Deductions</span>
                 <span>-{formatCurrency(calculation.totalDeductions)}</span>
               </div>
@@ -395,7 +395,7 @@ export function TaxCalculator() {
             <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Annual Net Income</span>
-                <span className="text-xl font-bold text-green-600">{formatCurrency(calculation.netIncome)}</span>
+                <span className="text-xl font-bold text-green-700 dark:text-green-400">{formatCurrency(calculation.netIncome)}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Effective Tax Rate: {calculation.effectiveRate.toFixed(2)}%

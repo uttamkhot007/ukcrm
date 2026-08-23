@@ -243,7 +243,7 @@ export function SalaryCalculator() {
                 <Separator />
                 <div className="flex justify-between text-sm font-medium">
                   <span>Gross Salary</span>
-                  <span className="text-green-600">{formatCurrency(breakdown.monthly.gross)}</span>
+                  <span className="text-green-700 dark:text-green-400">{formatCurrency(breakdown.monthly.gross)}</span>
                 </div>
               </div>
             </div>
@@ -317,7 +317,7 @@ export function SalaryCalculator() {
               <Separator />
               <div className="flex justify-between text-sm p-2 bg-green-50 dark:bg-green-950/20 rounded">
                 <span className="font-semibold">Annual Take-Home (with variable)</span>
-                <span className="font-bold text-green-600">{formatCurrency(breakdown.annual.takeHome)}</span>
+                <span className="font-bold text-green-700 dark:text-green-400">{formatCurrency(breakdown.annual.takeHome)}</span>
               </div>
             </div>
 

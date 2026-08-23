@@ -192,7 +192,7 @@ export function BonusCalculator() {
               )}
             </div>
             <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-              <p className="text-sm text-green-600">Maximum Bonus (20%)</p>
+              <p className="text-sm text-green-700 dark:text-green-400">Maximum Bonus (20%)</p>
               <p className="text-xl font-bold text-green-700">
                 {formatCurrency(calculation.proRataMaxBonus)}
               </p>

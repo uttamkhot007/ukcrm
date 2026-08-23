@@ -129,11 +129,11 @@ export function TicketingModuleDashboard({ onNavigate }: TicketingModuleDashboar
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Resolved This Month</p>
-                <p className="text-2xl font-bold text-green-600">{metrics?.resolvedThisMonth || 0}</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{metrics?.resolvedThisMonth || 0}</p>
                 <p className="text-xs text-muted-foreground mt-1">Closed tickets</p>
               </div>
               <div className="p-3 rounded-full bg-green-500/20">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <CheckCircle2 className="h-6 w-6 text-green-700 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
@@ -183,8 +183,8 @@ export function TicketingModuleDashboard({ onNavigate }: TicketingModuleDashboar
                 <p className="text-xs text-muted-foreground">Medium</p>
               </div>
               <div className="p-4 bg-green-500/10 rounded-lg text-center border border-green-500/30">
-                <CheckCircle2 className="h-6 w-6 mx-auto text-green-600 mb-2" />
-                <p className="text-2xl font-bold text-green-600">{metrics?.byPriority.low || 0}</p>
+                <CheckCircle2 className="h-6 w-6 mx-auto text-green-700 dark:text-green-400 mb-2" />
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{metrics?.byPriority.low || 0}</p>
                 <p className="text-xs text-muted-foreground">Low</p>
               </div>
             </div>

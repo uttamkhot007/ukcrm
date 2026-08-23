@@ -504,7 +504,7 @@ export function InventoryModule() {
                             {entry.quantity_in > 0 ? "IN" : "OUT"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-green-600">
+                        <TableCell className="text-right text-green-700 dark:text-green-400">
                           {entry.quantity_in > 0 ? `+${entry.quantity_in}` : "-"}
                         </TableCell>
                         <TableCell className="text-right text-destructive">

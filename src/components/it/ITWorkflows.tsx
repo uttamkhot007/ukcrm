@@ -28,7 +28,7 @@ interface ITWorkflow {
 }
 
 const WORKFLOW_TYPES = [
-  { value: "onboarding", label: "IT Onboarding", icon: UserPlus, color: "text-green-600" },
+  { value: "onboarding", label: "IT Onboarding", icon: UserPlus, color: "text-green-700 dark:text-green-400" },
   { value: "offboarding", label: "IT Offboarding", icon: UserMinus, color: "text-red-600" },
   { value: "equipment_request", label: "Equipment Request", icon: Laptop, color: "text-blue-600" },
   { value: "access_request", label: "Access Request", icon: Key, color: "text-yellow-600" },
@@ -160,7 +160,7 @@ export function ITWorkflows() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.onboarding}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.onboarding}</div>
           </CardContent>
         </Card>
         <Card>
@@ -181,7 +181,7 @@ export function ITWorkflows() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <UserPlus className="w-5 h-5 text-green-600" />
+              <UserPlus className="w-5 h-5 text-green-700 dark:text-green-400" />
               IT Onboarding Stages
             </CardTitle>
           </CardHeader>
@@ -262,7 +262,7 @@ export function ITWorkflows() {
                           variant="outline"
                           className={
                             workflow.status === "completed"
-                              ? "bg-green-500/20 text-green-600"
+                              ? "bg-green-500/20 text-green-700 dark:text-green-400"
                               : workflow.status === "in_progress"
                               ? "bg-blue-500/20 text-blue-600"
                               : "bg-muted text-muted-foreground"

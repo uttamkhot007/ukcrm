@@ -237,7 +237,7 @@ export function GSTModule() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Input Tax Credit</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(gstr3bSummary.inputTax)}</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(gstr3bSummary.inputTax)}</p>
               </CardContent>
             </Card>
             <Card>
@@ -253,7 +253,7 @@ export function GSTModule() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Net Tax Payable</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className={`text-2xl font-bold ${gstr3bSummary.netTax >= 0 ? "text-destructive" : "text-green-600"}`}>
+                <p className={`text-2xl font-bold ${gstr3bSummary.netTax >= 0 ? "text-destructive" : "text-green-700 dark:text-green-400"}`}>
                   {formatCurrency(Math.abs(gstr3bSummary.netTax))}
                   {gstr3bSummary.netTax < 0 && " (Credit)"}
                 </p>

@@ -129,7 +129,7 @@ export function RenewalDashboard({ onNavigate }: RenewalDashboardProps) {
                 <p className="text-xs text-muted-foreground">{formatCurrency(wonRenewalValue)}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <CheckCircle2 className="h-6 w-6 text-green-700 dark:text-green-400" />
               </div>
             </div>
           </CardContent>

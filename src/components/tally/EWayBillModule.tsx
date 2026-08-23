@@ -226,7 +226,7 @@ export function EWayBillModule() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-muted-foreground">Active</div>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>

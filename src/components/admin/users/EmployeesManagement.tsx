@@ -87,7 +87,7 @@ const SALES_SUB_TEAMS = [
 ];
 
 const EMPLOYMENT_STATUS = [
-  { value: "active", label: "Active", color: "bg-green-500/20 text-green-600 border-green-500/30" },
+  { value: "active", label: "Active", color: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30" },
   { value: "new_hire", label: "New Hire", color: "bg-blue-500/20 text-blue-600 border-blue-500/30" },
   { value: "probation", label: "Probation", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30" },
   { value: "pip", label: "PIP", color: "bg-red-500/20 text-red-600 border-red-500/30" },

@@ -141,10 +141,10 @@ export function AccountsModuleDashboard({ onNavigate }: AccountsModuleDashboardP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Collected This Month</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics?.collectedThisMonth || 0)}</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(metrics?.collectedThisMonth || 0)}</p>
               </div>
               <div className="p-3 rounded-full bg-green-500/20">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <CheckCircle2 className="h-6 w-6 text-green-700 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
@@ -185,7 +185,7 @@ export function AccountsModuleDashboard({ onNavigate }: AccountsModuleDashboardP
                 <p className="text-sm text-muted-foreground">Order Processing</p>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg text-center cursor-pointer hover:bg-muted" onClick={() => onNavigate('billing')}>
-                <FileText className="h-8 w-8 mx-auto text-green-600 mb-2" />
+                <FileText className="h-8 w-8 mx-auto text-green-700 dark:text-green-400 mb-2" />
                 <p className="text-2xl font-bold">{metrics?.workflowsByType.invoice_processing || 0}</p>
                 <p className="text-sm text-muted-foreground">Invoice Processing</p>
               </div>

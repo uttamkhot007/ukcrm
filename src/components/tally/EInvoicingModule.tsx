@@ -171,7 +171,7 @@ export function EInvoicingModule() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-muted-foreground">Generated</div>
-            <div className="text-2xl font-bold text-green-600">{stats.generated}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.generated}</div>
           </CardContent>
         </Card>
         <Card>

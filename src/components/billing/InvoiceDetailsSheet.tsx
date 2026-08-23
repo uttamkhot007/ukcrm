@@ -282,7 +282,7 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                 </div>
                 {invoice.amount_paid > 0 && (
                   <>
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-green-700 dark:text-green-400">
                       <span>Paid</span>
                       <span>-{formatCurrency(invoice.amount_paid, invoiceCurrency)}</span>
                     </div>
@@ -326,7 +326,7 @@ export function InvoiceDetailsSheet({ invoiceId, open, onOpenChange }: InvoiceDe
                             <p className="text-xs text-muted-foreground">{payment.payment_method}</p>
                           )}
                         </div>
-                        <span className="font-medium text-green-600">{formatCurrency(payment.amount, invoiceCurrency)}</span>
+                        <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(payment.amount, invoiceCurrency)}</span>
                       </div>
                     ))}
                   </div>

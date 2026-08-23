@@ -371,7 +371,7 @@ export function SupportManagementModule() {
                       </CardHeader>
                       <CardContent className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
-                          <Badge variant="outline" className="bg-green-500/10 text-green-600">L1</Badge>
+                          <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400">L1</Badge>
                           <span className="text-muted-foreground">{template.level_1_email || "-"}</span>
                           <span className="text-xs text-muted-foreground">({template.level_1_response_hours}h)</span>
                         </div>

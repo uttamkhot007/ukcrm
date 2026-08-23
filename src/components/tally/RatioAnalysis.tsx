@@ -361,7 +361,7 @@ export function RatioAnalysis() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-muted-foreground">Net Profit</div>
-            <div className={`text-xl font-bold ${metrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-xl font-bold ${metrics.netProfit >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
               {formatCurrency(metrics.netProfit)}
             </div>
           </CardContent>
@@ -436,7 +436,7 @@ export function RatioAnalysis() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Net Profit:</span>
-                    <span className={`ml-2 font-mono ${metrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`ml-2 font-mono ${metrics.netProfit >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                       {formatCurrency(metrics.netProfit)}
                     </span>
                   </div>

@@ -206,7 +206,7 @@ export function EmployeeDocumentsView() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          className="text-green-700 dark:text-green-400 border-green-600 hover:bg-green-50"
                           onClick={() => verifyDocument.mutate({ docId: doc.id, verified: true })}
                         >
                           <Check className="w-4 h-4 mr-1" />

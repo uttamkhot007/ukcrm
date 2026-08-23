@@ -257,7 +257,7 @@ export function VendorsManagement() {
                           className={cn(
                             "text-xs",
                             vendor.status === "active"
-                              ? "bg-green-500/20 text-green-600"
+                              ? "bg-green-500/20 text-green-700 dark:text-green-400"
                               : "bg-muted text-muted-foreground"
                           )}
                         >

@@ -42,7 +42,7 @@ export function ProjectRACI({ projectId, stakeholders }: ProjectRACIProps) {
       R: { label: "R", className: "bg-blue-500/10 text-blue-600" },
       A: { label: "A", className: "bg-red-500/10 text-red-600" },
       C: { label: "C", className: "bg-yellow-500/10 text-yellow-600" },
-      I: { label: "I", className: "bg-green-500/10 text-green-600" },
+      I: { label: "I", className: "bg-green-500/10 text-green-700 dark:text-green-400" },
     };
     const c = config[type];
     return c ? <Badge className={c.className}>{c.label}</Badge> : null;

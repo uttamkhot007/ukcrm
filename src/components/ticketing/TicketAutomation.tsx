@@ -188,7 +188,7 @@ export function TicketAutomation() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-medium">{rule.name}</h3>
                       {rule.isActive ? (
-                        <Badge variant="secondary" className="bg-green-500/10 text-green-600">Active</Badge>
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-400">Active</Badge>
                       ) : (
                         <Badge variant="secondary" className="bg-muted text-muted-foreground">Paused</Badge>
                       )}

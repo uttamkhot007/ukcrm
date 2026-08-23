@@ -237,7 +237,7 @@ export function TallyDashboard() {
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receipts</span>
-              <span className="font-medium text-green-600">{formatAmount(metrics.todayReceipts)}</span>
+              <span className="font-medium text-green-700 dark:text-green-400">{formatAmount(metrics.todayReceipts)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Payments</span>
@@ -245,7 +245,7 @@ export function TallyDashboard() {
             </div>
             <div className="flex justify-between border-t pt-3">
               <span className="text-muted-foreground">Net</span>
-              <span className={`font-medium ${metrics.todayNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`font-medium ${metrics.todayNet >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                 {formatAmount(metrics.todayNet)}
               </span>
             </div>

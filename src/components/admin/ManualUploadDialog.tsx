@@ -278,7 +278,7 @@ export function ManualUploadDialog({ open, onOpenChange, onComplete }: ManualUpl
     switch (extension) {
       case 'xlsx':
       case 'xls':
-        return <FileSpreadsheet className="w-5 h-5 text-green-600" />;
+        return <FileSpreadsheet className="w-5 h-5 text-green-700 dark:text-green-400" />;
       case 'docx':
       case 'doc':
         return <FileText className="w-5 h-5 text-blue-600" />;

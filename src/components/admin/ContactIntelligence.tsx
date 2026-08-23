@@ -207,7 +207,7 @@ export function ContactIntelligence({
 
   const getEngagementBadge = (level: string) => {
     switch (level) {
-      case "high": return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">High Engagement</Badge>;
+      case "high": return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">High Engagement</Badge>;
       case "medium": return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">Medium Engagement</Badge>;
       default: return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Low Engagement</Badge>;
     }

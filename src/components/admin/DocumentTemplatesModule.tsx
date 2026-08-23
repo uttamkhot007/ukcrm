@@ -729,7 +729,7 @@ export function DocumentTemplatesModule({ roleScope }: DocumentTemplatesModulePr
                       </div>
 
                       {isAdded && (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
+                        <Badge variant="outline" className="text-green-700 dark:text-green-400 border-green-600">
                           <Check className="h-3 w-3 mr-1" />
                           Added
                         </Badge>

@@ -295,7 +295,7 @@ export function FinanceAnalyticsDashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Net Cashflow</p>
-                <p className={`text-xl font-bold ${(kpis?.netCashflow || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-xl font-bold ${(kpis?.netCashflow || 0) >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                   {formatCurrency(kpis?.netCashflow || 0)}
                 </p>
               </div>
@@ -570,7 +570,7 @@ export function FinanceAnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Paid Invoices</p>
-                <p className="text-lg font-bold text-green-600">{kpis?.paidCount || 0}</p>
+                <p className="text-lg font-bold text-green-700 dark:text-green-400">{kpis?.paidCount || 0}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500/50" />
             </div>

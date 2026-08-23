@@ -592,7 +592,7 @@ export function AccountsWorkflowBoards({ onWorkflowCreated }: AccountsWorkflowBo
                       <div className="text-right">
                         <span className={cn(
                           "text-lg font-bold",
-                          margin >= 0 ? "text-green-600" : "text-red-600"
+                          margin >= 0 ? "text-green-700 dark:text-green-400" : "text-red-600"
                         )}>
                           ₹{margin.toLocaleString()}
                         </span>

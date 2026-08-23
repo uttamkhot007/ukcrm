@@ -289,12 +289,12 @@ export function DealRegistrationDetailsSheet({ drId, open, onOpenChange }: DealR
             {dr.dr_id_from_vendor && (
               <Card className="border-green-500/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-green-600">Deal Registration Approved</CardTitle>
+                  <CardTitle className="text-sm text-green-700 dark:text-green-400">Deal Registration Approved</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">DR ID from Vendor:</span>
-                    <p className="font-medium text-green-600">{dr.dr_id_from_vendor}</p>
+                    <p className="font-medium text-green-700 dark:text-green-400">{dr.dr_id_from_vendor}</p>
                   </div>
                   {dr.dr_expiry_date && (
                     <div>

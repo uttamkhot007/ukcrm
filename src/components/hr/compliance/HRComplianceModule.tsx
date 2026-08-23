@@ -218,7 +218,7 @@ function ComplianceOverview() {
               <CheckCircle2 className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-400">15+</p>
-                <p className="text-xs text-green-600">Labour Laws Covered</p>
+                <p className="text-xs text-green-700 dark:text-green-400">Labour Laws Covered</p>
               </div>
             </div>
           </CardContent>

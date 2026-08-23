@@ -93,7 +93,7 @@ export function TenderBidPreparationTab({
                   <div className="flex items-center gap-2">
                     <span>₹{((tender.emd_amount || 0) / 1000).toFixed(0)}K</span>
                     {tender.emd_submitted ? (
-                      <Badge variant="outline" className="text-green-600">Paid</Badge>
+                      <Badge variant="outline" className="text-green-700 dark:text-green-400">Paid</Badge>
                     ) : (
                       <Badge variant="outline" className="text-orange-600">Pending</Badge>
                     )}

@@ -333,7 +333,7 @@ export function TeamCommunication() {
                         <p className="text-sm text-muted-foreground truncate">{employee.job_title}</p>
                         <p className="text-xs text-muted-foreground">{employee.department}</p>
                       </div>
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                      <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                         Online
                       </Badge>
                     </div>
@@ -583,7 +583,7 @@ export function TeamCommunication() {
                currentCall?.call_type === 'video' ? 'Video Call' : 
                currentCall?.call_type === 'voice' ? 'Voice Call' : 'Screen Share'}
               {isConnecting && <Badge variant="outline">Connecting...</Badge>}
-              {isScreenSharing && <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Live</Badge>}
+              {isScreenSharing && <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Live</Badge>}
             </DialogTitle>
             <DialogDescription>
               {isConnecting ? 'Establishing connection...' : isScreenSharing ? 'Your screen is being shared' : 'Call in progress'}

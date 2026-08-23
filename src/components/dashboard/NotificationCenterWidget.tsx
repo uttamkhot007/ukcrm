@@ -39,7 +39,7 @@ const typeColors: Record<string, string> = {
 const categoryConfig: Record<string, { icon: typeof Info; label: string; color: string }> = {
   deals: { icon: Briefcase, label: "Deals", color: "text-blue-600" },
   tickets: { icon: Ticket, label: "Tickets", color: "text-amber-600" },
-  approvals: { icon: ClipboardCheck, label: "Approvals", color: "text-green-600" },
+  approvals: { icon: ClipboardCheck, label: "Approvals", color: "text-green-700 dark:text-green-400" },
   requests: { icon: FileText, label: "Requests", color: "text-purple-600" },
   renewals: { icon: RefreshCw, label: "Renewals", color: "text-orange-600" },
   compliance: { icon: Shield, label: "Compliance", color: "text-red-600" },

@@ -292,7 +292,7 @@ export function EstimatesModule() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-muted-foreground">Accepted</div>
-            <div className="text-2xl font-bold text-green-600">{stats.accepted}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.accepted}</div>
           </CardContent>
         </Card>
         <Card>
@@ -375,7 +375,7 @@ export function EstimatesModule() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-green-600"
+                              className="text-green-700 dark:text-green-400"
                               onClick={() => updateStatus.mutate({ id: est.id, status: "accepted" })}
                             >
                               <CheckCircle className="h-4 w-4" />

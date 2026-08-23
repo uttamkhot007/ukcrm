@@ -182,7 +182,7 @@ export function GratuityCalculator() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200">
-                <p className="text-sm text-green-600">Gratuity Amount</p>
+                <p className="text-sm text-green-700 dark:text-green-400">Gratuity Amount</p>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-400">
                   {formatCurrency(calculation.finalGratuity)}
                 </p>
@@ -197,7 +197,7 @@ export function GratuityCalculator() {
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-400">
                   {calculation.taxableAmount > 0 ? (
                     <>
-                      <span className="text-green-600">{formatCurrency(2000000)} Tax-Free</span>
+                      <span className="text-green-700 dark:text-green-400">{formatCurrency(2000000)} Tax-Free</span>
                       <br />
                       <span className="text-red-500 text-sm">{formatCurrency(calculation.taxableAmount)} Taxable</span>
                     </>

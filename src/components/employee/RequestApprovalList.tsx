@@ -51,7 +51,7 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
   under_review: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  approved: "bg-green-500/10 text-green-600 border-green-500/20",
+  approved: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
   rejected: "bg-red-500/10 text-red-600 border-red-500/20",
   completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   cancelled: "bg-muted text-muted-foreground border-muted",

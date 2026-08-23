@@ -164,7 +164,7 @@ export function OrderRequestDetails({ orderRequestId, onUpdate }: OrderRequestDe
           <div className="bg-muted/50 rounded-lg p-3 flex items-center justify-between">
             <span className="font-medium">Margin:</span>
             <div className="text-right">
-              <span className={`text-lg font-bold ${margin >= 0 ? "text-green-600" : "text-red-600"}`}>
+              <span className={`text-lg font-bold ${margin >= 0 ? "text-green-700 dark:text-green-400" : "text-red-600"}`}>
                 ₹{margin.toLocaleString()}
               </span>
               <span className="text-sm text-muted-foreground ml-2">

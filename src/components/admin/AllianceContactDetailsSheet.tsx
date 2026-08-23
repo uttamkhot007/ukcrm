@@ -441,7 +441,7 @@ export function AllianceContactDetailsSheet({
                         <ArrowUpRight className="h-3 w-3 text-green-500" />
                         Revenue Won
                       </span>
-                      <span className="font-medium text-green-600">${wonDealValue.toLocaleString()}</span>
+                      <span className="font-medium text-green-700 dark:text-green-400">${wonDealValue.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="flex items-center gap-1">

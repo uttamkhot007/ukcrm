@@ -155,7 +155,7 @@ export function InsideSalesDashboard({ onNavigate }: InsideSalesDashboardProps) 
                 <p className="text-xs text-muted-foreground">Being worked</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Target className="h-6 w-6 text-green-600" />
+                <Target className="h-6 w-6 text-green-700 dark:text-green-400" />
               </div>
             </div>
           </CardContent>

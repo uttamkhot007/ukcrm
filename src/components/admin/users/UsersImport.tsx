@@ -259,7 +259,7 @@ export function UsersImport() {
           {importResult && (
             <div className="p-4 rounded-lg bg-muted space-y-2">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-green-600">
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                   <CheckCircle className="w-4 h-4" />
                   <span>{importResult.success} successful</span>
                 </div>

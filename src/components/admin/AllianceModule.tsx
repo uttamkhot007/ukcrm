@@ -843,8 +843,8 @@ export function AllianceModule() {
                                         <Shield className="h-4 w-4 text-green-500" />
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-xl font-bold text-green-600">Strong</span>
-                                        <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Active</Badge>
+                                        <span className="text-xl font-bold text-green-700 dark:text-green-400">Strong</span>
+                                        <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Active</Badge>
                                       </div>
                                       <p className="text-xs text-muted-foreground mt-2">Last interaction: 3 days ago</p>
                                     </CardContent>

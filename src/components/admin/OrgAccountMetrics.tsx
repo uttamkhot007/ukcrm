@@ -261,10 +261,10 @@ export function OrgAccountMetrics({ organizationId, organizationType }: OrgAccou
           </div>
           <div className="bg-green-500/10 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-green-700 dark:text-green-400" />
               <span className="text-xs text-muted-foreground">Win Rate</span>
             </div>
-            <p className="text-xl font-bold text-green-600">{metrics.winRate.toFixed(1)}%</p>
+            <p className="text-xl font-bold text-green-700 dark:text-green-400">{metrics.winRate.toFixed(1)}%</p>
           </div>
           <div className="bg-red-500/10 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
@@ -286,12 +286,12 @@ export function OrgAccountMetrics({ organizationId, organizationType }: OrgAccou
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-green-600">Won Value</span>
-              <Badge variant="outline" className="text-green-600 border-green-500/30">
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">Won Value</span>
+              <Badge variant="outline" className="text-green-700 dark:text-green-400 border-green-500/30">
                 {metrics.wonCount} deals
               </Badge>
             </div>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(metrics.wonValue)}</p>
+            <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(metrics.wonValue)}</p>
           </div>
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">

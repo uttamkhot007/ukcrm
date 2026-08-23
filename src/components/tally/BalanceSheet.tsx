@@ -75,7 +75,7 @@ export function BalanceSheet() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Scale className="h-5 w-5" />
-            <span className={Math.abs(totalAssets - totalLiabilitiesAndCapital) < 0.01 ? "text-green-600" : "text-red-600"}>
+            <span className={Math.abs(totalAssets - totalLiabilitiesAndCapital) < 0.01 ? "text-green-700 dark:text-green-400" : "text-red-600"}>
               {Math.abs(totalAssets - totalLiabilitiesAndCapital) < 0.01 ? "Balanced" : "Not Balanced"}
             </span>
           </div>
@@ -128,7 +128,7 @@ export function BalanceSheet() {
                       <TableCell className="pl-6">
                         {netProfit > 0 ? "Add: Net Profit" : "Less: Net Loss"}
                       </TableCell>
-                      <TableCell className={`text-right font-mono ${netProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <TableCell className={`text-right font-mono ${netProfit > 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
                         {formatAmount(netProfit)}
                       </TableCell>
                     </TableRow>

@@ -40,7 +40,7 @@ export function CustomerPortal() {
     switch (status) {
       case 'open': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
       case 'in_progress': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'resolved': return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'resolved': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
       case 'closed': return 'bg-muted text-muted-foreground border-border';
       default: return 'bg-muted text-muted-foreground border-border';
     }
@@ -51,7 +51,7 @@ export function CustomerPortal() {
       case 'critical': return 'bg-red-500/10 text-red-600';
       case 'high': return 'bg-orange-500/10 text-orange-600';
       case 'medium': return 'bg-yellow-500/10 text-yellow-600';
-      case 'low': return 'bg-green-500/10 text-green-600';
+      case 'low': return 'bg-green-500/10 text-green-700 dark:text-green-400';
       default: return 'bg-muted text-muted-foreground';
     }
   };

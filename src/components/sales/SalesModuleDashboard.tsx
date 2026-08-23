@@ -135,13 +135,13 @@ export function SalesModuleDashboard({ onNavigate }: SalesModuleDashboardProps) 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Won This Month</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics?.wonValue || 0)}</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(metrics?.wonValue || 0)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {metrics?.wonDealsCount} deals closed
                 </p>
               </div>
               <div className="p-3 rounded-full bg-green-500/20">
-                <Award className="h-6 w-6 text-green-600" />
+                <Award className="h-6 w-6 text-green-700 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
