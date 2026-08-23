@@ -99,7 +99,7 @@ export function AuthDiagnosticsPanel({
               failed at {failed.key}
             </Badge>
           ) : allOk && user ? (
-            <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20 text-[10px] py-0 px-1.5">
+            <Badge className="bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20 text-[10px] py-0 px-1.5">
               healthy
             </Badge>
           ) : (
