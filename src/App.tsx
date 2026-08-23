@@ -121,6 +121,10 @@ const App = () => (
                     <Route path="status" element={<PlatformStatus />} />
                     <Route path="observability" element={<PlatformObservability />} />
                     <Route path="diagnostics" element={<PlatformDiagnostics />} />
+                    {/* Alias: "console" is a common shorthand for the Platform Console */}
+                    <Route path="console" element={<Navigate to="/admin/platform/tenants" replace />} />
+                    <Route path="*" element={<Navigate to="/admin/platform/tenants" replace />} />
+
 
                   </Route>
                   <Route path="health" element={<AdminHealth />} />
