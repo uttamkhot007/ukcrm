@@ -157,9 +157,13 @@ const Index = () => {
 
   // Decide what "/" should do once auth + tenant info are resolved.
   //
-  // A plain "/" is a deterministic landing route. Platform admins always land
-  // in the Platform Console and can never mount the legacy workspace view.
+  // A *plain* "/" is a deterministic landing route: platform admins land in the
+  // Platform Console. But when a module is explicitly requested (sidebar click
+  // from the admin shell -> navigate("/", { state: { module } })), that request
+  // must win — otherwise every module click bounces back to the console and
+  // each module appears to show the same content.
   const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
+  const isExplicitModuleRequest = !!requestedModule && requestedModule !== "dashboard";
 
   useEffect(() => {
     if (isLoading || !isAuthResolved || tenantLoading) return;
@@ -170,13 +174,14 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin) {
+    if (isPlatformAdmin && !isExplicitModuleRequest) {
       logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
         requestedModule: requestedModule ?? null,
       });
       navigate("/admin/platform/tenants", { replace: true });
       return;
     }
+
 
     if (!hasTenantAccess) {
       logRedirect("Index", location.pathname, "/workspace/new", "user has no tenant membership");
