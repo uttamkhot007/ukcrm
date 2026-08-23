@@ -41,16 +41,21 @@ export function ProjectsModule({ defaultTab = "projects" }: ProjectsModuleProps)
         <TabsList className="bg-muted/50 flex-wrap h-auto py-2 gap-1">
           {TABS.map((tab) => (
             <TabsTrigger key={tab.id} value={tab.id} className="gap-2 data-[state=active]:bg-background">
-              <tab.icon className="h-4 w-4" />
+              <tab.icon className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sr-only sm:hidden">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
+
+        {/* Each trigger needs its matching panel so aria-controls resolves. */}
+        {TABS.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id} className="mt-6 min-w-0">
+            {tab.id === activeTab ? <ActiveComponent /> : null}
+          </TabsContent>
+        ))}
       </Tabs>
 
-      <div className="min-w-0">
-        <ActiveComponent />
-      </div>
     </div>
   );
 }
