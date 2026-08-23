@@ -57,7 +57,7 @@ const PipelineCoach = lazyNamed(() => import("./PipelineCoach"), "PipelineCoach"
 const SalesForecasting = lazyNamed(() => import("./SalesForecasting"), "SalesForecasting");
 const EmailSequences = lazyNamed(() => import("./EmailSequences"), "EmailSequences");
 const SalesAutomations = lazyNamed(() => import("./SalesAutomations"), "SalesAutomations");
-// MEDDIC is rendered by DealsView (initialView="meddic") — no separate chunk.
+// MEDDIC is rendered inside DealsView — no separate tab or chunk.
 const ProductCatalog = lazyNamed(() => import("./ProductCatalog"), "ProductCatalog");
 const TerritoryManagement = lazyNamed(() => import("./TerritoryManagement"), "TerritoryManagement");
 const RottenDeals = lazyNamed(() => import("./RottenDeals"), "RottenDeals");
