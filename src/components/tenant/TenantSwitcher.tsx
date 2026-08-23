@@ -74,7 +74,7 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
             aria-label="Switch workspace"
           >
             <Avatar className="h-8 w-8">
-              <AvatarImage src={currentTenant.logo_url || undefined} />
+              <AvatarImage src={currentTenant.logo_url || undefined} alt="" />
               <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {getInitials(currentTenant.name)}
               </AvatarFallback>
@@ -94,7 +94,7 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
                     className="cursor-pointer"
                   >
                     <Avatar className="mr-2 h-6 w-6">
-                      <AvatarImage src={membership.tenant.logo_url || undefined} />
+                      <AvatarImage src={membership.tenant.logo_url || undefined} alt="" />
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">
                         {getInitials(membership.tenant.name)}
                       </AvatarFallback>
@@ -127,7 +127,7 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
         >
           <div className="flex items-center gap-2 truncate">
             <Avatar className="h-6 w-6">
-              <AvatarImage src={currentTenant.logo_url || undefined} />
+              <AvatarImage src={currentTenant.logo_url || undefined} alt="" />
               <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {getInitials(currentTenant.branding?.display_name || currentTenant.name)}
               </AvatarFallback>
@@ -151,7 +151,7 @@ export function TenantSwitcher({ collapsed = false }: TenantSwitcherProps) {
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Avatar className="h-6 w-6 shrink-0">
-                      <AvatarImage src={membership.tenant.logo_url || undefined} />
+                      <AvatarImage src={membership.tenant.logo_url || undefined} alt="" />
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">
                         {getInitials(membership.tenant.name)}
                       </AvatarFallback>
