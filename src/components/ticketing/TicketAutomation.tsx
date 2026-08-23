@@ -214,10 +214,10 @@ export function TicketAutomation() {
                     checked={rule.isActive}
                     onCheckedChange={() => toggleRule(rule.id)}
                   />
-                  <Button variant="ghost" size="icon" onClick={() => setEditingRule(rule)}>
+                  <Button variant="ghost" size="icon" aria-label="Edit automation rule" onClick={() => setEditingRule(rule)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteRule(rule.id)}>
+                  <Button variant="ghost" size="icon" aria-label="Delete automation rule" onClick={() => deleteRule(rule.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>

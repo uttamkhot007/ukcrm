@@ -350,7 +350,7 @@ export function TicketDetailsSheet({ ticketId, open, onOpenChange }: TicketDetai
                         className="h-7 w-24 text-xs"
                         onKeyDown={(e) => e.key === "Enter" && addTag()}
                       />
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={addTag}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Add tag" onClick={addTag}>
                         <Plus className="w-3 h-3" />
                       </Button>
                     </div>

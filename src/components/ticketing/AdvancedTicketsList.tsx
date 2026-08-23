@@ -282,7 +282,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
               </SelectContent>
             </Select>
           )}
-          <Button variant="outline" size="icon" onClick={() => refetch()}>
+          <Button variant="outline" size="icon" aria-label="Refresh tickets" onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
@@ -383,7 +383,7 @@ export function AdvancedTicketsList({ onTicketSelect }: AdvancedTicketsListProps
                         {format(new Date(ticket.created_at), "MMM d, HH:mm")}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onTicketSelect(ticket.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open ticket" onClick={() => onTicketSelect(ticket.id)}>
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TableCell>

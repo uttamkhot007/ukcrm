@@ -264,13 +264,13 @@ export function CannedResponses() {
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base line-clamp-1">{response.title}</CardTitle>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(response.content, response.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy response" onClick={() => copyToClipboard(response.content, response.id)}>
                       <Copy className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(response)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Edit response" onClick={() => handleEdit(response)}>
                       <Edit className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(response.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label="Delete response" onClick={() => deleteMutation.mutate(response.id)}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
