@@ -181,7 +181,6 @@ const Index = () => {
   // must win — otherwise every module click bounces back to the console and
   // each module appears to show the same content.
   const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
-  const isExplicitModuleRequest = !!requestedModule && requestedModule !== "dashboard";
 
   useEffect(() => {
     if (isLoading || !isAuthResolved || tenantLoading) return;
@@ -192,7 +191,7 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin && !isExplicitModuleRequest) {
+    if (isPlatformAdmin && activeModule === "dashboard") {
       logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
         requestedModule: requestedModule ?? null,
       });
@@ -221,6 +220,7 @@ const Index = () => {
     isPlatformAdmin,
     hasTenantAccess,
     requestedModule,
+    activeModule,
     resumeTick,
     navigate,
 
@@ -242,17 +242,17 @@ const Index = () => {
     return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
-  // Render-time gate: the legacy workspace *dashboard* must never mount for a
-  // platform administrator (including restored BFCache router state). An
-  // explicitly requested module is a deliberate navigation and still renders.
-  const adminWantsWorkspaceModule = isExplicitModuleRequest || activeModule !== "dashboard";
+  // Render-time gate: a plain root route must never mount the legacy workspace
+  // shell for a platform administrator. Only an explicit router request may
+  // open an operational module. Do not trust `activeModule` here: BFCache can
+  // restore stale component state that did not come from the current URL.
   if (
     !isLoading &&
     isAuthResolved &&
     !tenantLoading &&
     user &&
     isPlatformAdmin &&
-    !adminWantsWorkspaceModule
+    activeModule === "dashboard"
   ) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }

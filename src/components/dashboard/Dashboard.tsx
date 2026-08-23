@@ -20,6 +20,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useQuery } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/api/client";
 import { PremiumMetricCard } from "./PremiumMetricCard";
 import { PremiumModuleCard } from "./PremiumModuleCard";
@@ -90,7 +91,19 @@ function DashboardHeader({ profile, isAdmin, isManager }: DashboardHeaderProps) 
   );
 }
 
-export function Dashboard({ onModuleChange }: DashboardProps) {
+export function Dashboard(props: DashboardProps) {
+  const { isPlatformAdmin } = useAuth();
+
+  // Defense in depth: no routing race, restored component tree, or legacy
+  // navigation state may expose the retired tenant dashboard to platform admins.
+  if (isPlatformAdmin) {
+    return <Navigate to="/admin/platform/tenants" replace />;
+  }
+
+  return <DashboardContent {...props} />;
+}
+
+function DashboardContent({ onModuleChange }: DashboardProps) {
   const { profile, role, isAdmin, isManager, teams } = useAuth();
   const { currentTenant } = useTenant();
   const { formatCurrency } = useOrganizationSettings();
