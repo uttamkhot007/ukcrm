@@ -154,7 +154,12 @@ if (findings.length === 0) {
     (!releaseManifest.releaseId || !releaseManifest.commit || releaseManifest.commit === "dev");
   const htmlIdentityMismatch =
     !html.includes(`name="release-id" content="${releaseManifest.releaseId}"`) ||
-    !html.includes(`name="build-commit" content="${releaseManifest.commit}"`);
+    !html.includes(`name="build-commit" content="${releaseManifest.commit}"`) ||
+    !html.includes(`name="approved-design-id" content="${releaseManifest.approvedDesignId}"`) ||
+    !html.includes(`name="approved-design-revision" content="${releaseManifest.approvedDesignRevision}"`);
+  const invalidDesignIdentity =
+    releaseManifest.approvedDesignId !== "platform-console-2026-08-23" ||
+    releaseManifest.approvedDesignRevision !== 2;
   const javascript = files
     .filter((file) => extname(file).toLowerCase() === ".js")
     .map((file) => readFileSync(file, "utf8"))
@@ -162,7 +167,7 @@ if (findings.length === 0) {
   const bundleIdentityMismatch =
     !javascript.includes(String(releaseManifest.releaseId)) ||
     !javascript.includes(String(releaseManifest.commit));
-  if (invalidProductionIdentity || htmlIdentityMismatch || bundleIdentityMismatch) {
+  if (invalidProductionIdentity || invalidDesignIdentity || htmlIdentityMismatch || bundleIdentityMismatch) {
     console.error("✘ Release identity is missing, set to dev, or inconsistent across the manifest, HTML, and JavaScript.");
     process.exit(1);
   }

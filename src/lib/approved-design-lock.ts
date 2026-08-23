@@ -16,12 +16,12 @@
  * ------------------------------------------------------------------ */
 
 import { BUILD_COMMIT } from "@/lib/build-info";
+import {
+  APPROVED_DESIGN_ID,
+  APPROVED_DESIGN_REVISION,
+} from "@/lib/approved-design-identity";
 
-/** Monotonic revision of the approved UI shell. Only ever increases. */
-export const APPROVED_DESIGN_REVISION = 1;
-
-/** Human-readable identity of the approved design. */
-export const APPROVED_DESIGN_ID = "platform-console-2026-08-17";
+export { APPROVED_DESIGN_ID, APPROVED_DESIGN_REVISION } from "@/lib/approved-design-identity";
 
 const STORAGE_KEY = "nexus:approved-design";
 

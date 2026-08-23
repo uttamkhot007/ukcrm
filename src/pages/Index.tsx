@@ -6,7 +6,7 @@ import { ProgressiveSuspense } from "@/components/shared/ProgressiveSuspense";
 import { ModuleSwitchProbe } from "@/components/shared/ModuleSwitchProbe";
 import { beginModuleSwitch } from "@/lib/perf-metrics";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -135,9 +135,6 @@ const Index = () => {
     (location.state as { module?: string } | null)?.module ??
     new URLSearchParams(location.search).get("module") ??
     null;
-  const isExplicitAdminModuleNavigation =
-    (location.state as { fromAdminNavigation?: boolean } | null)?.fromAdminNavigation === true;
-
   const [activeModule, setActiveModule] = useState(requestedModule ?? "dashboard");
   const {
     user,
@@ -174,10 +171,9 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin && (!requestedModule || !isExplicitAdminModuleNavigation)) {
+    if (isPlatformAdmin) {
       logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
         requestedModule: requestedModule ?? null,
-        isExplicitAdminModuleNavigation,
       });
       navigate("/admin/platform/tenants", { replace: true });
       return;
@@ -192,7 +188,6 @@ const Index = () => {
     logNoRedirect("Index", location.pathname, "rendering workspace shell", {
       isPlatformAdmin,
       requestedModule: requestedModule ?? null,
-      isExplicitAdminModuleNavigation,
       hasTenantAccess,
     });
 
@@ -204,7 +199,6 @@ const Index = () => {
     isPlatformAdmin,
     hasTenantAccess,
     requestedModule,
-    isExplicitAdminModuleNavigation,
     navigate,
 
   ]);
@@ -225,6 +219,13 @@ const Index = () => {
     return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
+  // This is deliberately a render-time gate rather than only an effect-based
+  // redirect: the legacy workspace dashboard must never mount for a platform
+  // administrator, including when old router state is restored from BFCache.
+  if (!isLoading && isAuthResolved && !tenantLoading && user && isPlatformAdmin) {
+    return <Navigate to="/admin/platform/tenants" replace />;
+  }
+
 
   // Only block rendering while we genuinely don't know yet, or while an
   // unavoidable redirect (no session / no workspace) is in flight.
@@ -233,8 +234,7 @@ const Index = () => {
     !isAuthResolved ||
     tenantLoading ||
     !user ||
-    !hasTenantAccess ||
-    (isPlatformAdmin && (!requestedModule || !isExplicitAdminModuleNavigation));
+    !hasTenantAccess;
 
 
   if (shouldBlockRender) {

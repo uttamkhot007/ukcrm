@@ -2,6 +2,10 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { readFileSync } from "fs";
+import {
+  APPROVED_DESIGN_ID,
+  APPROVED_DESIGN_REVISION,
+} from "./src/lib/approved-design-identity";
 
 // Read package.json once at config-load time so we can inject the
 // version string into the bundle (visible in the Build Version badge).
@@ -27,6 +31,8 @@ function releaseManifest() {
     buildTime: BUILD_TIME,
     version: pkg.version,
     uiSchemaVersion: "3",
+    approvedDesignId: APPROVED_DESIGN_ID,
+    approvedDesignRevision: APPROVED_DESIGN_REVISION,
     environment: BUILD_ENVIRONMENT,
   };
 }
@@ -72,7 +78,9 @@ export default defineConfig(async ({ mode }) => {
               .replace(/__INDEX_HTML_COMMIT__/g, BUILD_COMMIT)
               .replace(/__INDEX_HTML_RELEASE_ID__/g, currentReleaseId)
               .replace(/__INDEX_HTML_RELEASE_REVISION__/g, String(currentReleaseRevision))
-              .replace(/__INDEX_HTML_ENVIRONMENT__/g, BUILD_ENVIRONMENT);
+              .replace(/__INDEX_HTML_ENVIRONMENT__/g, BUILD_ENVIRONMENT)
+              .replace(/__INDEX_HTML_APPROVED_DESIGN_ID__/g, APPROVED_DESIGN_ID)
+              .replace(/__INDEX_HTML_APPROVED_DESIGN_REVISION__/g, String(APPROVED_DESIGN_REVISION));
           },
 
         },
