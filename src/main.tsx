@@ -7,6 +7,7 @@ import { BUILD_VERSION, BUILD_TIME, BUILD_COMMIT } from "./lib/build-info";
 import { installPreviewBuildRefreshHook } from "./lib/preview-build-refresh";
 import { installBuildCacheStrategy } from "./lib/build-cache-strategy";
 import { enforceApprovedDesign } from "./lib/approved-design-lock";
+import { enforceCacheEpoch } from "./lib/cache-epoch";
 import { isStaleDeployError, recoverFromStaleDeploy } from "./lib/chunk-retry";
 
 
@@ -31,6 +32,8 @@ window.addEventListener("vite:preloadError", (event) => {
 });
 
 async function mountCurrentRelease() {
+  // Global cache epoch: purge every browser/CDN-held copy once per epoch.
+  if (enforceCacheEpoch()) return;
   // Approved design lock: never paint a shell older than the approved view.
   if (enforceApprovedDesign()) return;
   const releaseIsCurrent = await installBuildCacheStrategy();
