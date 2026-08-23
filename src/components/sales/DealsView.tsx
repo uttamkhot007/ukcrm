@@ -659,8 +659,6 @@ export function DealsView({ initialView = "pipeline" }: { initialView?: "pipelin
           }}
         />
       )}
-      </>
-      )}
     </div>
 
   );
