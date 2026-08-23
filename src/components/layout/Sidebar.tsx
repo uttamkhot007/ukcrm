@@ -336,16 +336,10 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       return items;
     }
 
-    // Admin mode shows ALL modules (super admins in admin mode also get all modules)
+    // Admin mode shows operational modules and their dedicated admin consoles.
+    // The legacy tenant dashboard is intentionally absent: platform admins land
+    // in Platform Console and can navigate directly to any operational module.
     if (portalMode === "admin") {
-      // Dashboard first
-      items.push({
-        id: "dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        color: "text-primary",
-      });
-
       // Agentic AI workbench
       items.push({
         id: "ai-agents",

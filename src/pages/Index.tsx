@@ -242,17 +242,17 @@ const Index = () => {
     return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
-  // Render-time gate: the legacy workspace *dashboard* must never mount for a
-  // platform administrator (including restored BFCache router state). An
-  // explicitly requested module is a deliberate navigation and still renders.
-  const adminWantsWorkspaceModule = isExplicitModuleRequest || activeModule !== "dashboard";
+  // Render-time gate: a plain root route must never mount the legacy workspace
+  // shell for a platform administrator. Only an explicit router request may
+  // open an operational module. Do not trust `activeModule` here: BFCache can
+  // restore stale component state that did not come from the current URL.
   if (
     !isLoading &&
     isAuthResolved &&
     !tenantLoading &&
     user &&
     isPlatformAdmin &&
-    !adminWantsWorkspaceModule
+    !isExplicitModuleRequest
   ) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }
