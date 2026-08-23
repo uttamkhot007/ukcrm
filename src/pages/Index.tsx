@@ -148,6 +148,24 @@ const Index = () => {
   } = useAuth();
   const { isLoading: tenantLoading, tenantMemberships } = useTenant();
   const navigate = useNavigate();
+  const [resumeTick, setResumeTick] = useState(0);
+
+  // A BFCache restore can repaint the old React tree without remounting it.
+  // Bump a local signal so routing gates are evaluated after every resume.
+  useEffect(() => {
+    const recheck = () => {
+      if (document.visibilityState === "visible") setResumeTick((value) => value + 1);
+    };
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) recheck();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", recheck);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", recheck);
+    };
+  }, []);
 
   // Keep in sync when navigated to "/" again with a different module.
   useEffect(() => {
@@ -203,6 +221,7 @@ const Index = () => {
     isPlatformAdmin,
     hasTenantAccess,
     requestedModule,
+    resumeTick,
     navigate,
 
   ]);
