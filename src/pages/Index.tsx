@@ -23,7 +23,7 @@ import { logRedirect, logNoRedirect } from "@/lib/route-diagnostics";
 // competed with that work. Now a module's code is fetched only when it is
 // first opened, and preloaded on hover so the click itself feels instant.
 // ---------------------------------------------------------------------------
-const Dashboard = lazyNamed(() => import("@/components/dashboard/Dashboard"), "Dashboard");
+const WorkspaceHome = lazyNamed(() => import("@/components/dashboard/WorkspaceHome"), "WorkspaceHome");
 const SalesModule = lazyNamed(() => import("@/components/sales/SalesModule"), "SalesModule");
 const SalesAIAssistant = lazyNamed(() => import("@/components/sales/SalesAIAssistant"), "SalesAIAssistant");
 const LegalModule = lazyNamed(() => import("@/components/legal/LegalModule"), "LegalModule");
@@ -76,7 +76,7 @@ const SkillMatrixModule = lazyNamed(() => import("@/components/employee/SkillMat
 const EmployeePortalModule = lazyNamed(() => import("@/components/employee/EmployeePortalModule"), "EmployeePortalModule");
 
 export const MODULE_COMPONENTS = {
-  Dashboard,
+  WorkspaceHome,
   SalesModule,
   SalesAIAssistant,
   LegalModule,
@@ -239,7 +239,7 @@ const Index = () => {
   // paying a fresh download each time.
   useEffect(() => {
     if (!user) return;
-    return preloadWhenIdle([Dashboard, SalesModule, HRModule, AccountsModule, ProjectsModule]);
+    return preloadWhenIdle([WorkspaceHome, SalesModule, HRModule, AccountsModule, ProjectsModule]);
   }, [user]);
 
   // Render-time gate: a plain root route must never mount the legacy workspace
@@ -742,7 +742,7 @@ const Index = () => {
         // Anything else without a renderer previously fell through to the
         // dashboard too, which made every unmapped module look identical.
         if (activeModule === "dashboard") {
-          return <Dashboard onModuleChange={setActiveModule} />;
+          return <WorkspaceHome onModuleChange={setActiveModule} />;
         }
         return <PlaceholderModule title="Module" section={activeModule} />;
     }
