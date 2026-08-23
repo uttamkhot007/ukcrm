@@ -91,18 +91,24 @@ function DashboardHeader({ profile, isAdmin, isManager }: DashboardHeaderProps) 
   );
 }
 
-export function Dashboard({ onModuleChange }: DashboardProps) {
-  const { profile, role, isAdmin, isManager, isPlatformAdmin, teams } = useAuth();
-  const { currentTenant } = useTenant();
-  const { formatCurrency } = useOrganizationSettings();
-  const { dashboardType } = useTeamRole();
-  const { widgets, reorderWidgets, getWidgetsByIds } = useDashboardWidgets();
+export function Dashboard(props: DashboardProps) {
+  const { isPlatformAdmin } = useAuth();
 
   // Defense in depth: no routing race, restored component tree, or legacy
   // navigation state may expose the retired tenant dashboard to platform admins.
   if (isPlatformAdmin) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }
+
+  return <DashboardContent {...props} />;
+}
+
+function DashboardContent({ onModuleChange }: DashboardProps) {
+  const { profile, role, isAdmin, isManager, teams } = useAuth();
+  const { currentTenant } = useTenant();
+  const { formatCurrency } = useOrganizationSettings();
+  const { dashboardType } = useTeamRole();
+  const { widgets, reorderWidgets, getWidgetsByIds } = useDashboardWidgets();
   
   // Get current tenant ID
   const currentTenantId = currentTenant?.id;
