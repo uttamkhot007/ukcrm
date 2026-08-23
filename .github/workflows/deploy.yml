@@ -181,7 +181,7 @@ jobs:
             -o /tmp/release-manifest.json
           jq -e --arg expected "${{ github.sha }}" \
             '.commit == $expected and .releaseId == $expected and .environment == "production"
-             and .approvedDesignId == "platform-console-2026-08-23-r4"
+             and .approvedDesignId == "platform-console-2026-08-23-r5"
              and .approvedDesignRevision == 4' \
             /tmp/release-manifest.json > /dev/null
           grep -qi '^cache-control:.*no-store' /tmp/release-headers.txt || {
