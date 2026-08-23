@@ -184,10 +184,11 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
   const aliases: Record<string, string> = useMemo(
     () => ({
       "team-contacts": "contacts",
-      meddic: "meddic-workflow",
+      meddic: "deals",
       "product-catalog": "catalog",
       // Legacy sidebar module ids
-      "sales-meddic-workflow": "meddic-workflow",
+      "sales-meddic-workflow": "deals",
+      "meddic-workflow": "deals",
       "sales-quotations": "quotations",
       "sales-leads": "leads",
       "sales-my-accounts": "my-accounts",
