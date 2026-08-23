@@ -18,6 +18,10 @@
 
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
+import {
+  APPROVED_DESIGN_ID,
+  APPROVED_DESIGN_REVISION,
+} from "@/lib/approved-design-identity";
 import path from "node:path";
 
 const OLD_TIME = "2026-08-01T10:00:00.000Z";
@@ -81,8 +85,8 @@ function servedManifest(time: string, commit: string, revision = 0) {
     commit,
     environment: "production",
     uiSchemaVersion: "3",
-    approvedDesignId: "platform-console-2026-08-23",
-    approvedDesignRevision: 2,
+    approvedDesignId: APPROVED_DESIGN_ID,
+    approvedDesignRevision: APPROVED_DESIGN_REVISION,
   });
 }
 
@@ -101,8 +105,8 @@ function servedHtml(time: string, commit: string, revision = 0) {
     <meta name="release-revision" content="${revision}">
     <meta name="release-environment" content="production">
     <meta name="ui-schema-version" content="3">
-    <meta name="approved-design-id" content="platform-console-2026-08-23">
-    <meta name="approved-design-revision" content="2">
+    <meta name="approved-design-id" content="${APPROVED_DESIGN_ID}">
+    <meta name="approved-design-revision" content="${APPROVED_DESIGN_REVISION}">
   </head></html>`;
 }
 

@@ -172,10 +172,8 @@
           t = t || fromCookie();
         }
         var el = document.documentElement;
-        // Dark mode is removed from the product: always paint light.
-        var mode = 'light';
-        var mood = (t && t.mood) || 'default';
-        if (mood === 'midnight' || mood === 'cyber') mood = 'default';
+        var mode = (t && t.mode) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        var mood = (t && t.mood) || 'cyber';
         el.classList.remove('light', 'dark');
         el.classList.add(mode);
         el.setAttribute('data-brand', (t && t.brand) || 'emerald');

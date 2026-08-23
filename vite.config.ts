@@ -111,8 +111,9 @@ export default defineConfig(async ({ mode }) => {
       } satisfies Plugin),
     ].filter(Boolean),
     resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
+      // Ordered aliases ensure the production client replacement wins before
+      // the broad source alias, including when the import is dynamic.
+      alias: [
         // ====================================================================
         // AWS production build: drop all Supabase dependencies.
         //
@@ -122,18 +123,19 @@ export default defineConfig(async ({ mode }) => {
         // real Supabase client so the in-editor preview keeps working.
         // ====================================================================
         ...(isProd
-          ? {
-              "@supabase/supabase-js": path.resolve(
-                __dirname,
-                "./src/integrations/api/aws-types.ts"
-              ),
-              "@/integrations/supabase/client": path.resolve(
-                __dirname,
-                "./src/integrations/api/supabase-client-stub.ts"
-              ),
-            }
-          : {}),
-      },
+          ? [
+              {
+                find: "@supabase/supabase-js",
+                replacement: path.resolve(__dirname, "./src/integrations/api/aws-types.ts"),
+              },
+              {
+                find: "@/integrations/supabase/client",
+                replacement: path.resolve(__dirname, "./src/integrations/api/supabase-client-stub.ts"),
+              },
+            ]
+          : []),
+        { find: "@", replacement: path.resolve(__dirname, "./src") },
+      ],
     },
     // ========================================================================
     // AWS production: scrub Supabase env vars from the bundle.

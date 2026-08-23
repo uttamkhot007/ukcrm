@@ -9,7 +9,7 @@ import {
   writeStoredTheme,
 } from "@/lib/theme-storage";
 
-const LIGHT = { mode: "light", brand: "emerald", mood: "ocean" } as const;
+const LIGHT = { mode: "light", brand: "emerald", mood: "cyber" } as const;
 
 describe("theme storage", () => {
   beforeEach(() => {

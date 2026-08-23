@@ -51,12 +51,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', onStorage);
   }, [theme]);
 
-  // Dark mode is removed: setMode/toggleMode are retained for API stability
-  // but can never move the app off light.
-  const setMode = (_mode: ThemeMode) => setTheme(prev => ({ ...prev, mode: 'light' }));
+  const setMode = (mode: ThemeMode) => setTheme(prev => ({ ...prev, mode }));
   const setBrand = (brand: ThemeBrand) => setTheme(prev => ({ ...prev, brand }));
   const setMood = (mood: ThemeMood) => setTheme(prev => ({ ...prev, mood }));
-  const toggleMode = () => setTheme(prev => ({ ...prev, mode: 'light' }));
+  const toggleMode = () => setTheme(prev => ({ ...prev, mode: prev.mode === 'light' ? 'dark' : 'light' }));
 
   return (
     <ThemeContext.Provider value={{ theme, setMode, setBrand, setMood, toggleMode }}>
