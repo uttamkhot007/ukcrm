@@ -266,7 +266,7 @@ export function AccountsStocking() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <BarChart3 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <BarChart3 className="w-5 h-5 text-green-700 dark:text-green-400" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Value</p>

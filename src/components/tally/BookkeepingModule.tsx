@@ -141,7 +141,7 @@ export function BookkeepingModule({ initialTab = "day-book" }: BookkeepingModule
                 </ul>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
                   <Lightbulb className="h-4 w-4" />
                   Recommendations
                 </div>

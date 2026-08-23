@@ -77,7 +77,7 @@ export function DealWonCelebration() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <PartyPopper className="h-4 w-4 text-yellow-500" />
-                  <h4 className="font-bold text-green-600 dark:text-green-400">
+                  <h4 className="font-bold text-green-700 dark:text-green-400">
                     {celebration.title}
                   </h4>
                   <Star className="h-4 w-4 text-yellow-500" />
