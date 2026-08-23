@@ -181,7 +181,6 @@ const Index = () => {
   // must win — otherwise every module click bounces back to the console and
   // each module appears to show the same content.
   const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
-  const isExplicitModuleRequest = !!requestedModule && requestedModule !== "dashboard";
 
   useEffect(() => {
     if (isLoading || !isAuthResolved || tenantLoading) return;
@@ -192,7 +191,7 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin && !isExplicitModuleRequest) {
+    if (isPlatformAdmin && activeModule === "dashboard") {
       logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
         requestedModule: requestedModule ?? null,
       });
@@ -221,6 +220,7 @@ const Index = () => {
     isPlatformAdmin,
     hasTenantAccess,
     requestedModule,
+    activeModule,
     resumeTick,
     navigate,
 
@@ -252,7 +252,7 @@ const Index = () => {
     !tenantLoading &&
     user &&
     isPlatformAdmin &&
-    !isExplicitModuleRequest
+    activeModule === "dashboard"
   ) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }
