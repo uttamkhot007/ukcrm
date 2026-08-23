@@ -778,10 +778,15 @@ const Index = () => {
   // they navigate to their dedicated routes instead of trying to render
   // inside the Index page (which has no renderer for them).
   const handleModuleChange = (module: string) => {
+    if (module === "ai-agents") {
+      navigate("/agents");
+      return;
+    }
     if (module === "platform-console" || module === "platform-tenants") {
       navigate("/admin/platform/tenants");
       return;
     }
+
     if (module.startsWith("platform-")) {
       const subPath = module.replace("platform-", "");
       navigate(`/admin/platform/${subPath}`);
