@@ -57,7 +57,7 @@ const PipelineCoach = lazyNamed(() => import("./PipelineCoach"), "PipelineCoach"
 const SalesForecasting = lazyNamed(() => import("./SalesForecasting"), "SalesForecasting");
 const EmailSequences = lazyNamed(() => import("./EmailSequences"), "EmailSequences");
 const SalesAutomations = lazyNamed(() => import("./SalesAutomations"), "SalesAutomations");
-// MEDDIC is rendered by DealsView (initialView="meddic") — no separate chunk.
+// MEDDIC is rendered inside DealsView — no separate tab or chunk.
 const ProductCatalog = lazyNamed(() => import("./ProductCatalog"), "ProductCatalog");
 const TerritoryManagement = lazyNamed(() => import("./TerritoryManagement"), "TerritoryManagement");
 const RottenDeals = lazyNamed(() => import("./RottenDeals"), "RottenDeals");
@@ -128,8 +128,8 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
         icon: TrendingUp,
         tabs: [
           { id: "dashboard", label: "Insights", icon: LayoutDashboard, render: () => <SalesModuleDashboard onNavigate={setActiveTab} /> },
-          { id: "deals", label: "Deals", icon: Handshake, render: () => <DealsView />, preload: DealsView as unknown as PreloadableComponent<never> },
-          { id: "meddic-workflow", label: "MEDDIC", icon: Sparkles, render: () => <DealsView initialView="meddic" />, preload: DealsView as unknown as PreloadableComponent<never> },
+          { id: "deals", label: "Deals & MEDDIC", icon: Handshake, render: () => <DealsView />, preload: DealsView as unknown as PreloadableComponent<never> },
+
 
           { id: "leads", label: "Leads", icon: Activity, render: () => <LeadsView />, preload: LeadsView as unknown as PreloadableComponent<never> },
           { id: "contacts", label: "Contacts", icon: Phone, render: () => <ContactsView />, preload: ContactsView as unknown as PreloadableComponent<never> },
@@ -184,10 +184,11 @@ export function SalesModule({ initialTab = "dashboard" }: SalesModuleProps) {
   const aliases: Record<string, string> = useMemo(
     () => ({
       "team-contacts": "contacts",
-      meddic: "meddic-workflow",
+      meddic: "deals",
       "product-catalog": "catalog",
       // Legacy sidebar module ids
-      "sales-meddic-workflow": "meddic-workflow",
+      "sales-meddic-workflow": "deals",
+      "meddic-workflow": "deals",
       "sales-quotations": "quotations",
       "sales-leads": "leads",
       "sales-my-accounts": "my-accounts",
