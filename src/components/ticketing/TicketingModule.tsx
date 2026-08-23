@@ -64,22 +64,27 @@ export function TicketingModule({ initialTab = "all" }: TicketingModuleProps) {
         <div className="flex items-center gap-2">
           {/* View Toggle - only for ticket views */}
           {isTicketView && (
-            <div className="flex items-center gap-1 border rounded-lg p-1">
+            <div className="flex items-center gap-1 border rounded-lg p-1" role="group" aria-label="Ticket view">
               <Button
                 variant={activeView === "list" ? "secondary" : "ghost"}
                 size="sm"
+                aria-label="List view"
+                aria-pressed={activeView === "list"}
                 onClick={() => setActiveView("list")}
               >
-                <List className="w-4 h-4" />
+                <List className="w-4 h-4" aria-hidden="true" />
               </Button>
               <Button
                 variant={activeView === "kanban" ? "secondary" : "ghost"}
                 size="sm"
+                aria-label="Kanban view"
+                aria-pressed={activeView === "kanban"}
                 onClick={() => setActiveView("kanban")}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
+
           )}
           <Button onClick={() => setIsNewTicketOpen(true)} size="lg">
             <Plus className="w-4 h-4 mr-2" />
