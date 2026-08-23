@@ -15,7 +15,7 @@
 
 export type ThemeMode = "light" | "dark";
 export type ThemeBrand = "emerald" | "blue" | "purple" | "orange";
-export type ThemeMood = "default" | "ocean" | "forest" | "sunset";
+export type ThemeMood = "default" | "ocean" | "forest" | "sunset" | "midnight" | "cyber";
 
 export interface ThemeConfig {
   mode: ThemeMode;
@@ -30,25 +30,18 @@ export const THEME_COOKIE = "nexus_theme";
 /** Keys written by older builds, read once and migrated forward. */
 export const LEGACY_THEME_KEYS = ["nexus-theme:v2", "nexus-theme:v1", "app-theme-config"];
 
-/**
- * Dark mode has been permanently removed from this product: the dark shell
- * kept reappearing after cache restores. Light is the only supported mode.
- */
-export const FORCED_MODE: ThemeMode = "light";
-
-export const DEFAULT_THEME: ThemeConfig = { mode: FORCED_MODE, brand: "emerald", mood: "default" };
+export const DEFAULT_THEME: ThemeConfig = { mode: "light", brand: "emerald", mood: "cyber" };
 
 const MODES: ThemeMode[] = ["light", "dark"];
 const BRANDS: ThemeBrand[] = ["emerald", "blue", "purple", "orange"];
-const MOODS: ThemeMood[] = ["default", "ocean", "forest", "sunset"];
+const MOODS: ThemeMood[] = ["default", "ocean", "forest", "sunset", "midnight", "cyber"];
 
 export function normalizeTheme(value: unknown): ThemeConfig | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<ThemeConfig>;
   if (!MODES.includes(raw.mode as ThemeMode)) return null;
   return {
-    // Any persisted "dark" value from an older build is healed to light.
-    mode: FORCED_MODE,
+    mode: raw.mode as ThemeMode,
     brand: BRANDS.includes(raw.brand as ThemeBrand) ? (raw.brand as ThemeBrand) : DEFAULT_THEME.brand,
     mood: MOODS.includes(raw.mood as ThemeMood) ? (raw.mood as ThemeMood) : DEFAULT_THEME.mood,
   };
@@ -114,7 +107,7 @@ export function readStoredTheme(): ThemeConfig {
 }
 
 export function writeStoredTheme(theme: ThemeConfig): void {
-  const serialized = JSON.stringify({ ...theme, mode: FORCED_MODE });
+  const serialized = JSON.stringify(theme);
   try {
     safeLocal()?.setItem(THEME_KEY, serialized);
   } catch {
@@ -137,8 +130,8 @@ export function applyThemeToDocument(theme: ThemeConfig): void {
   if (typeof document === "undefined") return;
   const el = document.documentElement;
   el.classList.remove("light", "dark");
-  el.classList.add(FORCED_MODE);
+  el.classList.add(theme.mode);
   el.setAttribute("data-brand", theme.brand);
   el.setAttribute("data-mood", theme.mood);
-  el.style.colorScheme = FORCED_MODE;
+  el.style.colorScheme = theme.mode;
 }

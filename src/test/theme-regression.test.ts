@@ -20,7 +20,7 @@ import {
   tokenLightness,
 } from "./theme-css-cascade";
 
-const MOODS = [undefined, "ocean", "forest", "sunset"] as const;
+const MOODS = [undefined, "ocean", "forest", "sunset", "midnight", "cyber"] as const;
 const BRANDS = [undefined, "blue", "purple", "orange"] as const;
 
 /** Tokens that paint large surfaces — must stay bright in light mode. */

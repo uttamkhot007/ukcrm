@@ -141,8 +141,8 @@ curl --fail --silent --show-error --retry 4 --retry-all-errors \
   -o "$release_manifest"
 jq -e --arg expected "${RELEASE_ID}" \
   '.commit == $expected and .releaseId == $expected and .environment == "production"
-   and .approvedDesignId == "platform-console-2026-08-23"
-   and .approvedDesignRevision == 2' \
+   and .approvedDesignId == "platform-console-2026-08-23-r3"
+   and .approvedDesignRevision == 3' \
   "$release_manifest" > /dev/null
 grep -qi '^cache-control:.*no-store' "$release_headers" || {
   echo "ERROR: release-manifest.json is cacheable." >&2

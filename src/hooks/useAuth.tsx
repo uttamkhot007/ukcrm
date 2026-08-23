@@ -375,9 +375,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
+    // Browsers can restore an inactive tab from BFCache without remounting
+    // React. Re-read auth and role/team data so a frozen shell cannot reappear.
+    const revalidateAfterResume = async () => {
+      if (!isMounted || document.visibilityState !== "visible") return;
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        if (error) {
+          updateStep("session", { status: "error", message: error.message });
+          return;
+        }
+        setSession(session as unknown as Session);
+        setUser((session?.user ?? null) as unknown as User);
+        if (session?.user) {
+          await fetchUserData(session.user.id);
+        } else {
+          setProfile(null);
+          setRole(null);
+          setTeams([]);
+          setIsProfileLoading(false);
+          setIsRoleLoading(false);
+        }
+      } catch (error: any) {
+        updateStep("session", { status: "error", message: error?.message ?? "resume check failed" });
+      }
+    };
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void revalidateAfterResume();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void revalidateAfterResume();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 

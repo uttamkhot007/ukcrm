@@ -47,7 +47,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { chartAxisProps, chartGridProps } from "@/lib/chart-theme";
 
-const MOODS = ["default", "ocean", "forest", "sunset"] as const;
+const MOODS = ["default", "ocean", "forest", "sunset", "midnight", "cyber"] as const;
 const BRANDS = ["emerald", "blue", "purple", "orange"] as const;
 
 const SERIES = [
