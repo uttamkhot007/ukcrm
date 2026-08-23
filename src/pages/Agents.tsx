@@ -1,10 +1,36 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AgentConsole } from "@/components/agents/AgentConsole";
 import { PageSeo } from "@/components/seo/PageSeo";
 
 export default function Agents() {
-  const [activeModule, setActiveModule] = useState("agents");
+  const navigate = useNavigate();
+
+  const handleModuleChange = (module: string) => {
+    if (module === "ai-agents" || module === "agents") return;
+
+    if (module === "platform-console" || module === "platform-tenants") {
+      navigate("/admin/platform/tenants");
+      return;
+    }
+
+    if (module.startsWith("platform-")) {
+      navigate(`/admin/platform/${module.replace("platform-", "")}`);
+      return;
+    }
+
+    if (module === "admin-center") {
+      navigate("/admin/organization");
+      return;
+    }
+
+    if (module.startsWith("admin-center-")) {
+      navigate(`/admin/${module.replace("admin-center-", "")}`);
+      return;
+    }
+
+    navigate("/", { state: { module } });
+  };
 
   return (
     <>
@@ -13,7 +39,7 @@ export default function Agents() {
         description="Specialist AI agents that draft documents, analyse tenders, run the books and build reports from your live workspace data."
         path="/agents"
       />
-      <MainLayout activeModule={activeModule} onModuleChange={setActiveModule}>
+      <MainLayout activeModule="ai-agents" onModuleChange={handleModuleChange}>
         <AgentConsole />
       </MainLayout>
     </>
