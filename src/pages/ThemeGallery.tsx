@@ -8,7 +8,7 @@
  * no animation and no random values, so screenshots are byte-stable.
  *
  * Theme is driven by query params instead of persisted preferences:
- *   /__theme?mode=light&mood=cyber&brand=blue
+ *   /__theme?mode=light&mood=ocean&brand=blue
  *
  * The route is only registered outside production builds.
  */
@@ -47,7 +47,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { chartAxisProps, chartGridProps } from "@/lib/chart-theme";
 
-const MOODS = ["default", "ocean", "forest", "sunset", "midnight", "cyber"] as const;
+const MOODS = ["default", "ocean", "forest", "sunset"] as const;
 const BRANDS = ["emerald", "blue", "purple", "orange"] as const;
 
 const SERIES = [

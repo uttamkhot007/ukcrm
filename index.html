@@ -171,20 +171,17 @@
         } catch (e) {
           t = t || fromCookie();
         }
-        if (!t) {
-          try {
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-              t = { mode: 'light' };
-            }
-          } catch (e) {}
-        }
         var el = document.documentElement;
-        var mode = t && t.mode === 'light' ? 'light' : 'dark';
+        // Dark mode is removed from the product: always paint light.
+        var mode = 'light';
+        var mood = (t && t.mood) || 'default';
+        if (mood === 'midnight' || mood === 'cyber') mood = 'default';
         el.classList.remove('light', 'dark');
         el.classList.add(mode);
         el.setAttribute('data-brand', (t && t.brand) || 'emerald');
-        el.setAttribute('data-mood', (t && t.mood) || 'cyber');
+        el.setAttribute('data-mood', mood);
         el.style.colorScheme = mode;
+        try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: (t && t.brand) || 'emerald', mood: mood })); } catch (e) {}
       })();
     </script>
   </head>

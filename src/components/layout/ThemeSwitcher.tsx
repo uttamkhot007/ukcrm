@@ -1,4 +1,4 @@
-import { Sun, Moon, Palette, Sparkles } from 'lucide-react';
+import { Palette, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,31 +23,13 @@ const moodOptions: { value: ThemeMood; label: string; description: string }[] = 
   { value: 'ocean', label: 'Ocean', description: 'Deep blue tones' },
   { value: 'forest', label: 'Forest', description: 'Natural greens' },
   { value: 'sunset', label: 'Sunset', description: 'Warm gradients' },
-  { value: 'midnight', label: 'Midnight', description: 'Ultra dark' },
-  { value: 'cyber', label: 'Cyber', description: 'Neon dashboard' },
 ];
 
 export function ThemeSwitcher() {
-  const { theme, toggleMode, setBrand, setMood } = useTheme();
+  const { theme, setBrand, setMood } = useTheme();
 
   return (
     <div className="flex items-center gap-1">
-      {/* Mode Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleMode}
-        className="h-9 w-9"
-        aria-label={theme.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        title={theme.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {theme.mode === 'dark' ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
-        )}
-      </Button>
-
       {/* Brand Color Picker */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
