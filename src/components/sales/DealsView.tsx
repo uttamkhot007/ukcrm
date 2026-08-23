@@ -365,23 +365,11 @@ export function DealsView({ initialView = "pipeline" }: { initialView?: "pipelin
   return (
     <div className="space-y-6">
 
-      <ToggleGroup
-        type="single"
-        value={dealsView}
-        onValueChange={(v) => v && setDealsView(v as "pipeline" | "meddic")}
-        className="justify-start"
-        aria-label="Deals view"
-      >
-        <ToggleGroupItem value="pipeline">Pipeline</ToggleGroupItem>
-        <ToggleGroupItem value="meddic">MEDDIC Qualification</ToggleGroupItem>
-      </ToggleGroup>
+      <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}>
+        <MEDDICWorkflow />
+      </Suspense>
 
-      {dealsView === "meddic" ? (
-        <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}>
-          <MEDDICWorkflow />
-        </Suspense>
-      ) : (
-      <>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 glass border-border">
 
