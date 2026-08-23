@@ -718,9 +718,16 @@ const Index = () => {
         if (isCustomer || portalMode === 'customer') {
           return <CustomerPortal />;
         }
-        return <Dashboard onModuleChange={setActiveModule} />;
+        // Only "dashboard" (and an unset module) may render the dashboard.
+        // Anything else without a renderer previously fell through to the
+        // dashboard too, which made every unmapped module look identical.
+        if (activeModule === "dashboard") {
+          return <Dashboard onModuleChange={setActiveModule} />;
+        }
+        return <PlaceholderModule title="Module" section={activeModule} />;
     }
   };
+
 
   // Polished placeholder for modules not yet implemented
   const PlaceholderModule = ({ title, section }: { title: string; section: string }) => {
