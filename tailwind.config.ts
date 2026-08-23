@@ -75,6 +75,12 @@ export default {
           DEFAULT: "hsl(var(--marketing))",
           glow: "hsl(var(--marketing-glow))",
         },
+        role: {
+          admin: "hsl(var(--role-admin))",
+          manager: "hsl(var(--role-manager))",
+          employee: "hsl(var(--role-employee))",
+          foreground: "hsl(var(--role-foreground))",
+        },
         management: {
           DEFAULT: "hsl(var(--management))",
           glow: "hsl(var(--management-glow))",

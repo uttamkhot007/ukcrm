@@ -64,6 +64,12 @@ html[data-release-unverified] [role="alert"] {
     --employee: 199 89% 48%;
     --employee-glow: 199 89% 58%;
 
+    /* Role badges — solid, AA-contrast fills (white text) */
+    --role-admin: 0 72% 38%;
+    --role-manager: 38 92% 28%;
+    --role-employee: 199 89% 28%;
+    --role-foreground: 0 0% 100%;
+
     /* 3D Glass Effect Variables */
     --glass-bg: 222 47% 11%;
     --glass-border: 217 33% 25%;
