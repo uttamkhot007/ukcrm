@@ -1,26 +1,31 @@
 import { useState } from "react";
 import { ProjectsStats } from "./ProjectsStats";
 import { ProjectsList } from "./ProjectsList";
-import { ProjectTasksView } from "./ProjectTasksView";
-import { ProjectMilestones } from "./ProjectMilestones";
 import { TimeEntriesView } from "./TimeEntriesView";
 import { ProjectIntelligenceDashboard } from "./ProjectIntelligenceDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FolderKanban, ListTodo, Flag, Clock, Brain } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Clock } from "lucide-react";
 
 interface ProjectsModuleProps {
   defaultTab?: string;
 }
 
+function ProjectsOverview() {
+  return (
+    <div className="space-y-6">
+      <ProjectsStats />
+      <ProjectIntelligenceDashboard />
+    </div>
+  );
+}
+
 const TABS = [
-  { id: "projects", label: "Projects", icon: FolderKanban, component: ProjectsList },
-  { id: "tasks", label: "Tasks", icon: ListTodo, component: ProjectTasksView },
-  { id: "milestones", label: "Milestones", icon: Flag, component: ProjectMilestones },
-  { id: "timesheet", label: "Timesheet", icon: Clock, component: TimeEntriesView },
-  { id: "intelligence", label: "Intelligence", icon: Brain, component: ProjectIntelligenceDashboard },
+  { id: "overview", label: "Overview", icon: LayoutDashboard, component: ProjectsOverview },
+  { id: "projects", label: "All Projects", icon: FolderKanban, component: ProjectsList },
+  { id: "timesheet", label: "Timesheets", icon: Clock, component: TimeEntriesView },
 ];
 
-export function ProjectsModule({ defaultTab = "projects" }: ProjectsModuleProps) {
+export function ProjectsModule({ defaultTab = "overview" }: ProjectsModuleProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const activeTabDef = TABS.find((t) => t.id === activeTab) ?? TABS[0];
@@ -31,31 +36,26 @@ export function ProjectsModule({ defaultTab = "projects" }: ProjectsModuleProps)
       <div>
         <h1 className="text-3xl font-bold">Project Management</h1>
         <p className="text-muted-foreground">
-          Manage projects, tasks, milestones, time tracking and AI delivery insights
+          Delivery dashboards, project portfolio and time tracking — tasks and milestones live inside each project
         </p>
       </div>
-
-      <ProjectsStats />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/50 flex-wrap h-auto py-2 gap-1">
           {TABS.map((tab) => (
             <TabsTrigger key={tab.id} value={tab.id} className="gap-2 data-[state=active]:bg-background">
               <tab.icon className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sr-only sm:hidden">{tab.label}</span>
+              <span>{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
 
-        {/* Each trigger needs its matching panel so aria-controls resolves. */}
         {TABS.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-6 min-w-0">
             {tab.id === activeTab ? <ActiveComponent /> : null}
           </TabsContent>
         ))}
       </Tabs>
-
     </div>
   );
 }

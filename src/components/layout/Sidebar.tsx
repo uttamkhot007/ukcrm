@@ -626,9 +626,8 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
           icon: FolderKanban,
           color: "text-purple-600",
           children: [
+            { id: "projects-overview", label: "Overview", icon: LayoutDashboard },
             { id: "projects-list", label: "All Projects", icon: Kanban },
-            { id: "projects-tasks", label: "Tasks", icon: ListTodo },
-            { id: "projects-milestones", label: "Milestones", icon: Milestone },
             { id: "projects-timesheet", label: "Timesheets", icon: Timer },
             { id: "projects-templates", label: "Templates", icon: FileText },
           ],
