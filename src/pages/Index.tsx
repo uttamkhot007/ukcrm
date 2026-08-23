@@ -158,8 +158,7 @@ const Index = () => {
   // Decide what "/" should do once auth + tenant info are resolved.
   //
   // A plain "/" is a deterministic landing route. Platform admins always land
-  // in the Platform Console; workspace modules remain reachable when the
-  // sidebar explicitly navigates here with a requested module.
+  // in the Platform Console and can never mount the legacy workspace view.
   const hasTenantAccess = tenantMemberships.length > 0 || !!profile?.tenant_id;
 
   useEffect(() => {
