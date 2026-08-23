@@ -220,7 +220,7 @@ export function TargetProgressWidget({ teamType = "sales", showFullBreakdown = f
               <Award className="h-5 w-5" />
               <span className="font-medium text-sm">Target Achieved!</span>
             </div>
-            <p className="text-xs text-green-600/80 mt-1">
+            <p className="text-xs text-green-700 dark:text-green-400/80 mt-1">
               Eligible for incentive up to {formatCurrency(targetData.incentive_cap_calculated || targetData.incentive_eligibility_cap)}
             </p>
           </div>
