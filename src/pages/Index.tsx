@@ -23,7 +23,6 @@ import { logRedirect, logNoRedirect } from "@/lib/route-diagnostics";
 // competed with that work. Now a module's code is fetched only when it is
 // first opened, and preloaded on hover so the click itself feels instant.
 // ---------------------------------------------------------------------------
-const WorkspaceHome = lazyNamed(() => import("@/components/dashboard/WorkspaceHome"), "WorkspaceHome");
 const SalesModule = lazyNamed(() => import("@/components/sales/SalesModule"), "SalesModule");
 const SalesAIAssistant = lazyNamed(() => import("@/components/sales/SalesAIAssistant"), "SalesAIAssistant");
 const LegalModule = lazyNamed(() => import("@/components/legal/LegalModule"), "LegalModule");
@@ -76,7 +75,6 @@ const SkillMatrixModule = lazyNamed(() => import("@/components/employee/SkillMat
 const EmployeePortalModule = lazyNamed(() => import("@/components/employee/EmployeePortalModule"), "EmployeePortalModule");
 
 export const MODULE_COMPONENTS = {
-  WorkspaceHome,
   SalesModule,
   SalesAIAssistant,
   LegalModule,
@@ -135,7 +133,7 @@ const Index = () => {
     (location.state as { module?: string } | null)?.module ??
     new URLSearchParams(location.search).get("module") ??
     null;
-  const [activeModule, setActiveModule] = useState(requestedModule ?? "dashboard");
+  const [activeModule, setActiveModule] = useState(requestedModule ?? "employee");
   const {
     user,
     isLoading,
@@ -191,7 +189,7 @@ const Index = () => {
       return;
     }
 
-    if (isPlatformAdmin && activeModule === "dashboard") {
+    if (isPlatformAdmin && (!requestedModule || activeModule === "dashboard")) {
       logRedirect("Index", location.pathname, "/admin/platform/tenants", "platform admin landing on root", {
         requestedModule: requestedModule ?? null,
       });
@@ -239,7 +237,7 @@ const Index = () => {
   // paying a fresh download each time.
   useEffect(() => {
     if (!user) return;
-    return preloadWhenIdle([WorkspaceHome, SalesModule, HRModule, AccountsModule, ProjectsModule]);
+    return preloadWhenIdle([SalesModule, HRModule, AccountsModule, ProjectsModule, EmployeePortalModule]);
   }, [user]);
 
   // Render-time gate: a plain root route must never mount the legacy workspace
@@ -252,7 +250,7 @@ const Index = () => {
     !tenantLoading &&
     user &&
     isPlatformAdmin &&
-    activeModule === "dashboard"
+    (!requestedModule || activeModule === "dashboard")
   ) {
     return <Navigate to="/admin/platform/tenants" replace />;
   }
@@ -726,11 +724,10 @@ const Index = () => {
         if (isCustomer || portalMode === 'customer') {
           return <CustomerPortal />;
         }
-        // Only "dashboard" (and an unset module) may render the dashboard.
-        // Anything else without a renderer previously fell through to the
-        // dashboard too, which made every unmapped module look identical.
+        // The retired workspace dashboard is gone. A stale dashboard module id
+        // resolves to the Employee Portal instead of resurrecting the old view.
         if (activeModule === "dashboard") {
-          return <WorkspaceHome onModuleChange={setActiveModule} />;
+          return <EmployeePortalModule initialTab="employee" />;
         }
         return <PlaceholderModule title="Module" section={activeModule} />;
     }

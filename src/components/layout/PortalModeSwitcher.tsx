@@ -23,7 +23,13 @@ export function PortalModeSwitcher() {
     return null;
   }
 
-  // Non-admin, non-super-admin employees don't need switcher
+  // Admin users stay in the Platform/Admin console. The old workspace switch
+  // was a path back into retired dashboard views.
+  if (isAdmin || isSuperAdmin) {
+    return null;
+  }
+
+  // Non-admin employees do not need a mode switcher.
   if (!isAdmin && !isSuperAdmin) {
     return null;
   }

@@ -491,7 +491,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!consoleAccess || !consoleAccess.has_full_access) {
       // Only allow employee-related modules
       const employeeModules = [
-        'dashboard', 'employee', 'employee-ai-assistant', 'employee-attendance',
+        'employee', 'employee-ai-assistant', 'employee-attendance',
         'employee-attendance-reports', 'employee-requests', 'employee-approvals',
         'employee-events', 'employee-documentation', 'employee-organization',
         'employee-workflows', 'employee-benefits', 'employee-resources',

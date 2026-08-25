@@ -7,8 +7,8 @@
  * tooltips, charts, badges, empty states and skeletons — with no network data,
  * no animation and no random values, so screenshots are byte-stable.
  *
- * Theme is driven by query params instead of persisted preferences:
- *   /__theme?mode=light&mood=ocean&brand=blue
+ * Theme is driven by the single approved runtime identity; query params are
+ * ignored unless they match that identity.
  *
  * The route is only registered outside production builds.
  */
@@ -47,8 +47,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { chartAxisProps, chartGridProps } from "@/lib/chart-theme";
 
-const MOODS = ["default", "ocean", "forest", "sunset", "midnight", "cyber"] as const;
-const BRANDS = ["emerald", "blue", "purple", "orange"] as const;
+const MOODS = ["default"] as const;
+const BRANDS = ["emerald"] as const;
 
 const SERIES = [
   { label: "Jan", pipeline: 42, closed: 18 },
@@ -67,7 +67,7 @@ const ROWS = [
 export default function ThemeGallery() {
   const [params] = useSearchParams();
 
-  const mode = params.get("mode") === "dark" ? "dark" : "light";
+  const mode = "light";
   const mood = useMemo(() => {
     const value = params.get("mood") ?? "default";
     return (MOODS as readonly string[]).includes(value) ? value : "default";

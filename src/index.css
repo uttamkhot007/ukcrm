@@ -111,289 +111,18 @@ html[data-release-unverified] [role="alert"] {
     --sidebar-ring: 160 84% 35%;
   }
 
-  /* ===== DARK MODE (Dormant) =====
-     Kept only for scoped dark: utilities/tests. It never applies during boot
-     because the approved runtime theme always writes html.light. */
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 160 84% 39%;
-    --glass-bg: 222 47% 11%;
-    --glass-border: 217 33% 25%;
-    --glass-blur: 20px;
-    --glass-reflection: linear-gradient(180deg,
-      hsla(160, 84%, 50%, 0.08) 0%,
-      hsla(160, 84%, 39%, 0.04) 50%,
-      transparent 100%);
-    --sidebar-background: 222 47% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217 33% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 15%;
-    --sidebar-ring: 160 84% 39%;
-  }
-
-  /* ===== LIGHT MODE ===== */
-  .light {
-    --background: 225 30% 96%;
-    --foreground: 222 47% 11%;
-    --card: 225 30% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 225 30% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 160 84% 27%;
-    --primary-foreground: 0 0% 100%;
-    /* Module accents darkened for AA contrast against white text in light mode */
-    --sales: 160 84% 27%;
-
-    --secondary: 225 20% 92%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 225 20% 92%;
-    --muted-foreground: 220 9% 40%;
-    --accent: 225 20% 92%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 225 20% 86%;
-    --input: 225 20% 86%;
-    --ring: 160 84% 35%;
-
-    /* Light Mode Glass - Higher opacity for readability */
-    --glass-bg: 0 0% 100%;
-    --glass-border: 220 13% 80%;
-    --glass-blur: 16px;
-    --glass-shine: linear-gradient(135deg, 
-      hsla(0, 0%, 100%, 0.7) 0%, 
-      hsla(0, 0%, 100%, 0.3) 40%, 
-      hsla(0, 0%, 100%, 0.1) 60%);
-    --glass-reflection: linear-gradient(180deg,
-      hsla(160, 84%, 50%, 0.04) 0%,
-      hsla(160, 84%, 35%, 0.02) 50%,
-      transparent 100%);
-
-    --shadow-elevation-low: 
-      0 1px 3px hsla(222, 47%, 20%, 0.06),
-      0 2px 6px hsla(222, 47%, 20%, 0.04);
-    --shadow-elevation-medium: 
-      0 4px 12px hsla(222, 47%, 20%, 0.08),
-      0 8px 24px hsla(222, 47%, 20%, 0.06);
-    --shadow-elevation-high: 
-      0 8px 24px hsla(222, 47%, 20%, 0.1),
-      0 16px 48px hsla(222, 47%, 20%, 0.08);
-
-    --sidebar-background: 225 30% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 160 84% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 20% 92%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 225 20% 86%;
-    --sidebar-ring: 160 84% 35%;
-  }
-
-  /* ===== BRAND COLORS ===== */
-  /* Blue/Sapphire Brand */
-  [data-brand="blue"] {
-    --primary: 217 91% 60%;
-    --ring: 217 91% 60%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-ring: 217 91% 60%;
-    --sales: 217 91% 60%;
-    --sales-glow: 217 91% 70%;
-  }
-
-  /* Purple/Amethyst Brand */
-  [data-brand="purple"] {
-    --primary: 263 70% 50%;
-    --ring: 263 70% 50%;
-    --sidebar-primary: 263 70% 50%;
-    --sidebar-ring: 263 70% 50%;
-    --sales: 263 70% 50%;
-    --sales-glow: 263 70% 60%;
-  }
-
-  /* Orange/Amber Brand */
-  [data-brand="orange"] {
-    --primary: 25 95% 53%;
-    --ring: 25 95% 53%;
-    --sidebar-primary: 25 95% 53%;
-    --sidebar-ring: 25 95% 53%;
-    --sales: 25 95% 53%;
-    --sales-glow: 25 95% 63%;
-  }
-
-  /* ===== MOOD THEMES ===== */
-  /* Ocean Mood */
-  .dark[data-mood="ocean"] {
-    --background: 210 50% 8%;
-    --card: 210 45% 10%;
-    --muted: 210 40% 15%;
-    --secondary: 210 35% 18%;
-    --accent: 210 35% 18%;
-    --border: 210 35% 18%;
-    --input: 210 35% 18%;
-    --sidebar-background: 210 50% 6%;
-    --sidebar-accent: 210 40% 12%;
-    --sidebar-border: 210 35% 16%;
-  }
-  [data-mood="ocean"].light {
-    --background: 200 50% 97%;
-    --card: 200 50% 100%;
-    --muted: 200 30% 94%;
-    --secondary: 200 30% 94%;
-    --accent: 200 30% 94%;
-    --border: 200 30% 88%;
-    --input: 200 30% 88%;
-    --sidebar-background: 200 50% 100%;
-    --sidebar-accent: 200 30% 94%;
-    --sidebar-border: 200 30% 88%;
-  }
-
-  /* Forest Mood */
-  .dark[data-mood="forest"] {
-    --background: 150 30% 6%;
-    --card: 150 25% 9%;
-    --muted: 150 20% 13%;
-    --secondary: 150 18% 16%;
-    --accent: 150 18% 16%;
-    --border: 150 18% 16%;
-    --input: 150 18% 16%;
-    --sidebar-background: 150 30% 5%;
-    --sidebar-accent: 150 20% 11%;
-    --sidebar-border: 150 18% 14%;
-  }
-  [data-mood="forest"].light {
-    --background: 140 30% 97%;
-    --card: 140 30% 100%;
-    --muted: 140 20% 94%;
-    --secondary: 140 20% 94%;
-    --accent: 140 20% 94%;
-    --border: 140 20% 88%;
-    --input: 140 20% 88%;
-    --sidebar-background: 140 30% 100%;
-    --sidebar-accent: 140 20% 94%;
-    --sidebar-border: 140 20% 88%;
-  }
-
-  /* Sunset Mood */
-  .dark[data-mood="sunset"] {
-    --background: 15 40% 7%;
-    --card: 15 35% 10%;
-    --muted: 15 30% 14%;
-    --secondary: 15 25% 17%;
-    --accent: 15 25% 17%;
-    --border: 15 25% 17%;
-    --input: 15 25% 17%;
-    --sidebar-background: 15 40% 5%;
-    --sidebar-accent: 15 30% 12%;
-    --sidebar-border: 15 25% 15%;
-  }
-  [data-mood="sunset"].light {
-    --background: 30 60% 98%;
-    --card: 30 60% 100%;
-    --muted: 30 40% 94%;
-    --secondary: 30 40% 94%;
-    --accent: 30 40% 94%;
-    --border: 30 40% 88%;
-    --input: 30 40% 88%;
-    --sidebar-background: 30 60% 100%;
-    --sidebar-accent: 30 40% 94%;
-    --sidebar-border: 30 40% 88%;
-  }
-
-  /* Midnight Mood (Ultra Dark) */
-  .dark[data-mood="midnight"] {
-    --background: 240 20% 4%;
-    --card: 240 18% 6%;
-    --muted: 240 15% 10%;
-    --secondary: 240 12% 13%;
-    --accent: 240 12% 13%;
-    --border: 240 12% 13%;
-    --input: 240 12% 13%;
-    --sidebar-background: 240 20% 3%;
-    --sidebar-accent: 240 15% 8%;
-    --sidebar-border: 240 12% 11%;
-  }
-  [data-mood="midnight"].light {
-    --background: 240 20% 96%;
-    --card: 240 20% 100%;
-    --muted: 240 15% 92%;
-    --secondary: 240 15% 92%;
-    --accent: 240 15% 92%;
-    --border: 240 15% 86%;
-    --input: 240 15% 86%;
-    --sidebar-background: 240 20% 100%;
-    --sidebar-accent: 240 15% 92%;
-    --sidebar-border: 240 15% 86%;
-  }
-
-  /* Cyber Mood (Cybersecurity Dashboard Style - Deep Navy with Neon Accents) */
-  .dark[data-mood="cyber"] {
-    --background: 225 35% 5%;
-    --card: 225 30% 8%;
-    --muted: 225 25% 12%;
-    --secondary: 225 20% 15%;
-    --accent: 225 20% 15%;
-    --border: 225 25% 14%;
-    --input: 225 25% 14%;
-    --sidebar-background: 225 35% 4%;
-    --sidebar-accent: 225 25% 10%;
-    --sidebar-border: 225 25% 12%;
-    
-    /* Enhanced glows for cyber mood */
-    --glass-bg: 225 30% 10%;
-    --glass-border: 225 25% 20%;
-    --glass-reflection: linear-gradient(180deg,
-      hsla(263, 70%, 50%, 0.08) 0%,
-      hsla(187, 92%, 45%, 0.04) 50%,
-      transparent 100%);
-  }
-  [data-mood="cyber"].light {
-    --background: 225 30% 96%;
-    --card: 225 30% 100%;
-    --muted: 225 20% 92%;
-    --secondary: 225 20% 92%;
-    --accent: 225 20% 92%;
-    --border: 225 20% 86%;
-    --input: 225 20% 86%;
-    --sidebar-background: 225 30% 100%;
-    --sidebar-accent: 225 20% 92%;
-    --sidebar-border: 225 20% 86%;
-  }
-
+  /* Historical dark, brand and mood token branches were removed.
+     The only paintable shell is the approved light identity. */
   /* ===== APPROVED THEME HARD LOCK =====
      Must come last: even if an old bundle, BFCache restore, or stale storage
-     re-adds html.dark / retired brand / retired mood attributes, the only
-     paintable shell remains the approved light emerald cyber identity. */
+     re-adds retired classes / brand / mood attributes, the only paintable
+     shell remains the approved light identity. */
   html,
   html.light,
-  html.dark,
   html[class],
   html[data-brand],
   html[data-mood],
-  html.dark[data-mood],
-  html.light[data-mood],
-  html[data-brand="blue"],
-  html[data-brand="purple"],
-  html[data-brand="orange"] {
+  html.light[data-mood] {
     --background: 225 30% 96% !important;
     --foreground: 222 47% 11% !important;
     --card: 0 0% 100% !important;
@@ -507,27 +236,6 @@ html[data-release-unverified] [role="alert"] {
     position: relative;
   }
 
-  /* Only apply shine effects in dark mode for better light mode readability */
-  .dark .glass::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--glass-shine);
-    pointer-events: none;
-    z-index: 1;
-    border-radius: inherit;
-  }
-
-  .dark .glass::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--glass-reflection);
-    pointer-events: none;
-    z-index: 0;
-    border-radius: inherit;
-  }
-
   /* Light mode gets subtle border glow instead */
   :root .glass,
   .light .glass {
@@ -539,10 +247,6 @@ html[data-release-unverified] [role="alert"] {
      neutral veil instead of a near-black slab. */
   .overlay-scrim {
     background-color: hsl(222 47% 11% / 0.35);
-  }
-
-  .dark .overlay-scrim {
-    background-color: hsl(0 0% 0% / 0.8);
   }
 
 
@@ -1276,7 +980,6 @@ html[data-release-unverified] [role="alert"] {
 @media print {
   :root,
   html,
-  html.dark,
   body {
     /* Re-declare the light palette so `dark` tokens can never reach paper. */
     --background: 0 0% 100%;

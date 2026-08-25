@@ -120,13 +120,6 @@ const salesPortalItems: NavItem[] = [
     linkPath: "/agents",
   },
   {
-    id: "dashboard",
-    label: "Sales Dashboard",
-    icon: LayoutDashboard,
-    color: "text-primary",
-    portalMode: "workspace",
-  },
-  {
     id: "sales",
     label: "Sales",
     icon: TrendingUp,
@@ -161,13 +154,6 @@ const employeePortalItems: NavItem[] = [
     portalMode: "workspace",
     isLink: true,
     linkPath: "/agents",
-  },
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    color: "text-primary",
-    portalMode: "workspace",
   },
   {
     id: "employee-ai-assistant",
@@ -663,14 +649,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       // Workspace mode: Team-based access control
       // But if user has employee-only access, skip all team-based modules
       
-      // Dashboard is always available
-      items.push({
-        id: "dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        color: "text-primary",
-      });
-
       // AI Assistant is always available in Employee Portal
       items.push({
         id: "employee-ai-assistant",
@@ -908,12 +886,6 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
       // Managers only see modules their team is assigned to
     } else {
       // Default to basic employee portal
-      items.push({
-        id: "dashboard",
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        color: "text-primary",
-      });
       items.push({
         id: "employee-ai-assistant",
         label: "My AI Assistant",

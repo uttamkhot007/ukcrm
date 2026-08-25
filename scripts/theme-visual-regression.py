@@ -33,9 +33,9 @@ BASELINE_DIR = ROOT / "tests" / "visual" / "baselines"
 OUTPUT_DIR = ROOT / "tests" / "visual" / "actual"
 DIFF_DIR = ROOT / "tests" / "visual" / "diffs"
 
-MOODS = ["default", "ocean", "forest", "sunset", "midnight", "cyber"]
-BRANDS = ["emerald", "blue", "purple", "orange"]
-MODES = ["light", "dark"]
+MOODS = ["default"]
+BRANDS = ["emerald"]
+MODES = ["light"]
 
 VIEWPORT = {"width": 1280, "height": 1800}
 
