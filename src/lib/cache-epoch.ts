@@ -12,12 +12,12 @@
  * Never lower CACHE_EPOCH.
  * ------------------------------------------------------------------ */
 
-export const CACHE_EPOCH = 9;
+export const CACHE_EPOCH = 10;
 
 const EPOCH_KEY = "nexus:cache-epoch";
 const EPOCH_PARAM = "__epoch";
 
-/** Keys that must survive a purge (session only; theme is design-revisioned). */
+/** Keys that must survive a purge (auth/session only; theme never survives). */
 function isPreservedKey(key: string): boolean {
   return (
     key.startsWith("sb-") ||
@@ -67,7 +67,7 @@ export async function purgeAllBrowserCaches(): Promise<void> {
     /* ignore */
   }
 
-  // 3. App storage (auth + theme preserved).
+  // 3. App storage (auth preserved, theme purged).
   try {
     const store = safeLocal();
     if (store) {
