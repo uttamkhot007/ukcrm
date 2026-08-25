@@ -51,8 +51,8 @@ function purgeThemeKeysFromStorage(
 }
 
 
-function purgeThemeCookies(): void {
-  if (typeof document === "undefined") return;
+function purgeThemeCookies(removed: string[]): ThemePurgeStatus {
+  if (typeof document === "undefined") return "unsupported";
   try {
     document.cookie
       .split(";")
@@ -63,11 +63,15 @@ function purgeThemeCookies(): void {
         const encoded = encodeURIComponent(name);
         document.cookie = `${encoded}=; path=/; max-age=0; SameSite=Lax${secure}`;
         document.cookie = `${encoded}=; max-age=0; SameSite=Lax${secure}`;
+        removed.push(`cookie:${name}`);
       });
+    return "ok";
   } catch {
     /* ignore cookie failures */
+    return "failed";
   }
 }
+
 
 function deleteDatabase(factory: IDBFactory, name: string): Promise<void> {
   return new Promise((resolve) => {
