@@ -27,6 +27,7 @@ import {
   RELEASE_REVISION,
 } from "@/lib/build-info";
 import { purgeObsoletePresentationState } from "@/lib/ui-persistence";
+import { clearStoredTheme } from "@/lib/theme-storage";
 import { flushReleaseFloorTelemetry, recordReleaseFloorEvent } from "@/lib/release-floor-telemetry";
 import {
   APPROVED_DESIGN_ID,
@@ -172,6 +173,7 @@ export async function purgeCachesOnNewBuild(): Promise<boolean> {
   try {
     if (store) {
       purgeObsoletePresentationState(store);
+      clearStoredTheme();
       const stale: string[] = [];
       for (let i = 0; i < store.length; i += 1) {
         const key = store.key(i);
