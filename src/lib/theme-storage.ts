@@ -1,4 +1,4 @@
-import { APPROVED_DESIGN_REVISION } from "@/lib/approved-design-identity";
+import { APPROVED_DESIGN_ID, APPROVED_DESIGN_REVISION } from "@/lib/approved-design-identity";
 
 /**
  * Device-level theme persistence.
@@ -22,15 +22,17 @@ export interface ThemeConfig {
 
 interface StoredThemeConfig extends ThemeConfig {
   revision: number;
+  designId: string;
 }
 
 /** Stable, unversioned. Never suffix this with a schema version again. */
 export const THEME_KEY = "nexus-theme";
 export const THEME_COOKIE = "nexus_theme";
 export const THEME_REVISION = APPROVED_DESIGN_REVISION;
+export const THEME_DESIGN_ID = APPROVED_DESIGN_ID;
 
 /** Keys written by older builds, read once and migrated forward. */
-export const LEGACY_THEME_KEYS = ["nexus-theme:v2", "nexus-theme:v1", "app-theme-config"];
+export const LEGACY_THEME_KEYS = ["nexus-theme:v4", "nexus-theme:v3", "nexus-theme:v2", "nexus-theme:v1", "app-theme-config"];
 
 export const DEFAULT_THEME: ThemeConfig = { mode: "light", brand: "emerald", mood: "cyber" };
 
@@ -52,8 +54,10 @@ function normalizeThemeShape(value: unknown): ThemeConfig | null {
 export function normalizeTheme(value: unknown): ThemeConfig | null {
   const theme = normalizeThemeShape(value);
   if (!theme || typeof value !== "object") return null;
-  const revision = (value as Partial<StoredThemeConfig>).revision;
-  return revision === THEME_REVISION ? theme : null;
+  const stored = value as Partial<StoredThemeConfig>;
+  if (stored.revision !== THEME_REVISION) return null;
+  if (stored.designId !== THEME_DESIGN_ID) return null;
+  return theme;
 }
 
 function parse(raw: string | null): ThemeConfig | null {
@@ -126,7 +130,7 @@ export function readStoredTheme(): ThemeConfig {
 }
 
 export function writeStoredTheme(theme: ThemeConfig): void {
-  const persisted: StoredThemeConfig = { ...theme, revision: THEME_REVISION };
+  const persisted: StoredThemeConfig = { ...theme, revision: THEME_REVISION, designId: THEME_DESIGN_ID };
   const serialized = JSON.stringify(persisted);
   try {
     safeLocal()?.setItem(THEME_KEY, serialized);

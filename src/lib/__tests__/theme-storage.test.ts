@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_THEME,
   THEME_KEY,
+  THEME_DESIGN_ID,
   THEME_REVISION,
   normalizeTheme,
   readStoredTheme,
@@ -23,6 +24,7 @@ describe("theme storage", () => {
     expect(JSON.parse(window.localStorage.getItem(THEME_KEY) ?? "{}" )).toEqual({
       ...LIGHT,
       revision: THEME_REVISION,
+      designId: THEME_DESIGN_ID,
     });
     expect(readThemeCookie(document.cookie)).toEqual(LIGHT);
     expect(readStoredTheme()).toEqual(LIGHT);
@@ -36,6 +38,7 @@ describe("theme storage", () => {
     expect(JSON.parse(window.localStorage.getItem(THEME_KEY) ?? "{}" )).toEqual({
       ...LIGHT,
       revision: THEME_REVISION,
+      designId: THEME_DESIGN_ID,
     });
   });
 
@@ -51,7 +54,9 @@ describe("theme storage", () => {
     expect(readStoredTheme()).toEqual(DEFAULT_THEME);
     expect(normalizeTheme({ mode: "neon" })).toBeNull();
     expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus" })).toBeNull();
-    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus", revision: THEME_REVISION })).toEqual({
+    expect(normalizeTheme({ ...LIGHT, revision: THEME_REVISION, designId: "stale-design-id" })).toBeNull();
+    expect(normalizeTheme({ ...LIGHT, revision: THEME_REVISION - 1, designId: THEME_DESIGN_ID })).toBeNull();
+    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus", revision: THEME_REVISION, designId: THEME_DESIGN_ID })).toEqual({
       mode: "light",
       brand: DEFAULT_THEME.brand,
       mood: DEFAULT_THEME.mood,

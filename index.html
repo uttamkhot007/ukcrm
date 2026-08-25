@@ -142,15 +142,29 @@
       // Stale saved themes are deleted so retired visuals cannot return.
       (function () {
         var STABLE = 'nexus-theme';
-        var LEGACY = ['nexus-theme:v3', 'nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
+        var LEGACY = ['nexus-theme:v4', 'nexus-theme:v3', 'nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
         var DEFAULT_THEME = { mode: 'light', brand: 'emerald', mood: 'cyber' };
-        var meta = document.querySelector('meta[name="approved-design-revision"]');
-        var THEME_REVISION = Number((meta && meta.getAttribute('content')) || '0');
+        var BRANDS = ['emerald', 'blue', 'purple', 'orange'];
+        var MOODS = ['default', 'ocean', 'forest', 'sunset', 'midnight', 'cyber'];
+        var revMeta = document.querySelector('meta[name="approved-design-revision"]');
+        var idMeta = document.querySelector('meta[name="approved-design-id"]');
+        var THEME_REVISION = Number((revMeta && revMeta.getAttribute('content')) || '0');
+        var THEME_DESIGN_ID = (idMeta && idMeta.getAttribute('content')) || '';
+        // Unresolved/placeholder identity means we cannot trust any saved theme.
+        var identityKnown = THEME_REVISION > 0 && THEME_DESIGN_ID && THEME_DESIGN_ID.indexOf('__') !== 0;
         function parse(raw) {
-          if (!raw) return null;
+          if (!raw || !identityKnown) return null;
           try {
             var v = JSON.parse(raw);
-            if (v && Number(v.revision) === THEME_REVISION && (v.mode === 'light' || v.mode === 'dark')) return v;
+            if (!v || typeof v !== 'object') return null;
+            if (Number(v.revision) !== THEME_REVISION) return null;
+            if (v.designId !== THEME_DESIGN_ID) return null;
+            if (v.mode !== 'light' && v.mode !== 'dark') return null;
+            return {
+              mode: v.mode,
+              brand: BRANDS.indexOf(v.brand) >= 0 ? v.brand : DEFAULT_THEME.brand,
+              mood: MOODS.indexOf(v.mood) >= 0 ? v.mood : DEFAULT_THEME.mood
+            };
           } catch (e) {}
           return null;
         }
@@ -177,15 +191,19 @@
         }
         t = t || DEFAULT_THEME;
         var el = document.documentElement;
-        var mode = t.mode || DEFAULT_THEME.mode;
-        var brand = t.brand || DEFAULT_THEME.brand;
-        var mood = t.mood || DEFAULT_THEME.mood;
+        var mode = t.mode === 'dark' ? 'dark' : 'light';
+        var brand = BRANDS.indexOf(t.brand) >= 0 ? t.brand : DEFAULT_THEME.brand;
+        var mood = MOODS.indexOf(t.mood) >= 0 ? t.mood : DEFAULT_THEME.mood;
+
         el.classList.remove('light', 'dark');
         el.classList.add(mode);
         el.setAttribute('data-brand', brand);
         el.setAttribute('data-mood', mood);
         el.style.colorScheme = mode;
-        try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION })); } catch (e) {}
+        if (identityKnown) {
+          try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION, designId: THEME_DESIGN_ID })); } catch (e) {}
+        }
+
       })();
     </script>
   </head>
