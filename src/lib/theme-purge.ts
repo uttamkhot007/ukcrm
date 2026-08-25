@@ -17,22 +17,42 @@ function isThemeStorageKey(value: unknown): value is string {
   return THEME_KEY_FRAGMENTS.some((fragment) => normalized.includes(fragment));
 }
 
-function purgeThemeKeysFromStorage(storage: Storage | null | undefined): void {
-  if (!storage) return;
+export type ThemePurgeStatus = "ok" | "failed" | "unsupported";
+
+export interface ThemePurgeReport {
+  localStorage: ThemePurgeStatus;
+  sessionStorage: ThemePurgeStatus;
+  cookies: ThemePurgeStatus;
+  indexedDB: ThemePurgeStatus;
+  removed: string[];
+  remaining: string[];
+}
+
+function purgeThemeKeysFromStorage(
+  storage: Storage | null | undefined,
+  removed: string[],
+): ThemePurgeStatus {
+  if (!storage) return "unsupported";
   try {
     const keys: string[] = [];
     for (let index = 0; index < storage.length; index += 1) {
       const key = storage.key(index);
       if (isThemeStorageKey(key)) keys.push(key);
     }
-    keys.forEach((key) => storage.removeItem(key));
+    keys.forEach((key) => {
+      storage.removeItem(key);
+      removed.push(key);
+    });
+    return "ok";
   } catch {
     /* storage access can be blocked by browser privacy settings */
+    return "failed";
   }
 }
 
-function purgeThemeCookies(): void {
-  if (typeof document === "undefined") return;
+
+function purgeThemeCookies(removed: string[]): ThemePurgeStatus {
+  if (typeof document === "undefined") return "unsupported";
   try {
     document.cookie
       .split(";")
@@ -43,11 +63,15 @@ function purgeThemeCookies(): void {
         const encoded = encodeURIComponent(name);
         document.cookie = `${encoded}=; path=/; max-age=0; SameSite=Lax${secure}`;
         document.cookie = `${encoded}=; max-age=0; SameSite=Lax${secure}`;
+        removed.push(`cookie:${name}`);
       });
+    return "ok";
   } catch {
     /* ignore cookie failures */
+    return "failed";
   }
 }
+
 
 function deleteDatabase(factory: IDBFactory, name: string): Promise<void> {
   return new Promise((resolve) => {
@@ -109,12 +133,12 @@ function deleteThemeRecords(store: IDBObjectStore): Promise<void> {
   });
 }
 
-async function purgeThemeIndexedDb(): Promise<void> {
-  if (typeof window === "undefined" || !("indexedDB" in window)) return;
+async function purgeThemeIndexedDb(removed: string[]): Promise<ThemePurgeStatus> {
+  if (typeof window === "undefined" || !("indexedDB" in window)) return "unsupported";
   const factory = window.indexedDB as IDBFactory & {
     databases?: () => Promise<Array<{ name?: string | null }>>;
   };
-  if (!factory.databases) return;
+  if (!factory.databases) return "unsupported";
 
   try {
     const databases = await factory.databases();
@@ -123,6 +147,7 @@ async function purgeThemeIndexedDb(): Promise<void> {
       if (!name) continue;
       if (isThemeStorageKey(name)) {
         await deleteDatabase(factory, name);
+        removed.push(`idb:${name}`);
         continue;
       }
 
@@ -134,8 +159,12 @@ async function purgeThemeIndexedDb(): Promise<void> {
           try {
             const tx = db.transaction(storeName, "readwrite");
             const store = tx.objectStore(storeName);
-            if (isThemeStorageKey(storeName)) await clearStore(store);
-            else await deleteThemeRecords(store);
+            if (isThemeStorageKey(storeName)) {
+              await clearStore(store);
+              removed.push(`idb:${name}/${storeName}`);
+            } else {
+              await deleteThemeRecords(store);
+            }
           } catch {
             /* ignore stores that cannot be opened read/write */
           }
@@ -144,25 +173,98 @@ async function purgeThemeIndexedDb(): Promise<void> {
         db.close();
       }
     }
+    return "ok";
   } catch {
     /* IndexedDB enumeration is best-effort and unsupported in some browsers. */
+    return "failed";
   }
 }
 
-export function purgeThemeStorageSync(): void {
-  if (typeof window === "undefined") return;
-  purgeThemeKeysFromStorage(window.localStorage);
-  purgeThemeKeysFromStorage(window.sessionStorage);
-  purgeThemeCookies();
+function collectRemainingThemeKeys(): string[] {
+  const remaining: string[] = [];
+  if (typeof window === "undefined") return remaining;
+  const scan = (storage: Storage | null | undefined, label: string) => {
+    if (!storage) return;
+    try {
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        if (isThemeStorageKey(key)) remaining.push(`${label}:${key}`);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+  scan(window.localStorage, "localStorage");
+  scan(window.sessionStorage, "sessionStorage");
+  try {
+    document.cookie
+      .split(";")
+      .map((part) => part.split("=")[0]?.trim())
+      .filter(isThemeStorageKey)
+      .forEach((name) => remaining.push(`cookie:${name}`));
+  } catch {
+    /* ignore */
+  }
+  return remaining;
 }
 
-export async function purgeThemeStorageBeforeBoot(): Promise<void> {
+export function purgeThemeStorageSync(): ThemePurgeReport {
+  const removed: string[] = [];
+  if (typeof window === "undefined") {
+    return {
+      localStorage: "unsupported",
+      sessionStorage: "unsupported",
+      cookies: "unsupported",
+      indexedDB: "unsupported",
+      removed,
+      remaining: [],
+    };
+  }
+  const report: ThemePurgeReport = {
+    localStorage: purgeThemeKeysFromStorage(window.localStorage, removed),
+    sessionStorage: purgeThemeKeysFromStorage(window.sessionStorage, removed),
+    cookies: purgeThemeCookies(removed),
+    indexedDB: "unsupported",
+    removed,
+    remaining: [],
+  };
+  report.remaining = collectRemainingThemeKeys();
+  return report;
+}
+
+function logThemePurgeReport(report: ThemePurgeReport): void {
+  const failed = (["localStorage", "sessionStorage", "cookies", "indexedDB"] as const).filter(
+    (key) => report[key] === "failed",
+  );
+  const summary = {
+    localStorage: report.localStorage,
+    sessionStorage: report.sessionStorage,
+    cookies: report.cookies,
+    indexedDB: report.indexedDB,
+    removedKeys: report.removed,
+    remainingThemeKeys: report.remaining,
+  };
+  const prefix = "[theme-purge] boot purge";
+  if (failed.length > 0 || report.remaining.length > 0) {
+    console.warn(`${prefix} incomplete`, summary);
+  } else {
+    console.info(`${prefix} ok`, summary);
+  }
+}
+
+export async function purgeThemeStorageBeforeBoot(): Promise<ThemePurgeReport> {
   purgeThemeStorageSync();
-  await purgeThemeIndexedDb();
-  purgeThemeStorageSync();
+  const removed: string[] = [];
+  const indexedDB = await purgeThemeIndexedDb(removed);
+  const report = purgeThemeStorageSync();
+  report.indexedDB = indexedDB;
+  report.removed = [...removed, ...report.removed];
   try {
     document.documentElement.setAttribute("data-theme-purged", "1");
   } catch {
     /* ignore */
   }
+  logThemePurgeReport(report);
+  return report;
 }
+
