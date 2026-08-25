@@ -10,9 +10,9 @@ import { APPROVED_DESIGN_ID, APPROVED_DESIGN_REVISION } from "@/lib/approved-des
  * approved design revision and design id. Anything else is purged.
  */
 
-export type ThemeMode = "light" | "dark";
-export type ThemeBrand = "emerald" | "blue" | "purple" | "orange";
-export type ThemeMood = "default" | "ocean" | "forest" | "sunset" | "midnight" | "cyber";
+export type ThemeMode = "light";
+export type ThemeBrand = "emerald";
+export type ThemeMood = "default";
 
 export interface ThemeConfig {
   mode: ThemeMode;

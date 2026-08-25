@@ -4,7 +4,7 @@
  * It reads `src/index.css`, collects every custom-property declaration and
  * replays it in source order for a synthetic element that carries the classes
  * / attributes a given theme combination would produce at runtime
- * (`html.light[data-mood="cyber"][data-brand="emerald"]`, ...).
+ * (`html.light[data-brand="emerald"]`, ...).
  *
  * This gives us a deterministic, browser-free way to prove that no dark token
  * survives into light mode for ANY mood/brand combination.
@@ -18,7 +18,7 @@ export interface CssRule {
 }
 
 export interface ThemeElement {
-  /** e.g. ["html", ":root", ".light", '[data-mood="cyber"]', '[data-brand="blue"]'] */
+  /** e.g. ["html", ":root", ".light", '[data-brand="emerald"]'] */
   tokens: string[];
 }
 

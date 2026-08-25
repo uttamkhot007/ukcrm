@@ -7,8 +7,8 @@
  * tooltips, charts, badges, empty states and skeletons — with no network data,
  * no animation and no random values, so screenshots are byte-stable.
  *
- * Theme is driven by query params instead of persisted preferences:
- *   /__theme?mode=light&mood=ocean&brand=blue
+ * Theme is driven by the single approved runtime identity; query params are
+ * ignored unless they match that identity.
  *
  * The route is only registered outside production builds.
  */

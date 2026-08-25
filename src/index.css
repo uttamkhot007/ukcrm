@@ -115,19 +115,14 @@ html[data-release-unverified] [role="alert"] {
      The only paintable shell is the approved light identity. */
   /* ===== APPROVED THEME HARD LOCK =====
      Must come last: even if an old bundle, BFCache restore, or stale storage
-     re-adds html.dark / retired brand / retired mood attributes, the only
-     paintable shell remains the approved light identity. */
+     re-adds retired classes / brand / mood attributes, the only paintable
+     shell remains the approved light identity. */
   html,
   html.light,
-  html.dark,
   html[class],
   html[data-brand],
   html[data-mood],
-  html.dark[data-mood],
-  html.light[data-mood],
-  html[data-brand="blue"],
-  html[data-brand="purple"],
-  html[data-brand="orange"] {
+  html.light[data-mood] {
     --background: 225 30% 96% !important;
     --foreground: 222 47% 11% !important;
     --card: 0 0% 100% !important;
@@ -985,7 +980,6 @@ html[data-release-unverified] [role="alert"] {
 @media print {
   :root,
   html,
-  html.dark,
   body {
     /* Re-declare the light palette so `dark` tokens can never reach paper. */
     --background: 0 0% 100%;
