@@ -20,27 +20,27 @@ describe("theme storage", () => {
     document.cookie = "nexus_theme=; path=/; max-age=0";
   });
 
-  it("round-trips the chosen theme through localStorage and the cookie mirror", () => {
+  it("keeps the approved theme runtime-only without localStorage or cookie persistence", () => {
     writeStoredTheme(LIGHT);
-    expect(JSON.parse(window.localStorage.getItem(THEME_KEY) ?? "{}" )).toEqual({
-      ...LIGHT,
-      revision: THEME_REVISION,
-      designId: THEME_DESIGN_ID,
-    });
-    expect(readThemeCookie(document.cookie)).toEqual(LIGHT);
+    expect(window.localStorage.getItem(THEME_KEY)).toBeNull();
+    expect(readThemeCookie(document.cookie)).toBeNull();
     expect(readStoredTheme()).toEqual(LIGHT);
   });
 
-  it("recovers the theme from the cookie when localStorage was wiped", () => {
-    writeStoredTheme(LIGHT);
-    window.localStorage.clear();
-    expect(readStoredTheme()).toEqual(LIGHT);
-    // and heals the stable key for the next boot
-    expect(JSON.parse(window.localStorage.getItem(THEME_KEY) ?? "{}" )).toEqual({
+  it("purges cookie and localStorage themes on read", () => {
+    window.localStorage.setItem(THEME_KEY, JSON.stringify({
       ...LIGHT,
       revision: THEME_REVISION,
       designId: THEME_DESIGN_ID,
-    });
+    }));
+    document.cookie = `nexus_theme=${encodeURIComponent(JSON.stringify({
+      ...LIGHT,
+      revision: THEME_REVISION,
+      designId: THEME_DESIGN_ID,
+    }))}; path=/`;
+    expect(readStoredTheme()).toEqual(LIGHT);
+    expect(window.localStorage.getItem(THEME_KEY)).toBeNull();
+    expect(readThemeCookie(document.cookie)).toBeNull();
   });
 
   it("rejects legacy schema-versioned keys instead of restoring old themes", () => {

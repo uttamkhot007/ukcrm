@@ -12,6 +12,7 @@ const LEGACY_PRESENTATION_KEYS = [
   "nexus-theme",
   "nexus-theme:v1",
   "nexus-theme:v2",
+  "nexus-theme:v3",
   "nexus-theme:v4",
   THEME_STORAGE_KEY,
   "app-theme-config",

@@ -126,38 +126,12 @@ export function clearStoredTheme(): void {
  * back so the next boot is a single-step read.
  */
 export function readStoredTheme(): ThemeConfig {
-  const store = safeLocal();
-  const stable = parse(store?.getItem(THEME_KEY) ?? null);
-  if (stable) return stable;
-
-  const cookie = typeof document === "undefined" ? null : readThemeCookie(document.cookie);
-  if (cookie) {
-    writeStoredTheme(cookie);
-    return cookie;
-  }
-
   clearStoredTheme();
   return DEFAULT_THEME;
 }
 
 export function writeStoredTheme(_theme: ThemeConfig): void {
-  const persisted: StoredThemeConfig = { ...DEFAULT_THEME, revision: THEME_REVISION, designId: THEME_DESIGN_ID };
-  const serialized = JSON.stringify(persisted);
-  try {
-    safeLocal()?.setItem(THEME_KEY, serialized);
-  } catch {
-    /* storage may be unavailable — the cookie below is the fallback */
-  }
-  try {
-    if (typeof document !== "undefined") {
-      const secure = window.location.protocol === "https:" ? "; Secure" : "";
-      // One year, site-wide, lax so it is sent on the top-level navigation
-      // that renders index.html and its pre-paint theme bootstrap.
-      document.cookie = `${THEME_COOKIE}=${encodeURIComponent(serialized)}; path=/; max-age=31536000; SameSite=Lax${secure}`;
-    }
-  } catch {
-    /* ignore */
-  }
+  clearStoredTheme();
 }
 
 /** Apply a theme to <html>. Mirrors the inline bootstrap in index.html. */
