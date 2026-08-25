@@ -12,7 +12,7 @@
  * Never lower CACHE_EPOCH.
  * ------------------------------------------------------------------ */
 
-export const CACHE_EPOCH = 8;
+export const CACHE_EPOCH = 9;
 
 const EPOCH_KEY = "nexus:cache-epoch";
 const EPOCH_PARAM = "__epoch";

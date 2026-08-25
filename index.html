@@ -137,15 +137,22 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@NexusCRM" />
+    <style id="approved-theme-first-paint">
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: hsl(225 30% 96%);
+        color: hsl(222 47% 11%);
+        color-scheme: light;
+      }
+    </style>
     <script>
-      // Apply only the current design-revision theme before first paint.
-      // Stale saved themes are deleted so retired visuals cannot return.
+      // Apply only the single approved theme before first paint.
+      // Any saved variant is deleted so retired visuals cannot flash on refresh.
       (function () {
         var STABLE = 'nexus-theme';
         var LEGACY = ['nexus-theme:v4', 'nexus-theme:v3', 'nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
         var DEFAULT_THEME = { mode: 'light', brand: 'emerald', mood: 'cyber' };
-        var BRANDS = ['emerald', 'blue', 'purple', 'orange'];
-        var MOODS = ['default', 'ocean', 'forest', 'sunset', 'midnight', 'cyber'];
         var revMeta = document.querySelector('meta[name="approved-design-revision"]');
         var idMeta = document.querySelector('meta[name="approved-design-id"]');
         var THEME_REVISION = Number((revMeta && revMeta.getAttribute('content')) || '0');
@@ -159,12 +166,10 @@
             if (!v || typeof v !== 'object') return null;
             if (Number(v.revision) !== THEME_REVISION) return null;
             if (v.designId !== THEME_DESIGN_ID) return null;
-            if (v.mode !== 'light' && v.mode !== 'dark') return null;
-            return {
-              mode: v.mode,
-              brand: BRANDS.indexOf(v.brand) >= 0 ? v.brand : DEFAULT_THEME.brand,
-              mood: MOODS.indexOf(v.mood) >= 0 ? v.mood : DEFAULT_THEME.mood
-            };
+            if (v.mode !== DEFAULT_THEME.mode) return null;
+            if (v.brand !== DEFAULT_THEME.brand) return null;
+            if (v.mood !== DEFAULT_THEME.mood) return null;
+            return DEFAULT_THEME;
           } catch (e) {}
           return null;
         }
@@ -182,18 +187,19 @@
           try { document.cookie = 'nexus_theme=; path=/; max-age=0; SameSite=Lax'; } catch (e) {}
         }
         var t = null;
+        var needsRewrite = false;
         try {
           t = parse(localStorage.getItem(STABLE));
           if (!t) t = fromCookie();
-          if (!t) clearStaleTheme();
+          if (!t) { clearStaleTheme(); needsRewrite = true; }
         } catch (e) {
           t = t || fromCookie();
         }
         t = t || DEFAULT_THEME;
         var el = document.documentElement;
-        var mode = t.mode === 'dark' ? 'dark' : 'light';
-        var brand = BRANDS.indexOf(t.brand) >= 0 ? t.brand : DEFAULT_THEME.brand;
-        var mood = MOODS.indexOf(t.mood) >= 0 ? t.mood : DEFAULT_THEME.mood;
+        var mode = DEFAULT_THEME.mode;
+        var brand = DEFAULT_THEME.brand;
+        var mood = DEFAULT_THEME.mood;
 
         el.classList.remove('light', 'dark');
         el.classList.add(mode);
@@ -201,7 +207,11 @@
         el.setAttribute('data-mood', mood);
         el.style.colorScheme = mode;
         if (identityKnown) {
-          try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION, designId: THEME_DESIGN_ID })); } catch (e) {}
+          try {
+            var serialized = JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION, designId: THEME_DESIGN_ID });
+            localStorage.setItem(STABLE, serialized);
+            document.cookie = 'nexus_theme=' + encodeURIComponent(serialized) + '; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+          } catch (e) {}
         }
 
       })();

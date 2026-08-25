@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { PortalModeSwitcher } from "./PortalModeSwitcher";
-import { ThemeSwitcher } from "./ThemeSwitcher";
 import { NotificationsPopover } from "./NotificationsPopover";
 import { MaintenanceBanner } from "./MaintenanceBanner";
 import { SuperAdminTenantSwitcher } from "./SuperAdminTenantSwitcher";
@@ -46,8 +45,6 @@ export function Header({ onAIToggle }: HeaderProps) {
 
         <div className="flex items-center gap-3">
           <SuperAdminTenantSwitcher />
-          
-          <ThemeSwitcher />
           
           <PortalModeSwitcher />
           

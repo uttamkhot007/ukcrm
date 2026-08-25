@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   applyThemeToDocument,
+  DEFAULT_THEME,
   readStoredTheme,
   writeStoredTheme,
   normalizeTheme,
@@ -51,10 +52,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const setMode = (mode: ThemeMode) => setTheme(prev => ({ ...prev, mode }));
-  const setBrand = (brand: ThemeBrand) => setTheme(prev => ({ ...prev, brand }));
-  const setMood = (mood: ThemeMood) => setTheme(prev => ({ ...prev, mood }));
-  const toggleMode = () => setTheme(prev => ({ ...prev, mode: prev.mode === 'light' ? 'dark' : 'light' }));
+  const lockToApprovedTheme = () => setTheme(DEFAULT_THEME);
+  const setMode = (_mode: ThemeMode) => lockToApprovedTheme();
+  const setBrand = (_brand: ThemeBrand) => lockToApprovedTheme();
+  const setMood = (_mood: ThemeMood) => lockToApprovedTheme();
+  const toggleMode = () => lockToApprovedTheme();
 
   return (
     <ThemeContext.Provider value={{ theme, setMode, setBrand, setMood, toggleMode }}>
