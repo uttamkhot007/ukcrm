@@ -523,10 +523,11 @@ Resources:
       SecurityGroups:
         - !Ref ALBSecurityGroup
       LoadBalancerAttributes:
-        # Long-idle browser tabs perform a release check when they wake. Keep
-        # idle connections alive long enough to avoid losing that first check.
+        # Do not pin resumed browser tabs to a retiring frontend task. The
+        # client release check uses a short request and does not need a long
+        # keep-alive window.
         - Key: idle_timeout.timeout_seconds
-          Value: '120'
+          Value: '30'
 
   FrontendTG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -537,6 +538,11 @@ Resources:
       VpcId: !Ref VPC
       TargetType: ip
       HealthCheckPath: /health
+      TargetGroupAttributes:
+        # Frontend responses are stateless. Retire an old release promptly so
+        # its index.html cannot reappear during the default five-minute drain.
+        - Key: deregistration_delay.timeout_seconds
+          Value: '5'
 
   BackendTG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
