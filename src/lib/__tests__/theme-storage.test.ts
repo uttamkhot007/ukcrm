@@ -12,6 +12,7 @@ import {
 } from "@/lib/theme-storage";
 
 const LIGHT = { mode: "light", brand: "emerald", mood: "cyber" } as const;
+const OLD_VARIANT = { mode: "dark", brand: "purple", mood: "midnight" } as const;
 
 describe("theme storage", () => {
   beforeEach(() => {
@@ -56,10 +57,7 @@ describe("theme storage", () => {
     expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus" })).toBeNull();
     expect(normalizeTheme({ ...LIGHT, revision: THEME_REVISION, designId: "stale-design-id" })).toBeNull();
     expect(normalizeTheme({ ...LIGHT, revision: THEME_REVISION - 1, designId: THEME_DESIGN_ID })).toBeNull();
-    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus", revision: THEME_REVISION, designId: THEME_DESIGN_ID })).toEqual({
-      mode: "light",
-      brand: DEFAULT_THEME.brand,
-      mood: DEFAULT_THEME.mood,
-    });
+    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus", revision: THEME_REVISION, designId: THEME_DESIGN_ID })).toBeNull();
+    expect(normalizeTheme({ ...OLD_VARIANT, revision: THEME_REVISION, designId: THEME_DESIGN_ID })).toBeNull();
   });
 });

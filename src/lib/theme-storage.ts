@@ -1,13 +1,13 @@
 import { APPROVED_DESIGN_ID, APPROVED_DESIGN_REVISION } from "@/lib/approved-design-identity";
 
 /**
- * Device-level theme persistence.
+ * Approved-theme persistence.
  *
- * The theme is intentionally tied to the approved design revision. Older builds
- * saved `nexus-theme` and `nexus_theme` without a design revision, allowing a
- * retired visual system to override the current shell after cache cleanup.
- * From r8 onward, only themes stamped with the current approved design revision
- * are accepted; stale theme values are deleted and the current default wins.
+ * The platform has one allowed visual identity. Older builds and user-selected
+ * variants could leave a valid-looking `nexus-theme` value behind, which the
+ * pre-paint bootstrap applied for a moment before React normalized it. From r9
+ * onward, the only loadable theme is DEFAULT_THEME stamped with the current
+ * approved design revision and design id. Anything else is purged.
  */
 
 export type ThemeMode = "light" | "dark";
@@ -44,11 +44,22 @@ function normalizeThemeShape(value: unknown): ThemeConfig | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<ThemeConfig>;
   if (!MODES.includes(raw.mode as ThemeMode)) return null;
-  return {
+  if (!BRANDS.includes(raw.brand as ThemeBrand)) return null;
+  if (!MOODS.includes(raw.mood as ThemeMood)) return null;
+  const theme = {
     mode: raw.mode as ThemeMode,
-    brand: BRANDS.includes(raw.brand as ThemeBrand) ? (raw.brand as ThemeBrand) : DEFAULT_THEME.brand,
-    mood: MOODS.includes(raw.mood as ThemeMood) ? (raw.mood as ThemeMood) : DEFAULT_THEME.mood,
+    brand: raw.brand as ThemeBrand,
+    mood: raw.mood as ThemeMood,
   };
+  return isApprovedDefaultTheme(theme) ? DEFAULT_THEME : null;
+}
+
+function isApprovedDefaultTheme(theme: ThemeConfig): boolean {
+  return (
+    theme.mode === DEFAULT_THEME.mode &&
+    theme.brand === DEFAULT_THEME.brand &&
+    theme.mood === DEFAULT_THEME.mood
+  );
 }
 
 export function normalizeTheme(value: unknown): ThemeConfig | null {
@@ -129,8 +140,8 @@ export function readStoredTheme(): ThemeConfig {
   return DEFAULT_THEME;
 }
 
-export function writeStoredTheme(theme: ThemeConfig): void {
-  const persisted: StoredThemeConfig = { ...theme, revision: THEME_REVISION, designId: THEME_DESIGN_ID };
+export function writeStoredTheme(_theme: ThemeConfig): void {
+  const persisted: StoredThemeConfig = { ...DEFAULT_THEME, revision: THEME_REVISION, designId: THEME_DESIGN_ID };
   const serialized = JSON.stringify(persisted);
   try {
     safeLocal()?.setItem(THEME_KEY, serialized);
@@ -152,10 +163,11 @@ export function writeStoredTheme(theme: ThemeConfig): void {
 /** Apply a theme to <html>. Mirrors the inline bootstrap in index.html. */
 export function applyThemeToDocument(theme: ThemeConfig): void {
   if (typeof document === "undefined") return;
+  const approvedTheme = isApprovedDefaultTheme(theme) ? theme : DEFAULT_THEME;
   const el = document.documentElement;
   el.classList.remove("light", "dark");
-  el.classList.add(theme.mode);
-  el.setAttribute("data-brand", theme.brand);
-  el.setAttribute("data-mood", theme.mood);
-  el.style.colorScheme = theme.mode;
+  el.classList.add(approvedTheme.mode);
+  el.setAttribute("data-brand", approvedTheme.brand);
+  el.setAttribute("data-mood", approvedTheme.mood);
+  el.style.colorScheme = approvedTheme.mode;
 }
