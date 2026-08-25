@@ -22,11 +22,10 @@ describe("presentation persistence migration", () => {
     storage = new MemoryStorage();
   });
 
-  it("removes obsolete UI keys without touching auth, current state, or the theme", () => {
+  it("removes obsolete UI keys without touching auth or current state", () => {
     storage.setItem("nexus-ui-state:legacy:tabs", "old");
     storage.setItem("dashboard-widget-order", "old");
     storage.setItem(`${UI_STATE_PREFIX}tabs`, "current");
-    storage.setItem(THEME_KEY, "current-theme");
     storage.setItem("auth-token", "secret");
 
     const removed = purgeObsoletePresentationState(storage);
@@ -39,10 +38,10 @@ describe("presentation persistence migration", () => {
     expect(storage.getItem("auth-token")).toBe("secret");
   });
 
-  it("never purges the device theme key", () => {
+  it("purges stale device theme keys so old visual systems cannot return", () => {
     storage.setItem(THEME_KEY, JSON.stringify({ mode: "light", brand: "emerald", mood: "cyber" }));
     const removed = purgeObsoletePresentationState(storage);
-    expect(removed).not.toContain(THEME_KEY);
-    expect(storage.getItem(THEME_KEY)).toBeTruthy();
+    expect(removed).toContain(THEME_KEY);
+    expect(storage.getItem(THEME_KEY)).toBeNull();
   });
 });

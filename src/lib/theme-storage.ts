@@ -1,16 +1,13 @@
+import { APPROVED_DESIGN_REVISION } from "@/lib/approved-design-identity";
+
 /**
  * Device-level theme persistence.
  *
- * Rules that this module exists to guarantee:
- *  - The stored key is NOT schema-versioned. Older builds wrote the theme to
- *    `nexus-theme:v<UI_STATE_SCHEMA_VERSION>`, so every schema bump silently
- *    reset a user's light theme back to the dark default.
- *  - The value is mirrored into a cookie. Cookies survive localStorage purges
- *    and are the only copy readable if storage is blocked (Safari private
- *    mode, third-party-storage restrictions).
- *  - The theme is device state, not account state: sign-out must never clear
- *    it, so it deliberately lives outside the `nexus-ui-state:` prefix that
- *    `clearPersistedUiState()` wipes.
+ * The theme is intentionally tied to the approved design revision. Older builds
+ * saved `nexus-theme` and `nexus_theme` without a design revision, allowing a
+ * retired visual system to override the current shell after cache cleanup.
+ * From r8 onward, only themes stamped with the current approved design revision
+ * are accepted; stale theme values are deleted and the current default wins.
  */
 
 export type ThemeMode = "light" | "dark";
@@ -23,9 +20,14 @@ export interface ThemeConfig {
   mood: ThemeMood;
 }
 
+interface StoredThemeConfig extends ThemeConfig {
+  revision: number;
+}
+
 /** Stable, unversioned. Never suffix this with a schema version again. */
 export const THEME_KEY = "nexus-theme";
 export const THEME_COOKIE = "nexus_theme";
+export const THEME_REVISION = APPROVED_DESIGN_REVISION;
 
 /** Keys written by older builds, read once and migrated forward. */
 export const LEGACY_THEME_KEYS = ["nexus-theme:v2", "nexus-theme:v1", "app-theme-config"];
@@ -36,7 +38,7 @@ const MODES: ThemeMode[] = ["light", "dark"];
 const BRANDS: ThemeBrand[] = ["emerald", "blue", "purple", "orange"];
 const MOODS: ThemeMood[] = ["default", "ocean", "forest", "sunset", "midnight", "cyber"];
 
-export function normalizeTheme(value: unknown): ThemeConfig | null {
+function normalizeThemeShape(value: unknown): ThemeConfig | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Partial<ThemeConfig>;
   if (!MODES.includes(raw.mode as ThemeMode)) return null;
@@ -45,6 +47,13 @@ export function normalizeTheme(value: unknown): ThemeConfig | null {
     brand: BRANDS.includes(raw.brand as ThemeBrand) ? (raw.brand as ThemeBrand) : DEFAULT_THEME.brand,
     mood: MOODS.includes(raw.mood as ThemeMood) ? (raw.mood as ThemeMood) : DEFAULT_THEME.mood,
   };
+}
+
+export function normalizeTheme(value: unknown): ThemeConfig | null {
+  const theme = normalizeThemeShape(value);
+  if (!theme || typeof value !== "object") return null;
+  const revision = (value as Partial<StoredThemeConfig>).revision;
+  return revision === THEME_REVISION ? theme : null;
 }
 
 function parse(raw: string | null): ThemeConfig | null {
@@ -74,6 +83,28 @@ function safeLocal(): Storage | null {
   }
 }
 
+function clearThemeCookie(): void {
+  try {
+    if (typeof document !== "undefined") {
+      const secure = window.location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `${THEME_COOKIE}=; path=/; max-age=0; SameSite=Lax${secure}`;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearStoredTheme(): void {
+  try {
+    const store = safeLocal();
+    store?.removeItem(THEME_KEY);
+    for (const key of LEGACY_THEME_KEYS) store?.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+  clearThemeCookie();
+}
+
 /**
  * Resolution order: stable key → cookie mirror → legacy versioned keys →
  * OS preference → app default. Any hit outside the stable key is written
@@ -90,24 +121,13 @@ export function readStoredTheme(): ThemeConfig {
     return cookie;
   }
 
-  for (const key of LEGACY_THEME_KEYS) {
-    const legacy = parse(store?.getItem(key) ?? null);
-    if (legacy) {
-      writeStoredTheme(legacy);
-      try {
-        store?.removeItem(key);
-      } catch {
-        /* ignore */
-      }
-      return legacy;
-    }
-  }
-
+  clearStoredTheme();
   return DEFAULT_THEME;
 }
 
 export function writeStoredTheme(theme: ThemeConfig): void {
-  const serialized = JSON.stringify(theme);
+  const persisted: StoredThemeConfig = { ...theme, revision: THEME_REVISION };
+  const serialized = JSON.stringify(persisted);
   try {
     safeLocal()?.setItem(THEME_KEY, serialized);
   } catch {

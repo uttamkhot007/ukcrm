@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_THEME,
   THEME_KEY,
+  THEME_REVISION,
   normalizeTheme,
   readStoredTheme,
   readThemeCookie,
@@ -19,7 +20,10 @@ describe("theme storage", () => {
 
   it("round-trips the chosen theme through localStorage and the cookie mirror", () => {
     writeStoredTheme(LIGHT);
-    expect(JSON.parse(window.localStorage.getItem(THEME_KEY)!)).toEqual(LIGHT);
+    expect(JSON.parse(window.localStorage.getItem(THEME_KEY) ?? "{}" )).toEqual({
+      ...LIGHT,
+      revision: THEME_REVISION,
+    });
     expect(readThemeCookie(document.cookie)).toEqual(LIGHT);
     expect(readStoredTheme()).toEqual(LIGHT);
   });
@@ -29,21 +33,25 @@ describe("theme storage", () => {
     window.localStorage.clear();
     expect(readStoredTheme()).toEqual(LIGHT);
     // and heals the stable key for the next boot
-    expect(JSON.parse(window.localStorage.getItem(THEME_KEY)!)).toEqual(LIGHT);
+    expect(JSON.parse(window.localStorage.getItem(THEME_KEY) ?? "{}" )).toEqual({
+      ...LIGHT,
+      revision: THEME_REVISION,
+    });
   });
 
-  it("migrates a legacy schema-versioned key forward", () => {
+  it("rejects legacy schema-versioned keys instead of restoring old themes", () => {
     window.localStorage.setItem("nexus-theme:v2", JSON.stringify(LIGHT));
-    expect(readStoredTheme()).toEqual(LIGHT);
+    expect(readStoredTheme()).toEqual(DEFAULT_THEME);
     expect(window.localStorage.getItem("nexus-theme:v2")).toBeNull();
-    expect(JSON.parse(window.localStorage.getItem(THEME_KEY)!)).toEqual(LIGHT);
+    expect(window.localStorage.getItem(THEME_KEY)).toBeNull();
   });
 
   it("rejects malformed values and falls back to the default", () => {
     window.localStorage.setItem(THEME_KEY, "{not json");
     expect(readStoredTheme()).toEqual(DEFAULT_THEME);
     expect(normalizeTheme({ mode: "neon" })).toBeNull();
-    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus" })).toEqual({
+    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus" })).toBeNull();
+    expect(normalizeTheme({ mode: "light", brand: "bogus", mood: "bogus", revision: THEME_REVISION })).toEqual({
       mode: "light",
       brand: DEFAULT_THEME.brand,
       mood: DEFAULT_THEME.mood,

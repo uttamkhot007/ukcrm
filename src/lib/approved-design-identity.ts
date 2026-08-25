@@ -4,5 +4,5 @@
  * This module deliberately has no browser dependencies so Vite can stamp the
  * same identity into HTML, the release manifest, and the JavaScript bundle.
  */
-export const APPROVED_DESIGN_REVISION = 7;
-export const APPROVED_DESIGN_ID = "platform-console-2026-08-25-r7";
+export const APPROVED_DESIGN_REVISION = 8;
+export const APPROVED_DESIGN_ID = "platform-console-2026-08-25-r8";
