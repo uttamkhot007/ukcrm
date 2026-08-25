@@ -17,19 +17,39 @@ function isThemeStorageKey(value: unknown): value is string {
   return THEME_KEY_FRAGMENTS.some((fragment) => normalized.includes(fragment));
 }
 
-function purgeThemeKeysFromStorage(storage: Storage | null | undefined): void {
-  if (!storage) return;
+export type ThemePurgeStatus = "ok" | "failed" | "unsupported";
+
+export interface ThemePurgeReport {
+  localStorage: ThemePurgeStatus;
+  sessionStorage: ThemePurgeStatus;
+  cookies: ThemePurgeStatus;
+  indexedDB: ThemePurgeStatus;
+  removed: string[];
+  remaining: string[];
+}
+
+function purgeThemeKeysFromStorage(
+  storage: Storage | null | undefined,
+  removed: string[],
+): ThemePurgeStatus {
+  if (!storage) return "unsupported";
   try {
     const keys: string[] = [];
     for (let index = 0; index < storage.length; index += 1) {
       const key = storage.key(index);
       if (isThemeStorageKey(key)) keys.push(key);
     }
-    keys.forEach((key) => storage.removeItem(key));
+    keys.forEach((key) => {
+      storage.removeItem(key);
+      removed.push(key);
+    });
+    return "ok";
   } catch {
     /* storage access can be blocked by browser privacy settings */
+    return "failed";
   }
 }
+
 
 function purgeThemeCookies(): void {
   if (typeof document === "undefined") return;
