@@ -140,7 +140,7 @@ export function readStoredTheme(): ThemeConfig {
   return DEFAULT_THEME;
 }
 
-export function writeStoredTheme(theme: ThemeConfig): void {
+export function writeStoredTheme(_theme: ThemeConfig): void {
   const persisted: StoredThemeConfig = { ...DEFAULT_THEME, revision: THEME_REVISION, designId: THEME_DESIGN_ID };
   const serialized = JSON.stringify(persisted);
   try {

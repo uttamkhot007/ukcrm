@@ -187,11 +187,10 @@
           try { document.cookie = 'nexus_theme=; path=/; max-age=0; SameSite=Lax'; } catch (e) {}
         }
         var t = null;
-        var needsRewrite = false;
         try {
           t = parse(localStorage.getItem(STABLE));
           if (!t) t = fromCookie();
-          if (!t) { clearStaleTheme(); needsRewrite = true; }
+          if (!t) clearStaleTheme();
         } catch (e) {
           t = t || fromCookie();
         }
