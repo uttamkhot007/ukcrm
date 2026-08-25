@@ -26,8 +26,8 @@ export function ModuleTabBar({ activeModule, onModuleChange }: ModuleTabBarProps
 
   const handleClick = (id: string) => {
     // Mirror the routing behaviour the sidebar children previously had.
-    if (id.startsWith("admin-center-")) {
-      navigate(`/admin/${id.replace("admin-center-", "")}`);
+    if (id.startsWith("tenant-admin-")) {
+      navigate(`/admin/${id.replace("tenant-admin-", "")}`);
     } else if (id.startsWith("platform-")) {
       navigate(`/admin/platform/${id.replace("platform-", "")}`);
     }

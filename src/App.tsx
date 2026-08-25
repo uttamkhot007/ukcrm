@@ -34,7 +34,6 @@ const AdminUsers = lazyDefault(() => import("./pages/admin/AdminUsers"));
 const AdminIntegrations = lazyDefault(() => import("./pages/admin/AdminIntegrations"));
 const AdminDocumentation = lazyDefault(() => import("./pages/admin/AdminDocumentation"));
 const AdminHealth = lazyDefault(() => import("./pages/admin/AdminHealth"));
-const AdminTenants = lazyDefault(() => import("./pages/admin/AdminTenants"));
 const AdminAlliance = lazyDefault(() => import("./pages/admin/AdminAlliance"));
 const AdminOfferings = lazyDefault(() => import("./pages/admin/AdminOfferings"));
 const AdminProcurement = lazyDefault(() => import("./pages/admin/AdminProcurement"));

@@ -49,7 +49,7 @@ interface ModuleDefinition {
   tier_required: TenantTier | null;
 }
 
-export default function AdminTenants() {
+export default function TenantDirectory() {
   const { isSuperAdmin, refetchTenants } = useTenant();
   // Risky writes are blocked while the published site is behind this build.
   const risky = useRiskyAction();

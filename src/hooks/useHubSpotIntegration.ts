@@ -60,7 +60,7 @@ export function useHubSpotIntegration() {
     }
 
     try {
-      const redirectUri = `${window.location.origin}/admin-center`;
+      const redirectUri = `${window.location.origin}/admin/integrations`;
       
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
@@ -89,7 +89,7 @@ export function useHubSpotIntegration() {
 
   const handleCallback = async (code: string) => {
     try {
-      const redirectUri = localStorage.getItem('hubspot_redirect') || `${window.location.origin}/admin-center`;
+      const redirectUri = localStorage.getItem('hubspot_redirect') || `${window.location.origin}/admin/integrations`;
 
       const { error } = await supabase.functions.invoke('hubspot-auth', {
         body: { action: 'exchange-code', code, redirectUri },

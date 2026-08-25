@@ -19,13 +19,13 @@ export default function Agents() {
       return;
     }
 
-    if (module === "admin-center") {
+    if (module === "tenant-admin") {
       navigate("/admin/organization");
       return;
     }
 
-    if (module.startsWith("admin-center-")) {
-      navigate(`/admin/${module.replace("admin-center-", "")}`);
+    if (module.startsWith("tenant-admin-")) {
+      navigate(`/admin/${module.replace("tenant-admin-", "")}`);
       return;
     }
 
