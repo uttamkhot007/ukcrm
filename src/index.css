@@ -113,6 +113,46 @@ html[data-release-unverified] [role="alert"] {
     --sidebar-ring: 160 84% 35%;
   }
 
+  /* ===== DARK MODE (Dormant) =====
+     Kept only for scoped dark: utilities/tests. It never applies during boot
+     because the approved runtime theme always writes html.light. */
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 160 84% 39%;
+    --glass-bg: 222 47% 11%;
+    --glass-border: 217 33% 25%;
+    --glass-blur: 20px;
+    --glass-reflection: linear-gradient(180deg,
+      hsla(160, 84%, 50%, 0.08) 0%,
+      hsla(160, 84%, 39%, 0.04) 50%,
+      transparent 100%);
+    --sidebar-background: 222 47% 5%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 15%;
+    --sidebar-ring: 160 84% 39%;
+  }
+
   /* ===== LIGHT MODE ===== */
   .light {
     --background: 225 30% 96%;
