@@ -9,6 +9,7 @@ import { installBuildCacheStrategy } from "./lib/build-cache-strategy";
 import { enforceApprovedDesign } from "./lib/approved-design-lock";
 import { enforceCacheEpoch } from "./lib/cache-epoch";
 import { isStaleDeployError, recoverFromStaleDeploy } from "./lib/chunk-retry";
+import { purgeThemeStorageBeforeBoot } from "./lib/theme-purge";
 
 
 // Log build identity to console so it's easy to confirm which bundle
@@ -32,6 +33,9 @@ window.addEventListener("vite:preloadError", (event) => {
 });
 
 async function mountCurrentRelease() {
+  // Theme storage is intentionally non-persistent. Purge all theme traces before
+  // any React UI can mount so retired themes cannot flash or rehydrate.
+  await purgeThemeStorageBeforeBoot();
   // Global cache epoch: purge every browser/CDN-held copy once per epoch.
   if (enforceCacheEpoch()) return;
   // Approved design lock: never paint a shell older than the approved view.
