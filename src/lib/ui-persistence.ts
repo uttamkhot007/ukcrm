@@ -1,17 +1,23 @@
-/** Presentation-state schema. Bump when navigation or theme shapes change. */
+/** Presentation-state schema. Bump when navigation state shapes change. */
 export const UI_STATE_SCHEMA_VERSION = "3";
 export const UI_STATE_PREFIX = `nexus-ui-state:v${UI_STATE_SCHEMA_VERSION}:`;
 /**
- * @deprecated Legacy, schema-versioned theme key. The live key is the stable
- * `THEME_KEY` in `@/lib/theme-storage` — versioning this key made every schema
- * bump reset the user's theme. Kept only so old values can be migrated.
+ * @deprecated Legacy, schema-versioned theme key. Current theme values are
+ * design-revisioned in `@/lib/theme-storage`; old theme keys are purged.
  */
 export const THEME_STORAGE_KEY = `nexus-theme:v${UI_STATE_SCHEMA_VERSION}`;
 
-const LEGACY_PRESENTATION_KEYS = ["dashboard-widget-order"];
+const LEGACY_PRESENTATION_KEYS = [
+  "dashboard-widget-order",
+  "nexus-theme",
+  "nexus-theme:v1",
+  "nexus-theme:v2",
+  THEME_STORAGE_KEY,
+  "app-theme-config",
+];
 
-/** Device-level keys that survive every purge and sign-out. */
-const PRESERVED_KEYS = ["nexus-theme"];
+/** Device-level keys that survive presentation purges. */
+const PRESERVED_KEYS: string[] = [];
 
 /** Remove only obsolete presentation state. Auth/session storage is untouched. */
 export function purgeObsoletePresentationState(storage: Storage): string[] {

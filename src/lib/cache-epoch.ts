@@ -4,7 +4,7 @@
  * Bumping CACHE_EPOCH forces every browser that boots this bundle to:
  *   1. unregister every service worker registration on the origin,
  *   2. delete every Cache Storage bucket,
- *   3. clear app-owned localStorage / sessionStorage (auth + theme survive),
+ *   3. clear app-owned localStorage / sessionStorage (auth survives),
  *   4. reload once with a cache-bypassing query parameter so any CDN,
  *      proxy or bfcache copy of the shell is re-fetched from origin.
  *
@@ -12,15 +12,14 @@
  * Never lower CACHE_EPOCH.
  * ------------------------------------------------------------------ */
 
-export const CACHE_EPOCH = 7;
+export const CACHE_EPOCH = 8;
 
 const EPOCH_KEY = "nexus:cache-epoch";
 const EPOCH_PARAM = "__epoch";
 
-/** Keys that must survive a purge (session + user theme choice). */
+/** Keys that must survive a purge (session only; theme is design-revisioned). */
 function isPreservedKey(key: string): boolean {
   return (
-    key === "nexus-theme" ||
     key.startsWith("sb-") ||
     key.startsWith("supabase.") ||
     key.startsWith("nexus:auth")

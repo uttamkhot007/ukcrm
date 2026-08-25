@@ -359,8 +359,8 @@ describe("cached assets from a previous build", () => {
     expect(buckets.size).toBe(0);
     expect(localStorage.getItem("nexus-query-cache")).toBeNull();
     expect(localStorage.getItem("nexus:build-scoped:tabs")).toBeNull();
-    // The theme is explicitly safelisted from build purges.
-    expect(localStorage.getItem("nexus-theme")).toBe("light");
+    // Theme is design-revisioned and purged with stale presentation state.
+    expect(localStorage.getItem("nexus-theme")).toBeNull();
   });
 
   it("does nothing when the build is unchanged", async () => {

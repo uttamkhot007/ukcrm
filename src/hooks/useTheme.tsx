@@ -31,25 +31,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyThemeToDocument(theme);
   }, [theme]);
 
-  // Keep every open tab in sync, and recover the choice if another script
-  // (cache purge, storage cleanup) removes the key while the app is running.
+  // Keep every open tab in sync. If a new release removes the theme key, do not
+  // resurrect an older in-memory theme; resolve through the current revision.
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (event.key !== null && event.key !== THEME_KEY) return;
       if (event.newValue === null) {
-        writeStoredTheme(theme);
+        setTheme(readStoredTheme());
         return;
       }
       try {
         const next = normalizeTheme(JSON.parse(event.newValue));
-        if (next) setTheme(next);
+        setTheme(next ?? readStoredTheme());
       } catch {
         /* ignore malformed writes */
       }
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [theme]);
+  }, []);
 
   const setMode = (mode: ThemeMode) => setTheme(prev => ({ ...prev, mode }));
   const setBrand = (brand: ThemeBrand) => setTheme(prev => ({ ...prev, brand }));

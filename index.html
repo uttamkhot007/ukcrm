@@ -138,17 +138,19 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@NexusCRM" />
     <script>
-      // Apply the persisted theme before first paint so light mode never
-      // flashes dark. The <body> must NOT carry a hardcoded theme class:
-      // that made every Tailwind `dark:` variant win in light mode.
+      // Apply only the current design-revision theme before first paint.
+      // Stale saved themes are deleted so retired visuals cannot return.
       (function () {
         var STABLE = 'nexus-theme';
-        var LEGACY = ['nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
+        var LEGACY = ['nexus-theme:v3', 'nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
+        var DEFAULT_THEME = { mode: 'light', brand: 'emerald', mood: 'cyber' };
+        var meta = document.querySelector('meta[name="approved-design-revision"]');
+        var THEME_REVISION = Number((meta && meta.getAttribute('content')) || '0');
         function parse(raw) {
           if (!raw) return null;
           try {
             var v = JSON.parse(raw);
-            if (v && (v.mode === 'light' || v.mode === 'dark')) return v;
+            if (v && Number(v.revision) === THEME_REVISION && (v.mode === 'light' || v.mode === 'dark')) return v;
           } catch (e) {}
           return null;
         }
@@ -158,28 +160,32 @@
             return m ? parse(decodeURIComponent(m[1])) : null;
           } catch (e) { return null; }
         }
+        function clearStaleTheme() {
+          try {
+            localStorage.removeItem(STABLE);
+            for (var i = 0; i < LEGACY.length; i++) localStorage.removeItem(LEGACY[i]);
+          } catch (e) {}
+          try { document.cookie = 'nexus_theme=; path=/; max-age=0; SameSite=Lax'; } catch (e) {}
+        }
         var t = null;
         try {
           t = parse(localStorage.getItem(STABLE));
           if (!t) t = fromCookie();
-          if (!t) {
-            for (var i = 0; i < LEGACY.length && !t; i++) t = parse(localStorage.getItem(LEGACY[i]));
-          }
-          // Heal the stable key immediately so the first React render and any
-          // later storage purge both read the same resolved value.
-          if (t) localStorage.setItem(STABLE, JSON.stringify(t));
+          if (!t) clearStaleTheme();
         } catch (e) {
           t = t || fromCookie();
         }
+        t = t || DEFAULT_THEME;
         var el = document.documentElement;
-        var mode = (t && t.mode) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        var mood = (t && t.mood) || 'cyber';
+        var mode = t.mode || DEFAULT_THEME.mode;
+        var brand = t.brand || DEFAULT_THEME.brand;
+        var mood = t.mood || DEFAULT_THEME.mood;
         el.classList.remove('light', 'dark');
         el.classList.add(mode);
-        el.setAttribute('data-brand', (t && t.brand) || 'emerald');
+        el.setAttribute('data-brand', brand);
         el.setAttribute('data-mood', mood);
         el.style.colorScheme = mode;
-        try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: (t && t.brand) || 'emerald', mood: mood })); } catch (e) {}
+        try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION })); } catch (e) {}
       })();
     </script>
   </head>
