@@ -200,7 +200,10 @@
         el.setAttribute('data-brand', brand);
         el.setAttribute('data-mood', mood);
         el.style.colorScheme = mode;
-        try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION })); } catch (e) {}
+        if (identityKnown) {
+          try { localStorage.setItem(STABLE, JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION, designId: THEME_DESIGN_ID })); } catch (e) {}
+        }
+
       })();
     </script>
   </head>
