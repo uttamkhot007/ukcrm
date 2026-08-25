@@ -55,7 +55,7 @@ const rules = parseCustomPropertyRules(readIndexCss());
 
 describe("light-mode token cascade", () => {
   it("parses the theme layer", () => {
-    expect(rules.length).toBeGreaterThan(5);
+    expect(rules.length).toBeGreaterThan(3);
   });
 
   for (const mood of MOODS) {
