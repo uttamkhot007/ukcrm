@@ -23,31 +23,34 @@ html[data-release-unverified] [role="alert"] {
 }
 
 @layer base {
-  /* ===== DARK MODE (Default) ===== */
-  :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+  /* ===== APPROVED LIGHT THEME (Default) =====
+     The root tokens are intentionally the approved theme. This prevents any
+     old dark theme from painting before the boot script or React can run. */
+  :root,
+  .light {
+    --background: 225 30% 96%;
+    --foreground: 222 47% 11%;
+    --card: 225 30% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 225 30% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 160 84% 27%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 225 20% 92%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 225 20% 92%;
+    --muted-foreground: 220 9% 40%;
+    --accent: 225 20% 92%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 160 84% 39%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 225 20% 86%;
+    --input: 225 20% 86%;
+    --ring: 160 84% 35%;
     --radius: 0.75rem;
 
     /* Module colors */
-    --sales: 160 84% 39%;
+    --sales: 160 84% 27%;
     --sales-glow: 160 84% 50%;
     --finance: 217 91% 60%;
     --finance-glow: 217 91% 70%;
@@ -71,40 +74,75 @@ html[data-release-unverified] [role="alert"] {
     --role-foreground: 0 0% 100%;
 
     /* 3D Glass Effect Variables */
-    --glass-bg: 222 47% 11%;
-    --glass-border: 217 33% 25%;
-    --glass-blur: 20px;
+    --glass-bg: 0 0% 100%;
+    --glass-border: 220 13% 85%;
+    --glass-blur: 16px;
     --glass-shine: linear-gradient(135deg, 
       hsla(0, 0%, 100%, 0.15) 0%, 
       hsla(0, 0%, 100%, 0.05) 40%, 
       hsla(0, 0%, 100%, 0) 60%);
+    --glass-reflection: none;
+
+    /* Depth Shadows */
+    --shadow-elevation-low: 
+      0 1px 3px hsla(222, 47%, 20%, 0.06),
+      0 2px 6px hsla(222, 47%, 20%, 0.04);
+    --shadow-elevation-medium: 
+      0 4px 12px hsla(222, 47%, 20%, 0.08),
+      0 8px 24px hsla(222, 47%, 20%, 0.06);
+    --shadow-elevation-high: 
+      0 8px 24px hsla(222, 47%, 20%, 0.1),
+      0 16px 48px hsla(222, 47%, 20%, 0.08);
+
+    /* Neon Glow Effects - Inspired by Cybersecurity Dashboards */
+    --neon-primary: 0 4px 16px hsl(var(--primary) / 0.18);
+    --neon-blue: 0 4px 16px hsl(217 91% 60% / 0.18);
+    --neon-purple: 0 4px 16px hsl(263 70% 50% / 0.18);
+    --neon-cyan: 0 4px 16px hsl(187 92% 45% / 0.18);
+    --neon-orange: 0 4px 16px hsl(38 92% 50% / 0.18);
+    --neon-pink: 0 4px 16px hsl(330 81% 60% / 0.18);
+
+    /* Sidebar */
+    --sidebar-background: 225 30% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 160 84% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 20% 92%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 225 20% 86%;
+    --sidebar-ring: 160 84% 35%;
+  }
+
+  /* ===== DARK MODE (Dormant) =====
+     Kept only for scoped dark: utilities/tests. It never applies during boot
+     because the approved runtime theme always writes html.light. */
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 160 84% 39%;
+    --glass-bg: 222 47% 11%;
+    --glass-border: 217 33% 25%;
+    --glass-blur: 20px;
     --glass-reflection: linear-gradient(180deg,
       hsla(160, 84%, 50%, 0.08) 0%,
       hsla(160, 84%, 39%, 0.04) 50%,
       transparent 100%);
-
-    /* Depth Shadows */
-    --shadow-elevation-low: 
-      0 1px 2px hsla(222, 47%, 0%, 0.3),
-      0 2px 4px hsla(222, 47%, 0%, 0.2);
-    --shadow-elevation-medium: 
-      0 4px 8px hsla(222, 47%, 0%, 0.3),
-      0 8px 16px hsla(222, 47%, 0%, 0.2),
-      0 16px 32px hsla(222, 47%, 0%, 0.1);
-    --shadow-elevation-high: 
-      0 8px 16px hsla(222, 47%, 0%, 0.4),
-      0 16px 32px hsla(222, 47%, 0%, 0.3),
-      0 32px 64px hsla(222, 47%, 0%, 0.2);
-
-    /* Neon Glow Effects - Inspired by Cybersecurity Dashboards */
-    --neon-primary: 0 0 20px hsl(160 84% 50% / 0.5), 0 0 40px hsl(160 84% 50% / 0.3), 0 0 60px hsl(160 84% 50% / 0.1);
-    --neon-blue: 0 0 20px hsl(217 91% 60% / 0.5), 0 0 40px hsl(217 91% 60% / 0.3);
-    --neon-purple: 0 0 20px hsl(263 70% 50% / 0.5), 0 0 40px hsl(263 70% 50% / 0.3);
-    --neon-cyan: 0 0 20px hsl(187 92% 45% / 0.5), 0 0 40px hsl(187 92% 45% / 0.3);
-    --neon-orange: 0 0 20px hsl(38 92% 50% / 0.5), 0 0 40px hsl(38 92% 50% / 0.3);
-    --neon-pink: 0 0 20px hsl(330 81% 60% / 0.5), 0 0 40px hsl(330 81% 60% / 0.3);
-
-    /* Sidebar */
     --sidebar-background: 222 47% 5%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 160 84% 39%;
@@ -117,27 +155,27 @@ html[data-release-unverified] [role="alert"] {
 
   /* ===== LIGHT MODE ===== */
   .light {
-    --background: 210 20% 96%;
+    --background: 225 30% 96%;
     --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
+    --card: 225 30% 100%;
     --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
+    --popover: 225 30% 100%;
     --popover-foreground: 222 47% 11%;
     --primary: 160 84% 27%;
     --primary-foreground: 0 0% 100%;
     /* Module accents darkened for AA contrast against white text in light mode */
     --sales: 160 84% 27%;
 
-    --secondary: 220 14% 92%;
+    --secondary: 225 20% 92%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 92%;
+    --muted: 225 20% 92%;
     --muted-foreground: 220 9% 40%;
-    --accent: 220 14% 92%;
+    --accent: 225 20% 92%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 85%;
-    --input: 220 13% 85%;
+    --border: 225 20% 86%;
+    --input: 225 20% 86%;
     --ring: 160 84% 35%;
 
     /* Light Mode Glass - Higher opacity for readability */
@@ -163,13 +201,13 @@ html[data-release-unverified] [role="alert"] {
       0 8px 24px hsla(222, 47%, 20%, 0.1),
       0 16px 48px hsla(222, 47%, 20%, 0.08);
 
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 225 30% 100%;
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 160 84% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent: 225 20% 92%;
     --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 88%;
+    --sidebar-border: 225 20% 86%;
     --sidebar-ring: 160 84% 35%;
   }
 
@@ -206,7 +244,7 @@ html[data-release-unverified] [role="alert"] {
 
   /* ===== MOOD THEMES ===== */
   /* Ocean Mood */
-  [data-mood="ocean"] {
+  .dark[data-mood="ocean"] {
     --background: 210 50% 8%;
     --card: 210 45% 10%;
     --muted: 210 40% 15%;
@@ -232,7 +270,7 @@ html[data-release-unverified] [role="alert"] {
   }
 
   /* Forest Mood */
-  [data-mood="forest"] {
+  .dark[data-mood="forest"] {
     --background: 150 30% 6%;
     --card: 150 25% 9%;
     --muted: 150 20% 13%;
@@ -258,7 +296,7 @@ html[data-release-unverified] [role="alert"] {
   }
 
   /* Sunset Mood */
-  [data-mood="sunset"] {
+  .dark[data-mood="sunset"] {
     --background: 15 40% 7%;
     --card: 15 35% 10%;
     --muted: 15 30% 14%;
@@ -284,7 +322,7 @@ html[data-release-unverified] [role="alert"] {
   }
 
   /* Midnight Mood (Ultra Dark) */
-  [data-mood="midnight"] {
+  .dark[data-mood="midnight"] {
     --background: 240 20% 4%;
     --card: 240 18% 6%;
     --muted: 240 15% 10%;
@@ -310,7 +348,7 @@ html[data-release-unverified] [role="alert"] {
   }
 
   /* Cyber Mood (Cybersecurity Dashboard Style - Deep Navy with Neon Accents) */
-  [data-mood="cyber"] {
+  .dark[data-mood="cyber"] {
     --background: 225 35% 5%;
     --card: 225 30% 8%;
     --muted: 225 25% 12%;
@@ -401,7 +439,7 @@ html[data-release-unverified] [role="alert"] {
   }
 
   /* Only apply shine effects in dark mode for better light mode readability */
-  :root:not(.light) .glass::before {
+  .dark .glass::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -411,7 +449,7 @@ html[data-release-unverified] [role="alert"] {
     border-radius: inherit;
   }
 
-  :root:not(.light) .glass::after {
+  .dark .glass::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -422,6 +460,7 @@ html[data-release-unverified] [role="alert"] {
   }
 
   /* Light mode gets subtle border glow instead */
+  :root .glass,
   .light .glass {
     background: hsl(var(--glass-bg) / 0.95);
     border: 1px solid hsl(var(--glass-border) / 0.5);

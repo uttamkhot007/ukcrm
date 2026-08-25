@@ -158,8 +158,8 @@ if (findings.length === 0) {
     !html.includes(`name="approved-design-id" content="${releaseManifest.approvedDesignId}"`) ||
     !html.includes(`name="approved-design-revision" content="${releaseManifest.approvedDesignRevision}"`);
   const invalidDesignIdentity =
-    releaseManifest.approvedDesignId !== "platform-console-2026-08-25-r9" ||
-    releaseManifest.approvedDesignRevision !== 9;
+    releaseManifest.approvedDesignId !== "platform-console-2026-08-25-r10" ||
+    releaseManifest.approvedDesignRevision !== 10;
   const javascript = files
     .filter((file) => extname(file).toLowerCase() === ".js")
     .map((file) => readFileSync(file, "utf8"))
