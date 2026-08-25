@@ -34,11 +34,11 @@ export const THEME_DESIGN_ID = APPROVED_DESIGN_ID;
 /** Keys written by older builds, read once and migrated forward. */
 export const LEGACY_THEME_KEYS = ["nexus-theme:v4", "nexus-theme:v3", "nexus-theme:v2", "nexus-theme:v1", "app-theme-config"];
 
-export const DEFAULT_THEME: ThemeConfig = { mode: "light", brand: "emerald", mood: "cyber" };
+export const DEFAULT_THEME: ThemeConfig = { mode: "light", brand: "emerald", mood: "default" };
 
-const MODES: ThemeMode[] = ["light", "dark"];
-const BRANDS: ThemeBrand[] = ["emerald", "blue", "purple", "orange"];
-const MOODS: ThemeMood[] = ["default", "ocean", "forest", "sunset", "midnight", "cyber"];
+const MODES: ThemeMode[] = ["light"];
+const BRANDS: ThemeBrand[] = ["emerald"];
+const MOODS: ThemeMood[] = ["default"];
 
 function normalizeThemeShape(value: unknown): ThemeConfig | null {
   if (!value || typeof value !== "object") return null;
@@ -139,9 +139,9 @@ export function applyThemeToDocument(theme: ThemeConfig): void {
   if (typeof document === "undefined") return;
   const approvedTheme = isApprovedDefaultTheme(theme) ? theme : DEFAULT_THEME;
   const el = document.documentElement;
-  el.classList.remove("light", "dark");
-  el.classList.add(approvedTheme.mode);
-  el.setAttribute("data-brand", approvedTheme.brand);
-  el.setAttribute("data-mood", approvedTheme.mood);
-  el.style.colorScheme = approvedTheme.mode;
+  el.classList.remove("dark");
+  el.classList.add("light");
+  el.setAttribute("data-brand", "emerald");
+  el.removeAttribute("data-mood");
+  el.style.colorScheme = "light";
 }

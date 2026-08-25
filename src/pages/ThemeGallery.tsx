@@ -47,8 +47,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { chartAxisProps, chartGridProps } from "@/lib/chart-theme";
 
-const MOODS = ["default", "ocean", "forest", "sunset", "midnight", "cyber"] as const;
-const BRANDS = ["emerald", "blue", "purple", "orange"] as const;
+const MOODS = ["default"] as const;
+const BRANDS = ["emerald"] as const;
 
 const SERIES = [
   { label: "Jan", pipeline: 42, closed: 18 },
@@ -67,7 +67,7 @@ const ROWS = [
 export default function ThemeGallery() {
   const [params] = useSearchParams();
 
-  const mode = params.get("mode") === "dark" ? "dark" : "light";
+  const mode = "light";
   const mood = useMemo(() => {
     const value = params.get("mood") ?? "default";
     return (MOODS as readonly string[]).includes(value) ? value : "default";

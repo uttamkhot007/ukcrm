@@ -11,7 +11,7 @@ import {
   writeStoredTheme,
 } from "@/lib/theme-storage";
 
-const LIGHT = { mode: "light", brand: "emerald", mood: "cyber" } as const;
+const LIGHT = { mode: "light", brand: "emerald", mood: "default" } as const;
 const OLD_VARIANT = { mode: "dark", brand: "purple", mood: "midnight" } as const;
 
 describe("theme storage", () => {

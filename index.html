@@ -53,7 +53,7 @@
           el.classList.remove('dark');
           el.classList.add('light');
           el.setAttribute('data-brand', 'emerald');
-          el.setAttribute('data-mood', 'cyber');
+          el.removeAttribute('data-mood');
           el.style.colorScheme = 'light';
           el.setAttribute('data-approved-theme-ready', '1');
         } catch (e) {}
@@ -210,7 +210,7 @@
       // Theme persistence is fully disabled. Delete all theme-related browser
       // storage before the body can paint; React waits for the IndexedDB purge.
       (function () {
-        var DEFAULT_THEME = { mode: 'light', brand: 'emerald', mood: 'cyber' };
+        var DEFAULT_THEME = { mode: 'light', brand: 'emerald', mood: 'default' };
         function isThemeKey(key) {
           if (!key || typeof key !== 'string') return false;
           var normalized = key.trim().toLowerCase();
@@ -256,13 +256,11 @@
         var el = document.documentElement;
         var mode = DEFAULT_THEME.mode;
         var brand = DEFAULT_THEME.brand;
-        var mood = DEFAULT_THEME.mood;
-
-        el.classList.remove('light', 'dark');
-        el.classList.add(mode);
+        el.classList.remove('dark');
+        el.classList.add('light');
         el.setAttribute('data-brand', brand);
-        el.setAttribute('data-mood', mood);
-        el.style.colorScheme = mode;
+        el.removeAttribute('data-mood');
+        el.style.colorScheme = 'light';
 
       })();
     </script>

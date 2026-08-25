@@ -20,7 +20,7 @@ import {
 type Loader = () => Promise<unknown>;
 
 const loaders: Record<string, Loader> = {
-  dashboard: () => import("@/components/dashboard/WorkspaceHome"),
+  dashboard: () => import("@/components/employee/EmployeePortalModule"),
   sales: () => import("@/components/sales/SalesModule"),
   presales: () => import("@/components/presales/SolutionEngineeringModule"),
   technical: () => import("@/components/technical/TechnicalModule"),

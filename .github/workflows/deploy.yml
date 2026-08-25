@@ -181,8 +181,8 @@ jobs:
             -o /tmp/release-manifest.json
           jq -e --arg expected "${{ github.sha }}" \
             '.commit == $expected and .releaseId == $expected and .environment == "production"
-             and .approvedDesignId == "platform-console-2026-08-25-r12"
-             and .approvedDesignRevision == 12' \
+             and .approvedDesignId == "platform-console-2026-08-25-r13"
+             and .approvedDesignRevision == 13' \
             /tmp/release-manifest.json > /dev/null
           grep -qi '^cache-control:.*no-store' /tmp/release-headers.txt || {
             echo "release-manifest.json is cacheable" >&2

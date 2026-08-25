@@ -39,7 +39,7 @@ describe("presentation persistence migration", () => {
   });
 
   it("purges stale device theme keys so old visual systems cannot return", () => {
-    storage.setItem(THEME_KEY, JSON.stringify({ mode: "light", brand: "emerald", mood: "cyber" }));
+    storage.setItem(THEME_KEY, JSON.stringify({ mode: "light", brand: "emerald", mood: "default" }));
     const removed = purgeObsoletePresentationState(storage);
     expect(removed).toContain(THEME_KEY);
     expect(storage.getItem(THEME_KEY)).toBeNull();
