@@ -1,8 +1,6 @@
-import AdminTenants from "../AdminTenants";
+import TenantDirectory from "@/components/admin/TenantDirectory";
 
-// Platform Console wrapper — the original AdminTenants table is the canonical
-// tenant directory. The PlatformLayout already provides the banner + sub-nav,
-// so we just render it inside.
+// The tenant directory exists only inside the canonical Platform Console.
 export default function PlatformTenants() {
-  return <AdminTenants />;
+  return <TenantDirectory />;
 }

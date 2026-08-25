@@ -227,23 +227,23 @@ const adminItems: NavItem[] = [
     ],
   },
   {
-    id: "admin-center",
+    id: "tenant-admin",
     label: "Admin Center",
     icon: Settings,
     color: "text-destructive",
     requiredRoles: ["admin"],
-  children: [
-      { id: "admin-center-organization", label: "Organization", icon: Building2 },
-      { id: "admin-center-whitelabel", label: "Whitelabel", icon: Palette },
-      { id: "admin-center-users", label: "User Management", icon: Users },
-      { id: "admin-center-authorized-domains", label: "Authorized Domains", icon: ShieldCheck },
-      { id: "admin-center-alliance", label: "Alliance", icon: Handshake },
-      { id: "admin-center-offerings", label: "Offerings", icon: Package },
-      { id: "admin-center-document-templates", label: "Document Templates", icon: FileText },
-      { id: "admin-center-support-management", label: "Support Management", icon: HeadphonesIcon },
-      { id: "admin-center-integrations", label: "Integrations", icon: Puzzle },
-      { id: "admin-center-documentation", label: "Documentation", icon: BookOpen },
-      { id: "admin-center-health", label: "Platform Health", icon: Activity },
+    children: [
+      { id: "tenant-admin-organization", label: "Organization", icon: Building2 },
+      { id: "tenant-admin-whitelabel", label: "Whitelabel", icon: Palette },
+      { id: "tenant-admin-users", label: "User Management", icon: Users },
+      { id: "tenant-admin-authorized-domains", label: "Authorized Domains", icon: ShieldCheck },
+      { id: "tenant-admin-alliance", label: "Alliance", icon: Handshake },
+      { id: "tenant-admin-offerings", label: "Offerings", icon: Package },
+      { id: "tenant-admin-document-templates", label: "Document Templates", icon: FileText },
+      { id: "tenant-admin-support-management", label: "Support Management", icon: HeadphonesIcon },
+      { id: "tenant-admin-integrations", label: "Integrations", icon: Puzzle },
+      { id: "tenant-admin-documentation", label: "Documentation", icon: BookOpen },
+      { id: "tenant-admin-health", label: "Platform Health", icon: Activity },
     ],
   },
 ];
@@ -936,7 +936,7 @@ export function Sidebar({ activeModule, onModuleChange }: SidebarProps) {
   // Publish the active main module's sub-modules so they render as a
   // horizontal tab strip in the content area instead of nesting here.
   // Resolve the owning module. Exact child match wins first, then the longest
-  // matching id prefix — otherwise "admin-center-organization" is wrongly
+  // matching id prefix — otherwise nested administration ids can be claimed
   // claimed by the "admin" (Administration) module.
   const activeParent =
     filteredNavItems.find(

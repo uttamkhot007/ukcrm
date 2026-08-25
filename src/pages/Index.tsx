@@ -346,18 +346,6 @@ const Index = () => {
         return <DealDeskModule initialTab="bid-preparation" />;
       case "deal-desk-evaluation":
         return <DealDeskModule initialTab="evaluation" />;
-      // Alliance module
-      case "admin-center-alliance":
-        return <AllianceModule />;
-      
-      // Offerings module
-      case "admin-center-offerings":
-        return <OfferingsModule />;
-      
-      // Document Templates module
-      case "admin-center-document-templates":
-        return <DocumentTemplatesModule />;
-
       // Module-scoped template libraries (Admin Center stays tenant-admin only)
       case "sales-templates":
         return <DocumentTemplatesModule roleScope="sales" />;
@@ -812,12 +800,12 @@ const Index = () => {
       navigate(`/admin/platform/${subPath}`);
       return;
     }
-    if (module === "admin-center") {
+    if (module === "tenant-admin") {
       navigate("/admin/organization");
       return;
     }
-    if (module.startsWith("admin-center-")) {
-      const subPath = module.replace("admin-center-", "");
+    if (module.startsWith("tenant-admin-")) {
+      const subPath = module.replace("tenant-admin-", "");
       navigate(`/admin/${subPath}`);
       return;
     }

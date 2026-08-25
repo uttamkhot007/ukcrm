@@ -60,7 +60,7 @@ export function useOffice365Integration() {
     }
 
     try {
-      const redirectUri = `${window.location.origin}/admin-center`;
+      const redirectUri = `${window.location.origin}/admin/integrations`;
       
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
@@ -89,7 +89,7 @@ export function useOffice365Integration() {
 
   const handleCallback = async (code: string) => {
     try {
-      const redirectUri = localStorage.getItem('office365_redirect') || `${window.location.origin}/admin-center`;
+      const redirectUri = localStorage.getItem('office365_redirect') || `${window.location.origin}/admin/integrations`;
 
       const { error } = await supabase.functions.invoke('office365-auth', {
         body: { action: 'exchange-code', code, redirectUri },

@@ -24,20 +24,20 @@ export default function AdminLayout() {
     if (path.includes("/admin/platform/licenses")) return "platform-licenses";
     if (path.includes("/admin/platform/integrations")) return "platform-integrations";
     if (path.includes("/admin/platform/status")) return "platform-status";
-    if (path.includes("/admin/organization")) return "admin-center-organization";
-    if (path.includes("/admin/whitelabel")) return "admin-center-whitelabel";
-    if (path.includes("/admin/users")) return "admin-center-users";
-    if (path.includes("/admin/integrations")) return "admin-center-integrations";
-    if (path.includes("/admin/documentation")) return "admin-center-documentation";
-    if (path.includes("/admin/portal")) return "admin-center-portal";
-    if (path.includes("/admin/health")) return "admin-center-health";
+    if (path.includes("/admin/organization")) return "tenant-admin-organization";
+    if (path.includes("/admin/whitelabel")) return "tenant-admin-whitelabel";
+    if (path.includes("/admin/users")) return "tenant-admin-users";
+    if (path.includes("/admin/integrations")) return "tenant-admin-integrations";
+    if (path.includes("/admin/documentation")) return "tenant-admin-documentation";
+    if (path.includes("/admin/portal")) return "tenant-admin-portal";
+    if (path.includes("/admin/health")) return "tenant-admin-health";
     if (path.includes("/admin/tenants")) return "platform-tenants";
-    if (path.includes("/admin/alliance")) return "admin-center-alliance";
-    if (path.includes("/admin/offerings")) return "admin-center-offerings";
-    if (path.includes("/admin/procurement")) return "admin-center-procurement";
-    if (path.includes("/admin/support-management")) return "admin-center-support-management";
-    if (path.includes("/admin/authorized-domains")) return "admin-center-authorized-domains";
-    return "admin-center";
+    if (path.includes("/admin/alliance")) return "tenant-admin-alliance";
+    if (path.includes("/admin/offerings")) return "tenant-admin-offerings";
+    if (path.includes("/admin/procurement")) return "tenant-admin-procurement";
+    if (path.includes("/admin/support-management")) return "tenant-admin-support-management";
+    if (path.includes("/admin/authorized-domains")) return "tenant-admin-authorized-domains";
+    return "tenant-admin";
   };
 
   const [activeModule, setActiveModule] = useState(getActiveModule());
@@ -85,8 +85,8 @@ export default function AdminLayout() {
   const handleModuleChange = (module: string) => {
     setActiveModule(module);
 
-    if (module.startsWith("admin-center-")) {
-      navigate(`/admin/${module.replace("admin-center-", "")}`);
+    if (module.startsWith("tenant-admin-")) {
+      navigate(`/admin/${module.replace("tenant-admin-", "")}`);
       return;
     }
     if (module === "super-admin-tenants" || module === "platform-tenants") {
