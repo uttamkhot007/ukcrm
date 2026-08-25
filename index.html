@@ -138,6 +138,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@NexusCRM" />
     <style id="approved-theme-first-paint">
+      html:not([data-theme-purged="1"]) body { visibility: hidden; }
       html, body {
         margin: 0;
         min-height: 100%;
@@ -147,54 +148,52 @@
       }
     </style>
     <script>
-      // Apply only the single approved theme before first paint.
-      // Any saved variant is deleted so retired visuals cannot flash on refresh.
+      // Theme persistence is fully disabled. Delete all theme-related browser
+      // storage before the body can paint; React waits for the IndexedDB purge.
       (function () {
-        var STABLE = 'nexus-theme';
-        var LEGACY = ['nexus-theme:v4', 'nexus-theme:v3', 'nexus-theme:v2', 'nexus-theme:v1', 'app-theme-config'];
         var DEFAULT_THEME = { mode: 'light', brand: 'emerald', mood: 'cyber' };
-        var revMeta = document.querySelector('meta[name="approved-design-revision"]');
-        var idMeta = document.querySelector('meta[name="approved-design-id"]');
-        var THEME_REVISION = Number((revMeta && revMeta.getAttribute('content')) || '0');
-        var THEME_DESIGN_ID = (idMeta && idMeta.getAttribute('content')) || '';
-        // Unresolved/placeholder identity means we cannot trust any saved theme.
-        var identityKnown = THEME_REVISION > 0 && THEME_DESIGN_ID && THEME_DESIGN_ID.indexOf('__') !== 0;
-        function parse(raw) {
-          if (!raw || !identityKnown) return null;
+        function isThemeKey(key) {
+          if (!key || typeof key !== 'string') return false;
+          var normalized = key.trim().toLowerCase();
+          return normalized.indexOf('theme') !== -1 || normalized.indexOf('color-scheme') !== -1;
+        }
+        function purgeStorage(storage) {
+          if (!storage) return;
           try {
-            var v = JSON.parse(raw);
-            if (!v || typeof v !== 'object') return null;
-            if (Number(v.revision) !== THEME_REVISION) return null;
-            if (v.designId !== THEME_DESIGN_ID) return null;
-            if (v.mode !== DEFAULT_THEME.mode) return null;
-            if (v.brand !== DEFAULT_THEME.brand) return null;
-            if (v.mood !== DEFAULT_THEME.mood) return null;
-            return DEFAULT_THEME;
+            var doomed = [];
+            for (var i = 0; i < storage.length; i++) {
+              var key = storage.key(i);
+              if (isThemeKey(key)) doomed.push(key);
+            }
+            doomed.forEach(function (key) { storage.removeItem(key); });
           } catch (e) {}
-          return null;
         }
-        function fromCookie() {
+        function purgeCookies() {
           try {
-            var m = document.cookie.match(/(?:^|;\s*)nexus_theme=([^;]*)/);
-            return m ? parse(decodeURIComponent(m[1])) : null;
-          } catch (e) { return null; }
-        }
-        function clearStaleTheme() {
-          try {
-            localStorage.removeItem(STABLE);
-            for (var i = 0; i < LEGACY.length; i++) localStorage.removeItem(LEGACY[i]);
+            document.cookie.split(';').forEach(function (part) {
+              var name = (part.split('=')[0] || '').trim();
+              if (!isThemeKey(name)) return;
+              document.cookie = encodeURIComponent(name) + '=; path=/; max-age=0; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+              document.cookie = encodeURIComponent(name) + '=; max-age=0; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+            });
           } catch (e) {}
-          try { document.cookie = 'nexus_theme=; path=/; max-age=0; SameSite=Lax'; } catch (e) {}
         }
-        var t = null;
-        try {
-          t = parse(localStorage.getItem(STABLE));
-          if (!t) t = fromCookie();
-          if (!t) clearStaleTheme();
-        } catch (e) {
-          t = t || fromCookie();
+        function purgeIndexedDb() {
+          try {
+            if (!('indexedDB' in window) || !indexedDB.databases) return;
+            indexedDB.databases().then(function (dbs) {
+              (dbs || []).forEach(function (db) {
+                if (db && db.name && isThemeKey(db.name)) {
+                  try { indexedDB.deleteDatabase(db.name); } catch (e) {}
+                }
+              });
+            }).catch(function () {});
+          } catch (e) {}
         }
-        t = t || DEFAULT_THEME;
+        purgeStorage(localStorage);
+        purgeStorage(sessionStorage);
+        purgeCookies();
+        purgeIndexedDb();
         var el = document.documentElement;
         var mode = DEFAULT_THEME.mode;
         var brand = DEFAULT_THEME.brand;
@@ -205,13 +204,6 @@
         el.setAttribute('data-brand', brand);
         el.setAttribute('data-mood', mood);
         el.style.colorScheme = mode;
-        if (identityKnown) {
-          try {
-            var serialized = JSON.stringify({ mode: mode, brand: brand, mood: mood, revision: THEME_REVISION, designId: THEME_DESIGN_ID });
-            localStorage.setItem(STABLE, serialized);
-            document.cookie = 'nexus_theme=' + encodeURIComponent(serialized) + '; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
-          } catch (e) {}
-        }
 
       })();
     </script>
