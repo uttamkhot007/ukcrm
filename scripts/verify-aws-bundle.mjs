@@ -158,7 +158,7 @@ if (findings.length === 0) {
     !html.includes(`name="approved-design-id" content="${releaseManifest.approvedDesignId}"`) ||
     !html.includes(`name="approved-design-revision" content="${releaseManifest.approvedDesignRevision}"`);
   const invalidDesignIdentity =
-    releaseManifest.approvedDesignId !== "platform-console-2026-08-25-r6" ||
+    releaseManifest.approvedDesignId !== "platform-console-2026-08-25-r7" ||
     releaseManifest.approvedDesignRevision !== 6;
   const javascript = files
     .filter((file) => extname(file).toLowerCase() === ".js")
